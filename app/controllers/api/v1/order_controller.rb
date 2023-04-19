@@ -106,6 +106,45 @@ class API::V1::OrderController < ApplicationController
 				render plain: response.to_json and return	
 	end
 	
+	def retrieve_samples
+		if params['order_date'].blank?
+			msg = "date not provided"	
+		else
+			res = OrderService.retrieve_samples(params['order_date'],params['from_date'],params['region'])
+			if res != false
+				response = {
+										status: 200,
+										error: false,
+										message: 'undispatching samples successfuly retrieved',
+										data: res
+									}	
+			else
+				response = {
+						status: 401,
+						error: true,
+						message: "no samples available yet",
+						data: {
+							
+						}
+				}
+			end
+		end
+
+		if msg
+			response = {
+							status: 401,
+							error: true,
+							message: msg,
+							data: {
+								
+							}
+					}
+		end
+		render plain: response.to_json  and return
+	end
+
+
+
 	def check_if_dispatched
 	
 		if !params[:tracking_number].blank?

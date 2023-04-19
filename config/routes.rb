@@ -13,6 +13,7 @@ Rails.application.routes.draw do
 		post '/dispatch_sample'									  	=> 'order#dispatch_sample'
 		get	 '/check_if_dispatched/:tracking_number'				=> 'order#check_if_dispatched'
 		get  '/retrieve_undispatched_samples'						=> 'order#retrieve_undispatched_samples'
+		get  '/retrieve_samples/:order_date/:from_date/:region'							=> 'order#retrieve_samples'
 
   		#test routes
   		post '/update_test'  				   					 	=> 'test#update_test'
