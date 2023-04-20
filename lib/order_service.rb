@@ -340,22 +340,36 @@ module  OrderService
 
       def self.get_site_code_number(site_code_alpha)
             site_code_number = ""
-            if site_code_alpha[3..3].match?(/[[:digit:]]/)
-                  site_code_alpha = site_code_alpha[1..2]
-            else
-                  if site_code_alpha[4..4].match?(/[[:digit:]]/)
-                        site_code_alpha = site_code_alpha[1..3]
-                  else
-                        if site_code_alpha[5..5].match?(/[[:digit:]]/)
-                              site_code_alpha = site_code_alpha[1..4]
+      	
+	    if site_code_alpha[0..0] == "L"
+                  res = Speciman.find_by_sql("SELECT sending_facility FROM specimen WHERE tracking_number='#{site_code_alpha}'")
+                  if !res.blank?
+                        sending_facility = res[0]['sending_facility']
+                        res = Site.find_by_sql("SELECT site_code_number FROM sites where name='#{sending_facility}'").first
+                        if !res.blank?
+                        site_code_number = res['site_code_number']
                         end
                   end
-            end
+            else
+	
 
-            res = Site.find_by_sql("SELECT site_code_number FROM sites where site_code='#{site_code_alpha}'").first
-            if !res.blank?
-                site_code_number = res['site_code_number']
-            end
+	        if site_code_alpha[3..3].match?(/[[:digit:]]/)
+                	  site_code_alpha = site_code_alpha[1..2]
+            	else
+                  	if site_code_alpha[4..4].match?(/[[:digit:]]/)
+                        	site_code_alpha = site_code_alpha[1..3]
+                  	else
+                          	if site_code_alpha[5..5].match?(/[[:digit:]]/)
+                              		site_code_alpha = site_code_alpha[1..4]
+                        	end
+                        end
+            	end
+
+            	res = Site.find_by_sql("SELECT site_code_number FROM sites where site_code='#{site_code_alpha}'").first
+            	if !res.blank?
+                	site_code_number = res['site_code_number']
+            	end
+	    end
 
             return site_code_number
 
@@ -401,10 +415,15 @@ module  OrderService
                                     tsts[t.test_name] = t.test_status
                               end
                         end
-
+			patient_name = res.pat_name.gsub("'"," ")
+			drawer_name = res.drawer_name.gsub("'"," ")
                         arv_number = res.arv_number.split("-")
                         arv_number = arv_number[arv_number.length - 1]
-                        data[counter] =  {   sample_type: res.sample_type,
+                        #dob = Time.new.strftime("%Y-%m-%d")  if res.dob == 'NULL'
+			next if tracking_number[0..4] == "XCHSU"
+			dob = res.dob
+			dob = Time.new.strftime("%Y-%m-%d")  if dob.nil?
+			data[counter] =  {   sample_type: res.sample_type,
                                                 tracking_number:  tracking_number,
                                                 specimen_status: res.specimen_status,
                                                 order_location: res.order_location,
@@ -416,14 +435,14 @@ module  OrderService
                                                 art_start_date: res.art_start_date,
                                                 sample_created_by: {
                                                             id: res.drawe_number,
-                                                            name: res.drawer_name,
+                                                            name: drawer_name,
                                                             phone: res.drawe_number
                                                       },
                                                 patient: {
                                                             id: res.pat_id,
-                                                            name: res.pat_name,
+                                                            name: patient_name,
                                                             gender: res.sex,
-                                                            dob: res.dob
+                                                            dob: dob
                                                       },
                                                 receiving_lab: res.target_lab,
                                                 sending_lab: res.health_facility,
@@ -434,6 +453,7 @@ module  OrderService
                         counter = counter + 1
                   end
                   counter = 0
+			
                   return data
             else
                   return false
