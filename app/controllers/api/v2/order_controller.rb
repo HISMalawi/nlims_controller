@@ -110,5 +110,45 @@ class API::V2::OrderController < ApplicationController
 		render plain: response.to_json and return
     end
 
+
+
+	def query_order_by_tracking_number		
+		if  params[:tracking_number]
+				res = OrderService.query_order_by_tracking_number_v2(params[:tracking_number],params[:test_name])		
+				#raise res.inspect
+				if res == false
+					response = {
+						status: 200,
+						error: true,
+						message: 'order not available',
+						data: {
+							
+						}
+					}
+				else
+					response = {
+						status: 200,
+						error: false,
+						message: 'order retrieved',
+						data: {
+							tests: res[:tests],
+							other: res[:gen_details]
+						}
+					}
+				end
+		else
+			response = {
+					status: 401,
+					error: true,
+					message: 'tracking number not provided',
+					data: {
+						
+					}
+			}
+		end
+
+		render plain: response.to_json and return
+
+	end
     
 end
