@@ -66,13 +66,16 @@ If you are installing the app for the first time, follow these steps:
 
 If you already had NLIMS running before and want to update it, follow these steps:
 
-1. Load the database dump.
-
-3. Run update metadata:
+1. Checkout to intended tag.
+   ```bash
+   git checkout [tag]
+   ```
+2. Run update metadata:
 
    ```bash
    ./bin/update_metadata.sh
    ```
+3. NOTE: Check that the configurations in all .yml files in the config folder are ok. This will not be necessary one everything is stable and consolidated.
 # Local NLIMS at Sites 
 
 ## Overview
