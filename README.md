@@ -9,6 +9,9 @@ Before installing `NLIMS`, ensure that the following requirements are met:
 - Rails 5
 - Couchdb 3.2.1
 
+## Installing CouchDB
+Install by following this guide: [Couchdb installation](https://github.com/HISMalawi/couchdb_installation/tree/main)
+
 ## Configuration
 
 1. Checkout to the ```main``` branch
@@ -40,7 +43,6 @@ Before installing `NLIMS`, ensure that the following requirements are met:
    ```bash
    bundle install
    ```
-
 ## First-Time Setup
 
 If you are installing the app for the first time, follow these steps:
@@ -50,19 +52,16 @@ If you are installing the app for the first time, follow these steps:
    ```bash
    rails db:create
    ```
-
 2. Run database migrations:
 
    ```bash
    rails db:migrate
    ```
-
 3. Seed the database with initial data:
 
    ```bash
    rails db:seed
    ```
-
 ## Updating NLIMS
 
 If you already had NLIMS running before and want to update it, follow these steps:
@@ -74,10 +73,6 @@ If you already had NLIMS running before and want to update it, follow these step
    ```bash
    ./bin/update_metadata.sh
    ```
-
-
-
-
 # Local NLIMS at Sites 
 
 ## Overview
@@ -145,13 +140,10 @@ Local NLIMS communicates with the CHSU NLIMS and requires an account for proper 
    Local NLIMS pulls statuses and results from the CHSU NLIMS and shares this data with the ART application. This is accomplished through the `master_nlims:sync_data` job. It can also send these statuses and results to the ART application proactively without waiting for a request.
 
 5. **Account Configuration with ART**
-   - Edit the `emr_connection.yml` file to specify the IP address and port number where the ART application is running.
+   - Edit the `emr_connection.yml` file to specify the IP address and port number where the ART application (BHT-EMR-API) is running.
    - Customize `username` and `password` with your desired credentials, which will be used for the account created within the ART application.
    - Run the following command to create account with emr
    ```bash
       rake emr:create_user
    ```
-
-6. Run the necessary command to complete the setup, as per your specific requirements.
-
 By following these steps, Local NLIMS establishes effective communication with both the ART application and the CHSU NLIMS, facilitating efficient data exchange within the healthcare system.
