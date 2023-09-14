@@ -75,7 +75,7 @@ If you already had NLIMS running before and want to update it, follow these step
    ```bash
    ./bin/update_metadata.sh
    ```
-3. NOTE: Check that the configurations in all .yml files in the config folder are ok. This will not be necessary one everything is stable and consolidated.
+3. NOTE: Check that the configurations in all ```.yml``` files in the ```config``` folder are ok. This will not be necessary once everything is stable and consolidated.
 # Local NLIMS at Sites 
 
 ## Overview
