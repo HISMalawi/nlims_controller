@@ -11,10 +11,18 @@ Before installing `NLIMS`, ensure that the following requirements are met:
 
 ## Configuration
 
-1. Open the respective configuration files in the `config` folder: Copy the .example file to respective .yml file e.g  
-```bash
-cp database.yml.example database.yml
-```
+1. Checkout to the ```main``` branch
+   ```bash
+   git checkout main
+   ```
+      OR 
+   ```bash
+   git checkout [tag]
+   ```
+2. Open the respective configuration files in the `config` folder: Copy the .example file to respective .yml file e.g  
+   ```bash
+   cp database.yml.example database.yml
+   ```
 
    - `database.yml`: Configure your database settings.
    - `couchdb.yml`: Configure your CouchDB settings.
@@ -23,7 +31,7 @@ cp database.yml.example database.yml
    - `emr_connection` : Configure connection to emr for updating results and statuses, [See this section](#master_nlims)
    - `master_nlims.yml`: Configure your CouchDB settings, [See this section](#master_nlims)
 
-2. Update the configuration settings in these files to match your environment.
+3. Update the configuration settings in these files to match your environment.
 
 ## Installation
 
@@ -59,39 +67,13 @@ If you are installing the app for the first time, follow these steps:
 
 If you already had NLIMS running before and want to update it, follow these steps:
 
-1. Load the database dump if applicable.
+1. Load the database dump.
 
-2. Run database migrations:
+3. Run update metadata:
 
    ```bash
-   rails db:migrate
+   ./bin/update_metadata.sh
    ```
-
-3. Seed the database with specific data as needed:
-
-   - Seed Dispatcher Types:
-
-     ```bash
-     rake db:seed:specific\[seed_dispatcher_types.rb\]
-     ```
-
-   - Seed Test Results Recipient Types:
-
-     ```bash
-     rake db:seed:specific\[seed_test_results_recepient_types.rb\]
-     ```
-
-   - Seed Update Site Name:
-
-     ```bash
-     rake db:seed:specific\[seed_update_site_name.rb\]
-     ```
-
-   - Seed Update Sites:
-
-     ```bash
-     rake db:seed:specific\[seed_update_sites.rb\]
-     ```
 
 
 
