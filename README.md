@@ -132,21 +132,21 @@ Local NLIMS communicates with the CHSU NLIMS and requires an account for proper 
    ```bash
    rake master_nlims:create_account
    ```
-
-3. **Data Synchronization to CHSU NLIMS**:
-   To push orders from the Local NLIMS to the CHSU NLIMS, a job named `master_nlims:sync_data` must be scheduled in the crontab. This job ensures that pending data is sent to the CHSU NLIMS.
-   ```bash
-   0 */2 * * *  /bin/bash -l -c 'cd /var/www/nlims_controller && rvm use 2.5.3 && RAILS_ENV=development bundle exec rake master_nlims:sync_data --silent >> log/pull_from_master_nlims.log 2>&1'
-   ```
-
-4. **Data Retrieval from CHSU NLIMS and Sharing**:
-   Local NLIMS pulls statuses and results from the CHSU NLIMS and shares this data with the ART application. This is accomplished through the `master_nlims:sync_data` job. It can also send these statuses and results to the ART application proactively without waiting for a request.
-
-5. **Account Configuration with ART**
+3. **Account Configuration with ART**
    - Edit the `emr_connection.yml` file to specify the IP address and port number where the ART application (BHT-EMR-API) is running.
    - Customize `username` and `password` with your desired credentials, which will be used for the account created within the ART application.
    - Run the following command to create account with emr
    ```bash
       rake emr:create_user
    ```
+4. **Data Retrieval from CHSU NLIMS and Sharing**:
+   Local NLIMS pulls statuses and results from the CHSU NLIMS and shares this data with the ART application. This is accomplished through the `master_nlims:sync_data` job. It can also send these statuses and results to the ART application proactively without waiting for a request. This job ensures that data is sent to the CHSU NLIMS.
+      ```bash
+      0 */2 * * *  /bin/bash -l -c 'cd /var/www/nlims_controller && rvm use 2.5.3 && RAILS_ENV=development bundle exec rake master_nlims:sync_data --silent >> log/pull_from_master_nlims.log 2>&1'
+      ```
+
+4. **Data Synchronization to CHSU NLIMS**:
+   2. To Synchronization data orders between local NLIMS and CHSU NLIMS: Install ```NLIMS DATA SYNCHRONISER``` as guided through the following guide: [NLIMS DATA SYNCRONISER](https://github.com/HISMalawi/nlims_data_syncroniser/tree/master)
+
+
 By following these steps, Local NLIMS establishes effective communication with both the ART application and the CHSU NLIMS, facilitating efficient data exchange within the healthcare system.
