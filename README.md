@@ -31,8 +31,8 @@ Install by following this guide: [Couchdb installation](https://github.com/HISMa
    - `couchdb.yml`: Configure your CouchDB settings.
    - `results_channel_socket.yml`: Configure your results channel socket settings.
    - `application.yml`: Edit application-specific configurations as required.
-   - `emr_connection` : Configure connection to emr for updating results and statuses, [See this section](#master_nlims)
-   - `master_nlims.yml`: Configure your CouchDB settings, [See this section](#master_nlims)
+   - `emr_connection` : Configure connection to emr for updating results and statuses.
+   - `master_nlims.yml`: Configure your CouchDB settings.
 
 3. Update the configuration settings in these files to match your environment.
 
@@ -117,7 +117,7 @@ ART communicates with the Local NLIMS through its backend, which is the API modu
 * * * * * /bin/bash -l -c 'cd /var/www/BHT-EMR-API && bin/rails runner -e development '\''bin/lab/sync_worker.rb'\'''
 ```
 
-## How Local NLIMS Communicates with CHSU NLIMS {#master_nlims}
+## How Local NLIMS Communicates with CHSU NLIMS
 
 Local NLIMS communicates with the CHSU NLIMS and requires an account for proper setup. Follow these steps:
 
