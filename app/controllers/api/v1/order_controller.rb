@@ -109,7 +109,7 @@ class API::V1::OrderController < ApplicationController
 	def check_if_dispatched
 	
 		if !params[:tracking_number].blank?
-			res = OrderService.check_if_dispatched(params[:tracking_number])
+			res = OrderService.check_if_dispatched(params[:tracking_number], params[:dispatcher_type_id])
 			if res == false
 				response = {
 								status: 200,
@@ -289,7 +289,7 @@ class API::V1::OrderController < ApplicationController
 							}
 						end
 						
-					elsif case_type == "delivery"
+					elsif case_type == "r4h_delivery"
 						tracking_numbers = params[:properties]["tracking_numbers"]
 						date_dispatched = params[:properties]["date_of_delivery"]
 						time_of_delivery = params[:properties]["time_of_delivery"]
@@ -320,7 +320,9 @@ class API::V1::OrderController < ApplicationController
 												}
 										}
 									else
-								
+										if dispatcher_type_id.id == 1
+											OrderService.record_r4h_pickup_from_hub(params[:properties]["pickup_info"], dispatcher)
+										end
 										response = {
 													status: 200,
 													error: false,

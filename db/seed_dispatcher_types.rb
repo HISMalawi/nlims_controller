@@ -1,4 +1,4 @@
-dispatcher_types = ['delivering_samples_to_molecular_lab','delivering_samples_to_district_hub','delivering_results_to_facility','sample_dispatched_from_facility']
+dispatcher_types = ['delivering_samples_to_molecular_lab','delivering_samples_to_district_hub','delivering_results_to_facility','sample_dispatched_from_facility', 'pickup_sample_from_hub']
 
 
 puts 'loading dispatcher types--------------'

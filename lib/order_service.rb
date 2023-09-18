@@ -1,4 +1,4 @@
-
+require 'json'
 module  OrderService
 
       def self.create_order(params,tracking_number)
@@ -859,6 +859,24 @@ module  OrderService
             end
 
             return true
+      end
+
+      def self.record_r4h_pickup_from_hub(pickup_info, dispatcher)
+            pickup_info = pickup_info.gsub('[\\{','[{').gsub('\\}]', '}]').gsub('tracking_number', '"tracking_number"').gsub('time_picked_from_hub', '"time_picked_from_hub"').gsub('date_picked_from_hub', '"date_picked_from_hub"').gsub(/\\/, '')
+            JSON.parse(pickup_info).each do |info|
+                  date_picked_up = info['date_picked_from_hub']
+                  time_picked_from_hub = info['time_picked_from_hub']
+                  datetime_picked_from_hub = date_picked_up + " "+ time_picked_from_hub
+                  dispatched = SpecimenDispatch.where(tracking_number: info['tracking_number'], dispatcher_type_id: 5).first
+                  if dispatched.nil?
+                        SpecimenDispatch.create(
+                              tracking_number: info['tracking_number'],
+                              dispatcher: dispatcher,
+                              date_dispatched: datetime_picked_from_hub,
+                              dispatcher_type_id: 5
+                        )
+                  end
+            end
       end
 
       def self.check_if_dispatched(tracking_number,dispatcher_type)
