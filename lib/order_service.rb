@@ -406,8 +406,8 @@ module  OrderService
                               
                         end
                   end
-                  arv_number = res.arv_number.split("-")
-                  arv_number = arv_number[arv_number.length - 1]
+                  arv_number = res.arv_number.nil? ? nil : res.arv_number.split("-")
+                  arv_number = arv_number.nil? ? nil : arv_number[arv_number.length - 1]
 
                   if result_status == true
 
@@ -593,8 +593,8 @@ module  OrderService
                         end
                   end
 
-                  arv_number = res.arv_number.split("-")
-                  arv_number = arv_number[arv_number.length - 1]
+                  arv_number = res.arv_number.nil? ? nil : res.arv_number.split("-")
+                  arv_number = arv_number.nil? ? nil : arv_number[arv_number.length - 1]
 
                   if result_status == true
 
@@ -949,8 +949,8 @@ module  OrderService
                               end
                         end
 
-                        arv_number = res.arv_number.split("-")
-                        arv_number = arv_number[arv_number.length - 1]
+                        arv_number = res.arv_number.nil? ? nil : res.arv_number.split("-")
+                        arv_number = arv_number.nil? ? nil : arv_number[arv_number.length - 1]
                         data[counter] =  {   sample_type: res.sample_type,
                                                 tracking_number:  tracking_number,
                                                 specimen_status: res.specimen_status,
@@ -1476,8 +1476,8 @@ module  OrderService
                         end
                   end
                   
-			arv_number = res.arv_number.split("-")
-			arv_number = arv_number[arv_number.length - 1]
+			arv_number = res.arv_number.nil? ? nil : res.arv_number.split("-")
+			arv_number = arv_number.nil? ? nil : arv_number[arv_number.length - 1]
                   return { 
 
                         gen_details:   {  sample_type: res.sample_type,
