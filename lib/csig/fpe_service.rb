@@ -223,10 +223,10 @@ def calculate_tweak64_ff3_1(tweak56)
 end
 
 # USAGE
-plaintext = 3_992_520_240
-cipher = FF3Cipher.new('3a12f03a59b73e5e06f6c5babb22d76203e177a8b87f274a', '0123456789ABCDEF', 10, '0123456789')
-c = cipher.encrypt(plaintext.to_s)
-d = cipher.decrypt(c)
-puts "plaintext: #{plaintext}"
-puts "ciphertext: #{c}"
-puts "decrypted text: #{d}"
+# plaintext = 222333444
+# cipher = FF3Cipher.new('3a12f03a59b73e5e06f6c5babb22d76203e177a8b87f274a', '0123456789ABCDEF', 10, '0123456789')
+# c = cipher.encrypt(plaintext.to_s)
+# d = cipher.decrypt(c)
+# puts "plaintext: #{plaintext}"
+# puts "ciphertext: #{c}"
+# puts "decrypted text: #{d}"
