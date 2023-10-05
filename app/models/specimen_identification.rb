@@ -1,0 +1,2 @@
+class SpecimenIdentification < ApplicationRecord
+end
