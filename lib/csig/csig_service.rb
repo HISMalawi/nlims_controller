@@ -71,6 +71,7 @@ module CsigService
     check_digit.to_s + number.to_s
   end
 
+  # clean zeros by adding 1 to each individual value in the number
   def self.zero_cleaned(number)
     numbers = number.to_i.digits.reverse
     numbers.map { |n| n + 1 }.join.to_i
