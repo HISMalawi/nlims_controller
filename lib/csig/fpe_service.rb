@@ -49,6 +49,7 @@ class FF3Cipher
   end
 
   def encrypt(plaintext)
+    plaintext = plaintext.to_s
     tweak_bytes = [@tweak].pack('H*')
     plaintext_len = plaintext.length
     raise "plaintext must be between #{@min_len} and #{@max_len} digits" if plaintext_len < @min_len || plaintext_len > @max_len
@@ -95,6 +96,7 @@ class FF3Cipher
   end
 
   def decrypt(ciphertext)
+    ciphertext = ciphertext.to_s
     tweak_bytes = [@tweak].pack('H*')
     ciphertext_len = ciphertext.length
     raise "ciphertext must be between #{@min_len} and #{@max_len} digits" if ciphertext_len < @min_len || ciphertext_len > @max_len
