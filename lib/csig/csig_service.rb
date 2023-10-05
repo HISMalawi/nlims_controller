@@ -67,6 +67,7 @@ module CsigService
     number.to_s.rjust(length, '0')
   end
 
+  # To Follow up: Why concat check digit to the left of the number?
   def self.concat_check_digit_with_number(check_digit, number)
     check_digit.to_s + number.to_s
   end
