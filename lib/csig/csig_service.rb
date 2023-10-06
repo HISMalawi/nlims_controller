@@ -30,22 +30,12 @@ module CsigService
 
   # Encrypt a number using FPE FF3
   def self.encrypt(plaintext)
-    encryption_key = '3a12f03a59b73e5e06f6c5babb22d76203e177a8b87f274a'
-    tweak_value = '0123456789ABCDEF'
-    radix = 9
-    alphabet = '012345678'
-    ff3 = FF3Cipher.new(encryption_key, tweak_value, radix, alphabet)
-    ff3.encrypt(plaintext.to_s)
+    fpe_service.encrypt(plaintext.to_s)
   end
 
   # Decrypt a ciphernumber using FPE FF3
   def self.decrypt(ciphertext)
-    encryption_key = '3a12f03a59b73e5e06f6c5babb22d76203e177a8b87f274a'
-    tweak_value = '0123456789ABCDEF'
-    radix = 9
-    alphabet = '012345678'
-    ff3 = FF3Cipher.new(encryption_key, tweak_value, radix, alphabet)
-    ff3.decrypt(ciphertext)
+    fpe_service.decrypt(ciphertext)
   end
 
   # Convert a number to base 9
@@ -74,5 +64,14 @@ module CsigService
   def self.zero_cleaned(number)
     numbers = number.to_i.digits.reverse
     numbers.map { |n| n + 1 }.join.to_i
+  end
+
+  # FPE service
+  def self.fpe_service
+    encryption_key = ENV['KEY']
+    tweak_value = ENV['TWEAK']
+    radix = ENV['RADIX'].to_i
+    alphabet = ENV['ALPHABET']
+    FF3Cipher.new(encryption_key, tweak_value, radix, alphabet)
   end
 end

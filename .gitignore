@@ -30,3 +30,6 @@ config/master_nlims.yml
 
 # Ignore db schema
 db/schema.rb
+
+# ignore .env
+.env

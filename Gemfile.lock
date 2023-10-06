@@ -59,6 +59,10 @@ GEM
     digest (3.1.1)
     domain_name (0.5.20190701)
       unf (>= 0.0.5, < 1.0.0)
+    dotenv (2.8.1)
+    dotenv-rails (2.8.1)
+      dotenv (= 2.8.1)
+      railties (>= 3.2)
     erubi (1.12.0)
     event_emitter (0.2.6)
     ffi (1.15.5)
@@ -201,6 +205,7 @@ DEPENDENCIES
   bcrypt (~> 3.1.7)
   byebug
   couchrest_model
+  dotenv-rails
   listen (>= 3.0.5, < 3.2)
   mysql2 (>= 0.3.18)
   parallel
