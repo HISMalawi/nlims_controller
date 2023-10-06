@@ -5,10 +5,10 @@ require 'csig/mod9710_service'
 # Central Specimen ID Generator Service
 module CsigService
   def self.generate_sin(number_of_ids = 100)
-    last_id = SpecimenIdentification.last
-    last_id = last_id.nil? ? 1 : last_id.id
+    last_seq_number = SpecimenIdentification.last
+    last_seq_number = last_seq_number.nil? ? 1 : last_seq_number.sequence_number.to_i
     0..number_of_ids.times do
-      sequence_number = last_id
+      sequence_number = last_seq_number
       base9_equivalent = convert_to_base9(sequence_number)
       base9_equivalent_zero_padded = prepad_number_with_zeros(10, base9_equivalent)
       fp_encrypted = encrypt(base9_equivalent_zero_padded)
@@ -24,10 +24,8 @@ module CsigService
         check_digit: check_digit,
         sin: sin
       )
-      last_id += 1
+      last_seq_number += 1
     end
-    consective_last_id = last_id + 1
-    SpecimenIdentification.where(id: consective_last_id..(consective_last_id + number_of_ids))
   end
 
   # Encrypt a number using FPE FF3
