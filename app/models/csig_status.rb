@@ -1,0 +1,2 @@
+class CsigStatus < ApplicationRecord
+end

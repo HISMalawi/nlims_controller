@@ -28,6 +28,44 @@ module CsigService
     end
   end
 
+  # Distrubute specimen identifications to sites
+  def self.distribute_sin(number_of_ids = 100, site)
+    sin_to_distribute = SpecimenIdentification.where(distributed: false).limit(number_of_ids)
+    ActiveRecord::Base.transaction do
+      sin_to_distribute.each do |sin|
+        SpecimenIdentificationDistribution.create(specimen_identification_id: sin.id, site_id: site.id)
+        sin.update(distributed: true)
+        csig_status = CsigStatus.find_by(name: 'Distributed')
+        SpecimenIdentificationStatus.create(
+          csig_status_id: csig_status.id,
+          specimen_identification_id: id,
+          site_name: site.name
+        )
+      end
+    end
+  end
+
+  # Update specimen identification status to used
+  def self.use_sin(sin, site_name, system_name = nil)
+    sin_ = SpecimenIdentification.find_by(sin: sin)
+    csig_status = CsigStatus.find_by(name: 'Used')
+    SpecimenIdentificationStatus.create(
+      csig_status_id: csig_status.id,
+      specimen_identification_id: sin_.id,
+      site_name: site_name,
+      system_name: system_name
+    )
+  end
+
+  # check if a sin has been used
+  def self.sin_used?(sin)
+    sin_ = SpecimenIdentification.find_by(sin: sin)
+    return false if sin_.nil?
+
+    specimen_identification_status = SpecimenIdentificationStatus.where(specimen_identification_id: sin_.id).last
+    specimen_identification_status.csig_status.name == 'Used'
+  end
+
   # Encrypt a number using FPE FF3
   def self.encrypt(plaintext)
     fpe_service.encrypt(plaintext.to_s)
