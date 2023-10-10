@@ -51,6 +51,9 @@ module CsigService
 
   # Update specimen identification status to used
   def self.use_sin(sin, site_name, system_name = nil)
+    sin_used = sin_used?(sin)
+    return true if sin_used
+
     sin_ = SpecimenIdentification.find_by(sin: sin)
     csig_status = CsigStatus.find_by(name: 'Used')
     SpecimenIdentificationStatus.create(
