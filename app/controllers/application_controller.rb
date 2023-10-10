@@ -1,4 +1,7 @@
+# frozen_string_literal: true
 
+require 'user_service'
+# application controller
 class ApplicationController < ActionController::API
     before_action :authenticate_request, :except => [
                                             "re_authenticate", "check_token_validity", "authenticate_user", "create_user", "dispatch_sample"

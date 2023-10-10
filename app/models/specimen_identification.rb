@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'activerecord-import/base'
+require 'activerecord-import/active_record/adapters/mysql2_adapter'
 # specimen_identification model
 class SpecimenIdentification < ApplicationRecord
   validates :sequence_number, presence: true, uniqueness: true

@@ -5,27 +5,30 @@ require 'csig/mod9710_service'
 # Central Specimen ID Generator Service
 module CsigService
   def self.generate_sin(number_of_ids = 100)
-    last_seq_number = SpecimenIdentification.last
-    last_seq_number = last_seq_number.nil? ? 1 : last_seq_number.sequence_number.to_i
-    0..number_of_ids.times do
-      sequence_number = last_seq_number
-      base9_equivalent = convert_to_base9(sequence_number)
+    ids = []
+    last_spid_transaction = SpecimenIdentification.last
+    last_seq_number = last_spid_transaction.nil? ? 0 : last_spid_transaction.sequence_number.to_i
+    next_seq_number = last_seq_number + 1
+    0..number_of_ids.to_i.times do
+      base9_equivalent = convert_to_base9(next_seq_number)
       base9_equivalent_zero_padded = prepad_number_with_zeros(10, base9_equivalent)
       fp_encrypted = encrypt(base9_equivalent_zero_padded)
       fp_encrypted_zero_cleaned = zero_cleaned(fp_encrypted)
       check_digit = Mod9710Service.calculate_check_digit(fp_encrypted_zero_cleaned)
       sin = concat_check_digit_with_number(check_digit, fp_encrypted_zero_cleaned)
-      SpecimenIdentification.create(
-        sequence_number: sequence_number,
+      ids << {
+        sequence_number: next_seq_number,
         base9_equivalent: base9_equivalent,
         base9_zero_padded: base9_equivalent_zero_padded,
         encrypted: fp_encrypted,
         encrypted_zero_cleaned: fp_encrypted_zero_cleaned,
         check_digit: check_digit,
         sin: sin
-      )
-      last_seq_number += 1
+      }
+      next_seq_number += 1
     end
+    SpecimenIdentification.import(ids)
+    SpecimenIdentification.where("sequence_number > #{last_seq_number}").limit(100)
   end
 
   # Distrubute specimen identifications to sites

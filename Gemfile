@@ -5,6 +5,7 @@ git_source(:github) do |repo_name|
   "https://github.com/#{repo_name}.git"
 end
 ruby '2.5.3'
+gem 'activerecord-import'
 gem 'apipie-rails'
 gem 'couchrest_model'
 gem 'dotenv-rails'
