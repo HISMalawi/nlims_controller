@@ -67,6 +67,8 @@ module CsigService
     return false if sin_.nil?
 
     specimen_identification_status = SpecimenIdentificationStatus.where(specimen_identification_id: sin_.id).last
+    return false if specimen_identification_status.nil?
+
     specimen_identification_status.csig_status.name == 'Used'
   end
 
