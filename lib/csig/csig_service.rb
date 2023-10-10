@@ -32,16 +32,17 @@ module CsigService
   end
 
   # Distrubute specimen identifications to sites
+  # Refactor to use bulk insert
   def self.distribute_sin(number_of_ids = 100, site)
     sin_to_distribute = SpecimenIdentification.where(distributed: false).limit(number_of_ids)
+    csig_status = CsigStatus.find_by(name: 'Distributed')
     ActiveRecord::Base.transaction do
       sin_to_distribute.each do |sin|
         SpecimenIdentificationDistribution.create(specimen_identification_id: sin.id, site_id: site.id)
         sin.update(distributed: true)
-        csig_status = CsigStatus.find_by(name: 'Distributed')
         SpecimenIdentificationStatus.create(
           csig_status_id: csig_status.id,
-          specimen_identification_id: id,
+          specimen_identification_id: sin.id,
           site_name: site.name
         )
       end
