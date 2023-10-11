@@ -55,13 +55,25 @@ module CsigService
     return true if sin_used
 
     sin_ = SpecimenIdentification.find_by(sin: sin)
+    return 'Invalid sin' if sin_.nil?
+
     csig_status = CsigStatus.find_by(name: 'Used')
-    SpecimenIdentificationStatus.create(
+    spid_status = SpecimenIdentificationStatus.create(
       csig_status_id: csig_status.id,
       specimen_identification_id: sin_.id,
       site_name: site_name,
       system_name: system_name
     )
+    if spid_status
+      ActionCable.server.broadcast(
+        'csig_sample_mapping_alert_channel',
+        {
+          data: sin_.sin,
+          message: 'Sin is used'
+        }
+      )
+    end
+    spid_status
   end
 
   # check if a sin has been used
