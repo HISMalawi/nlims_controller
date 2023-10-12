@@ -12,9 +12,9 @@ gem 'dotenv-rails'
 # Use ActiveModel has_secure_password
 gem 'bcrypt', '~> 3.1.7'
 # Bundle edge Rails instead: gem 'rails', github: 'rails/rails'
-gem 'rails', '~> 5.1.5'
-
 gem 'parallel'
+gem 'rails', '~> 5.1.5'
+# gem 'rswag'
 gem 'ruby-progressbar'
 # Use mysql as the database for Active Record
 gem 'mysql2', '>= 0.3.18'

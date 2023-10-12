@@ -40,10 +40,14 @@ Rails.application.routes.draw do
 			post '/confirm_order_request'	=> 'order#confirm_order_request'
 			get  '/query_requested_order_by_npid/:npid'	=> 'order#query_requested_order_by_npid2'
 			get  '/query_order_by_tracking_number/:tracking_number'	=> 'order#query_order_by_tracking_number'
-			post '/csig/generate_ids' => 'csig#generate_specimen_tracking_id'
-			post '/csig/distribute_ids' => 'csig#distribute_sin'
-			get '/csig/sin_used/' => 'csig#check_if_sin_is_used'
-			post '/csig/use_sin' => 'csig#use_sin'
+			resources :csig do
+				collection do
+					post '/generate_ids' => 'csig#generate_specimen_tracking_id'
+					post '/distribute_ids' => 'csig#distribute_sin'
+					get '/sin_used' => 'csig#check_if_sin_is_used'
+					post '/use_sin' => 'csig#use_sin'
+				end
+			end
 		end
   end
 end
