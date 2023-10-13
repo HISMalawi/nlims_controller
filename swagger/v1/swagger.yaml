@@ -7,9 +7,24 @@ paths:
   "/api/v2/csig/generate_ids":
     post:
       summary: generate_specimen_tracking_id csig
+      tags:
+      - CSIG
+      parameters: []
       responses:
         '200':
           description: successful
+        '400':
+          description: bad request
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                number_of_ids:
+                  type: integer
+              required:
+              - number_of_ids
   "/api/v2/csig/distribute_ids":
     post:
       summary: distribute_sin csig
@@ -30,40 +45,7 @@ paths:
           description: successful
   "/api/v2/csig":
     get:
-      summary: list csigs
-      responses:
-        '200':
-          description: successful
-    post:
-      summary: create csig
-      responses:
-        '200':
-          description: successful
-  "/api/v2/csig/{id}":
-    parameters:
-    - name: id
-      in: path
-      description: id
-      required: true
-      schema:
-        type: string
-    get:
-      summary: show csig
-      responses:
-        '200':
-          description: successful
-    patch:
-      summary: update csig
-      responses:
-        '200':
-          description: successful
-    put:
-      summary: update csig
-      responses:
-        '200':
-          description: successful
-    delete:
-      summary: delete csig
+      summary: list specimen tracking ids
       responses:
         '200':
           description: successful
