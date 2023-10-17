@@ -35,7 +35,7 @@ module CsigService
       total_pages: active_record_relation.total_pages,
       current_page: active_record_relation.current_page,
       next_page: active_record_relation.next_page,
-
+      prev_page: active_record_relation.prev_page
     }
   end
 
