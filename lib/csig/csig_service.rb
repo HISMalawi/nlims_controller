@@ -4,6 +4,32 @@ require 'csig/fpe_service'
 require 'csig/mod9710_service'
 # Central Specimen ID Generator Service
 module CsigService
+  def self.list_of_sins(page: 25, page_number: 1, distributed: nil, status: nil, query: nil)
+    specimen_identifications = filter_distributed(distributed)
+    specimen_identifications = search_sin(query, specimen_identifications)
+    specimen_identifications = filter_status(status, specimen_identifications)
+    specimen_identifications.page(page_number).per(page) unless specimen_identifications.nil?
+  end
+
+  def self.filter_distributed(distributed)
+    specimen_identifications = SpecimenIdentification.left_joins({specimen_identification_distribution: :site}).select('specimen_identifications.*, sites.name AS site_name, sites.district')
+    specimen_identifications = specimen_identifications.where(distributed: distributed)  unless distributed.nil?
+    specimen_identifications
+  end
+
+  def self.search_sin(sin, specimen_identifications)
+    specimen_identifications = specimen_identifications.where("sin LIKE #{sin}") unless sin.nil?
+    specimen_identifications
+  end
+
+  def self.filter_status(status, specimen_identifications)
+    s = SpecimenIdentification.joins(:specimen_identification_statuses).select('MAX(specimen_identifications.created_at)').group('specimen_identifications.id')
+    specimen_identifications = specimen_identifications.joins({specimen_identification_statuses: :csig_status}).where("specimen_identifications.created_at IN (#{s.to_sql})"
+    ).select('specimen_identifications.*, csig_statuses.name AS status')
+    specimen_identifications = specimen_identifications.where("spid_statuses.csig_status_id = #{status}") unless status.nil?
+    specimen_identifications
+  end
+
   def self.generate_sin(number_of_ids = 100)
     ids = []
     last_spid_transaction = SpecimenIdentification.last
@@ -49,7 +75,7 @@ module CsigService
     end
   end
 
-  # Update specimen identification status to used
+  # Update specimen identification status to - Used / Invalid(Not allocated to the site/ should send seq number to central)
   def self.use_sin(sin, site_name, system_name = nil)
     sin_used = sin_used?(sin)
     return true if sin_used

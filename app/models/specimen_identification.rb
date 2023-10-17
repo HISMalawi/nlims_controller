@@ -11,8 +11,9 @@ class SpecimenIdentification < ApplicationRecord
   validates :sin, presence: true, uniqueness: true
   validates :check_digit, presence: true
   validates :encrypted_zero_cleaned, presence: true, uniqueness: true
-
+  has_many :specimen_identification_statuses
   after_create :default_specimen_identification_status
+  has_one :specimen_identification_distribution
 
   private
 

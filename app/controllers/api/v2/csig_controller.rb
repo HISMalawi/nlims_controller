@@ -7,6 +7,9 @@ module API
   module V2
     # class CsigController
     class CsigController < ApplicationController
+      def index
+        
+      end
       def generate_specimen_tracking_id
         generated_ids = CsigService.generate_sin(params.require(:number_of_ids))
         render json: { data: generated_ids, message: 'Success' }, status: :created

@@ -19,6 +19,7 @@ gem 'rswag'
 gem 'ruby-progressbar'
 # Use mysql as the database for Active Record
 gem 'mysql2', '>= 0.3.18'
+gem 'kaminari'
 # Use Puma as the app server
 gem 'puma', '~> 3.7'
 # Build JSON APIs with ease. Read more: https://github.com/rails/jbuilder
