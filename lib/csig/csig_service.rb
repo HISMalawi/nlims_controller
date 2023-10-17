@@ -4,11 +4,11 @@ require 'csig/fpe_service'
 require 'csig/mod9710_service'
 # Central Specimen ID Generator Service
 module CsigService
-  def self.list_of_sins(page: 25, page_number: 1, distributed: nil, status: nil, query: nil)
+  def self.list_of_sins(per_page: 25, page_number: 1, distributed: nil, status: nil, query: nil)
     specimen_identifications = filter_distributed(distributed)
     specimen_identifications = search_sin(query, specimen_identifications)
     specimen_identifications = filter_status(status, specimen_identifications)
-    specimen_identifications.page(page_number).per(page) unless specimen_identifications.nil?
+    specimen_identifications.page(page_number).per(per_page) unless specimen_identifications.nil?
   end
 
   def self.filter_distributed(distributed)
@@ -28,6 +28,15 @@ module CsigService
     ).select('specimen_identifications.*, csig_statuses.name AS status')
     specimen_identifications = specimen_identifications.where("spid_statuses.csig_status_id = #{status}") unless status.nil?
     specimen_identifications
+  end
+
+  def page_metadata(active_record_relation)
+    {
+      total_pages: active_record_relation.total_pages,
+      current_page: active_record_relation.current_page,
+      next_page: active_record_relation.next_page,
+
+    }
   end
 
   def self.generate_sin(number_of_ids = 100)
