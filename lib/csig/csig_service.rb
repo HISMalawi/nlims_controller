@@ -67,7 +67,21 @@ module CsigService
       next_seq_number += 1
     end
     SpecimenIdentification.import(ids)
-    SpecimenIdentification.where("sequence_number > #{last_seq_number}").limit(100)
+    created_records = SpecimenIdentification.where("sequence_number > #{last_seq_number}")
+    default_csig_status(created_records)
+    created_records.limit(100)
+  end
+
+  def self.default_csig_status(created_records)
+    csig_status = CsigStatus.find_by(name: 'Not Distributed')
+    statuses = []
+    created_records.each do |record|
+      statuses << {
+        csig_status_id: csig_status.id,
+        specimen_identification_id: record.id
+      }
+    end
+    SpecimenIdentificationStatus.import(statuses)
   end
 
   # Distrubute specimen identifications to sites
