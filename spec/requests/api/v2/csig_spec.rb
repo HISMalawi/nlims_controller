@@ -8,15 +8,32 @@ RSpec.describe 'api/v2/csig', type: :request do
     post('generate specimen tracking ids') do
       tags TAGS_CSIG
       consumes 'application/json'
+      produces 'application/json'
       parameter in: :body, schema: {
         type: :object,
         properties: {
-          number_of_ids: { type: :integer }
+          number_of_ids: { type: :integer, example: 10, default: 100 }
         },
         required: ['number_of_ids']
       }
       response(200, 'successful') do
-        let(:number_of_ids) { 1 }
+        schema type: :array,
+               items: {
+                 type: :object,
+                 properties: {
+                   id: { type: :integer, example: 221200 },
+                   sequence_number: { type: :string, example: '221200' },
+                   base9_equivalent: { type: :string, example: '366377' },
+                   base9_zero_padded: { type: :string, example: '0000366377' },
+                   encrypted: { type: :string, example: '2155087835' },
+                   encrypted_zero_cleaned: { type: :string, example: '3266198946' },
+                   check_digit: { type: :string, example: '74' },
+                   sin: { type: :string, example: '743266198946' },
+                   created_at: { type: :string, format: 'date-time', example: '2023-10-17T14:57:18.000+02:00' },
+                   updated_at: { type: :string, format: 'date-time', example: '2023-10-17T14:57:18.000+02:00' },
+                   distributed: { type: :boolean, example: false }
+                 }
+               }
         run_test!
       end
     end
