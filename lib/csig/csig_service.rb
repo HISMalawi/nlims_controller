@@ -8,17 +8,21 @@ module CsigService
     specimen_identifications = filter_distributed(distributed)
     specimen_identifications = search_sin(query, specimen_identifications)
     specimen_identifications = filter_status(status, specimen_identifications)
-    specimen_identifications.page(page_number).per(per_page) unless specimen_identifications.nil?
+    specimen_identifications = specimen_identifications.page(page_number).per(per_page) unless specimen_identifications.blank?
+    {
+      data: specimen_identifications,
+      metadata: page_metadata(specimen_identifications)
+    }
   end
 
   def self.filter_distributed(distributed)
     specimen_identifications = SpecimenIdentification.left_joins({specimen_identification_distribution: :site}).select('specimen_identifications.*, sites.name AS site_name, sites.district')
-    specimen_identifications = specimen_identifications.where(distributed: distributed)  unless distributed.nil?
+    specimen_identifications = specimen_identifications.where(distributed: distributed)  unless distributed.blank?
     specimen_identifications
   end
 
   def self.search_sin(sin, specimen_identifications)
-    specimen_identifications = specimen_identifications.where("sin LIKE #{sin}") unless sin.nil?
+    specimen_identifications = specimen_identifications.where("sin LIKE #{sin}") unless sin.blank?
     specimen_identifications
   end
 
@@ -26,11 +30,11 @@ module CsigService
     s = SpecimenIdentification.joins(:specimen_identification_statuses).select('MAX(specimen_identifications.created_at)').group('specimen_identifications.id')
     specimen_identifications = specimen_identifications.joins({specimen_identification_statuses: :csig_status}).where("specimen_identifications.created_at IN (#{s.to_sql})"
     ).select('specimen_identifications.*, csig_statuses.name AS status')
-    specimen_identifications = specimen_identifications.where("spid_statuses.csig_status_id = #{status}") unless status.nil?
+    specimen_identifications = specimen_identifications.where("spid_statuses.csig_status_id = #{status}") unless status.blank?
     specimen_identifications
   end
 
-  def page_metadata(active_record_relation)
+  def self.page_metadata(active_record_relation)
     {
       total_pages: active_record_relation.total_pages,
       current_page: active_record_relation.current_page,

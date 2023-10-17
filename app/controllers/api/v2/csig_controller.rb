@@ -8,8 +8,21 @@ module API
     # class CsigController
     class CsigController < ApplicationController
       def index
-        
+        per_page = params[:per_page] || 25
+        page_number = params[:page_number] || 1
+        distributed = params[:distributed]
+        status = params[:status]
+        q = params[:q]
+        data = CsigService.list_of_sins(
+          per_page: per_page,
+          page_number: page_number,
+          distributed: distributed,
+          status: status,
+          query: q
+        )
+        render json: data
       end
+
       def generate_specimen_tracking_id
         generated_ids = CsigService.generate_sin(params.require(:number_of_ids))
         render json: { data: generated_ids, message: 'Success' }, status: :created
