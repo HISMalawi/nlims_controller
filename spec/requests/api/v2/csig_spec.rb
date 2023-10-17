@@ -5,7 +5,7 @@ require 'swagger_helper'
 TAGS_CSIG = 'CSIG'
 RSpec.describe 'api/v2/csig', type: :request do
   path '/api/v2/csig/generate_ids' do
-    post('generate_specimen_tracking_id csig') do
+    post('generate specimen tracking ids') do
       tags TAGS_CSIG
       consumes 'application/json'
       parameter in: :body, schema: {
@@ -23,7 +23,17 @@ RSpec.describe 'api/v2/csig', type: :request do
   end
 
   path '/api/v2/csig/distribute_ids' do
-    post('distribute_sin csig') do
+    post('distribute specimen tracking ids') do
+      tags TAGS_CSIG
+      consumes 'application/json'
+      parameter in: :body, schema: {
+        type: :object,
+        properties: {
+          site_name: { type: :string },
+          number_of_ids: { type: :integer }
+        },
+        required: %w[site_name number_of_ids]
+      }
       response(200, 'successful') do
         after do |example|
           example.metadata[:response][:content] = {
@@ -38,7 +48,9 @@ RSpec.describe 'api/v2/csig', type: :request do
   end
 
   path '/api/v2/csig/sin_used' do
-    get('check_if_sin_is_used csig') do
+    get('check if specimen tracking id is used') do
+      tags TAGS_CSIG
+      parameter name: :sin, in: :query, type: :string, required: true
       response(200, 'successful') do
         after do |example|
           example.metadata[:response][:content] = {
@@ -54,6 +66,17 @@ RSpec.describe 'api/v2/csig', type: :request do
 
   path '/api/v2/csig/use_sin' do
     post('use_sin csig') do
+      tags TAGS_CSIG
+      consumes 'application/json'
+      parameter in: :body, schema: {
+        type: :object,
+        properties: {
+          sin: { type: :string },
+          site_name: { type: :string },
+          system_name: { type: :string }
+        },
+        required: %w[sin site_name]
+      }
       response(200, 'successful') do
         after do |example|
           example.metadata[:response][:content] = {

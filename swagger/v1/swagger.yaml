@@ -6,15 +6,13 @@ info:
 paths:
   "/api/v2/csig/generate_ids":
     post:
-      summary: generate_specimen_tracking_id csig
+      summary: generate specimen tracking ids
       tags:
       - CSIG
       parameters: []
       responses:
         '200':
           description: successful
-        '400':
-          description: bad request
       requestBody:
         content:
           application/json:
@@ -27,22 +25,64 @@ paths:
               - number_of_ids
   "/api/v2/csig/distribute_ids":
     post:
-      summary: distribute_sin csig
+      summary: distribute specimen tracking ids
+      tags:
+      - CSIG
+      parameters: []
       responses:
         '200':
           description: successful
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                site_name:
+                  type: string
+                number_of_ids:
+                  type: integer
+              required:
+              - site_name
+              - number_of_ids
   "/api/v2/csig/sin_used":
     get:
-      summary: check_if_sin_is_used csig
+      summary: check if specimen tracking id is used
+      tags:
+      - CSIG
+      parameters:
+      - name: sin
+        in: query
+        required: true
+        schema:
+          type: string
       responses:
         '200':
           description: successful
   "/api/v2/csig/use_sin":
     post:
       summary: use_sin csig
+      tags:
+      - CSIG
+      parameters: []
       responses:
         '200':
           description: successful
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                sin:
+                  type: string
+                site_name:
+                  type: string
+                system_name:
+                  type: string
+              required:
+              - sin
+              - site_name
   "/api/v2/csig":
     get:
       summary: list specimen tracking ids
