@@ -40,7 +40,10 @@ RSpec.configure do |config|
             in: :header
           }
         }
-      }
+      },
+      security: [
+        { authorization: [] }
+      ]
     }
   }
 

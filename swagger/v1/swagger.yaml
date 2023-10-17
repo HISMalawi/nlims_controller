@@ -147,3 +147,5 @@ components:
       type: apiKey
       name: token
       in: header
+security:
+- authorization: []
