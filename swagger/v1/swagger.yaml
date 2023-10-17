@@ -4,6 +4,403 @@ info:
   title: NLIMS API
   version: v1
 paths:
+  "/api/v1/sites":
+    get:
+      summary: list sites
+      tags:
+      - Sites
+      parameters:
+      - name: q
+        in: query
+        description: Search name of site query
+        schema:
+          type: string
+      responses:
+        '200':
+          description: successful
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                      example: 2331
+                    name:
+                      type: string
+                      example: Kamuzu Academy Clinic
+                    district:
+                      type: string
+                      example: kasungu
+                    x:
+                      type: number
+                      format: float
+                      example: 33.6884
+                    y:
+                      type: number
+                      format: float
+                      example: -13.0294
+                    region:
+                      type: string
+                      example: Central
+                    description:
+                      type: string
+                      example: Clinic
+                    enabled:
+                      type: boolean
+                      example: false
+                    sync_status:
+                      type: boolean
+                      example: false
+                    site_code:
+                      type: string
+                      example: ''
+                    application_port:
+                      type: string
+                      example: '0000'
+                    host_address:
+                      type: string
+                      example: ''
+                    couch_username:
+                      type: string
+                      example: ''
+                    couch_password:
+                      type: string
+                      example: ''
+                    created_at:
+                      type: string
+                      format: date-time
+                      example: '2021-07-29T11:24:55.000+02:00'
+                    updated_at:
+                      type: string
+                      format: date-time
+                      example: '2021-07-29T11:24:55.000+02:00'
+                    site_code_number:
+                      type: integer
+                      example: KAC
+    post:
+      summary: create site
+      tags:
+      - Sites
+      parameters: []
+      responses:
+        '200':
+          description: successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    example: 2331
+                  name:
+                    type: string
+                    example: Kamuzu Academy Clinic
+                  district:
+                    type: string
+                    example: kasungu
+                  x:
+                    type: number
+                    format: float
+                    example: 33.6884
+                  y:
+                    type: number
+                    format: float
+                    example: -13.0294
+                  region:
+                    type: string
+                    example: Central
+                  description:
+                    type: string
+                    example: Clinic
+                  enabled:
+                    type: boolean
+                    example: false
+                  sync_status:
+                    type: boolean
+                    example: false
+                  site_code:
+                    type: string
+                    example: ''
+                  application_port:
+                    type: string
+                    example: '0000'
+                  host_address:
+                    type: string
+                    example: ''
+                  couch_username:
+                    type: string
+                    example: ''
+                  couch_password:
+                    type: string
+                    example: ''
+                  created_at:
+                    type: string
+                    format: date-time
+                    example: '2021-07-29T11:24:55.000+02:00'
+                  updated_at:
+                    type: string
+                    format: date-time
+                    example: '2021-07-29T11:24:55.000+02:00'
+                  site_code_number:
+                    type: integer
+                    example: KAC
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: Kamuzu Academy Clinic
+                district:
+                  type: string
+                  example: kasungu
+                x:
+                  type: number
+                  format: float
+                  example: 33.6884
+                y:
+                  type: number
+                  format: float
+                  example: -13.0294
+                region:
+                  type: string
+                  example: Central
+                description:
+                  type: string
+                  example: Clinic
+                enabled:
+                  type: boolean
+                  example: false
+                site_code:
+                  type: string
+                  example: ''
+                application_port:
+                  type: string
+                  example: '0000'
+                host_address:
+                  type: string
+                  example: ''
+                couch_username:
+                  type: string
+                  example: ''
+                couch_password:
+                  type: string
+                  example: ''
+                created_at:
+                  type: string
+                  format: date-time
+                  example: '2021-07-29T11:24:55.000+02:00'
+                updated_at:
+                  type: string
+                  format: date-time
+                  example: '2021-07-29T11:24:55.000+02:00'
+                site_code_number:
+                  type: integer
+                  example: KAC
+  "/api/v1/sites/{id}":
+    parameters:
+    - name: id
+      in: path
+      description: id
+      required: true
+      schema:
+        type: integer
+    get:
+      summary: show site
+      tags:
+      - Sites
+      responses:
+        '200':
+          description: successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    example: 2331
+                  name:
+                    type: string
+                    example: Kamuzu Academy Clinic
+                  district:
+                    type: string
+                    example: kasungu
+                  x:
+                    type: number
+                    format: float
+                    example: 33.6884
+                  y:
+                    type: number
+                    format: float
+                    example: -13.0294
+                  region:
+                    type: string
+                    example: Central
+                  description:
+                    type: string
+                    example: Clinic
+                  enabled:
+                    type: boolean
+                    example: false
+                  sync_status:
+                    type: boolean
+                    example: false
+                  site_code:
+                    type: string
+                    example: ''
+                  application_port:
+                    type: string
+                    example: '0000'
+                  host_address:
+                    type: string
+                    example: ''
+                  couch_username:
+                    type: string
+                    example: ''
+                  couch_password:
+                    type: string
+                    example: ''
+                  created_at:
+                    type: string
+                    format: date-time
+                    example: '2021-07-29T11:24:55.000+02:00'
+                  updated_at:
+                    type: string
+                    format: date-time
+                    example: '2021-07-29T11:24:55.000+02:00'
+                  site_code_number:
+                    type: integer
+                    example: KAC
+    put:
+      summary: update site
+      tags:
+      - Sites
+      parameters: []
+      responses:
+        '200':
+          description: successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    example: 2331
+                  name:
+                    type: string
+                    example: Kamuzu Academy Clinic
+                  district:
+                    type: string
+                    example: kasungu
+                  x:
+                    type: number
+                    format: float
+                    example: 33.6884
+                  y:
+                    type: number
+                    format: float
+                    example: -13.0294
+                  region:
+                    type: string
+                    example: Central
+                  description:
+                    type: string
+                    example: Clinic
+                  enabled:
+                    type: boolean
+                    example: false
+                  sync_status:
+                    type: boolean
+                    example: false
+                  site_code:
+                    type: string
+                    example: ''
+                  application_port:
+                    type: string
+                    example: '0000'
+                  host_address:
+                    type: string
+                    example: ''
+                  couch_username:
+                    type: string
+                    example: ''
+                  couch_password:
+                    type: string
+                    example: ''
+                  created_at:
+                    type: string
+                    format: date-time
+                    example: '2021-07-29T11:24:55.000+02:00'
+                  updated_at:
+                    type: string
+                    format: date-time
+                    example: '2021-07-29T11:24:55.000+02:00'
+                  site_code_number:
+                    type: integer
+                    example: KAC
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: Kamuzu Academy Clinic
+                district:
+                  type: string
+                  example: kasungu
+                x:
+                  type: number
+                  format: float
+                  example: 33.6884
+                y:
+                  type: number
+                  format: float
+                  example: -13.0294
+                region:
+                  type: string
+                  example: Central
+                description:
+                  type: string
+                  example: Clinic
+                enabled:
+                  type: boolean
+                  example: false
+                site_code:
+                  type: string
+                  example: ''
+                application_port:
+                  type: string
+                  example: '0000'
+                host_address:
+                  type: string
+                  example: ''
+                couch_username:
+                  type: string
+                  example: ''
+                couch_password:
+                  type: string
+                  example: ''
+                created_at:
+                  type: string
+                  format: date-time
+                  example: '2021-07-29T11:24:55.000+02:00'
+                updated_at:
+                  type: string
+                  format: date-time
+                  example: '2021-07-29T11:24:55.000+02:00'
+                site_code_number:
+                  type: integer
+                  example: KAC
   "/api/v1/re_authenticate/{username}/{password}":
     get:
       summary: Login
