@@ -91,7 +91,13 @@ RSpec.describe 'api/v2/csig', type: :request do
   end
 
   path '/api/v2/csig' do
-    get('list specimen tracking ids') do
+    get('list csig specimen tracking ids') do
+      tags TAGS_CSIG
+      parameter name: :per_page, in: :query, type: :integer, required: false
+      parameter name: :page_number, in: :query, type: :integer, required: false
+      parameter name: :distributed, in: :query, type: :boolean, required: false
+      parameter name: :status, in: :query, type: :integer, required: false
+      parameter name: :q, in: :query, type: :string, required: false
       response(200, 'successful') do
         after do |example|
           example.metadata[:response][:content] = {
