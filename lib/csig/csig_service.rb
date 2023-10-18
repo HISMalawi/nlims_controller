@@ -1,45 +1,17 @@
 # frozen_string_literal: true
 
-require 'csig/fpe_service'
-require 'csig/mod9710_service'
+require 'csig/reversing_service'
+require 'csig/csig_utility_service'
 # Central Specimen ID Generator Service
 module CsigService
   def self.list_of_sins(per_page: 25, page_number: 1, distributed: nil, status: nil, query: nil)
-    specimen_identifications = filter_distributed(distributed)
-    specimen_identifications = search_sin(query, specimen_identifications)
-    specimen_identifications = filter_status(status, specimen_identifications)
+    specimen_identifications = CsigUtilityService.filter_distributed(distributed)
+    specimen_identifications = CsigUtilityService.search_sin(query, specimen_identifications)
+    specimen_identifications = CsigUtilityService.filter_status(status, specimen_identifications)
     specimen_identifications = specimen_identifications.page(page_number).per(per_page) unless specimen_identifications.blank?
     {
       data: specimen_identifications,
-      metadata: page_metadata(specimen_identifications)
-    }
-  end
-
-  def self.filter_distributed(distributed)
-    specimen_identifications = SpecimenIdentification.left_joins({specimen_identification_distribution: :site}).select('specimen_identifications.*, sites.name AS site_name, sites.district')
-    specimen_identifications = specimen_identifications.where(distributed: distributed)  unless distributed.blank?
-    specimen_identifications
-  end
-
-  def self.search_sin(sin, specimen_identifications)
-    specimen_identifications = specimen_identifications.where("sin LIKE #{sin}") unless sin.blank?
-    specimen_identifications
-  end
-
-  def self.filter_status(status, specimen_identifications)
-    s = SpecimenIdentification.joins(:specimen_identification_statuses).select('MAX(specimen_identifications.created_at)').group('specimen_identifications.id')
-    specimen_identifications = specimen_identifications.joins({specimen_identification_statuses: :csig_status}).where("specimen_identifications.created_at IN (#{s.to_sql})"
-    ).select('specimen_identifications.*, csig_statuses.name AS status')
-    specimen_identifications = specimen_identifications.where("spid_statuses.csig_status_id = #{status}") unless status.blank?
-    specimen_identifications
-  end
-
-  def self.page_metadata(active_record_relation)
-    {
-      total_pages: active_record_relation.total_pages,
-      current_page: active_record_relation.current_page,
-      next_page: active_record_relation.next_page,
-      prev_page: active_record_relation.prev_page
+      metadata: CsigUtilityService.page_metadata(specimen_identifications)
     }
   end
 
@@ -49,12 +21,12 @@ module CsigService
     last_seq_number = last_spid_transaction.nil? ? 0 : last_spid_transaction.sequence_number.to_i
     next_seq_number = last_seq_number + 1
     0..number_of_ids.to_i.times do
-      base9_equivalent = convert_to_base9(next_seq_number)
-      base9_equivalent_zero_padded = prepad_number_with_zeros(10, base9_equivalent)
-      fp_encrypted = encrypt(base9_equivalent_zero_padded)
-      fp_encrypted_zero_cleaned = zero_cleaned(fp_encrypted)
+      base9_equivalent = CsigUtilityService.convert_to_base9(next_seq_number)
+      base9_equivalent_zero_padded = CsigUtilityService.prepad_number_with_zeros(10, base9_equivalent)
+      fp_encrypted = CsigUtilityService.encrypt(base9_equivalent_zero_padded)
+      fp_encrypted_zero_cleaned = CsigUtilityService.zero_cleaned(fp_encrypted)
       check_digit = Mod9710Service.calculate_check_digit(fp_encrypted_zero_cleaned)
-      sin = concat_check_digit_with_number(check_digit, fp_encrypted_zero_cleaned)
+      sin = CsigUtilityService.concat_check_digit_with_number(check_digit, fp_encrypted_zero_cleaned)
       ids << {
         sequence_number: next_seq_number,
         base9_equivalent: base9_equivalent,
@@ -140,76 +112,5 @@ module CsigService
     return false if specimen_identification_status.nil?
 
     specimen_identification_status.csig_status.name == 'Used'
-  end
-
-  # Encrypt a number using FPE FF3
-  def self.encrypt(plaintext)
-    fpe_service.encrypt(plaintext.to_s)
-  end
-
-  # Decrypt a ciphernumber using FPE FF3
-  def self.decrypt(ciphertext)
-    fpe_service.decrypt(ciphertext)
-  end
-
-  # Convert a number to base 9
-  def self.convert_to_base9(number)
-    return number if number < 9
-
-    result = ''
-    while number != 0
-      result = (number % 9).to_s + result
-      number /= 9
-    end
-    result.to_i
-  end
-
-  # Prepad a number with 0s to a given length
-  def self.prepad_number_with_zeros(length = 10, number)
-    number.to_s.rjust(length, '0')
-  end
-
-  # To Follow up: Why concat check digit to the left of the number?
-  def self.concat_check_digit_with_number(check_digit, number)
-    check_digit.to_s + number.to_s
-  end
-
-  # clean zeros by adding 1 to each individual value in the number
-  def self.zero_cleaned(number)
-    numbers = number.to_i.digits.reverse
-    numbers.map { |n| n + 1 }.join.to_i
-  end
-
-  # FPE service
-  def self.fpe_service
-    encryption_key = ENV['KEY']
-    tweak_value = ENV['TWEAK']
-    radix = ENV['RADIX'].to_i
-    alphabet = ENV['ALPHABET']
-    FF3Cipher.new(encryption_key, tweak_value, radix, alphabet)
-  end
-
-  # Remove check digit from a sin
-  def self.remove_check_digit(sin)
-    sin.to_s[2..-1]
-  end
-
-  # reverse clean zeros by subtracting 1 from each individual value in the number
-  def self.reverse_zero_cleaned(number)
-    numbers = number.to_i.digits.reverse
-    numbers.map { |n| n - 1 }.join.to_i
-  end
-
-  # convert base 9 number to base 10
-  def self.convert_to_base10(number)
-    number.to_s.to_i(9)
-  end
-
-  # Reverse the sin to sequence number
-  def self.reverse_sin_to_seq(sin)
-    sin_without_check_digit = remove_check_digit(sin.to_s)
-    encrypted_sin = reverse_zero_cleaned(sin_without_check_digit)
-    decrypted_sin = decrypt(encrypted_sin).to_i
-    convert_to_base10(decrypted_sin)
   end
 end
