@@ -102,7 +102,9 @@ module CsigService
     end
   end
 
-  # Update specimen identification status to - Used / Invalid(Not allocated to the site/ should send seq number to central)
+  # Update this function so that chaning specimen identification status to - Used / Invalid should
+  # used seq number and not sin as the allocated site/ system will be local keeping seq number
+  # and sending seq number to central
   def self.use_sin(sin, site_name, system_name = nil)
     sin_used = sin_used?(sin)
     return true if sin_used
