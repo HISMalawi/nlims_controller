@@ -8,7 +8,7 @@ module CsigService
     specimen_identifications = CsigUtilityService.filter_distributed(distributed)
     specimen_identifications = CsigUtilityService.search_sin(query, specimen_identifications)
     specimen_identifications = CsigUtilityService.filter_status(status, specimen_identifications)
-    specimen_identifications = specimen_identifications.page(page_number).per(per_page) unless specimen_identifications.blank?
+    specimen_identifications = specimen_identifications.page(page_number).per(per_page)
     {
       data: specimen_identifications,
       metadata: CsigUtilityService.page_metadata(specimen_identifications)

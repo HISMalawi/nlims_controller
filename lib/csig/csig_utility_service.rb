@@ -70,7 +70,7 @@ module CsigUtilityService
     s = SpecimenIdentification.joins(:specimen_identification_statuses).select('MAX(specimen_identifications.created_at)').group('specimen_identifications.id')
     specimen_identifications = specimen_identifications.joins({specimen_identification_statuses: :csig_status}).where("specimen_identifications.created_at IN (#{s.to_sql})"
     ).select('specimen_identifications.*, csig_statuses.name AS status')
-    specimen_identifications = specimen_identifications.where("spid_statuses.csig_status_id = #{status}") unless status.blank?
+    specimen_identifications = specimen_identifications.where("spid_statuses.csig_status_id = #{CsigStatus.find_by_name(status).id}") unless status.blank?
     specimen_identifications
   end
 
