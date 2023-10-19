@@ -48,15 +48,47 @@ RSpec.describe 'api/v1/order', type: :request do
             sample_status
           ]
         }
-      response(200, 'successful') do
-
-        after do |example|
-          example.metadata[:response][:content] = {
-            'application/json' => {
-              example: JSON.parse(response.body, symbolize_names: true)
+      response(200, 'Order creation successful') do
+        schema type: :object,
+         properties: {
+          status: { type: :integer, example: 200 },
+          error: { type: :boolean, example: false},
+          message: { type: :string, example: 'order created successfully' },
+          data: {
+            type: :object,
+            properties: {
+              tracking_number: { type: :string, example: 'xkch123s2', description: 'Tracking number tied to the order'},
+              couch_id: { type: :string, example: 'cdrjtgwit4065680285843', description: 'CouchDB id tied to the order'},
             }
           }
-        end
+         }
+        run_test!
+      end
+      response(409, 'Order with such tracking number already exists') do
+        schema type: :object,
+         properties: {
+          status: { type: :integer, example: 200 },
+          error: { type: :boolean, example: false},
+          message: { type: :string, example: 'order already available' },
+          data: {
+            type: :object,
+            properties: {
+              tracking_number: { type: :string, example: 'xkch123s2', description: 'Tracking number tied to the order'},
+            }
+          }
+         }
+        run_test!
+      end
+      response(401, 'Error') do
+        schema type: :object,
+         properties: {
+          status: { type: :integer, example: 401 },
+          error: { type: :boolean, example: true },
+          message: { type: :string },
+          data: {
+            type: :object
+          }
+         }
         run_test!
       end
     end

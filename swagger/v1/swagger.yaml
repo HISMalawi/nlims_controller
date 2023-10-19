@@ -12,7 +12,72 @@ paths:
       parameters: []
       responses:
         '200':
-          description: successful
+          description: Order creation successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: integer
+                    example: 200
+                  error:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: order created successfully
+                  data:
+                    type: object
+                    properties:
+                      tracking_number:
+                        type: string
+                        example: xkch123s2
+                        description: Tracking number tied to the order
+                      couch_id:
+                        type: string
+                        example: cdrjtgwit4065680285843
+                        description: CouchDB id tied to the order
+        '409':
+          description: Order with such tracking number already exists
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: integer
+                    example: 200
+                  error:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: order already available
+                  data:
+                    type: object
+                    properties:
+                      tracking_number:
+                        type: string
+                        example: xkch123s2
+                        description: Tracking number tied to the order
+        '401':
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: integer
+                    example: 401
+                  error:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    type: object
       requestBody:
         content:
           application/json:
