@@ -20,10 +20,10 @@ RSpec.describe 'api/v1/order', type: :request do
             last_name: { type: :string, example: 'Doe', description: 'Last name of the patient'},
             phone_number: { type: :string, example: '0888888888', description: 'Phone number of the patient'},
             gender: { type: :string, example: 'F', description: 'Gender of the patient', enum: ['M', 'F']},
-            national_patient_id: { type: :string, example: '123456789', description: 'National patient ID of the patient'},
+            national_patient_id: { type: :string, example: '123456789', description: 'National patient Identifier of the patient'},
             sample_type: { type: :string, example: 'Blood', description: 'Sample type'},
             tests: { type: :array, items: { type: :string, example: 'FBC'}, description: 'Tests to be performed on the sample'},
-            date_sample_drawn: { type: :string, example: '2020-10-10', description: 'Date sample was drawn'},
+            date_sample_drawn: { type: :string, example: '2023-10-17T14:57:18.000+02:00', description: 'Date sample was drawn'},
             sample_status: { type: :string, example: 'specimen_not_collected', description: 'Sample status', enum: ['specimen_not_collected', 'specimen_accepted', 'specimen_rejected', 'specimen_collected']},
             sample_priority: { type: :string, example: 'routine', description: 'Reason for testing'},
             target_lab: { type: :string, example: 'Lighthouse', description: 'Target lab is the lab where the sample is going to be tested'},
@@ -31,7 +31,22 @@ RSpec.describe 'api/v1/order', type: :request do
             who_order_test_first_name: { type: :string, example: 'John', description: 'First name of the person who drew the test'},
             who_order_test_last_name: { type: :string, example: 'Doe', description: 'Last name of the person who drew the test'},
             tracking_number: { type: :string, example: 'xkch123s2', description: 'Tracking number aka the national accession number of the order'}
-          }
+          },
+          required: %w[
+            district
+            health_facility_name
+            requesting_clinician
+            first_name
+            last_name
+            gender
+            sample_type
+            tests
+            date_sample_drawn
+            sample_priority
+            target_lab
+            order_location
+            sample_status
+          ]
         }
       response(200, 'successful') do
 

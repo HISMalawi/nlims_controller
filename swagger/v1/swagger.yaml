@@ -54,7 +54,7 @@ paths:
                 national_patient_id:
                   type: string
                   example: '123456789'
-                  description: National patient ID of the patient
+                  description: National patient Identifier of the patient
                 sample_type:
                   type: string
                   example: Blood
@@ -67,7 +67,7 @@ paths:
                   description: Tests to be performed on the sample
                 date_sample_drawn:
                   type: string
-                  example: '2020-10-10'
+                  example: '2023-10-17T14:57:18.000+02:00'
                   description: Date sample was drawn
                 sample_status:
                   type: string
@@ -105,6 +105,20 @@ paths:
                   example: xkch123s2
                   description: Tracking number aka the national accession number of
                     the order
+              required:
+              - district
+              - health_facility_name
+              - requesting_clinician
+              - first_name
+              - last_name
+              - gender
+              - sample_type
+              - tests
+              - date_sample_drawn
+              - sample_priority
+              - target_lab
+              - order_location
+              - sample_status
   "/api/v1/query_results_by_tracking_number/{tracking_number}":
     parameters:
     - name: tracking_number
