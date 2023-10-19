@@ -61,16 +61,23 @@ module CsigService
   def self.distribute_sin(number_of_ids = 100, site)
     sin_to_distribute = SpecimenIdentification.where(distributed: false).limit(number_of_ids)
     csig_status = CsigStatus.find_by(name: 'Distributed')
+    spid_ditributions = []
+    spid_statuses = []
     ActiveRecord::Base.transaction do
       sin_to_distribute.each do |sin|
-        SpecimenIdentificationDistribution.create(specimen_identification_id: sin.id, site_id: site.id)
-        sin.update(distributed: true)
-        SpecimenIdentificationStatus.create(
+        spid_ditributions << {
+          specimen_identification_id: sin.id,
+          site_id: site.id
+        }
+        spid_statuses << {
           csig_status_id: csig_status.id,
           specimen_identification_id: sin.id,
           site_name: site.name
-        )
+        }
       end
+      sin_to_distribute.update_all(distributed: true)
+      SpecimenIdentificationDistribution.import(spid_ditributions)
+      SpecimenIdentificationStatus.import(spid_statuses)
     end
   end
 
