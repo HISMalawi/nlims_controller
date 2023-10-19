@@ -61,7 +61,7 @@ module CsigUtilityService
 
   # Search specimen identifications by sin
   def self.search_sin(sin, specimen_identifications)
-    specimen_identifications = specimen_identifications.where("sin LIKE #{sin}") unless sin.blank?
+    specimen_identifications = specimen_identifications.where("sin LIKE '%#{sin}%'") unless sin.blank?
     specimen_identifications
   end
 

@@ -63,6 +63,7 @@ module CsigService
     csig_status = CsigStatus.find_by(name: 'Distributed')
     spid_ditributions = []
     spid_statuses = []
+    spids = []
     ActiveRecord::Base.transaction do
       sin_to_distribute.each do |sin|
         spid_ditributions << {
@@ -74,11 +75,13 @@ module CsigService
           specimen_identification_id: sin.id,
           site_name: site.name
         }
+        spids << sin.id
       end
       sin_to_distribute.update_all(distributed: true)
       SpecimenIdentificationDistribution.import(spid_ditributions)
       SpecimenIdentificationStatus.import(spid_statuses)
     end
+    SpecimenIdentification.where(id: spids)
   end
 
   # Update this function so that chaning specimen identification status to - Used / Invalid should
