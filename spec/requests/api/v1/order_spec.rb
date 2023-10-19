@@ -95,20 +95,66 @@ RSpec.describe 'api/v1/order', type: :request do
   end
 
   path '/api/v1/query_results_by_tracking_number/{tracking_number}' do
-    # You'll want to customize the parameter types...
-    parameter name: 'tracking_number', in: :path, type: :string, description: 'tracking_number'
-
-    get('query_results_by_tracking_number order') do
-      response(200, 'successful') do
-        let(:tracking_number) { '123' }
-
-        after do |example|
-          example.metadata[:response][:content] = {
-            'application/json' => {
-              example: JSON.parse(response.body, symbolize_names: true)
+    parameter name: 'tracking_number', in: :path, type: :string, description: 'Tracking number of the order in question'
+    get('Query order results by tracking number') do
+      tags TAG
+      produces 'application/json'
+      response(200, 'results retrieved successfuly') do
+        schema type: :object,
+          properties: {
+            status: { type: :integer, example: 200 },
+            error: { type: :boolean, example: false },
+            message: { type: :string, example: 'results retrieved successfuly' },
+            data: {
+              type: :object,
+              properties: {
+                tracking_number: { type: :string, example: 'xhce232s23', description: 'Tracking number tied to the order' },
+                results: {
+                  type: :object,
+                  properties: {
+                    FBC: {
+                      type: :object,
+                      properties: {
+                        RBC: { type: :string, example: '4.13' },
+                        HGB: { type: :string, example: '12.5' },
+                        HCT: { type: :string, example: '37.6' },
+                        MCV: { type: :string, example: '91.0' },
+                        MCH: { type: :string, example: '30.3' },
+                        MCHC: { type: :string, example: '33.2' },
+                        PLT: { type: :string, example: '97.0' },
+                        PDW: { type: :string, example: '13.0' },
+                        MPV: { type: :string, example: '10.9' },
+                        PCT: { type: :string, example: '0.11' },
+                        "MONO\#" => { type: :string, example: '0.23' },
+                        "P-LCC" =>  { type: :string, example: '0.23' },
+                        result_date: { type: :string, example: '2016-05-23' }
+                      }
+                    },
+                    'Viral Load' => {
+                      type: :object,
+                      properties: {
+                        'Viral Load' => { type: :string, example: '< LDL' },
+                        result_date: { type: :string, example: '2016-05-23' }
+                      }
+                    }
+                  }
+                }
+              }
             }
           }
-        end
+        run_test!
+      end
+      
+      response(401, 'Error or results not available') do
+        schema type: :object,
+         properties: {
+          status: { type: :integer, example: 401 },
+          error: { type: :boolean, example: true },
+          message: { type: :string },
+          data: {
+            type: :object
+          }
+         }
         run_test!
       end
     end
