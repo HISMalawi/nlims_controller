@@ -55,7 +55,7 @@ module CsigUtilityService
   # Filter specimen identifications by distributed identifiers
   def self.filter_distributed(distributed)
     specimen_identifications = SpecimenIdentification.left_joins({specimen_identification_distribution: :site}).select('specimen_identifications.*, sites.name AS site_name, sites.district')
-    specimen_identifications = specimen_identifications.where(distributed: distributed)  unless distributed.blank?
+    specimen_identifications = specimen_identifications.where(distributed: ActiveRecord::Type::Boolean.new.cast(distributed))  unless distributed.blank?
     specimen_identifications
   end
 
