@@ -76,11 +76,20 @@ module CsigUtilityService
 
   # Page metadata
   def self.page_metadata(active_record_relation)
-    {
-      total_pages: active_record_relation.total_pages,
-      current_page: active_record_relation.current_page,
-      next_page: active_record_relation.next_page,
-      prev_page: active_record_relation.prev_page
-    }
+    if active_record_relation.empty?
+      {
+        total_pages: 0,
+        current_page: 0,
+        next_page: nil,
+        prev_page: nil
+      }
+    else
+      {
+        total_pages: active_record_relation.total_pages,
+        current_page: active_record_relation.current_page,
+        next_page: active_record_relation.next_page,
+        prev_page: active_record_relation.prev_page
+      }
+    end
   end
 end
