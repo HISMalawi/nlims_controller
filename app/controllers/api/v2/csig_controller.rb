@@ -56,6 +56,10 @@ module API
         data = error ? nil : used_sin
         render json: { data: data, error: error, message: message }
       end
+
+      def csig_status
+        render json: CsigStatus.all
+      end
     end
   end
 end

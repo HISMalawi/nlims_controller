@@ -619,6 +619,34 @@ paths:
       responses:
         '200':
           description: successful
+  "/api/v2/csig/status":
+    get:
+      summary: list csig statuses
+      tags:
+      - CSIG
+      responses:
+        '200':
+          description: successful
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                      example: 1
+                    name:
+                      type: string
+                      example: Not Distributed
+                    description:
+                      type: string
+                      example: Not Distributed
+                    created_at:
+                      type: string
+                      format: date-time
+                      example: '2023-10-17T14:57:18.000+02:00'
 servers:
 - url: http://{defaultHost}
   variables:

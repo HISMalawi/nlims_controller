@@ -49,6 +49,7 @@ Rails.application.routes.draw do
 					post '/distribute_ids' => 'csig#distribute_sin'
 					get '/sin_used' => 'csig#check_if_sin_is_used'
 					post '/use_sin' => 'csig#use_sin'
+					get '/status' => 'csig#csig_status'
 				end
 			end
 		end

@@ -127,4 +127,23 @@ RSpec.describe 'api/v2/csig', type: :request do
       end
     end
   end
+  path '/api/v2/csig/status' do
+    get('list csig statuses') do
+      tags TAGS_CSIG
+      produces 'application/json'
+      response(200, 'successful') do
+        schema type: :array,
+        items: {
+          type: :object,
+            properties: {
+              id: { type: :integer, example: 1 },
+              name: { type: :string, example: 'Not Distributed' },
+              description: { type: :string, example: 'Not Distributed' },
+              created_at: { type: :string, format: 'date-time', example: '2023-10-17T14:57:18.000+02:00' },
+            }
+        }
+        run_test!
+      end
+    end
+  end
 end
