@@ -26,7 +26,7 @@ Rails.application.routes.draw do
 			get  '/query_test_status/:tracking_number' => 'test#query_test_status'
 			get  '/query_tests_with_no_results_by_npid/:npid'	=> 'test#test_no_results'
 			post '/acknowledge/test/results/recipient' => 'test#acknowledge_test_results_receiptient'
-  		#user routes	
+  		#user routes
   		post '/create_user'	=> 'user#create_user'
   		get	 '/authenticate/:username/:password' =>	'user#authenticate_user'
   		get	 '/re_authenticate/:username/:password'	=>	'user#re_authenticate'
@@ -36,7 +36,7 @@ Rails.application.routes.draw do
 			get '/retrieve_target_labs' => 'test#retrieve_target_labs'
 			resources :sites
 		end
-		
+
 		namespace :v2 do
 			#order routes
 			post '/request_order'	=> 'order#request_order'
@@ -47,6 +47,7 @@ Rails.application.routes.draw do
 				collection do
 					post '/generate_ids' => 'csig#generate_specimen_tracking_id'
 					post '/distribute_ids' => 'csig#distribute_sin'
+					get '/distributions' => 'csig#distributions'
 					get '/sin_used' => 'csig#check_if_sin_is_used'
 					post '/use_sin' => 'csig#use_sin'
 					get '/status' => 'csig#csig_status'

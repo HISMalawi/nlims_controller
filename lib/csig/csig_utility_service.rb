@@ -74,6 +74,15 @@ module CsigUtilityService
     specimen_identifications
   end
 
+  # Search distributions using site name
+  def self.search_site_name(site_name, distributions)
+    unless site_name.blank?
+      distributions = distributions.where('sites.name LIKE ?', "%#{site_name}%")
+    end
+    distributions
+  end
+
+
   # Page metadata
   def self.page_metadata(active_record_relation)
     if active_record_relation.empty?

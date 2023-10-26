@@ -43,6 +43,18 @@ class API::V2::CsigController < ApplicationController
     render json: { data: sin_used }
   end
 
+  def distributions(per_page: 25, page_number: 1, query: nil)
+    per_page = params[:per_page] || 25
+    page_number = params[:page_number] || 1
+    query = params[:query]
+    data = CsigService.distributions(
+      per_page: per_page,
+      page_number: page_number,
+      query: query
+    )
+    render json: { data: data }
+  end
+
   def use_sin
     sin = params.require(:sin)
     site_name = params.require(:site_name)

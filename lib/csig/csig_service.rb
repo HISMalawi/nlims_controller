@@ -84,6 +84,34 @@ module CsigService
     SpecimenIdentification.where(id: spids)
   end
 
+  # Get distributed specimen id's with grouped by facility
+  def self.distributions(per_page: 25, page_number: 1, query: nil)
+    @distributions = SpecimenIdentificationDistribution
+      .joins(:site, :specimen_identification)
+      .select('spid_distributions.site_id, sites.name as site_name, specimen_identifications.sin')
+
+    @distributions = CsigUtilityService.search_site_name(query, @distributions)
+    @distributions = @distributions.page(page_number).per(per_page)
+
+    formatted_data = @distributions.group_by { |item| [item.site_id, item.site_name] }.map do |(site_id, site_name), items|
+      {
+        site_name: site_name,
+        site_id: site_id,
+        specimens_id: items.map do |item|
+        {
+          sin: item.sin,
+          used: true
+        }
+        end
+      }
+    end
+    {
+      data: @distributions,
+      metadata: CsigUtilityService.page_metadata(@distributions)
+    }
+  end
+
+
   # Update this function so that chaning specimen identification status to - Used / Invalid should
   # used seq number and not sin as the allocated site/ system will be local keeping seq number
   # and sending seq number to central
