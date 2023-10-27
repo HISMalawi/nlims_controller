@@ -111,6 +111,24 @@ module CsigService
     }
   end
 
+  def self.distributions_by_facility(facility_name, from: nil, to: nil)
+    distributions = SpecimenIdentificationDistribution
+      .joins(:site, :specimen_identification)
+      .where(sites: { name: facility_name })
+      .where(updated_at: from..to)
+      .select('spid_distributions.site_id, sites.name as site_name, specimen_identifications.sin')
+    formatted_data = {}
+    formatted_data[:distributions] = distributions.group_by { |item| [item.site_id, item.site_name] }.map do |(site_id, site_name), items|
+      {
+        site_name: site_name,
+        site_id: site_id,
+        generated_from: from,
+        generated_to: to,
+        specimens_id: items.map { |item| { sin: item.sin } }
+      }
+    end
+  end
+
 
   # Update this function so that chaning specimen identification status to - Used / Invalid should
   # used seq number and not sin as the allocated site/ system will be local keeping seq number

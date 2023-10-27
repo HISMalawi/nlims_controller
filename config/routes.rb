@@ -48,6 +48,7 @@ Rails.application.routes.draw do
 					post '/generate_ids' => 'csig#generate_specimen_tracking_id'
 					post '/distribute_ids' => 'csig#distribute_sin'
 					get '/distributions' => 'csig#distributions'
+					get 'distributions_by_facility' => 'csig#distributions_by_facility'
 					get '/sin_used' => 'csig#check_if_sin_is_used'
 					post '/use_sin' => 'csig#use_sin'
 					get '/status' => 'csig#csig_status'

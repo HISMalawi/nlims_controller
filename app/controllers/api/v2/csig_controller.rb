@@ -5,7 +5,7 @@ require 'csig/csig_service'
 
 class API::V2::CsigController < ApplicationController
   def index
-    per_page = params[:per_page] || 25
+    per_page = params[:per_page] || 5
     page_number = params[:page_number] || 1
     distributed = params[:distributed]
     status = params[:status]
@@ -52,6 +52,14 @@ class API::V2::CsigController < ApplicationController
       page_number: page_number,
       query: query
     )
+    render json: { data: data }
+  end
+
+  def distributions_by_facility
+    facility_name = params[:facility_name]
+    from = params[:from]
+    to = params[:to]
+    data = CsigService.distributions_by_facility(facility_name, from: from, to: to)
     render json: { data: data }
   end
 
