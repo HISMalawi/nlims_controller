@@ -4,6 +4,38 @@ require 'csig/reversing_service'
 require 'csig/csig_utility_service'
 # Central Specimen ID Generator Service
 module CsigService
+
+  # get csgi analytics
+  def self.analytics
+    specimens = SpecimenIdentification.all
+    distributions = SpecimenIdentificationDistribution
+      .joins(:site, :specimen_identification)
+      .select('sites.name as site_name, COUNT(*) as count_of_specimens')
+      .group('site_name')
+      .take(5)
+    facilities = Site.count
+    sites_count = SpecimenIdentificationDistribution
+      .joins(:site)
+      .select('COUNT(DISTINCT sites.name) as site_count')
+      .first.site_count
+    total_distributions = SpecimenIdentificationDistribution.count
+    generated_last_at = SpecimenIdentificationDistribution.order(updated_at: :desc).first.updated_at
+    statuses = CsigStatus.all
+    statuses_data = statuses.each_with_object({}) do |status, hash|
+      hash[status.name] = CsigUtilityService.filter_status(status.name, specimens).size
+    end
+    {
+      specimens_count: specimens.count,
+      distributions: distributions,
+      distribution_sites: sites_count,
+      distributions_total: total_distributions,
+      distributions_by_status: statuses_data,
+      generated_last_at: generated_last_at,
+      sites: facilities,
+      updated_at: DateTime.now
+    }
+  end
+
   def self.list_of_sins(per_page: 25, page_number: 1, distributed: nil, status: nil, query: nil)
     specimen_identifications = CsigUtilityService.filter_distributed(distributed)
     specimen_identifications = CsigUtilityService.search_sin(query, specimen_identifications)
@@ -169,4 +201,5 @@ module CsigService
 
     specimen_identification_status.csig_status.name == 'Used'
   end
+
 end

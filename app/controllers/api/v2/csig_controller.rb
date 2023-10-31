@@ -77,4 +77,9 @@ class API::V2::CsigController < ApplicationController
   def csig_status
     render json: CsigStatus.all
   end
+
+  def analytics
+    data = CsigService.analytics
+    render json: { data: data }
+  end
 end

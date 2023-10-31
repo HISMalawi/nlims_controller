@@ -45,6 +45,7 @@ Rails.application.routes.draw do
 			get  '/query_order_by_tracking_number/:tracking_number'	=> 'order#query_order_by_tracking_number'
 			resources :csig do
 				collection do
+					get 'analytics' => 'csig#analytics'
 					post '/generate_ids' => 'csig#generate_specimen_tracking_id'
 					post '/distribute_ids' => 'csig#distribute_sin'
 					get '/distributions' => 'csig#distributions'
