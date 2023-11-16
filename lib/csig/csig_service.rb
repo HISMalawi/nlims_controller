@@ -19,7 +19,7 @@ module CsigService
       .select('COUNT(DISTINCT sites.name) as site_count')
       .first.site_count
     total_distributions = SpecimenIdentificationDistribution.count
-    generated_last_at = SpecimenIdentificationDistribution.order(updated_at: :desc).first.updated_at
+    generated_last_at = SpecimenIdentificationDistribution.order(updated_at: :desc).first&.updated_at
     statuses = CsigStatus.all
     statuses_data = statuses.each_with_object({}) do |status, hash|
       hash[status.name] = CsigUtilityService.filter_status(status.name, specimens).size
