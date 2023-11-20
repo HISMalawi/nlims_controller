@@ -53,6 +53,7 @@ Rails.application.routes.draw do
 					get '/sin_used' => 'csig#check_if_sin_is_used'
 					post '/use_sin' => 'csig#use_sin'
 					get '/status' => 'csig#csig_status'
+					get '/not_distributed_ids_count' => 'csig#not_distributed_ids_count'
 				end
 			end
 		end

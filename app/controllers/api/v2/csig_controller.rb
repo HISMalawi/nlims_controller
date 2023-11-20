@@ -74,6 +74,11 @@ class API::V2::CsigController < ApplicationController
     render json: { data: data, error: error, message: message }
   end
 
+  def not_distributed_ids_count
+    count = SpecimenIdentification.where(distributed: false).count
+    render json: { data: count }
+  end
+
   def csig_status
     render json: CsigStatus.all
   end
