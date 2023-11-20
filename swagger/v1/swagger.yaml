@@ -1036,6 +1036,22 @@ paths:
                       type: string
                       format: date-time
                       example: '2023-10-17T14:57:18.000+02:00'
+  "/api/v2/csig/not_distributed_ids_count":
+    get:
+      summary: Get total count of ids not distributed
+      tags:
+      - CSIG
+      responses:
+        '200':
+          description: successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: integer
+                    example: 1
 servers:
 - url: http://{defaultHost}
   variables:

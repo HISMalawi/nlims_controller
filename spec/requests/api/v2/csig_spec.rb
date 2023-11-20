@@ -146,4 +146,17 @@ RSpec.describe 'api/v2/csig', type: :request do
       end
     end
   end
+  path '/api/v2/csig/not_distributed_ids_count' do
+    get('Get total count of ids not distributed') do
+      tags TAGS_CSIG
+      produces 'application/json'
+      response(200, 'successful') do
+        schema type: :object,
+            properties: {
+              data: { type: :integer, example: 1 }
+            }
+        run_test!
+      end
+    end
+  end
 end
