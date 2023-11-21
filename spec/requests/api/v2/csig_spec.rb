@@ -46,10 +46,10 @@ RSpec.describe 'api/v2/csig', type: :request do
       parameter in: :body, schema: {
         type: :object,
         properties: {
-          site_name: { type: :string },
+          sites: { type: :array, items: { type: :integer } },
           number_of_ids: { type: :integer }
         },
-        required: %w[site_name number_of_ids]
+        required: %w[sites number_of_ids]
       }
       response(200, 'successful') do
         after do |example|
