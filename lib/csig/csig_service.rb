@@ -24,12 +24,17 @@ module CsigService
     statuses_data = statuses.each_with_object({}) do |status, hash|
       hash[status.name] = CsigUtilityService.filter_status(status.name, specimens).size
     end
+    distributions_by_status = {
+      "Not Distributed": statuses_data["Not Distributed"] - statuses_data["Distributed"],
+      "Distributed": statuses_data["Distributed"],
+      "Used": statuses_data["Used"],
+    }
     {
       specimens_count: specimens.count,
       distributions: distributions,
       distribution_sites: sites_count,
       distributions_total: total_distributions,
-      distributions_by_status: statuses_data,
+      distributions_by_status: distributions_by_status,
       generated_last_at: generated_last_at,
       sites: facilities,
       updated_at: DateTime.now
