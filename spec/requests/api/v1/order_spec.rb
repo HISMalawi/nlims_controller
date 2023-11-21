@@ -165,6 +165,7 @@ RSpec.describe 'api/v1/order', type: :request do
     parameter name: 'tracking_number', in: :path, type: :string, description: 'tracking_number'
 
     get('query_order_by_tracking_number order') do
+      tags TAG
       response(200, 'successful') do
         let(:tracking_number) { '123' }
 
@@ -185,6 +186,7 @@ RSpec.describe 'api/v1/order', type: :request do
     parameter name: 'npid', in: :path, type: :string, description: 'npid'
 
     get('query_order_by_npid order') do
+      tags TAG
       response(200, 'successful') do
         let(:npid) { '123' }
 
@@ -205,6 +207,7 @@ RSpec.describe 'api/v1/order', type: :request do
     parameter name: 'npid', in: :path, type: :string, description: 'npid'
 
     get('query_results_by_npid order') do
+      tags TAG
       response(200, 'successful') do
         let(:npid) { '123' }
 
@@ -223,6 +226,7 @@ RSpec.describe 'api/v1/order', type: :request do
   path '/api/v1/update_order' do
 
     post('update_order order') do
+      tags TAG
       response(200, 'successful') do
 
         after do |example|
@@ -242,6 +246,7 @@ RSpec.describe 'api/v1/order', type: :request do
     parameter name: 'npid', in: :path, type: :string, description: 'npid'
 
     get('query_requested_order_by_npid order') do
+      tags TAG
       response(200, 'successful') do
         let(:npid) { '123' }
 
@@ -260,6 +265,7 @@ RSpec.describe 'api/v1/order', type: :request do
   path '/api/v1/dispatch_sample' do
 
     post('dispatch_sample order') do
+      tags TAG
       response(200, 'successful') do
 
         after do |example|
@@ -279,6 +285,7 @@ RSpec.describe 'api/v1/order', type: :request do
     parameter name: 'tracking_number', in: :path, type: :string, description: 'tracking_number'
 
     get('check_if_dispatched order') do
+      tags TAG
       response(200, 'successful') do
         let(:tracking_number) { '123' }
 
@@ -297,6 +304,7 @@ RSpec.describe 'api/v1/order', type: :request do
   path '/api/v1/retrieve_undispatched_samples' do
 
     get('retrieve_undispatched_samples order') do
+      tags TAG
       response(200, 'successful') do
 
         after do |example|
@@ -317,6 +325,7 @@ RSpec.describe 'api/v1/order', type: :request do
     parameter name: 'region', in: :path, type: :string, description: 'region'
 
     get('retrieve_samples order') do
+      tags TAG
       response(200, 'successful') do
         let(:order_date) { '123' }
         let(:region) { '123' }

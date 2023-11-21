@@ -4,6 +4,67 @@ info:
   title: NLIMS API
   version: v1
 paths:
+  "/api/v1/re_authenticate/{username}/{password}":
+    get:
+      summary: Login
+      tags:
+      - Users
+      parameters:
+      - name: username
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: password
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: integer
+                    example: 200
+                  error:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: re authentication successfuly
+                  data:
+                    type: object
+                    properties:
+                      token:
+                        type: string
+                        example: pgq13sZpUFT6
+                      expiry_time:
+                        type: string
+                        example: '20231017180719'
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: integer
+                    example: 401
+                  error:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: wrong username or password
+                  data:
+                    type: object
+                    example: {}
   "/api/v1/create_order":
     post:
       summary: create_order order
@@ -301,6 +362,8 @@ paths:
         type: string
     get:
       summary: query_order_by_tracking_number order
+      tags:
+      - Order
       responses:
         '200':
           description: successful
@@ -314,6 +377,8 @@ paths:
         type: string
     get:
       summary: query_order_by_npid order
+      tags:
+      - Order
       responses:
         '200':
           description: successful
@@ -327,12 +392,16 @@ paths:
         type: string
     get:
       summary: query_results_by_npid order
+      tags:
+      - Order
       responses:
         '200':
           description: successful
   "/api/v1/update_order":
     post:
       summary: update_order order
+      tags:
+      - Order
       responses:
         '200':
           description: successful
@@ -346,12 +415,16 @@ paths:
         type: string
     get:
       summary: query_requested_order_by_npid order
+      tags:
+      - Order
       responses:
         '200':
           description: successful
   "/api/v1/dispatch_sample":
     post:
       summary: dispatch_sample order
+      tags:
+      - Order
       responses:
         '200':
           description: successful
@@ -365,12 +438,16 @@ paths:
         type: string
     get:
       summary: check_if_dispatched order
+      tags:
+      - Order
       responses:
         '200':
           description: successful
   "/api/v1/retrieve_undispatched_samples":
     get:
       summary: retrieve_undispatched_samples order
+      tags:
+      - Order
       responses:
         '200':
           description: successful
@@ -390,6 +467,8 @@ paths:
         type: string
     get:
       summary: retrieve_samples order
+      tags:
+      - Order
       responses:
         '200':
           description: successful
@@ -790,67 +869,6 @@ paths:
                 site_code_number:
                   type: integer
                   example: KAC
-  "/api/v1/re_authenticate/{username}/{password}":
-    get:
-      summary: Login
-      tags:
-      - Users
-      parameters:
-      - name: username
-        in: path
-        required: true
-        schema:
-          type: string
-      - name: password
-        in: path
-        required: true
-        schema:
-          type: string
-      responses:
-        '200':
-          description: successful
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  status:
-                    type: integer
-                    example: 200
-                  error:
-                    type: boolean
-                    example: false
-                  message:
-                    type: string
-                    example: re authentication successfuly
-                  data:
-                    type: object
-                    properties:
-                      token:
-                        type: string
-                        example: pgq13sZpUFT6
-                      expiry_time:
-                        type: string
-                        example: '20231017180719'
-        '401':
-          description: unauthorized
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  status:
-                    type: integer
-                    example: 401
-                  error:
-                    type: boolean
-                    example: true
-                  message:
-                    type: string
-                    example: wrong username or password
-                  data:
-                    type: object
-                    example: {}
   "/api/v2/csig/generate_ids":
     post:
       summary: generate specimen tracking ids
@@ -929,12 +947,14 @@ paths:
             schema:
               type: object
               properties:
-                site_name:
-                  type: string
+                sites:
+                  type: array
+                  items:
+                    type: integer
                 number_of_ids:
                   type: integer
               required:
-              - site_name
+              - sites
               - number_of_ids
   "/api/v2/csig/sin_used":
     get:
