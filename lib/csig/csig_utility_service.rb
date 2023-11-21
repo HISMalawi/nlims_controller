@@ -54,8 +54,13 @@ module CsigUtilityService
 
   # Filter specimen identifications by distributed identifiers
   def self.filter_distributed(distributed)
-    specimen_identifications = SpecimenIdentification.left_joins({specimen_identification_distribution: :site}).select('specimen_identifications.*, sites.name AS site_name, sites.district')
-    specimen_identifications = specimen_identifications.where(distributed: ActiveRecord::Type::Boolean.new.cast(distributed))  unless distributed.blank?
+    specimen_identifications = SpecimenIdentification.left_joins({ specimen_identification_distribution: :site })
+                                                     .select('specimen_identifications.*, sites.name AS site_name,
+                                                              sites.district')
+    unless distributed.blank?
+      specimen_identifications = specimen_identifications
+                                 .where(distributed: ActiveRecord::Type::Boolean.new.cast(distributed))
+    end
     specimen_identifications
   end
 
@@ -65,23 +70,30 @@ module CsigUtilityService
     specimen_identifications
   end
 
+  # rubocop:disable Metrics/MethodLength
   # Filter specimen identifications by status
   def self.filter_status(status, specimen_identifications)
-    s = SpecimenIdentification.joins(:specimen_identification_statuses).select('MAX(specimen_identifications.created_at)').group('specimen_identifications.id')
-    specimen_identifications = specimen_identifications.joins({specimen_identification_statuses: :csig_status}).where("specimen_identifications.created_at IN (#{s.to_sql})"
-    ).select('specimen_identifications.*, csig_statuses.name AS status')
-    specimen_identifications = specimen_identifications.where("spid_statuses.csig_status_id = #{CsigStatus.find_by_name(status).id}") unless status.blank?
+    s = "SELECT ss.id FROM spid_statuses ss INNER JOIN
+          (
+            SELECT ss2.specimen_identification_id, MAX(ss2.created_at) created_at
+            FROM spid_statuses ss2 GROUP BY ss2.specimen_identification_id
+          ) ss_i ON ss.specimen_identification_id = ss_i.specimen_identification_id AND ss.created_at = ss_i.created_at"
+    specimen_identifications = specimen_identifications
+                               .joins({ specimen_identification_statuses: :csig_status })
+                               .where("spid_statuses.id IN (#{s})").select('specimen_identifications.*,
+                                csig_statuses.name AS status')
+    unless status.blank?
+      specimen_identifications = specimen_identifications
+                                 .where("spid_statuses.csig_status_id = #{CsigStatus.find_by_name(status).id}")
+    end
     specimen_identifications
   end
 
   # Search distributions using site name
   def self.search_site_name(site_name, distributions)
-    unless site_name.blank?
-      distributions = distributions.where('sites.name LIKE ?', "%#{site_name}%")
-    end
+    distributions = distributions.where('sites.name LIKE ?', "%#{site_name}%") unless site_name.blank?
     distributions
   end
-
 
   # Page metadata
   def self.page_metadata(active_record_relation)
@@ -102,3 +114,4 @@ module CsigUtilityService
     end
   end
 end
+# rubocop:enable Metrics/MethodLength
