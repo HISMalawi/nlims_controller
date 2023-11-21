@@ -9,25 +9,26 @@ module CsigService
   def self.analytics
     specimens = SpecimenIdentification.all
     distributions = SpecimenIdentificationDistribution
-      .joins(:site, :specimen_identification)
-      .select('sites.name as site_name, COUNT(*) as count_of_specimens')
-      .group('site_name')
-      .take(5)
+                    .joins(:site, :specimen_identification)
+                    .select('sites.name as site_name, COUNT(*) as count_of_specimens')
+                    .group('site_name')
+                    .take(5)
     facilities = Site.count
     sites_count = SpecimenIdentificationDistribution
-      .joins(:site)
-      .select('COUNT(DISTINCT sites.name) as site_count')
-      .first.site_count
+                  .joins(:site)
+                  .select('COUNT(DISTINCT sites.name) as site_count')
+                  .first.site_count
     total_distributions = SpecimenIdentificationDistribution.count
-    generated_last_at = SpecimenIdentificationDistribution.order(updated_at: :desc).first&.updated_at
+    generated_last_at = SpecimenIdentificationDistribution.order(updated_at: :desc).first
+    generated_last_at = generated_last_at.nil? ? nil : generated_last_at.updated_at
     statuses = CsigStatus.all
     statuses_data = statuses.each_with_object({}) do |status, hash|
       hash[status.name] = CsigUtilityService.filter_status(status.name, specimens).size
     end
     distributions_by_status = {
-      "Not Distributed": statuses_data["Not Distributed"] - statuses_data["Distributed"],
-      "Distributed": statuses_data["Distributed"],
-      "Used": statuses_data["Used"],
+      'Not Distributed': statuses_data['Not Distributed'] - statuses_data['Distributed'],
+      'Distributed': statuses_data['Distributed'],
+      'Used': statuses_data['Used']
     }
     {
       specimens_count: specimens.count,
