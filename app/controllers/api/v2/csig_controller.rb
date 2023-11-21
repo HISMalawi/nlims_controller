@@ -26,16 +26,10 @@ class API::V2::CsigController < ApplicationController
   end
 
   def distribute_sin
-    site = Site.find_by(name: params.require(:site_name))
-    if site.nil?
-      render json: {
-        data: nil,
-        message: "Site with name #{params.require(:site_name)} not found"
-      }, status: :not_found
-    else
-      distributed_ids = CsigService.distribute_sin(params.require(:number_of_ids), site)
-      render json: { data: distributed_ids, message: 'Success' }
+    params.require(:sites).each do |site|
+      CsigService.distribute_sin(params.require(:number_of_ids), site)
     end
+    render json: { message: 'Success' }
   end
 
   def check_if_sin_is_used
@@ -43,7 +37,7 @@ class API::V2::CsigController < ApplicationController
     render json: { data: sin_used }
   end
 
-  def distributions(per_page: 25, page_number: 1, query: nil)
+  def distributions
     per_page = params[:per_page] || 25
     page_number = params[:page_number] || 1
     query = params[:query]

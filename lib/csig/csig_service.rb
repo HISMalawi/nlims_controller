@@ -105,12 +105,12 @@ module CsigService
       sin_to_distribute.each do |sin|
         spid_ditributions << {
           specimen_identification_id: sin.id,
-          site_id: site.id
+          site_id: site
         }
         spid_statuses << {
           csig_status_id: csig_status.id,
           specimen_identification_id: sin.id,
-          site_name: site.name
+          site_name: Site.find(site).name
         }
         spids << sin.id
       end
