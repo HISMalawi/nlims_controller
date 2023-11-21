@@ -119,7 +119,9 @@ module CsigService
       SpecimenIdentificationDistribution.import(spid_ditributions)
       SpecimenIdentificationStatus.import(spid_statuses)
     end
-    SpecimenIdentification.where(id: spids)
+    SpecimenIdentificationDistribution.joins(:site, :specimen_identification)
+                                      .where(specimen_identifications: { id: spids })
+                                      .select('specimen_identifications.*, sites.name AS site_name, sites.district')
   end
 
   # Get distributed specimen id's with grouped by facility

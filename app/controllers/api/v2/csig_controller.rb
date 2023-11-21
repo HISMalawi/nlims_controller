@@ -26,10 +26,12 @@ class API::V2::CsigController < ApplicationController
   end
 
   def distribute_sin
+    distributions = []
     params.require(:sites).each do |site|
-      CsigService.distribute_sin(params.require(:number_of_ids), site)
+      distribution = CsigService.distribute_sin(params.require(:number_of_ids), site)
+      distributions << distribution
     end
-    render json: { message: 'Success' }
+    render json: { data: distributions.flatten, message: 'Success' }
   end
 
   def check_if_sin_is_used
