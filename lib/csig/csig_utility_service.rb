@@ -99,6 +99,7 @@ module CsigUtilityService
   def self.page_metadata(active_record_relation)
     if active_record_relation.empty?
       {
+        total_count: 0,
         total_pages: 0,
         current_page: 0,
         next_page: nil,
@@ -106,6 +107,7 @@ module CsigUtilityService
       }
     else
       {
+        total_count: active_record_relation.total_count,
         total_pages: active_record_relation.total_pages,
         current_page: active_record_relation.current_page,
         next_page: active_record_relation.next_page,
