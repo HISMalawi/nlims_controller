@@ -35,23 +35,12 @@ module TrackingNumberService
 					
 	    	     	f.write(fi.to_json) } 
 
-	    	 value =  "001"
+					value = prepad_str(1, 3)
 	    	 tracking_number = "X" + site_code + year.to_s +  get_month(month).to_s +  get_day(day).to_s + value.to_s
 			
 		else
 			counter = file[todate]
-
-			if counter.to_s.length == 1
-				
-				value = "00" + counter.to_s
-			elsif counter.to_s.length == 2
-				
-				value = "0" + counter.to_s
-			else
-				value = counter.to_s
-			end
-			
-
+			value = prepad_str(counter, 3)
 			tracking_number = "X" + site_code + year.to_s +  get_month(month).to_s +  get_day(day).to_s + value.to_s
 			
 		end
@@ -77,5 +66,9 @@ module TrackingNumberService
 
 	def self.get_day(day)
 		convert_day(day)
+	end
+
+	def self.prepad_str(str, padding)
+		str.to_s.rjust(padding, "0").to_s
 	end
 end
