@@ -1,5 +1,20 @@
+# frozen_string_literal: true
+
+# TrackingNumber module
 module TrackingNumberService
-	
+	DAY_MAPPING = {
+    "01" => "1", "02" => "2", "03" => "3", "04" => "4", "05" => "5",
+    "06" => "6", "07" => "7", "08" => "8", "09" => "9", "10" => "A",
+    "11" => "B", "12" => "C", "13" => "E", "14" => "F", "15" => "G",
+    "16" => "H", "17" => "Y", "18" => "J", "19" => "K", "20" => "Z",
+    "21" => "M", "22" => "N", "23" => "O", "24" => "P", "25" => "Q",
+    "26" => "R", "27" => "S", "28" => "T", "29" => "V", "30" => "W",
+    "31" => "X"
+  }.freeze
+
+  def self.convert_day(day)
+    DAY_MAPPING[day]
+  end
 
 	def self.generate_tracking_number
 		configs = YAML.load_file "#{Rails.root}/config/application.yml"
@@ -57,106 +72,10 @@ module TrackingNumberService
 	end
 
 	def self.get_month(month)
-		
-		case month
-
-			when "01"
-				return "1"
-			when "02"
-				return "2"
-			when "03"
-				return "3"
-			when "04"
-				return "4"
-			when "05"
-				return "5"
-			when "06"
-				return "6"
-			when "07"
-				return "7"
-			when "08"
-				return "8"
-			when "09"
-				return "9"
-			when "10"
-				return "A"
-			when "11"
-				return "B"
-			when "12"
-				return "C"
-			end
-
+		convert_day(month)
 	end
 
 	def self.get_day(day)
-
-		case day
-
-			when "01"
-				return "1"
-			when "02"
-				return "2"
-			when "03"
-				return "3"
-			when "04"
-				return "4"
-			when "05"
-				return "5"
-			when "06"
-				return "6"
-			when "07"
-				return "7"
-			when "08"
-				return "8"
-			when "09"
-				return "9"
-			when "10"
-				return "A"
-			when "11"
-				return "B"
-			when "12"
-				return "C"
-			when "13"
-				return "E"
-			when "14"
-				return "F"
-			when "15"
-				return "G"
-			when "16"
-				return "H"
-			when "17"
-				return "Y"
-			when "18"
-				return "J"
-			when "19"
-				return "K"
-			when "20"
-				return "Z"
-			when "21"
-				return "M"
-			when "22"
-				return "N"
-			when "23"
-				return "O"
-			when "24"
-				return "P"
-			when "25"
-				return "Q"
-			when "26"
-				return "R"
-			when "27"
-				return "S"
-			when "28"
-				return "T"
-			when "29"
-				return "V"
-			when "30"
-				return "W"
-			when "31"
-				return "X"
-			end	
-
+		convert_day(day)
 	end
-
-
 end
