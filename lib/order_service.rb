@@ -394,7 +394,7 @@ module  OrderService
                         LEFT JOIN wards ON specimen.ward_id = wards.id
                         INNER JOIN test_types ON test_types.id = tests.test_type_id
                         INNER JOIN sites ON sites.name = specimen.sending_facility
-			WHERE (substr(specimen.created_at,1,10) BETWEEN  '#{date_from}' AND '#{date}'   )   AND (test_types.name ='Viral Load' AND sites.region='#{region}') GROUP BY specimen.id DESC limit 250")
+			WHERE (substr(specimen.created_at,1,10) BETWEEN  '#{date_from}' AND '#{date}'   )   AND (test_types.name ='Viral Load' AND sites.region='#{region}') GROUP BY specimen.id DESC limit 35000")
             tsts = {}
             data =  []
              counter = 0;
