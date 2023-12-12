@@ -27,6 +27,7 @@ config/couchdb.yml
 config/emr_connection.yml
 config/results_channel_socket.yml
 config/master_nlims.yml
+public/tracker.json
 
 # Ignore db schema
 db/schema.rb
