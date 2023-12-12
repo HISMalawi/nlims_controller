@@ -19,45 +19,17 @@ module TrackingNumberService
 	def self.generate_tracking_number
 		configs = YAML.load_file "#{Rails.root}/config/application.yml"
 		site_code = configs['facility_code']
-		file = JSON.parse(File.read("#{Rails.root}/public/tracker.json"))
 		todate = Time.now.strftime("%Y%m%d")
-		year = Time.now.strftime("%Y%m%d").to_s.slice(2..3)
-		month = Time.now.strftime("%m")
-		day = Time.now.strftime("%d")
-	
-		key = file.keys
-		
-		if todate > key[0]
-
-			fi = {}
-			fi[todate] = 1
-			File.open("#{Rails.root}/public/tracker.json", 'w') {|f|
-					
-	    	     	f.write(fi.to_json) } 
-
-					value = prepad_str(1, 3)
-	    	 tracking_number = "X" + site_code + year.to_s +  get_month(month).to_s +  get_day(day).to_s + value.to_s
-			
-		else
-			counter = file[todate]
-			value = prepad_str(counter, 3)
-			tracking_number = "X" + site_code + year.to_s +  get_month(month).to_s +  get_day(day).to_s + value.to_s
-			
-		end
-		return tracking_number
-	end
-
-	def self.prepare_next_tracking_number
-			file = JSON.parse(File.read("#{Rails.root}/public/tracker.json"))
-			todate = Time.now.strftime("%Y%m%d")
-				
-			counter = file[todate]
-			counter = counter.to_i + 1
-			fi = {}
-			fi[todate] = counter
-			File.open("#{Rails.root}/public/tracker.json", 'w') {|f|
-					
-	    	     	f.write(fi.to_json) } 	
+		year = Time.now.strftime('%y')
+		month = Time.now.strftime('%m')
+		day = Time.now.strftime('%d')
+		last_tracking_number_trail = TrackingNumberTrail.last
+		date = last_tracking_number_trail&.date || todate
+		current_value = last_tracking_number_trail&.current_value || 1
+		value = (todate.to_i > date.to_i) ? prepad_str(1, 3) : prepad_str(current_value.to_i + 1, 3)
+		tracking_number = "X#{site_code}#{year}#{get_month(month)}#{get_day(day)}NL#{value}"
+		TrackingNumberTrail.create(date: todate, current_value: value.to_i)
+		tracking_number
 	end
 
 	def self.get_month(month)
