@@ -6,10 +6,10 @@ git_source(:github) do |repo_name|
 end
 
 
-ruby '2.5.3'
+ruby '3.2.2'
 
 # Bundle edge Rails instead: gem 'rails', github: 'rails/rails'
-gem 'rails', '~> 5.1.5'
+gem 'rails', '~> 7.1.2'
 
 gem 'parallel'
 gem 'ruby-progressbar'
@@ -39,6 +39,7 @@ gem 'passenger'
 group :development, :test do
   # Call 'byebug' anywhere in the code to stop execution and get a debugger console
   gem 'byebug', platforms: [:mri, :mingw, :x64_mingw]
+  gem 'rspec-rails', '~> 6.1.0'
 end
 
 group :development do
