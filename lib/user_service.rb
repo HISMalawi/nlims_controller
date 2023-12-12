@@ -48,7 +48,7 @@ module UserService
 
    		token = create_token
    		time = Time.now 
-   		time = time + 14400
+   		time = time + 80000
 		return {token: token, expiry_time: time.strftime("%Y%m%d%H%M%S")}
 	end
 

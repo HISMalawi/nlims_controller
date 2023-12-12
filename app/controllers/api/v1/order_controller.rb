@@ -106,6 +106,45 @@ class API::V1::OrderController < ApplicationController
 				render plain: response.to_json and return	
 	end
 	
+	def retrieve_samples
+		if params['order_date'].blank?
+			msg = "date not provided"	
+		else
+			res = OrderService.retrieve_samples(params['order_date'],params['from_date'],params['region'])
+			if res != false
+				response = {
+										status: 200,
+										error: false,
+										message: 'undispatching samples successfuly retrieved',
+										data: res
+									}	
+			else
+				response = {
+						status: 401,
+						error: true,
+						message: "no samples available yet",
+						data: {
+							
+						}
+				}
+			end
+		end
+
+		if msg
+			response = {
+							status: 401,
+							error: true,
+							message: msg,
+							data: {
+								
+							}
+					}
+		end
+		render plain: response.to_json  and return
+	end
+
+
+
 	def check_if_dispatched
 	
 		if !params[:tracking_number].blank?
@@ -246,7 +285,7 @@ class API::V1::OrderController < ApplicationController
 						else 
 							time_of_delivery = time_of_delivery[0..7]
 						end
-						date_dispatched += time_of_delivery
+						date_dispatched = date_dispatched +" "+ time_of_delivery
 						delivery_type = "sample_dispatched_from_facility"
 						dispatcher = "rh4"
 						if tracking_number && date_dispatched
@@ -299,7 +338,7 @@ class API::V1::OrderController < ApplicationController
 						else 
 							time_of_delivery = time_of_delivery[0..7]
 						end
-						date_dispatched += time_of_delivery
+						date_dispatched = date_dispatched + " " + time_of_delivery
 						delivery_type = params[:properties]["delivery_type"]
 						delivery_location = params[:properties]["delivery_location"]
 						dispatcher = "rh4"

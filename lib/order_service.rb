@@ -486,12 +486,11 @@ module  OrderService
             end
 
       end
-
-
-
+      
       def self.get_site_code_number(site_code_alpha)
-
-		  if site_code_alpha[0..0] == "L"
+            site_code_number = ""
+      	
+	    if site_code_alpha[0..0] == "L"
                   res = Speciman.find_by_sql("SELECT sending_facility FROM specimen WHERE tracking_number='#{site_code_alpha}'")
                   if !res.blank?
                         sending_facility = res[0]['sending_facility']
@@ -501,26 +500,116 @@ module  OrderService
                         end
                   end
             else
-                  site_code_number = ""
-                  if site_code_alpha[3..3].match?(/[[:digit:]]/)
-                        site_code_alpha = site_code_alpha[1..2]
-                  else
-                        if site_code_alpha[4..4].match?(/[[:digit:]]/)
-                              site_code_alpha = site_code_alpha[1..3]
-                        else
-                              if site_code_alpha[5..5].match?(/[[:digit:]]/)
-                                    site_code_alpha = site_code_alpha[1..4]
+	
+
+	        if site_code_alpha[3..3].match?(/[[:digit:]]/)
+                	  site_code_alpha = site_code_alpha[1..2]
+            	else
+                  	if site_code_alpha[4..4].match?(/[[:digit:]]/)
+                        	site_code_alpha = site_code_alpha[1..3]
+                  	else
+                          	if site_code_alpha[5..5].match?(/[[:digit:]]/)
+                              		site_code_alpha = site_code_alpha[1..4]
+                        	end
+                        end
+            	end
+
+            	res = Site.find_by_sql("SELECT site_code_number FROM sites where site_code='#{site_code_alpha}'").first
+            	if !res.blank?
+                	site_code_number = res['site_code_number']
+            	end
+	    end
+
+            return site_code_number
+
+      end
+
+        def self.retrieve_samples(date,date_from,region)
+            orders = Speciman.find_by_sql("SELECT specimen_types.name AS sample_type, specimen_statuses.name AS specimen_status,
+                        specimen.tracking_number AS tracking_number,
+                        wards.name AS order_location, specimen.date_created AS date_created, specimen.priority AS priority,
+                        specimen.drawn_by_id AS drawer_id, specimen.drawn_by_name AS drawer_name,
+                        specimen.drawn_by_phone_number AS drawe_number, specimen.target_lab AS target_lab, 
+                        specimen.sending_facility AS health_facility, specimen.requested_by AS requested_by,
+                        specimen.date_created AS date_drawn,
+                        patients.patient_number AS pat_id, patients.name AS pat_name,
+                        patients.dob AS dob, patients.gender AS sex,
+                        art_regimen AS art_regi, arv_number AS arv_number,
+                        art_start_date AS art_start_date 
+                        FROM specimen INNER JOIN specimen_statuses ON specimen_statuses.id = specimen.specimen_status_id
+                        LEFT JOIN specimen_types ON specimen_types.id = specimen.specimen_type_id
+                        INNER JOIN tests ON tests.specimen_id = specimen.id
+                        INNER JOIN patients ON patients.id = tests.patient_id
+                        LEFT JOIN wards ON specimen.ward_id = wards.id
+                        INNER JOIN test_types ON test_types.id = tests.test_type_id
+                        INNER JOIN sites ON sites.name = specimen.sending_facility
+			WHERE (substr(specimen.created_at,1,10) BETWEEN  '#{date_from}' AND '#{date}'   )   AND (test_types.name ='Viral Load' AND sites.region='#{region}') GROUP BY specimen.id DESC limit 35000")
+            tsts = {}
+            data =  []
+             counter = 0;
+            if orders.length > 0
+                  orders.each do |res|
+                        tracking_number = res.tracking_number
+                        site_code_number = get_site_code_number(tracking_number)
+                        tst = Test.find_by_sql("SELECT test_types.name AS test_name, test_statuses.name AS test_status
+                                                FROM tests
+                                                INNER JOIN specimen ON specimen.id = tests.specimen_id
+                                                INNER JOIN test_types ON test_types.id = tests.test_type_id
+                                                INNER JOIN test_statuses ON test_statuses.id = tests.test_status_id
+                                                WHERE specimen.tracking_number ='#{tracking_number}'"
+                                    )
+
+                        if tst.length > 0
+                              tst.each do |t|
+                                    tsts[t.test_name] = t.test_status
                               end
                         end
+			patient_name = res.pat_name.gsub("'"," ")
+			drawer_name = res.drawer_name.gsub("'"," ")
+                        arv_number = res.arv_number.split("-")
+                        arv_number = arv_number[arv_number.length - 1]
+                        #dob = Time.new.strftime("%Y-%m-%d")  if res.dob == 'NULL'
+			next if tracking_number[0..4] == "XCHSU"
+			dob = res.dob
+			dob = Time.new.strftime("%Y-%m-%d")  if dob.nil?
+			data[counter] =  {   sample_type: res.sample_type,
+                                                tracking_number:  tracking_number,
+                                                specimen_status: res.specimen_status,
+                                                order_location: res.order_location,
+                                                date_created: res.date_created,
+                                                priority: res.priority,
+                                                art_regimen: res.art_regi,
+                                                arv_number: arv_number,
+                                                site_code_number: site_code_number,
+                                                art_start_date: res.art_start_date,
+                                                sample_created_by: {
+                                                            id: res.drawe_number,
+                                                            name: drawer_name,
+                                                            phone: res.drawe_number
+                                                      },
+                                                patient: {
+                                                            id: res.pat_id,
+                                                            name: patient_name,
+                                                            gender: res.sex,
+                                                            dob: dob
+                                                      },
+                                                receiving_lab: res.target_lab,
+                                                sending_lab: res.health_facility,
+                                                sending_lab_code: site_code_number,
+                                                requested_by: res.requested_by,
+                                                tests: tsts
+                                          }
+                        counter = counter + 1
                   end
-
-                  res = Site.find_by_sql("SELECT site_code_number FROM sites where site_code='#{site_code_alpha}'").first
-                  if !res.blank?
-                  site_code_number = res['site_code_number']
-                  end
+                  counter = 0
+			
+                  return data
+            else
+                  return false
             end
-                  return site_code_number
       end
+
+
 
       def self.check_test_name(test)
 	  tst = TestType.find_by_sql("SELECT name AS tst_name FROM test_types WHERE name ='#{test}' LIMIT 1")
@@ -699,6 +788,165 @@ module  OrderService
             RestClient.post(url,order.to_json, :content_type => 'application/json')
       end
 
+
+	 def self.query_order_by_tracking_number_v2(tracking_number,test_name)
+
+            res = Speciman.find_by_sql("SELECT specimen_types.name AS sample_type, specimen_statuses.name AS specimen_status,
+                                    wards.name AS order_location, specimen.date_created AS date_created, specimen.priority AS priority,
+                                    specimen.drawn_by_id AS drawer_id, specimen.drawn_by_name AS drawer_name,
+                                    specimen.drawn_by_phone_number AS drawe_number, specimen.target_lab AS target_lab, 
+                                    specimen.sending_facility AS health_facility, specimen.requested_by AS requested_by,
+                                    specimen.date_created AS date_drawn,
+                                    patients.patient_number AS pat_id, patients.name AS pat_name,
+                                    patients.dob AS dob, patients.gender AS sex,
+                                    art_regimen AS art_regi, arv_number AS arv_number,
+                                    art_start_date AS art_start_date 
+                                    FROM specimen INNER JOIN specimen_statuses ON specimen_statuses.id = specimen.specimen_status_id
+                                    LEFT JOIN specimen_types ON specimen_types.id = specimen.specimen_type_id
+                                    INNER JOIN tests ON tests.specimen_id = specimen.id
+                                    INNER JOIN patients ON patients.id = tests.patient_id
+                                    LEFT JOIN wards ON specimen.ward_id = wards.id
+                                    WHERE specimen.tracking_number ='#{tracking_number}' ")
+            
+            tsts = {}
+            result_status = false
+            results = {}
+            result_measures = {}
+            result_val = {}
+            if res.length > 0
+                  site_code_number = get_site_code_number(tracking_number)
+                  res = res[0]
+                  tst = Test.find_by_sql("SELECT test_types.name AS test_name, test_statuses.name AS test_status,
+                                          tests.id  AS test_id
+                                          FROM tests
+                                          INNER JOIN specimen ON specimen.id = tests.specimen_id
+                                          INNER JOIN test_types ON test_types.id = tests.test_type_id
+                                          INNER JOIN test_statuses ON test_statuses.id = tests.test_status_id
+                                          WHERE specimen.tracking_number ='#{tracking_number}' AND test_types.name='#{test_name}'"
+                              )
+
+                  if tst.length > 0
+                        tst.each do |t|
+			        updater_trailer = {}
+                              trail = TestStatusTrail.find_by_sql("SELECT test_statuses.name AS test_status,test_status_trails.time_updated,test_status_trails.who_updated_name,
+									test_status_trails.who_updated_id FROM test_status_trails
+									 INNER JOIN test_statuses ON test_status_trails.test_status_id = test_statuses.id 
+									WHERE test_id='#{t.test_id}' order by test_status_trails.id desc limit 1")
+                              if !trail.blank?
+                                    updater_trailer ={
+                                          "updater_name": trail[0]['who_updated_name'],
+                                          "updater_id": trail[0]['who_updated_id'],
+                                          "time_updated": trail[0]['time_updated'],
+                                          "status": trail[0]['test_status']
+                                    }
+                              end
+
+                             #tsts[t.test_name] = t.test_status
+			     tsts[t.test_name] = {"status": t.test_status, "update_details": updater_trailer}                              
+                              result_got =TestResult.find_by_sql("SELECT * FROM test_results WHERE test_id='#{t.test_id}'")
+                              if !result_got.blank?                                    
+                                    puts "=============================="
+                                    puts t.test_name
+                                    puts result_got
+                                    puts "=============================="
+                                    result_got.each do |reslt|
+                                          puts reslt['measure_id']
+                                          result_value = reslt['result']
+                                          result_measure = Measure.find_by(:id => reslt['measure_id'])['name']
+                                          result_measures[result_measure] = {'result': result_value, 'result_date': reslt['time_entered']}   
+                                                                               
+                                    end
+                                    result_val[t.test_name] = result_measures
+                                    result_measures = {}                                    
+                                    result_status = true
+                              end
+                              
+                        end
+                  end
+		  arv_number = ""
+                  arv_number = res.arv_number.split("-") if !res.arv_number.blank?
+                  arv_number = arv_number[arv_number.length - 1] if !arv_number.blank?
+
+                  if result_status == true
+
+                        return { 
+
+                              gen_details:   {  sample_type: res.sample_type,
+                                                specimen_status: res.specimen_status,
+                                                order_location: res.order_location,
+                                                date_created: res.date_created,
+                                                priority: res.priority,
+                                                art_regimen: res.art_regi,
+                                                arv_number: arv_number,
+                                                site_code_number: site_code_number,
+                                                art_start_date: res.art_start_date,
+                                                sample_created_by: {
+                                                            id: res.drawe_number,
+                                                            name: res.drawer_name,
+                                                            phone: res.drawe_number
+                                                      },
+                                                patient: {
+                                                            id: res.pat_id,
+                                                            name: res.pat_name,
+                                                            gender: res.sex,
+                                                            dob: res.dob
+                                                      },
+                                                receiving_lab: res.target_lab,
+                                                sending_lab: res.health_facility,
+                                                sending_lab_code: site_code_number,
+                                                requested_by: res.requested_by,
+                                                tracking_number: tracking_number,
+                                                results: result_val
+                                                },
+                                                tests: tsts,
+                                                
+                                               
+                        }
+                  else
+
+                        return { 
+
+                              gen_details:   {  sample_type: res.sample_type,
+                                                specimen_status: res.specimen_status,
+                                                order_location: res.order_location,
+                                                date_created: res.date_created,
+                                                priority: res.priority,
+                                                art_regimen: res.art_regi,
+                                                arv_number: arv_number,
+                                                site_code_number: site_code_number,
+                                                art_start_date: res.art_start_date,
+                                                sample_created_by: {
+                                                            id: res.drawe_number,
+                                                            name: res.drawer_name,
+                                                            phone: res.drawe_number
+                                                      },
+                                                patient: {
+                                                            id: res.pat_id,
+                                                            name: res.pat_name,
+                                                            gender: res.sex,
+                                                            dob: res.dob
+                                                      },
+                                                receiving_lab: res.target_lab,
+                                                sending_lab: res.health_facility,
+                                                sending_lab_code: site_code_number,
+                                                requested_by: res.requested_by,
+                                                tracking_number: tracking_number                                         
+                                                },
+                                                tests: tsts
+                                                
+                        }
+
+
+                  end
+
+            else
+                  return false
+            end
+
+      end
+
+
+
       def self.query_results_by_npid(npid)
 
             ord = Speciman.find_by_sql("SELECT specimen.id AS trc, specimen.tracking_number AS track,specimen_types.name AS spec_name FROM specimen
@@ -842,8 +1090,7 @@ module  OrderService
                                                       INNER JOIN tests ON tests.specimen_id = specimen.id
                                                       INNER JOIN patients ON patients.id = tests.patient_id
                                                       LEFT JOIN wards ON specimen.ward_id = wards.id
-						      WHERE specimen.sending_facility ='#{res[0]['site_name'].gsub("'", "\\\\'")}' AND specimen.tracking_number NOT IN (SELECT tracking_number FROM specimen_dispatches) GROUP BY specimen.id DESC limit 250")
-
+                                                      WHERE specimen.sending_facility ='#{res[0]['site_name'].gsub("'", "\\\\'")}' AND specimen.tracking_number NOT IN (SELECT tracking_number FROM specimen_dispatches) GROUP BY specimen.id DESC limit 400")
                                                       tsts = {}
                         
                         if res_.length > 0
@@ -1380,6 +1627,16 @@ module  OrderService
             end 
       end
       
+      def self.check_if_order_updated?(tracing_number,specimen_status_id)
+		res = Speciman.find_by(:tracking_number => tracking_number,:specimen_status => specimen_status_id )
+		if !res.blank?
+		 return true
+		else
+		 return false
+		end
+
+      end
+
       def self.update_order(ord)
           return [false,"no tracking number"] if ord['tracking_number'].blank?
 	    status = ord['status']              

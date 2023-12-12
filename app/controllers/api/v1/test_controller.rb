@@ -352,7 +352,7 @@ class API::V1::TestController < ApplicationController
 			msg = "no date for acknowlegment is provided"
 		else
 
-			res = TestService.acknowledge_test_results_receiptient(tracking_number,test_name,date_acknowledged,recipient_type)
+			res = TestService.acknowledge_test_results_receiptient(tracking_number,test_name,date_acknowledged.to_time,recipient_type)
 
 			if res == true
 				response = {
