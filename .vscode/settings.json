@@ -1,0 +1,4 @@
+{
+  "ruby.rubocop.onSave": true,
+  "ruby.rubocop.executePath": "/home/hopgausi/.rvm/gems/ruby-3.2.2/bin/"
+}
