@@ -126,11 +126,6 @@ def query_order_by_tracking_number
 
 	end
 
-<<<<<<< HEAD
-
-
-=======
->>>>>>> 370fa166a3f019d5557c800340b2f4c8fb1fde61
     def  confirm_order_request
         if params['tracking_number']  && params['specimen_type']	&& params['target_lab']
 			OrderService.confirm_order_request(params)
