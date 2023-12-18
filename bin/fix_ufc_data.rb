@@ -79,12 +79,12 @@ def order_for_specific_client(patient_number, date_created)
 end
 
 def delete_order(order_id)
-  order = Speciman.find(order_id)
+  order = Speciman.where(id: order_id).first
   order.destroy unless order.nil?
 end
 
 def delete_test(test_id)
-  test_ = Test.find(test_id)
+  test_ = Test.where(id: test_id).first
   test_.destroy unless test_.nil?
 end
 
