@@ -35,6 +35,12 @@ module TestService
 			test_name =  "calcium" if test_name == "Serum calcium"
 			test_name =  "TB Tests" if test_name == "GeneXpert"
 			test_name =  "FBC" if test_name == "FBS"
+			test_name =  "FBC" if test_name == "FBC (Paeds)"
+			test_name =  "Liver Function Tests" if test_name == "Liver Function Tests (Paeds)"
+			test_name = "Urine Macroscopy" if test_name == "Urine Macroscopy (Paeds)"
+			test_name = "Renal Function Test" if test_name == "Renal Function Tests"
+      test_name = "Renal Function Test" if test_name == "Renal Function Tests (Paeds)"
+			test_name = "Urine Microscopy" if test_name == "Urine Microscopy (Paeds)"
 			test_name =  "Direct Coombs Test" if test_name == "D/Coombs"
 			test_name =  "Creatinine" if test_name == "creat"
 			test_name =  "TB Microscopic Exam" if test_name == "AAFB (3rd)"
@@ -139,7 +145,7 @@ module TestService
 						couch_id_updater = tst_update.test_status_id 
 							
 							#if tst_update.test_status_id == 9 && test_status.id == 5
-			#					   tst_update.test_status_id = test_status.id
+					#					   tst_update.test_status_id = test_status.id
                                                        #                 tst_update.save
                                                        #
                                                         #                TestStatusTrail.create(
@@ -483,24 +489,25 @@ module TestService
 	end
 
 
-	def self.check_if_test_updated?(test_id,status_id)
-		obj = Test.find_by(:id => test_id ,:test_status_id => status_id)
-		if !obj.blank?
-		res = Test.find_by_sql("SELECT tests.id FROM tests INNER JOIN test_types ON test_types.id = tests.test_type_id
-							INNER JOIN specimen ON specimen.id = tests.specimen_id
-							where specimen.tracking_number ='#{tracking_number}' AND test_types.name='#{test_name}'")
-		if !res.blank?		
-			type = TestResultRecepientType.find_by(:name => recipient_type)
-			tst = Test.find_by(:id => res[0]['id'])
-			tst.test_result_receipent_types = type.id
-			tst.result_given = true
-			tst.date_result_given = date
-			tst.save			
-			return true
-		else
-			  return false
-		end 
-  	end
+	# def self.check_if_test_updated?(test_id,status_id)
+	# 	obj = Test.find_by(:id => test_id ,:test_status_id => status_id)
+	# 	if !obj.blank?
+	# 		tracking_number = Speciman.where(id: obj.specimen_id).first.tracking_number
+	# 	res = Test.find_by_sql("SELECT tests.id FROM tests INNER JOIN test_types ON test_types.id = tests.test_type_id
+	# 						INNER JOIN specimen ON specimen.id = tests.specimen_id
+	# 						where specimen.tracking_number ='#{tracking_number}' AND test_types.id='#{obj.test_type_id}'")
+	# 	if !res.blank?		
+	# 		type = TestResultRecepientType.find_by(:name => recipient_type)
+	# 		tst = Test.find_by(:id => res[0]['id'])
+	# 		tst.test_result_receipent_types = type.id
+	# 		tst.result_given = true
+	# 		tst.date_result_given = date
+	# 		tst.save			
+	# 		return true
+	# 	else
+	# 		  return false
+	# 	end 
+  # 	end
 
 
 	def self.test_no_results(npid)
@@ -611,7 +618,7 @@ module TestService
 		order['test_statuses'] = test_statuses
 
 		OrderService.update_couch_order(sql_order.id,order)
-        return true
+    return true
 	end
 	
 	def self.retrieve_test_catelog
@@ -645,52 +652,44 @@ module TestService
 		end
 	end
 
-    def self.get_order_test(params)
-    	tracking_number = params[:tracking_number]
-    	res1 = TestType.find_by_sql(
-    						"SELECT test_types.name AS test_name, test_types.id AS tes_id FROM test_types 
-    							INNER JOIN tests ON tests.test_type_id = test_types.id
-    							INNER JOIN specimen ON tests.specimen_id = specimen.id
-    							WHERE specimen.tracking_number = '#{tracking_number}'"
-    		)
-
-    	details = {}
-    	measures = {}
-    	ranges = []
-    	if !res1.blank?
-
-    		res1.each do |te|
-    			
-    			res = Speciman.find_by_sql("SELECT measures.name AS measure_nam, measures.id AS me_id FROM measures 
-    							INNER JOIN testtype_measures ON testtype_measures.measure_id = measures.id
-    							INNER JOIN test_types ON test_types.id = testtype_measures.test_type_id
-    							WHERE test_types.id = '#{te.tes_id}'
-    						")
-
-    			if !res.blank?
-    				res.each do |me|	
-    					me_ra = MeasureRange.find_by_sql("SELECT measure_ranges.alphanumeric AS alpha FROM measure_ranges
-    											 WHERE measures_id ='#{me.me_id}'")
-    					me_ra.each do |r|
-    						if r.alpha.blank?
-    							ranges.push('free text')
-    						else    							
-    							ranges.push(r.alpha)
-    						end
-    					end   
-    					measures[me.measure_nam] = ranges
-    					ranges = []					  				
-    				end    				
-    				details[te.test_name] = measures
-    				measures = {}
-    			end
-    		end
-    	else
-    		
-    	end
-
-    	return details
-
-    end
-
+	def self.get_order_test(params)
+		tracking_number = params[:tracking_number]
+		res1 = TestType.find_by_sql(
+							"SELECT test_types.name AS test_name, test_types.id AS tes_id FROM test_types 
+								INNER JOIN tests ON tests.test_type_id = test_types.id
+								INNER JOIN specimen ON tests.specimen_id = specimen.id
+								WHERE specimen.tracking_number = '#{tracking_number}'"
+			)
+		details = {}
+		measures = {}
+		ranges = []
+		if !res1.blank?
+			res1.each do |te|
+				res = Speciman.find_by_sql("SELECT measures.name AS measure_nam, measures.id AS me_id FROM measures 
+								INNER JOIN testtype_measures ON testtype_measures.measure_id = measures.id
+								INNER JOIN test_types ON test_types.id = testtype_measures.test_type_id
+								WHERE test_types.id = '#{te.tes_id}'
+							")
+				if !res.blank?
+					res.each do |me|	
+						me_ra = MeasureRange.find_by_sql("SELECT measure_ranges.alphanumeric AS alpha FROM measure_ranges
+													WHERE measures_id ='#{me.me_id}'")
+						me_ra.each do |r|
+							if r.alpha.blank?
+								ranges.push('free text')
+							else    							
+								ranges.push(r.alpha)
+							end
+						end   
+						measures[me.measure_nam] = ranges
+						ranges = []					  				
+					end    				
+					details[te.test_name] = measures
+					measures = {}
+				end
+			end
+		else
+		end
+		return details
+	end
 end

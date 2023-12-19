@@ -16,6 +16,12 @@ module  OrderService
                         tst =  "calcium" if tst == "Serum calcium"
                         tst =  "TB Tests" if tst == "GeneXpert"
                         tst =  "FBC" if tst == "FBS"
+                        tst =  "FBC" if tst == "FBC (Paeds)"
+                        tst =  "Liver Function Tests" if tst == "Liver Function Tests (Paeds)"
+                        tst = "Urine Macroscopy" if tst == "Urine Macroscopy (Paeds)"
+                        tst = "Renal Function Test" if tst == "Renal Function Tests"
+                        tst = "Renal Function Test" if tst == "Renal Function Tests (Paeds)"
+                        tst = "Urine Microscopy" if tst == "Urine Microscopy (Paeds)"
                         tst =  "Direct Coombs Test" if tst == "D/Coombs"
                         tst =  "Creatinine" if tst == "creat"
                         tst =  "TB Microscopic Exam" if tst == "AAFB (3rd)"
@@ -185,6 +191,12 @@ module  OrderService
                         tst =  "calcium" if tst == "Serum calcium"
                         tst =  "TB Tests" if tst == "GeneXpert"
                         tst =  "FBC" if tst == "FBS"
+                        tst =  "FBC" if tst == "FBC (Paeds)"
+                        tst =  "Liver Function Tests" if tst == "Liver Function Tests (Paeds)"
+                        tst = "Urine Macroscopy" if tst == "Urine Macroscopy (Paeds)"
+                        tst = "Renal Function Test" if tst == "Renal Function Tests"
+                        tst = "Renal Function Test" if tst == "Renal Function Tests (Paeds)"
+                        tst = "Urine Microscopy" if tst == "Urine Microscopy (Paeds)"
                         tst =  "Direct Coombs Test" if tst == "D/Coombs"
                         tst =  "Creatinine" if tst == "creat"
                         tst =  "TB Microscopic Exam" if tst == "AAFB (3rd)"
@@ -283,6 +295,12 @@ module  OrderService
                         tst =  "calcium" if tst == "Serum calcium"
                         tst =  "TB Tests" if tst == "GeneXpert"
                         tst =  "FBC" if tst == "FBS"
+                        tst =  "FBC" if tst == "FBC (Paeds)"
+                        tst =  "Liver Function Tests" if tst == "Liver Function Tests (Paeds)"
+                        tst = "Urine Macroscopy" if tst == "Urine Macroscopy (Paeds)"
+                        tst = "Renal Function Test" if tst == "Renal Function Tests (Paeds)"
+                        tst = "Renal Function Test" if tst == "Renal Function Tests"
+                        tst = "Urine Microscopy" if tst == "Urine Microscopy (Paeds)"
                         tst =  "Direct Coombs Test" if tst == "D/Coombs"
                         tst =  "Creatinine" if tst == "creat"
                         tst =  "TB Microscopic Exam" if tst == "AAFB (3rd)"
@@ -616,6 +634,7 @@ module  OrderService
           if tst.length > 0
                 return tst[0].tst_name
           else
+            FailedTestType.find_or_create_by(test_type: test)
                 return false
           end
 

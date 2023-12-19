@@ -76,7 +76,7 @@ class API::V1::OrderController < ApplicationController
 														couch_id: st[2]
 													}
 											}
-										TrackingNumberService.prepare_next_tracking_number
+										# TrackingNumberService.prepare_next_tracking_number
 									else
 									      response = {
                                                        					status: 401,
