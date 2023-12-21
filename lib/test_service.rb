@@ -8,399 +8,326 @@ module TestService
 		return [false,"test status not provided"] if params[:test_status].blank?
 		sql_order = OrderService.get_order_by_tracking_number_sql(params[:tracking_number])
 		tracking_number = params[:tracking_number]
-
 		if params[:result_date].blank?
 			result_date = Time.now.strftime("%Y%m%d%H%M%S")
 		else
 			result_date = params[:result_date]
 		end 
-		
 		if !sql_order == false 
 			order_id = sql_order.id
 			couch_id = sql_order.couch_id
 			test_name = params[:test_name]
 			test_name = test_name.gsub("_"," ")
-			
 			retr_order = OrderService.retrieve_order_from_couch(couch_id)
-			
-
-			test_name = "CD4" if test_name == "PIMA CD4"
-                        test_name = "Viral Load" if test_name == "Viral Load Gene X-per"
-			test_name = "Cryptococcus Antigen Test"  if test_name == "Cr Ag"
-			test_name =  "CD4" if test_name == "Cd4 Count"
-			test_name = "TB Tests" if test_name == "Gene Xpert"
-			test_name =  "Cryptococcus Antigen Test" if test_name == "Cryptococcal Antigen"
-			test_name =  "TB Microscopic Exam" if test_name == "AFB sputum smear"
-			test_name =  "Beta Human Chorionic Gonatropin" if test_name == "B-HCG"
-			test_name =  "calcium" if test_name == "Serum calcium"
-			test_name =  "TB Tests" if test_name == "GeneXpert"
-			test_name =  "FBC" if test_name == "FBS"
-			test_name =  "FBC" if test_name == "FBC (Paeds)"
-			test_name =  "Liver Function Tests" if test_name == "Liver Function Tests (Paeds)"
-			test_name = "Urine Macroscopy" if test_name == "Urine Macroscopy (Paeds)"
-			test_name = "Renal Function Test" if test_name == "Renal Function Tests"
-      test_name = "Renal Function Test" if test_name == "Renal Function Tests (Paeds)"
-			test_name = "Urine Microscopy" if test_name == "Urine Microscopy (Paeds)"
-			test_name =  "Direct Coombs Test" if test_name == "D/Coombs"
-			test_name =  "Creatinine" if test_name == "creat"
-			test_name =  "TB Microscopic Exam" if test_name == "AAFB (3rd)"
-			test_name =  "Urine Microscopy" if test_name == "Urine micro"
-			test_name =  "TB Microscopic Exam" if test_name == "AAFB (1st)"
-			test_name =  "Anti Streptolysis O" if test_name == "ASOT"
-			test_name =  "Culture & Sensitivity" if test_name == "Blood C/S"
-			test_name =  "Cryptococcus Antigen Test" if test_name == "Cryptococcal Ag"
-			test_name = "Viral Load" if test_name == "Gene Xpert Viral"
-			test_name =  "India Ink" if test_name == "I/Ink"
-			test_name =  "Culture & Sensitivity" if test_name == "C_S"
-			test_name =  "Hepatitis B Test" if test_name == "hep"
-			test_name =  "Cryptococcus Antigen Test" if test_name == "Cryptococcal Antigen"
-			test_name =  "Sickling Test" if test_name == "Sickle"
-			test_name =  "Protein" if test_name == "Protein and Sugar"
-
+			test_name_mapping = {
+				"PIMA CD4" => "CD4",
+				"Viral Load Gene X-per" => "Viral Load",
+				"Cr Ag" => "Cryptococcus Antigen Test",
+				"Cd4 Count" => "CD4",
+				"Gene Xpert" => "TB Tests",
+				"Cryptococcal Antigen" => "Cryptococcus Antigen Test",
+				"AFB sputum smear" => "TB Microscopic Exam",
+				"B-HCG" => "Beta Human Chorionic Gonatropin",
+				"Serum calcium" => "calcium",
+				"GeneXpert" => "TB Tests",
+				"FBS" => "FBC",
+				"FBC (Paeds)" => "FBC",
+				"Liver Function Tests (Paeds)" => "Liver Function Tests",
+				"Urine Macroscopy (Paeds)" => "Urine Macroscopy",
+				"Renal Function Tests" => "Renal Function Test",
+				"Renal Function Tests (Paeds)" => "Renal Function Test",
+				"Urine Microscopy (Paeds)" => "Urine Microscopy",
+				"D/Coombs" => "Direct Coombs Test",
+				"creat" => "Creatinine",
+				"AAFB (3rd)" => "TB Microscopic Exam",
+				"Urine micro" => "Urine Microscopy",
+				"AAFB (1st)" => "TB Microscopic Exam",
+				"ASOT" => "Anti Streptolysis O",
+				"Blood C/S" => "Culture & Sensitivity",
+				"Cryptococcal Ag" => "Cryptococcus Antigen Test",
+				"Gene Xpert Viral" => "Viral Load",
+				"I/Ink" => "India Ink",
+				"C_S" => "Culture & Sensitivity",
+				"hep" => "Hepatitis B Test",
+				"Cryptococcal Antigen" => "Cryptococcus Antigen Test",
+				"Sickle" => "Sickling Test",
+				"Protein and Sugar" => "Protein",
+			}
+			test_name = test_name_mapping[test_name] || test_name
 			tst_name__ = TestType.find_by(:name => test_name)
 			status__ = TestStatus.find_by(:name => params[:test_status])
 			return [false,"wrong parameter on test name provided"] if tst_name__.blank?
 			return [false,"test status provided, not within scope of tests statuses"] if status__.blank?
 			test_id = Test.find_by_sql("SELECT tests.id FROM tests INNER JOIN test_types ON tests.test_type_id = test_types.id
-							WHERE tests.specimen_id = '#{order_id}' AND test_types.name = '#{test_name}'")
-			
+																	WHERE tests.specimen_id = '#{order_id}' AND test_types.name = '#{test_name}'")
 			test_status = TestStatus.where(name: params[:test_status]).first
 			couch_id_updater = 0
 			if !test_id.blank?
 				checker = check_if_test_updated?(test_id,test_status.id)
-			   if checker == false
-				ts = test_id[0]
-				
-				test_id = ts['id']
+				if checker == false
+					ts = test_id[0]
+					test_id = ts['id']
+					details = {}
+					couch_test = {}
+					time = Time.now.strftime("%Y%m%d%H%M%S")
+					details = {
+							"status" => params[:test_status],
+							"updated_by":  {
+								:first_name => params[:who_updated]['first_name'],
+								:last_name => params[:who_updated]['last_name'],
+								:phone_number => '',
+								:id => params[:who_updated]['id_number'] 
+								}
+					}
+					couch_test[test_name] = details
+					test_results_measures = {}
+					results_measure = {}
+					couch_test_results = ""
+					if params[:results]
+						results = params[:results]
+						results.each do |key, value|
+							measure_name =  key
+							result_value = value
+							measure = Measure.where(name: measure_name).first
+							next if measure.blank?  
 
-				details = {}
-				couch_test = {}
-				time = Time.now.strftime("%Y%m%d%H%M%S")
-				details = {
-					  "status" => params[:test_status],
-					  "updated_by":  {
-							:first_name => params[:who_updated]['first_name'],
-							:last_name => params[:who_updated]['last_name'],
-							:phone_number => '',
-							:id => params[:who_updated]['id_number'] 
-							}
-				}
-				couch_test[test_name] = details
-
-				
-				
-				test_results_measures = {}
-				results_measure = {}
-				couch_test_results = ""
-				if params[:results]
-					results = params[:results]
-					
-					results.each do |key, value|
-						measure_name =  key
-						result_value = value
-						
-						measure = Measure.where(name: measure_name).first
-                        			next if measure.blank?      
-						if check_if_result_already_available(test_id,measure.id) == false            
+							if check_if_result_already_available(test_id,measure.id) == false            
 								if test_name = "Viral Load"
-										device_name = params[:platform] if !params[:platform].blank?
-										#device_serial = params[:platformserial] if !params[:platformserial].blank?
-										next if result_value == "Failed"
-																				
-										TestResult.create(
-											measure_id: measure.id,
-											test_id: test_id,
-											result: result_value,	
-											device_name: device_name,						
-											time_entered: result_date
-										)
-									else      
-							TestResult.create(
-								measure_id: measure.id,
-								test_id: test_id,
-								result: result_value,	
-								device_name: '',						
-								time_entered: result_date
-							)
+									device_name = params[:platform] if !params[:platform].blank?
+									next if result_value == "Failed"					
+									TestResult.create(
+										measure_id: measure.id,
+										test_id: test_id,
+										result: result_value,	
+										device_name: device_name,						
+										time_entered: result_date
+									)
+								else      
+									TestResult.create(
+										measure_id: measure.id,
+										test_id: test_id,
+										result: result_value,	
+										device_name: '',						
+										time_entered: result_date
+									)
 								end
-						else
-							if test_name == "Viral Load"
+							else
+								if test_name == "Viral Load"
 										test_result_ = TestResult.where(test_id: test_id, measure_id: measure.id).first
 										test_result_.update(result: result_value, time_entered: result_date)	
 										
 										t = TestStatusTrail.where(test_id: test_id,test_status_id:5).first
-								if !t.blank?
-									t.update(time_updated: result_date)
+									if !t.blank?
+										t.update(time_updated: result_date)
+									end
 								end
 							end
-						end
-						test_results_measures[measure_name] = { 'result_value': result_value }						
-					end	
-					results_measure[test_name] = test_results_measures	
-
-						test_status = TestStatus.where(name: params[:test_status]).first			
+							test_results_measures[measure_name] = { 'result_value': result_value }						
+						end	
+						results_measure[test_name] = test_results_measures	
+						test_status = TestStatus.where(name: params[:test_status]).first				
 						tst_update = Test.find_by(:id => test_id)
-
-
-						couch_id_updater = tst_update.test_status_id 
-							
-							#if tst_update.test_status_id == 9 && test_status.id == 5
-					#					   tst_update.test_status_id = test_status.id
-                                                       #                 tst_update.save
-                                                       #
-                                                        #                TestStatusTrail.create(
-                                                        #                        test_id: test_id,
-                                                        #                        time_updated: params[:time_updated],
-                                                        #                        test_status_id: test_status.id,
-                                                        #                        who_updated_id: params[:who_updated]['id_number'].to_s,
-                                                        #                        who_updated_name: params[:who_updated]['first_name'].to_s + " " + params[:who_updated]['last_name'].to_s,
-                                                        #                       who_updated_phone_number: ''
-							
-                                                        #                )
-
-							#end	
-							if tst_update.test_status_id == 9 && test_status.id == 2
-									tst_update.test_status_id = test_status.id
-									tst_update.save
-
-									TestStatusTrail.create(
-										test_id: test_id,
-										time_updated: params[:time_updated],
-										test_status_id: test_status.id,
-										who_updated_id: params[:who_updated]['id_number'].to_s,
-										who_updated_name: params[:who_updated]['first_name'].to_s + " " + params[:who_updated]['last_name'].to_s,
-										who_updated_phone_number: ''				
-
-									)
-									#return [true,""]
-								elsif tst_update.test_status_id == 2 && test_status.id == 3
-
-									 tst_update.test_status_id = test_status.id
-                                                                        tst_update.save
-
-                                                                        TestStatusTrail.create(
-                                                                                test_id: test_id,
-                                                                                time_updated: params[:time_updated],
-                                                                                test_status_id: test_status.id,
-                                                                                who_updated_id: params[:who_updated]['id_number'].to_s,
-                                                                                who_updated_name: params[:who_updated]['first_name'].to_s + " " + params[:who_updated]['last_name'].to_s,
-                                                                                who_updated_phone_number: ''
-
-                                                                        )
-
-								elsif tst_update.test_status_id == 3 && test_status.id == 4
-									tst_update.test_status_id = test_status.id
-									tst_update.save
-
-									TestStatusTrail.create(
-										test_id: test_id,
-										time_updated: params[:time_updated],
-										test_status_id: test_status.id,
-										who_updated_id: params[:who_updated]['id_number'].to_s,
-										who_updated_name: params[:who_updated]['first_name'].to_s + " " + params[:who_updated]['last_name'].to_s,
-										who_updated_phone_number: ''				
-
-									)
-									#return [true,""]
-								elsif tst_update.test_status_id == 4 && test_status.id == 5
-									tst_update.test_status_id = test_status.id
-									tst_update.save
-
-									TestStatusTrail.create(
-										test_id: test_id,
-										time_updated: params[:time_updated],
-										test_status_id: test_status.id,
-										who_updated_id: params[:who_updated]['id_number'].to_s,
-										who_updated_name: params[:who_updated]['first_name'].to_s + " " + params[:who_updated]['last_name'].to_s,
-										who_updated_phone_number: ''				
-
-									)
-									#return [true,""]
-								elsif test_status.id == 11
-									tst_update.test_status_id = test_status.id
-									tst_update.save
-
-									TestStatusTrail.create(
-										test_id: test_id,
-										time_updated: params[:time_updated],
-										test_status_id: test_status.id,
-										who_updated_id: params[:who_updated]['id_number'].to_s,
-										who_updated_name: params[:who_updated]['first_name'].to_s + " " + params[:who_updated]['last_name'].to_s,
-										who_updated_phone_number: ''				
-
-									)
-									#return [true,""]
-    								elsif test_status.id == 10
-                                                                        tst_update.test_status_id = test_status.id
-                                                                        tst_update.save
-
-                                                                        TestStatusTrail.create(
-                                                                                test_id: test_id,
-                                                                                time_updated: params[:time_updated],
-                                                                                test_status_id: test_status.id,
-                                                                                who_updated_id: params[:who_updated]['id_number'].to_s,
-                                                                                who_updated_name: params[:who_updated]['first_name'].to_s + " " + params[:who_updated]['last_name'].to_s,
-                                                                                who_updated_phone_number: ''
-
-                                                                        )
-
-								end
-
-
-
-
-
-
-				else
+						couch_id_updater = tst_update.test_status_id
+						if tst_update.test_status_id == 9 && test_status.id == 2
+							tst_update.test_status_id = test_status.id
+							tst_update.save
+							TestStatusTrail.create(
+								test_id: t.est_id,
+								time_updated: params[:time_updated],
+								test_status_id: test_status.id,
+								who_updated_id: params[:who_updated]['id_number'].to_s,
+								who_updated_name: params[:who_updated]['first_name'].to_s + " " + params[:who_updated]['last_name'].to_s,
+								who_updated_phone_number: ''				
+							)
+						elsif tst_update.test_status_id == 2 && test_status.id == 3
+							tst_update.test_status_id = test_status.id
+							tst_update.save
+							TestStatusTrail.create(
+								test_id: test_id,
+								time_updated: params[:time_updated],
+								test_status_id: test_status.id,
+								who_updated_id: params[:who_updated]['id_number'].to_s,
+								who_updated_name: params[:who_updated]['first_name'].to_s + " " + params[:who_updated]['last_name'].to_s,
+								who_updated_phone_number: ''
+							)
+						elsif tst_update.test_status_id == 3 && test_status.id == 4
+							tst_update.test_status_id = test_status.id
+							tst_update.save
+							TestStatusTrail.create(
+								test_id: test_id,
+								time_updated: params[:time_updated],
+								test_status_id: test_status.id,
+								who_updated_id: params[:who_updated]['id_number'].to_s,
+								who_updated_name: params[:who_updated]['first_name'].to_s + " " + params[:who_updated]['last_name'].to_s,
+								who_updated_phone_number: ''				
+							)
+						elsif tst_update.test_status_id == 4 && test_status.id == 5
+							tst_update.test_status_id = test_status.id
+							tst_update.save
+							TestStatusTrail.create(
+								test_id: test_id,
+								time_updated: params[:time_updated],
+								test_status_id: test_status.id,
+								who_updated_id: params[:who_updated]['id_number'].to_s,
+								who_updated_name: params[:who_updated]['first_name'].to_s + " " + params[:who_updated]['last_name'].to_s,
+								who_updated_phone_number: ''				
+							)
+						elsif test_status.id == 11
+							tst_update.test_status_id = test_status.id
+							tst_update.save
+							TestStatusTrail.create(
+								test_id: test_id,
+								time_updated: params[:time_updated],
+								test_status_id: test_status.id,
+								who_updated_id: params[:who_updated]['id_number'].to_s,
+								who_updated_name: params[:who_updated]['first_name'].to_s + " " + params[:who_updated]['last_name'].to_s,
+								who_updated_phone_number: ''				
+							)
+						elsif test_status.id == 10
+							tst_update.test_status_id = test_status.id
+							tst_update.save
+							TestStatusTrail.create(
+								test_id: test_id,
+								time_updated: params[:time_updated],
+								test_status_id: test_status.id,
+								who_updated_id: params[:who_updated]['id_number'].to_s,
+								who_updated_name: params[:who_updated]['first_name'].to_s + " " + params[:who_updated]['last_name'].to_s,
+								who_updated_phone_number: ''
+							)
+						else
+							puts '99'
+						end	
+					else
 						test_status = TestStatus.where(name: params[:test_status]).first
-						tst_update = Test.find_by(:id => test_id)
-						
-							couch_id_updater = tst_update.test_status_id
+						tst_update = Test.find_by(:id => test_id)							
+						couch_id_updater = tst_update.test_status_id
+						if tst_update.test_status_id == 9 && test_status.id == 2
+							tst_update.test_status_id = test_status.id
+							tst_update.save
+							TestStatusTrail.create(
+								test_id: test_id,
+								time_updated: params[:time_updated],
+								test_status_id: test_status.id,
+								who_updated_id: params[:who_updated]['id_number'].to_s,
+								who_updated_name: params[:who_updated]['first_name'].to_s + " " + params[:who_updated]['last_name'].to_s,
+								who_updated_phone_number: ''				
+							)		
+						elsif tst_update.test_status_id == 2 && test_status.id == 3
+							tst_update.test_status_id = test_status.id
+							tst_update.save
+							TestStatusTrail.create(
+								test_id: test_id,
+								time_updated: params[:time_updated],
+								test_status_id: test_status.id,
+								who_updated_id: params[:who_updated]['id_number'].to_s,
+								who_updated_name: params[:who_updated]['first_name'].to_s + " " + params[:who_updated]['last_name'].to_s,
+								who_updated_phone_number: ''
+							)
+						elsif tst_update.test_status_id == 3 && test_status.id == 4
+							tst_update.test_status_id = test_status.id
+							tst_update.save
+							TestStatusTrail.create(
+								test_id: test_id,
+								time_updated: params[:time_updated],
+								test_status_id: test_status.id,
+								who_updated_id: params[:who_updated]['id_number'].to_s,
+								who_updated_name: params[:who_updated]['first_name'].to_s + " " + params[:who_updated]['last_name'].to_s,
+								who_updated_phone_number: ''				
+							)
+						elsif tst_update.test_status_id == 4 && test_status.id == 5
+							tst_update.test_status_id = test_status.id
+							tst_update.save
 
-								if tst_update.test_status_id == 9 && test_status.id == 2
-									tst_update.test_status_id = test_status.id
-									tst_update.save
+							TestStatusTrail.create(
+								test_id: test_id,
+								time_updated: params[:time_updated],
+								test_status_id: test_status.id,
+								who_updated_id: params[:who_updated]['id_number'].to_s,
+								who_updated_name: params[:who_updated]['first_name'].to_s + " " + params[:who_updated]['last_name'].to_s,
+								who_updated_phone_number: ''				
 
-										
-									TestStatusTrail.create(
-										test_id: test_id,
-										time_updated: params[:time_updated],
-										test_status_id: test_status.id,
-										who_updated_id: params[:who_updated]['id_number'].to_s,
-										who_updated_name: params[:who_updated]['first_name'].to_s + " " + params[:who_updated]['last_name'].to_s,
-										who_updated_phone_number: ''				
+							)
+							#return [true,""]
+						elsif test_status.id == 11
+							tst_update.test_status_id = test_status.id
+							tst_update.save
 
-									)		
-									#return [true,""]
-								elsif tst_update.test_status_id == 2 && test_status.id == 3
-									 tst_update.test_status_id = test_status.id
-                                                                        tst_update.save
+							TestStatusTrail.create(
+								test_id: test_id,
+								time_updated: params[:time_updated],
+								test_status_id: test_status.id,
+								who_updated_id: params[:who_updated]['id_number'].to_s,
+								who_updated_name: params[:who_updated]['first_name'].to_s + " " + params[:who_updated]['last_name'].to_s,
+								who_updated_phone_number: ''				
 
+							)
+							#return [true,""]
+						elsif test_status.id == 10
+																																		tst_update.test_status_id = test_status.id
+																																		tst_update.save
 
-                                                                        TestStatusTrail.create(
-                                                                                test_id: test_id,
-                                                                                time_updated: params[:time_updated],
-                                                                                test_status_id: test_status.id,
-                                                                                who_updated_id: params[:who_updated]['id_number'].to_s,
-                                                                                who_updated_name: params[:who_updated]['first_name'].to_s + " " + params[:who_updated]['last_name'].to_s,
-                                                                                who_updated_phone_number: ''
+																																		TestStatusTrail.create(
+																																						test_id: test_id,
+																																						time_updated: params[:time_updated],
+																																						test_status_id: test_status.id,
+																																						who_updated_id: params[:who_updated]['id_number'].to_s,
+																																						who_updated_name: params[:who_updated]['first_name'].to_s + " " + params[:who_updated]['last_name'].to_s,
+																																						who_updated_phone_number: ''
 
-                                                                        )
+																																		)
 
-								elsif tst_update.test_status_id == 3 && test_status.id == 4
-									tst_update.test_status_id = test_status.id
-									tst_update.save
-
-									TestStatusTrail.create(
-										test_id: test_id,
-										time_updated: params[:time_updated],
-										test_status_id: test_status.id,
-										who_updated_id: params[:who_updated]['id_number'].to_s,
-										who_updated_name: params[:who_updated]['first_name'].to_s + " " + params[:who_updated]['last_name'].to_s,
-										who_updated_phone_number: ''				
-
-									)
-									#return [true,""]
-								elsif tst_update.test_status_id == 4 && test_status.id == 5
-									tst_update.test_status_id = test_status.id
-									tst_update.save
-
-									TestStatusTrail.create(
-										test_id: test_id,
-										time_updated: params[:time_updated],
-										test_status_id: test_status.id,
-										who_updated_id: params[:who_updated]['id_number'].to_s,
-										who_updated_name: params[:who_updated]['first_name'].to_s + " " + params[:who_updated]['last_name'].to_s,
-										who_updated_phone_number: ''				
-
-									)
-									#return [true,""]
-								elsif test_status.id == 11
-									tst_update.test_status_id = test_status.id
-									tst_update.save
-
-									TestStatusTrail.create(
-										test_id: test_id,
-										time_updated: params[:time_updated],
-										test_status_id: test_status.id,
-										who_updated_id: params[:who_updated]['id_number'].to_s,
-										who_updated_name: params[:who_updated]['first_name'].to_s + " " + params[:who_updated]['last_name'].to_s,
-										who_updated_phone_number: ''				
-
-									)
-									#return [true,""]
-								elsif test_status.id == 10
-                                                                        tst_update.test_status_id = test_status.id
-                                                                        tst_update.save
-
-                                                                        TestStatusTrail.create(
-                                                                                test_id: test_id,
-                                                                                time_updated: params[:time_updated],
-                                                                                test_status_id: test_status.id,
-                                                                                who_updated_id: params[:who_updated]['id_number'].to_s,
-                                                                                who_updated_name: params[:who_updated]['first_name'].to_s + " " + params[:who_updated]['last_name'].to_s,
-                                                                                who_updated_phone_number: ''
-
-                                                                        )
-
-								end
-
-				end		
-				
-				if !results_measure.blank?
-					retr_order = OrderService.retrieve_order_from_couch(couch_id)
-					if retr_order != "false" 
-					couch_test_statuses = retr_order['test_statuses'][test_name]
-					couch_test_statuses[time] =  details if !couch_test_statuses.blank?
-					retr_order['test_statuses'][test_name] =  couch_test_statuses
-					
-					retr_order['test_results'][test_name] = {
-						'results': test_results_measures,
-						'date_result_entered': result_date,
-						'result_entered_by': {
-							:first_name => params[:who_updated]['first_name'],
-							:last_name => params[:who_updated]['last_name'],
-							:phone_number => '',
-							:id => params[:who_updated]['id_number'] 
-						}                             
-				        }		
-						if couch_id_updater == 9 && params[:test_status] == "started" 
-										OrderService.update_couch_order(couch_id,retr_order)
-									elsif couch_id_updater == 3 && params[:test_status] == "completed" 
-										OrderService.update_couch_order(couch_id,retr_order)
-									elsif couch_id_updater == 4 && params[:test_status] == "verified" 
-										OrderService.update_couch_order(couch_id,retr_order)
-									elsif params[:test_status] == "rejected" 
-										OrderService.update_couch_order(couch_id,retr_order)
 						end
-					#return [true,""]
-					end
-					
-				else
-					retr_order = OrderService.retrieve_order_from_couch(couch_id)
-					if retr_order != "false"
-						couch_test_statuses = retr_order['test_statuses'][test_name]
-						couch_test_statuses[time] =  details if !couch_test_statuses.blank?
-						retr_order['test_statuses'][test_name] =  couch_test_statuses
+					end		
+					if !results_measure.blank?
+						retr_order = OrderService.retrieve_order_from_couch(couch_id)
+						if retr_order != "false" 
+							couch_test_statuses = retr_order['test_statuses'][test_name]
+							couch_test_statuses[time] =  details if !couch_test_statuses.blank?
+
+							retr_order['test_statuses'][test_name] =  couch_test_statuses
+							retr_order['test_results'][test_name] = {
+								'results': test_results_measures,
+								'date_result_entered': result_date,
+								'result_entered_by': {
+									:first_name => params[:who_updated]['first_name'],
+									:last_name => params[:who_updated]['last_name'],
+									:phone_number => '',
+									:id => params[:who_updated]['id_number'] 
+								}                             
+							}		
 							if couch_id_updater == 9 && params[:test_status] == "started" 
-										OrderService.update_couch_order(couch_id,retr_order)
-									elsif couch_id_updater == 3 && params[:test_status] == "completed" 
-										OrderService.update_couch_order(couch_id,retr_order)
-									elsif couch_id_updater == 4 && params[:test_status] == "verified" 
-										OrderService.update_couch_order(couch_id,retr_order)
-									elsif params[:test_status] == "test-rejected" 
-										OrderService.update_couch_order(couch_id,retr_order)
+								OrderService.update_couch_order(couch_id,retr_order)
+							elsif couch_id_updater == 3 && params[:test_status] == "completed" 
+								OrderService.update_couch_order(couch_id,retr_order)
+							elsif couch_id_updater == 4 && params[:test_status] == "verified" 
+								OrderService.update_couch_order(couch_id,retr_order)
+							elsif params[:test_status] == "rejected" 
+								OrderService.update_couch_order(couch_id,retr_order)
 							end
-					#return [true,""]
+						end		
+					else
+						retr_order = OrderService.retrieve_order_from_couch(couch_id)
+						if retr_order != "false"
+							couch_test_statuses = retr_order['test_statuses'][test_name]
+							couch_test_statuses[time] =  details if !couch_test_statuses.blank?
+
+							retr_order['test_statuses'][test_name] =  couch_test_statuses
+							if couch_id_updater == 9 && params[:test_status] == "started" 
+								OrderService.update_couch_order(couch_id,retr_order)
+							elsif couch_id_updater == 3 && params[:test_status] == "completed" 
+								OrderService.update_couch_order(couch_id,retr_order)
+							elsif couch_id_updater == 4 && params[:test_status] == "verified" 
+								OrderService.update_couch_order(couch_id,retr_order)
+							elsif params[:test_status] == "test-rejected" 
+								OrderService.update_couch_order(couch_id,retr_order)
+							end
+						end
 					end
-					
-				end
-				return [true,""]
-
-			    else
-				return [false,"order already updated with such state"]
-			    end	
-
+					puts '5675'
+					return [true,""]
+				else
+					return [false,"order already updated with such state"]
+				end	
 			else
 				return [false,"order with such test not available"]
 			end

@@ -3,7 +3,7 @@ module  OrderService
 
       def self.create_order(params,tracking_number)
             couch_order = 0
-            ActiveRecord::Base.transaction do 
+            ActiveRecord::Base.transaction do
 		      params[:tests].each do |tst|
 			      tst = "Cryptococcus Antigen Test"  if tst == "Cr Ag"
 			      tst = "CD4" if tst == "PIMA CD4"
@@ -214,10 +214,11 @@ module  OrderService
                         tst =  "Protein" if tst == "Protein and Sugar"
 			      tst =  "Nasopharyngeal swab"  if tst == "Nasopharyngeal"
 				tst =  "SARS Cov 2" if tst == "SARS-CoV-2"
-			tst =  "Creatine kinase" if tst == "CREATINE (J)"
+			      tst =  "Creatine kinase" if tst == "CREATINE (J)"
 			      tst =  check_test_name(tst)
                         tst = tst.gsub("&amp;",'&')
                         status = check_test(tst)
+                        
                         if status == false
                               details = {}
                               details[time] = {
@@ -235,15 +236,41 @@ module  OrderService
                               rst = TestType.get_test_type_id(tst)
                               rst2 = TestStatus.get_test_status_id('drawn')
 
-                              Test.create(
-                                    :specimen_id => sp_obj.id,
-                                    :test_type_id => rst,
-                                    :patient_id => patient_obj.id,
-                                    :created_by => params[:who_order_test_first_name] + " " + params[:who_order_test_last_name],
-                                    :panel_id => '',
-                                    :time_created => time,
-                                    :test_status_id => rst2
-                              )
+                              # Test.create!(
+                              #       :specimen_id => sp_obj.id,
+                              #       :test_type_id => rst,
+                              #       :patient_id => patient_obj.id,
+                              #       :created_by => params[:who_order_test_first_name] + " " + params[:who_order_test_last_name],
+                              #       :panel_id => '',
+                              #       :time_created => time,
+                              #       :test_status_id => rst2
+                              # )
+
+                              # if(tracking_number == "XQEC220IBZ2637")
+                                    begin
+                                          Test.create!(
+                                                :specimen_id => sp_obj.id,
+                                                :test_type_id => rst,
+                                                :patient_id => patient_obj.id,
+                                                :created_by => params[:who_order_test_first_name] + " " + params[:who_order_test_last_name],
+                                                :panel_id => '',
+                                                :time_created => time,
+                                                :test_status_id => rst2
+                                          )
+                                    rescue => e
+                                          debugger
+                                    end
+                              # else
+                              #       Test.create(
+                              #             :specimen_id => sp_obj.id,
+                              #             :test_type_id => rst,
+                              #             :patient_id => patient_obj.id,
+                              #             :created_by => params[:who_order_test_first_name] + " " + params[:who_order_test_last_name],
+                              #             :panel_id => '',
+                              #             :time_created => time,
+                              #             :test_status_id => rst2
+                              #       )
+                              # end
                         else
                               pa_id = PanelType.where(name: tst).first
                               res = TestType.find_by_sql("SELECT test_types.id FROM test_types INNER JOIN panels 
