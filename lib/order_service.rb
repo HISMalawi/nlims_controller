@@ -546,50 +546,50 @@ module OrderService
   end
 
   def self.query_results_by_npid(npid)
-    ord = Speciman.find_by_sql("SELECT specimen.id AS trc, specimen.tracking_number AS track,specimen_types.name AS spec_name FROM specimen
-                                    INNER JOIN specimen_types ON specimen_types.id = specimen.specimen_type_id
-                                    INNER JOIN tests ON tests.specimen_id = specimen.id
-                                    INNER JOIN patients ON patients.id = tests.patient_id
-                                    WHERE patients.patient_number='#{npid}'")
+    ord = Speciman.find_by_sql("SELECT specimen.id AS trc, specimen.tracking_number AS track,
+																specimen_types.name AS spec_name FROM specimen
+																INNER JOIN specimen_types ON specimen_types.id = specimen.specimen_type_id
+																INNER JOIN tests ON tests.specimen_id = specimen.id
+																INNER JOIN patients ON patients.id = tests.patient_id
+																WHERE patients.patient_number='#{npid}'")
     info = {}
-    if ord.length > 0
+    if !ord.empty?
       checker = false
       ord.each do |ord_lo|
         r = Test.find_by_sql("SELECT test_types.name AS tst_type, tests.id AS tst_id FROM test_types
-                                                INNER JOIN tests ON test_types.id = tests.test_type_id
-                                                INNER JOIN specimen ON specimen.id = tests.specimen_id
-                                                WHERE specimen.id ='#{ord_lo.trc}'")
-
-        if r.length > 0
+															INNER JOIN tests ON test_types.id = tests.test_type_id
+															INNER JOIN specimen ON specimen.id = tests.specimen_id
+															WHERE specimen.id ='#{ord_lo.trc}'")
+        unless r.empty?
           test_re = {}
           r.each do |te|
             res = Speciman.find_by_sql("SELECT measures.name AS measure_name, test_results.result AS result,
-                                                      tests.id AS tstt_id
-                                                      FROM specimen INNER JOIN tests ON tests.specimen_id = specimen.id
-                                                      INNER JOIN test_results ON test_results.test_id = tests.id
-                                                      INNER JOIN measures ON measures.id = test_results.measure_id
-                                                      WHERE specimen.id  = '#{ord_lo.trc}' AND
-                                                      test_results.test_id ='#{te.tst_id}'")
+																				tests.id AS tstt_id
+																				FROM specimen INNER JOIN tests ON tests.specimen_id = specimen.id
+																				INNER JOIN test_results ON test_results.test_id = tests.id
+																				INNER JOIN measures ON measures.id = test_results.measure_id
+																				WHERE specimen.id  = '#{ord_lo.trc}' AND
+																				test_results.test_id ='#{te.tst_id}'")
             results = {}
-
-            if res.length > 0
+            if !res.empty?
               res.each do |re|
-                tet_id = re.tstt_id
-                $ts = TestStatusTrail.find_by_sql("SELECT max(test_status_trails.created_at),
-                                                                        test_statuses.name AS st_name
-                                                                        FROM test_statuses
-                                                                        INNER JOIN test_status_trails
-                                                                        ON test_status_trails.test_status_id =
-                                                                        test_statuses.id
-                                                                        INNER JOIN tests ON tests.id =
-                                                                        test_status_trails.test_id
-                                                                        WHERE tests.id='#{tet_id}' GROUP BY test_statuses.name
-                                                                        ")
-
                 results[re.measure_name] = re.result
               end
-              test_re[te.tst_type] = { 'test_result': results,
-                                       'test_status': $ts[0].st_name }
+              ts_name_ = TestStatusTrail.find_by_sql("SELECT max(test_status_trails.created_at),
+																									test_statuses.name AS st_name
+																									FROM test_statuses
+																									INNER JOIN test_status_trails
+																									ON test_status_trails.test_status_id =
+																									test_statuses.id
+																									INNER JOIN tests ON tests.id =
+																									test_status_trails.test_id
+																									WHERE tests.id='#{te.tst_id}' GROUP BY test_statuses.name
+																									")
+              ts_name_ = ts_name_[0].st_name
+              test_re[te.tst_type] = {
+                'test_result': results,
+                'test_status': ts_name_
+              }
               checker = true
             else
               test_re[te.tst_type] = {}
@@ -597,16 +597,16 @@ module OrderService
           end
 
         end
-        info[ord_lo.track] = { 'sample_type': ord_lo.spec_name,
-                               'tests': test_re }
+        info[ord_lo.track] = {
+          'sample_type': ord_lo.spec_name,
+          'tests': test_re
+        }
       end
-
       if checker == true
         info
       else
         checker
       end
-
     else
       false
     end
@@ -614,23 +614,22 @@ module OrderService
 
   def self.query_results_by_tracking_number(tracking_number)
     r = Test.find_by_sql("SELECT test_types.name AS tst_type, tests.id AS tst_id FROM test_types
-                                    INNER JOIN tests ON test_types.id = tests.test_type_id
-                                    INNER JOIN specimen ON specimen.id = tests.specimen_id
-                                    WHERE specimen.tracking_number ='#{tracking_number}'")
-
+													INNER JOIN tests ON test_types.id = tests.test_type_id
+													INNER JOIN specimen ON specimen.id = tests.specimen_id
+													WHERE specimen.tracking_number ='#{tracking_number}'")
     checker = false
     r_date = ''
-    if r.length > 0
+    if !r.empty?
       test_re = {}
       r.each do |te|
-        res = Speciman.find_by_sql("SELECT measures.name AS measure_name, test_results.result AS result, test_results.time_entered AS time_entered
-                                          FROM specimen INNER JOIN tests ON tests.specimen_id = specimen.id
-                                          INNER JOIN test_results ON test_results.test_id = tests.id
-                                          INNER JOIN measures ON measures.id = test_results.measure_id
-                                          WHERE specimen.tracking_number  = '#{tracking_number}' AND
-                                          test_results.test_id ='#{te.tst_id}'")
+        res = Speciman.find_by_sql("SELECT measures.name AS measure_name, test_results.result AS result,
+																		test_results.time_entered AS time_entered
+																		FROM specimen INNER JOIN tests ON tests.specimen_id = specimen.id
+																		INNER JOIN test_results ON test_results.test_id = tests.id
+																		INNER JOIN measures ON measures.id = test_results.measure_id
+																		WHERE specimen.tracking_number  = '#{tracking_number}' AND
+																		test_results.test_id ='#{te.tst_id}'")
         results = {}
-
         if res.length > 0
           res.each do |re|
             results[re.measure_name] = re.result
@@ -648,7 +647,6 @@ module OrderService
         end
       end
       if checker == true
-
         test_re
       else
         checker
