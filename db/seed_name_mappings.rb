@@ -4,7 +4,7 @@ test_types = TestType.all
 test_types.each do |test_type|
   NameMapping.find_or_create_by(manually_created_name: test_type.name, actual_name: test_type.name)
 end
-test_name_mapping = {
+name_mappings = {
   'PIMA CD4' => 'CD4',
   'Viral Load Gene X-per' => 'Viral Load',
   'Cr Ag' => 'Cryptococcus Antigen Test',
@@ -30,9 +30,22 @@ test_name_mapping = {
   'C_S' => 'Culture & Sensitivity',
   'hep' => 'Hepatitis B Test',
   'Sickle' => 'Sickling Test',
-  'Protein and Sugar' => 'Protein'
+  'Protein and Sugar' => 'Protein',
+  'Nasopharyngeal' => 'Nasopharyngeal swab',
+  'SARS-CoV-2' => 'SARS Cov 2',
+  'CREATINE (J)' => 'Creatine kinase',
+  'Plasma (2)' => 'Plasma',
+  'DBS 70 micro ltr' => 'DBS 70ml',
+  'DBS 70ml (2)' => 'DBS 70ml',
+  'Bwaila Hospital Martin Preuss Centre' => 'Bwaila Hospital',
+  'Kawale Health Center' => 'Kawale Health Centre',
+  'Mitundu Hospital' => 'Mitundu Rural Hospital',
+  'Area 18 Health Center' => 'Area 18 Urban Health Centre',
+  'Chileka (Lilongwe) Health Center' => 'Chileka Health Centre (Lilongwe)',
+  'Kamuzu (KCH) Central Hospital' => 'Kamuzu Central Hospital',
+  'Gateway' => 'Gateway Clinic (Blantyre)'
 }
 
-test_name_mapping.each do |manually_created_name, actual_name|
-  NameMapping.find_or_create_by(manually_created_name: manually_created_name, actual_name: actual_name)
+name_mappings.each do |manually_created_name, actual_name|
+  NameMapping.find_or_create_by(manually_created_name: manually_created_name.strip, actual_name: actual_name.strip)
 end
