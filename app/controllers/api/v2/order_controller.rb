@@ -68,7 +68,6 @@ class API::V2::OrderController < ApplicationController
 											couch_id: st[2]
 										}
 								}
-							TrackingNumberService.prepare_next_tracking_number
 						end										
 				end
 
@@ -126,11 +125,6 @@ def query_order_by_tracking_number
 
 	end
 
-<<<<<<< HEAD
-
-
-=======
->>>>>>> 370fa166a3f019d5557c800340b2f4c8fb1fde61
     def  confirm_order_request
         if params['tracking_number']  && params['specimen_type']	&& params['target_lab']
 			OrderService.confirm_order_request(params)
