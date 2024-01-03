@@ -15,6 +15,7 @@ class NameMapping < ApplicationRecord
   def self.filter_name(name)
     name_ = name.downcase.gsub(/\(paeds\)/, '').strip
     name_ = name_.downcase.gsub(/\(cancercenter\)/, '').strip
+    name_ = name_.gsub("_"," ")
     name_
   end
 end
