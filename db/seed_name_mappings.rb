@@ -4,6 +4,16 @@ test_types = TestType.all
 test_types.each do |test_type|
   NameMapping.find_or_create_by(manually_created_name: test_type.name, actual_name: test_type.name)
 end
+
+specimens = SpecimenType.all
+specimens.each do |specimen|
+  NameMapping.find_or_create_by(manually_created_name: specimen.name, actual_name: specimen.name)
+end
+
+wards = Ward.all
+wards.each do |ward|
+  NameMapping.find_or_create_by(manually_created_name: ward.name, actual_name: ward.name)
+end
 name_mappings = {
   'PIMA CD4' => 'CD4',
   'Viral Load Gene X-per' => 'Viral Load',
