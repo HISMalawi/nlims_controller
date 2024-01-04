@@ -663,41 +663,43 @@ module OrderService
       res = Site.find_by_sql("SELECT name AS site_name FROM sites WHERE id='#{facility}'")
 
       unless res.blank?
-        res_ = Speciman.find_by_sql("SELECT specimen.tracking_number AS tracking_number, specimen_types.name AS sample_type, specimen_statuses.name AS specimen_status,
-                                                      wards.name AS order_location, specimen.date_created AS date_created, specimen.priority AS priority,
-                                                      specimen.drawn_by_id AS drawer_id, specimen.drawn_by_name AS drawer_name,
-                                                      specimen.drawn_by_phone_number AS drawe_number, specimen.target_lab AS target_lab,
-                                                      specimen.sending_facility AS health_facility, specimen.requested_by AS requested_by,
-                                                      specimen.date_created AS date_drawn,
-                                                      patients.patient_number AS pat_id, patients.name AS pat_name,
-                                                      patients.dob AS dob, patients.gender AS sex
-                                                      FROM specimen INNER JOIN specimen_statuses ON specimen_statuses.id = specimen.specimen_status_id
-                                                      LEFT JOIN specimen_types ON specimen_types.id = specimen.specimen_type_id
-                                                      INNER JOIN tests ON tests.specimen_id = specimen.id
-                                                      INNER JOIN patients ON patients.id = tests.patient_id
-                                                      LEFT JOIN wards ON specimen.ward_id = wards.id
-						      WHERE specimen.sending_facility ='#{res[0]['site_name'].gsub("'",
-                                                                         "\\\\'")}' AND specimen.tracking_number NOT IN (SELECT tracking_number FROM specimen_dispatches) GROUP BY specimen.id DESC limit 250")
-
+        res_ = Speciman.find_by_sql("SELECT specimen.tracking_number AS tracking_number,
+																		specimen_types.name AS sample_type, specimen_statuses.name AS specimen_status,
+																		wards.name AS order_location, specimen.date_created AS date_created,
+																		specimen.priority AS priority,
+																		specimen.drawn_by_id AS drawer_id, specimen.drawn_by_name AS drawer_name,
+																		specimen.drawn_by_phone_number AS drawe_number, specimen.target_lab AS target_lab,
+																		specimen.sending_facility AS health_facility, specimen.requested_by AS requested_by,
+																		specimen.date_created AS date_drawn,
+																		patients.patient_number AS pat_id, patients.name AS pat_name,
+																		patients.dob AS dob, patients.gender AS sex
+																		FROM specimen INNER JOIN specimen_statuses ON specimen_statuses.id = specimen.specimen_status_id
+																		LEFT JOIN specimen_types ON specimen_types.id = specimen.specimen_type_id
+																		INNER JOIN tests ON tests.specimen_id = specimen.id
+																		INNER JOIN patients ON patients.id = tests.patient_id
+																		LEFT JOIN wards ON specimen.ward_id = wards.id
+						      									WHERE specimen.sending_facility ='#{res[0]['site_name'].gsub("'", "\\\\'")}'
+																		AND specimen.tracking_number NOT IN (SELECT tracking_number FROM specimen_dispatches)
+																		GROUP BY specimen.id DESC limit 250")
         tsts = {}
-
-        if res_.length > 0
+        if !res_.empty?
           res_.each do |ress|
             tst = Test.find_by_sql("SELECT test_types.name AS test_name, test_statuses.name AS test_status
-                                                      FROM tests
-                                                      INNER JOIN specimen ON specimen.id = tests.specimen_id
-                                                      INNER JOIN test_types ON test_types.id = tests.test_type_id
-                                                      INNER JOIN test_statuses ON test_statuses.id = tests.test_status_id
-                                                      WHERE specimen.tracking_number ='#{ress.tracking_number}'")
+																	FROM tests
+																	INNER JOIN specimen ON specimen.id = tests.specimen_id
+																	INNER JOIN test_types ON test_types.id = tests.test_type_id
+																	INNER JOIN test_statuses ON test_statuses.id = tests.test_status_id
+																	WHERE specimen.tracking_number ='#{ress.tracking_number}'")
 
-            if tst.length > 0
+            unless tst.empty?
               tst.each do |t|
                 tsts[t.test_name] = t.test_status
               end
             end
 
             facility_samples.push(
-              { tracking_number: ress.tracking_number,
+              {
+                tracking_number: ress.tracking_number,
                 sample_type: ress.sample_type,
                 specimen_status: ress.specimen_status,
                 order_location: ress.order_location,
@@ -718,7 +720,8 @@ module OrderService
                   dob: ress.dob
                 },
 
-                tests: tsts }
+                tests: tsts
+              }
             )
             tsts = {}
           end
@@ -728,7 +731,7 @@ module OrderService
         end
 
       end
-      master_facility["#{facility}"] = facility_samples
+      master_facility[facility.to_s] = facility_samples
       facility_samples = []
     end
     [true, master_facility]
