@@ -376,7 +376,7 @@ class API::V1::TestController < ApplicationController
 			end
 		end
 
-		if msg
+		if !msg.blank?
 			response = {
 						status: 401,
 						error: true,
