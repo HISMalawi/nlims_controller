@@ -376,6 +376,7 @@ module OrderService
     tst = TestType.find_by_sql("SELECT name AS tst_name FROM test_types WHERE name ='#{test_name}' LIMIT 1")
     return tst[0].tst_name unless tst.empty?
 
+    FailedTestType.find_or_create_by(test_type: test_name, reason: 'Test Type not avail in NLIMS')
     false
   end
 
