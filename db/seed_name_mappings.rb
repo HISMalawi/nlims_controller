@@ -10,6 +10,11 @@ specimens.each do |specimen|
   NameMapping.find_or_create_by(manually_created_name: specimen.name, actual_name: specimen.name)
 end
 
+panels = PanelType.all
+panels.each do |panel|
+  NameMapping.find_or_create_by(manually_created_name: panel.name, actual_name: panel.name)
+end
+
 wards = Ward.all
 wards.each do |ward|
   NameMapping.find_or_create_by(manually_created_name: ward.name, actual_name: ward.name)

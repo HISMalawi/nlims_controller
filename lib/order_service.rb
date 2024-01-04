@@ -850,13 +850,11 @@ module OrderService
     ActiveRecord::Base.transaction do
       npid = params[:national_patient_id]
       patient_obj = Patient.where(patient_number: npid)
-
       patient_obj = patient_obj.first unless patient_obj.blank?
-
       if patient_obj.blank?
         patient_obj = patient_obj.create(
           patient_number: npid,
-          name: params[:first_name] + ' ' + params[:last_name],
+          name: "#{params[:first_name]} #{params[:last_name]}",
           email: '',
           dob: params[:date_of_birth],
           gender: params[:gender],
@@ -876,14 +874,12 @@ module OrderService
       art_regimen = params[:art_regimen] unless params[:art_regimen].blank?
       arv_number = params[:arv_number] unless params[:arv_number].blank?
       art_start_date = params[:art_start_date] unless params[:art_start_date].blank?
-      # art_start_date = params[:art_start_date] if !params[:art_start_date].blank?
       who_order = {
         first_name: params[:who_order_test_first_name],
         last_name: params[:who_order_test_last_name],
         phone_number: params[:who_order_test_phone_number],
         id: params[:who_order_test_id]
       }
-
       patient = {
         first_name: params[:first_name],
         last_name: params[:last_name],
@@ -905,10 +901,7 @@ module OrderService
           id: params[:who_order_test_id]
         }
       }
-
-      # sample_type_id = SpecimenType.get_specimen_type_id(params[:sample_type])
       sample_status_id = SpecimenStatus.get_specimen_status_id('specimen_not_collected')
-
       sp_obj = Speciman.create(
         tracking_number: tracking_number,
         specimen_type_id: 0,
@@ -917,7 +910,7 @@ module OrderService
         ward_id: Ward.get_ward_id(params[:order_location]),
         priority: params[:sample_priority],
         drawn_by_id: params[:who_order_test_id],
-        drawn_by_name: params[:who_order_test_first_name] + ' ' + params[:who_order_test_last_name],
+        drawn_by_name: "#{params[:who_order_test_first_name]} #{params[:who_order_test_last_name]}",
         drawn_by_phone_number: params[:who_order_test_phone_number],
         target_lab: 'not_assigned',
         art_start_date: art_start_date,
@@ -934,10 +927,9 @@ module OrderService
         visit_type_id: '',
         ward_id: Ward.get_ward_id(params[:order_location])
       )
-      visit_id = res.id
 
       params[:tests].each do |tst|
-        tst = tst.gsub('&amp;', '&')
+        tst = NameMapping.actual_name_of(tst)
         status = check_test(tst)
         if status == false
           details = {}
@@ -958,7 +950,7 @@ module OrderService
             specimen_id: sp_obj.id,
             test_type_id: rst,
             patient_id: patient_obj.id,
-            created_by: params[:who_order_test_first_name] + ' ' + params[:who_order_test_last_name],
+            created_by: "#{params[:who_order_test_first_name]} #{params[:who_order_test_last_name]}",
             panel_id: '',
             time_created: time,
             test_status_id: rst2
@@ -966,9 +958,9 @@ module OrderService
         else
           pa_id = PanelType.where(name: tst).first
           res = TestType.find_by_sql("SELECT test_types.id FROM test_types INNER JOIN panels
-                                                            ON panels.test_type_id = test_types.id
-                                                            INNER JOIN panel_types ON panel_types.id = panels.panel_type_id
-                                                            WHERE panel_types.id ='#{pa_id.id}'")
+																			ON panels.test_type_id = test_types.id
+																			INNER JOIN panel_types ON panel_types.id = panels.panel_type_id
+																			WHERE panel_types.id ='#{pa_id.id}'")
           res.each do |tt|
             details = {}
             details[time] = {
@@ -981,7 +973,6 @@ module OrderService
               }
             }
             test_status[tst] = details
-            # rst = TestType.get_test_type_id(tt)
             rst2 = TestStatus.get_test_status_id('drawn')
             Test.create(
               specimen_id: sp_obj.id,
