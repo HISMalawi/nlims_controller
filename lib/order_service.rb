@@ -841,8 +841,8 @@ module OrderService
   end
 
   def self.check_if_dispatched(tracking_number, dispatcher_type)
-    rs = SpecimenDispatch.find_by_sql("SELECT * FROM specimen_dispatches WHERE tracking_number='#{tracking_number}' AND dispatcher_type_id='#{dispatcher_type}'")
-    rs.length > 0
+    dispatched = SpecimenDispatch.find_by_sql("SELECT * FROM specimen_dispatches WHERE tracking_number='#{tracking_number}' AND dispatcher_type_id='#{dispatcher_type}'")
+    !dispatched.empty?
   end
 
   def self.request_order(params, tracking_number)
