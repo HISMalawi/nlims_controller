@@ -58,7 +58,9 @@ name_mappings = {
   'Area 18 Health Center' => 'Area 18 Urban Health Centre',
   'Chileka (Lilongwe) Health Center' => 'Chileka Health Centre (Lilongwe)',
   'Kamuzu (KCH) Central Hospital' => 'Kamuzu Central Hospital',
-  'Gateway' => 'Gateway Clinic (Blantyre)'
+  'Gateway' => 'Gateway Clinic (Blantyre)',
+  'urine chemistry' => 'Urine Chemistries',
+  'cryptococcal antigen test' => 'Cryptococcus Antigen Test'
 }
 
 name_mappings.each do |manually_created_name, actual_name|

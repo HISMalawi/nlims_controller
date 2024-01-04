@@ -34,23 +34,25 @@ class API::V1::TestController < ApplicationController
 										
 									}
 							}
-
+					
 					if update_details['results']
-						settings = YAML.load_file("#{Rails.root.to_s}/config/results_channel_socket.yml")
-						socket = SocketIO::Client::Simple.connect "http://#{settings['host']}:#{settings['port']}"
-						socket.on :connect do
-							puts "connect!!!"
-							puts 'Putting result on socket'
-							response = socket.emit :results, {"tracking_number": update_details['tracking_number'], 
-																"results": update_details['results'],
-																"test_status": update_details['test_status'],
-																"test_name": update_details['test_name'],
-																"date_updated": update_details['date_updated'],
-																"who_updated": update_details['who_updated']
-															}				   
-							puts response
-							socket.disconnect
-						end					
+						sock_status = socket_status
+						if sock_status
+							socket = SocketIO::Client::Simple.connect @socket_url
+							socket.on :connect do
+								puts "connect!!!"
+								puts 'Putting result on socket'
+								response = socket.emit :results, {"tracking_number": update_details['tracking_number'], 
+																	"results": update_details['results'],
+																	"test_status": update_details['test_status'],
+																	"test_name": update_details['test_name'],
+																	"date_updated": update_details['date_updated'],
+																	"who_updated": update_details['who_updated']
+																}				   
+								puts response
+								socket.disconnect
+							end		
+						end
 					end
 				else
 						response = {
@@ -388,5 +390,22 @@ class API::V1::TestController < ApplicationController
 		end
 
 		render plain: response.to_json and return		
+	end
+
+	private
+
+	def socket_status
+		begin
+			settings = YAML.load_file("#{Rails.root.to_s}/config/results_channel_socket.yml")
+			@socket_url = "http://#{settings['host']}:#{settings['port']}"
+		rescue StandardError => e
+			@socket_url = 'http://localhost:3011'
+		end
+		begin 
+			RestClient.get(@socket_url)
+			true
+		rescue StandardError => e
+			false
+		end
 	end
 end
