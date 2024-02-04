@@ -74,13 +74,13 @@ module OrderService
       art_regimen = params[:art_regimen] unless params[:art_regimen].blank?
       arv_number = params[:arv_number] unless params[:arv_number].blank?
       art_start_date = params[:art_start_date] unless params[:art_start_date].blank?
-      unless params[:date_sample_drawn].blank?
-        time_got = Time.new
-        time_got = time_got.strftime('%H:%M:%S')
-        if params[:date_sample_drawn].split(' ').length == 1
-          params[:date_sample_drawn] = "#{params[:date_sample_drawn]} #{time_got}"
-        end
-      end
+      # unless params[:date_sample_drawn].blank?
+      #   time_got = Time.new
+      #   time_got = time_got.strftime('%H:%M:%S')
+      #   if params[:date_sample_drawn].split(' ').length == 1
+      #     params[:date_sample_drawn] = "#{params[:date_sample_drawn]} #{time_got}"
+      #   end
+      # end
       sp_obj = Speciman.create(
         tracking_number: tracking_number,
         specimen_type_id: sample_type_id,
@@ -103,7 +103,7 @@ module OrderService
       res = Visit.create(
         patient_id: npid,
         visit_type_id: '',
-        ward_id: Ward.get_ward_id(params[:order_location])
+        ward_id: order_ward
       )
       couchdb_tests = []
       params[:tests].each do |tst|
@@ -350,24 +350,26 @@ module OrderService
 
   def self.get_site_code_number(site_code_alpha)
     site_code_number = ''
-    if site_code_alpha[0..0] == 'L'
-      res = Speciman.find_by_sql("SELECT sending_facility FROM specimen WHERE tracking_number='#{site_code_alpha}'")
-      unless res.blank?
-        sending_facility = res[0]['sending_facility']
-        res = Site.find_by_sql("SELECT site_code_number FROM sites where name='#{sending_facility}'").first
+    unless site_code_alpha.blank?
+      if site_code_alpha[0..0] == 'L'
+        res = Speciman.find_by_sql("SELECT sending_facility FROM specimen WHERE tracking_number='#{site_code_alpha}'")
+        unless res.blank?
+          sending_facility = res[0]['sending_facility']
+          res = Site.find_by_sql("SELECT site_code_number FROM sites where name='#{sending_facility}'").first
+          site_code_number = res['site_code_number'] unless res.blank?
+        end
+      else
+        if site_code_alpha[3..3].match?(/[[:digit:]]/)
+          site_code_alpha = site_code_alpha[1..2]
+        elsif site_code_alpha[4..4].match?(/[[:digit:]]/)
+          site_code_alpha = site_code_alpha[1..3]
+        elsif site_code_alpha[5..5].match?(/[[:digit:]]/)
+          site_code_alpha = site_code_alpha[1..4]
+        end
+
+        res = Site.find_by_sql("SELECT site_code_number FROM sites where site_code='#{site_code_alpha}'").first
         site_code_number = res['site_code_number'] unless res.blank?
       end
-    else
-      if site_code_alpha[3..3].match?(/[[:digit:]]/)
-        site_code_alpha = site_code_alpha[1..2]
-      elsif site_code_alpha[4..4].match?(/[[:digit:]]/)
-        site_code_alpha = site_code_alpha[1..3]
-      elsif site_code_alpha[5..5].match?(/[[:digit:]]/)
-        site_code_alpha = site_code_alpha[1..4]
-      end
-
-      res = Site.find_by_sql("SELECT site_code_number FROM sites where site_code='#{site_code_alpha}'").first
-      site_code_number = res['site_code_number'] unless res.blank?
     end
     site_code_number
   end
@@ -546,7 +548,7 @@ module OrderService
 																		LEFT JOIN wards ON specimen.ward_id = wards.id
 						      									WHERE specimen.sending_facility ='#{res[0]['site_name'].gsub("'", "\\\\'")}'
 																		AND specimen.tracking_number NOT IN (SELECT tracking_number FROM specimen_dispatches)
-																		GROUP BY specimen.id DESC limit 250")
+																		GROUP BY specimen.id DESC limit 500")
         tsts = {}
         if !res_.empty?
           res_.each do |ress|
@@ -642,8 +644,11 @@ module OrderService
         end
         patient_name = res.pat_name.gsub("'", ' ')
         drawer_name = res.drawer_name.gsub("'", ' ')
-        arv_number = res.arv_number.split('-')
-        arv_number = arv_number[arv_number.length - 1]
+        arv_number = res.arv_number
+        if arv_number.present?
+          arv_number = arv_number.split('-')
+          arv_number = arv_number[arv_number.length - 1]
+        end
         next if tracking_number[0..4] == 'XCHSU'
 
         dob = res.dob
@@ -1100,15 +1105,18 @@ module OrderService
 															FROM tests
 															INNER JOIN specimen ON specimen.id = tests.specimen_id
 															INNER JOIN test_types ON test_types.id = tests.test_type_id
-															INNER JOIN test_statuses ON test_statuses.id = tests.test_status_id
+                              INNER JOIN test_statuses ON test_statuses.id = tests.test_status_id
 															WHERE specimen.tracking_number ='#{tracking_number}'")
       unless tst.empty?
         tst.each do |t|
           tsts[t.test_name] = t.test_status
         end
       end
-      arv_number = res.arv_number.split('-')
-      arv_number = arv_number[arv_number.length - 1]
+      arv_number = res.arv_number
+      if arv_number.present?
+        arv_number = arv_number.split('-')
+        arv_number = arv_number[arv_number.length - 1]
+      end
       {
         gen_details: {
           sample_type: res.sample_type,
