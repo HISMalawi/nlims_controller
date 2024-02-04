@@ -110,7 +110,6 @@ class API::V1::TestController < ApplicationController
         message: 'tracking number not provided',
         data: {}
       }
-
     end
     render plain: response.to_json and return
   end
@@ -134,7 +133,6 @@ class API::V1::TestController < ApplicationController
                    }
 
                  end
-
     else
       response = {
         status: 401,
@@ -164,7 +162,6 @@ class API::V1::TestController < ApplicationController
                    data: dat
                  }
                end
-
     render plain: response.to_json and return
   end
 
@@ -185,7 +182,6 @@ class API::V1::TestController < ApplicationController
                    data: dat
                  }
                end
-
     render plain: response.to_json and return
   end
 
@@ -206,7 +202,6 @@ class API::V1::TestController < ApplicationController
                    data: dat
                  }
                end
-
     render plain: response.to_json and return
   end
 
@@ -279,7 +274,6 @@ class API::V1::TestController < ApplicationController
     test_name = details['test']
     date_acknowledged = details['date_acknowledged']
     recipient_type = details['recipient_type']
-
     if !details['tracking_number']
       msg = 'no tracking number provided'
     elsif !details['test']
@@ -289,7 +283,7 @@ class API::V1::TestController < ApplicationController
     elsif !details['date_acknowledged']
       msg = 'no date for acknowlegment is provided'
     else
-      res = TestService.acknowledge_test_results_receiptient(tracking_number, test_name, date_acknowledged,
+      res = TestService.acknowledge_test_results_receiptient(tracking_number, test_name, date_acknowledged.to_time,
                                                              recipient_type)
       response = if res == true
                    {
@@ -308,7 +302,6 @@ class API::V1::TestController < ApplicationController
 
                  end
     end
-
     unless msg.blank?
       response = {
         status: 401,
@@ -317,7 +310,6 @@ class API::V1::TestController < ApplicationController
         data: {}
       }
     end
-
     render plain: response.to_json and return
   end
 
