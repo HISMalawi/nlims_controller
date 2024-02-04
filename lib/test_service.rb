@@ -55,7 +55,13 @@ module TestService
           test_status = TestStatus.where(name: params[:test_status]).first
           tst_update = Test.find_by(id: test_id)
           couch_id_updater = tst_update.test_status_id
-          if tst_update.test_status_id == 9 && test_status.id == 2
+          if tst_update.test_status_id == 9 && test_status.id == 5
+            tst_update.test_status_id = test_status.id
+            tst_update.save
+          elsif tst_update.test_status_id == 9 && test_status.id == 4
+            tst_update.test_status_id = test_status.id
+            tst_update.save
+          elsif tst_update.test_status_id == 9 && test_status.id == 2
             tst_update.test_status_id = test_status.id
             tst_update.save
           elsif tst_update.test_status_id == 2 && test_status.id == 3
@@ -84,7 +90,7 @@ module TestService
 
               if check_if_result_already_available(test_id, measure.id) == false
                 device_name = params[:platform].blank? ? '' : params[:platform]
-                next if result_value == 'Failed' && test_name == 'Viral Load'
+                next if result_value == 'Failed'
 
                 TestResult.create(
                   measure_id: measure.id,
@@ -166,33 +172,15 @@ module TestService
     test_name = 'Viral Load' if test_name == 'HIV viral load'
     test_name = 'CD4' if test_name == 'CD4 count'
     res = Test.find_by_sql("SELECT tests.id FROM tests INNER JOIN test_types ON test_types.id = tests.test_type_id
-                                                        INNER JOIN specimen ON specimen.id = tests.specimen_id
-                                                        where specimen.tracking_number ='#{tracking_number}' AND test_types.name='#{test_name}'")
-
+            INNER JOIN specimen ON specimen.id = tests.specimen_id
+            where specimen.tracking_number ='#{tracking_number}' AND test_types.name='#{test_name}'")
     if !res.blank?
-
       type = TestResultRecepientType.find_by(name: recipient_type)
       tst = Test.find_by(id: res[0]['id'])
       tst.test_result_receipent_types = type.id
       tst.result_given = true
       tst.date_result_given = date
       tst.save
-      obj = Speciman.find_by(tracking_number: tracking_number)
-      couch_id = obj['couch_id'] unless obj['couch_id'].blank?
-
-      retr_order = OrderService.retrieve_order_from_couch(couch_id)
-      unless retr_order['tracking_number'].blank?
-        test_ackn = {}
-        test_ackn[test_name] = {
-          'result_recepient_type': recipient_type,
-          'result_given': 'true',
-          'date_result_give;': date
-        }
-        new_acknow = test_ackn
-        retr_order['results_acknowledgement'] = new_acknow
-        OrderService.update_couch_order(couch_id, retr_order)
-      end
-
       true
     else
       false
