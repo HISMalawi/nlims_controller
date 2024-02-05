@@ -903,7 +903,7 @@ module OrderService
     obj.specimen_status_id = SpecimenStatus.find_by(name: 'specimen_collected')['id']
     obj.save
     retr_order = OrderService.retrieve_order_from_couch(couch_id)
-    return unless retr_order != 'false'
+    return if retr_order == 'false'
 
     retr_order['sample_type'] = specimen_type
     retr_order['receiving_facility'] = target_lab
