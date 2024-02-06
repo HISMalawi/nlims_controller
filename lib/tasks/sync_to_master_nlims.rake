@@ -11,7 +11,8 @@ namespace :master_nlims do
                       FROM tests INNER JOIN specimen ON specimen.id = tests.specimen_id
                       INNER JOIN test_types ON test_types.id = tests.test_type_id
                       WHERE tests.id NOT IN (SELECT test_id FROM test_results where test_id IS NOT NULL)
-                      AND DATE(specimen.date_created) > '2023-09-31' AND test_types.name LIKE '%Viral Load%'")
+                      AND DATE(specimen.date_created) > '2023-09-31' AND test_types.name LIKE '%Viral Load%'
+                      ORDER BY specimen.id DESC")
     unless res.blank?
       auth = JSON.parse(RestClient.get("#{protocol}:#{port}/api/v1/re_authenticate/#{username}/#{password}"))
       if auth['error'] == false
@@ -116,7 +117,7 @@ def push_acknwoledgement_to_master_nlims
   password = config['password']
   protocol = config['protocol']
   port = config['port']
-  res = ResultsAcknwoledge.find_by_sql("SELECT * FROM results_acknwoledges WHERE acknwoledged_to_nlims ='false'")
+  res = ResultsAcknwoledge.find_by_sql("SELECT * FROM results_acknwoledges WHERE acknwoledged_to_nlims ='false' ORDER BY id DESC")
   return if res.blank?
 
   res.each do |order|
