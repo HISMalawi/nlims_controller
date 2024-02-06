@@ -27,7 +27,7 @@ module TrackingNumberService
     day = Time.now.strftime('%d')
     last_tracking_number_trail = TrackingNumberTrail.last
     date = last_tracking_number_trail&.date || todate
-    current_value = last_tracking_number_trail&.current_value || 3500
+    current_value = last_tracking_number_trail&.current_value || 1
     value = todate.to_i > date.to_i ? prepad_str(1, 3) : prepad_str(current_value.to_i + 1, 3)
     tracking_number = "X#{site_code}#{year}#{get_month(month)}#{get_day(day)}NL#{value}"
     TrackingNumberTrail.create(date: todate, current_value: value.to_i)
