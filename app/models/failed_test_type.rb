@@ -1,0 +1,2 @@
+class FailedTestType < ApplicationRecord
+end
