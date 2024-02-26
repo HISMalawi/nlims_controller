@@ -26,76 +26,81 @@ namespace :master_nlims do
           tracking_number = sample['tracking_number']
           test_name = sample['test_name']
           test_id = sample['test_id']
-          url = "#{protocol}:#{port}/api/v2/query_order_by_tracking_number/#{tracking_number}?test_name=#{test_name}"
-          order = JSON.parse(RestClient.get(url, headers))
-          next unless order['error'] == false
+          begin
+            url = "#{protocol}:#{port}/api/v2/query_order_by_tracking_number/#{tracking_number}?test_name=#{test_name}"
+            order = JSON.parse(RestClient.get(url, headers))
+            next unless order['error'] == false
 
-          tests = order['data']['tests']
-          unless order['data']['other']['results'].blank?
-            results = order['data']['other']['results']
-            results.each do |key, result|
-              next unless TestType.find_by(name: key)['id'] == sample['test_type_id']
+            tests = order['data']['tests']
+            unless order['data']['other']['results'].blank?
+              results = order['data']['other']['results']
+              results.each do |key, result|
+                next unless TestType.find_by(name: key)['id'] == sample['test_type_id']
 
-              result.each do |act_rst|
-                measure = act_rst[0]
-                measure_id = Measure.find_by(name: measure)['id']
-                re_value = act_rst[1]
-                TestResult.create(
-                  test_id: test_id,
-                  measure_id: measure_id,
-                  result: re_value['result'],
-                  time_entered: re_value['result_date']
-                )
-                acknwoledge_result_at_facility_level(tracking_number, test_id, re_value['result_date'])
-                puts "Result updated for tracking number:  #{tracking_number}"
-                next unless emr_auth_status[0] == true
+                result.each do |act_rst|
+                  measure = act_rst[0]
+                  measure_id = Measure.find_by(name: measure)['id']
+                  re_value = act_rst[1]
+                  TestResult.create(
+                    test_id: test_id,
+                    measure_id: measure_id,
+                    result: re_value['result'],
+                    time_entered: re_value['result_date']
+                  )
+                  acknwoledge_result_at_facility_level(tracking_number, test_id, re_value['result_date'])
+                  puts "Result updated for tracking number:  #{tracking_number}"
+                  next unless emr_auth_status[0] == true
 
-                token = emr_auth_status[1]
-                push_result_to_emr(token, tracking_number, re_value['result'], re_value['result_date'],
-                                   test_name)
-                acknwoledge_result_at_emr_level(tracking_number, test_id, re_value['result_date'])
-                puts "Pushed result to emr for tracking number: #{tracking_number}"
+                  token = emr_auth_status[1]
+                  push_result_to_emr(token, tracking_number, re_value['result'], re_value['result_date'],
+                                    test_name)
+                  acknwoledge_result_at_emr_level(tracking_number, test_id, re_value['result_date'])
+                  puts "Pushed result to emr for tracking number: #{tracking_number}"
+                end
               end
             end
-          end
 
-          tests.each do |test, details|
-            test_name = test
-            status = details['status']
-            unless details['update_details'].blank?
-              updater_name = details['update_details']['updater_name']
-              updater_id = details['update_details']['updater_id']
-              time_updated = details['update_details']['time_updated']
-              trail_staus =  details['update_details']['status']
-            end
-            test_status = status
-            test_status = 'test-rejected' if test_status == 'rejected'
-            tst_id = TestType.find_by(name: test_name)['id']
-            tst_status_id = TestStatus.find_by(name: test_status)['id']
-            if already_updated_with_such?(test_id, tst_status_id) == false
-              tst_update = Test.find_by(id: test_id, test_type_id: tst_id)
-              tst_update.test_status_id = tst_status_id
-              tst_update.save
-              if status == trail_staus
-                TestStatusTrail.create(
-                  test_id: test_id,
-                  time_updated: time_updated,
-                  test_status_id: tst_status_id,
-                  who_updated_id: updater_id.to_s,
-                  who_updated_name: updater_name.to_s,
-                  who_updated_phone_number: ''
-                )
+            tests.each do |test, details|
+              test_name = test
+              status = details['status']
+              unless details['update_details'].blank?
+                updater_name = details['update_details']['updater_name']
+                updater_id = details['update_details']['updater_id']
+                time_updated = details['update_details']['time_updated']
+                trail_staus =  details['update_details']['status']
               end
-              puts "Status updated to #{status} for tracking number: #{tracking_number}"
-              if emr_auth_status[0] = true
-                token = emr_auth_status[1]
-                push_status_to_emr(token, tracking_number, status, time_updated,
-                                            test_name)
-                puts "Pushed status: #{status} to emr for tracking number: #{tracking_number}"
+              test_status = status
+              test_status = 'test-rejected' if test_status == 'rejected'
+              tst_id = TestType.find_by(name: test_name)['id']
+              tst_status_id = TestStatus.find_by(name: test_status)['id']
+              if already_updated_with_such?(test_id, tst_status_id) == false
+                tst_update = Test.find_by(id: test_id, test_type_id: tst_id)
+                tst_update.test_status_id = tst_status_id
+                tst_update.save
+                if status == trail_staus
+                  TestStatusTrail.create(
+                    test_id: test_id,
+                    time_updated: time_updated,
+                    test_status_id: tst_status_id,
+                    who_updated_id: updater_id.to_s,
+                    who_updated_name: updater_name.to_s,
+                    who_updated_phone_number: ''
+                  )
+                end
+                puts "Status updated to #{status} for tracking number: #{tracking_number}"
+                if emr_auth_status[0] = true
+                  token = emr_auth_status[1]
+                  push_status_to_emr(token, tracking_number, status, time_updated,
+                                              test_name)
+                  puts "Pushed status: #{status} to emr for tracking number: #{tracking_number}"
+                end
+              else
+                puts "Order already updated with such status for tracking number: #{tracking_number}"
               end
-            else
-              puts "Order already updated with such status for tracking number: #{tracking_number}"
             end
+          rescue StandardError => e
+            puts "Error: #{e}"
+            next
           end
         end
       end
@@ -117,7 +122,7 @@ def push_acknwoledgement_to_master_nlims
   password = config['password']
   protocol = config['protocol']
   port = config['port']
-  res = ResultsAcknwoledge.find_by_sql("SELECT * FROM results_acknwoledges WHERE acknwoledged_to_nlims ='false' ORDER BY id DESC")
+  res = ResultsAcknwoledge.find_by_sql("SELECT * FROM results_acknwoledges WHERE acknwoledged_to_nlims ='false'")
   return if res.blank?
 
   res.each do |order|
