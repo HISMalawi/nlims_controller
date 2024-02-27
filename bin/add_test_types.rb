@@ -7,6 +7,13 @@ new_test_types = [
     specimen: 'Blood',
     test_category: 'Microbiology', # Department
     measures: [{ name: 'Vdrl', measure_type_id: 2 }]
+  },
+  {
+    name: 'Rbs',
+    short_name: 'Rbs',
+    specimen: 'Blood',
+    test_category: 'Biochemistry', # Department
+    measures: [{ name: 'Rbs', measure_type_id: 2 }]
   }
 ]
 
