@@ -11,8 +11,7 @@ namespace :master_nlims do
                       FROM tests INNER JOIN specimen ON specimen.id = tests.specimen_id
                       INNER JOIN test_types ON test_types.id = tests.test_type_id
                       WHERE tests.id NOT IN (SELECT test_id FROM test_results where test_id IS NOT NULL)
-                      AND DATE(specimen.date_created) > '2023-09-31' AND test_types.name LIKE '%Viral Load%'
-                      ORDER BY specimen.id DESC")
+                      AND DATE(specimen.date_created) > '2023-09-31' AND test_types.name LIKE '%Viral Load%'")
     unless res.blank?
       auth = JSON.parse(RestClient.get("#{protocol}:#{port}/api/v1/re_authenticate/#{username}/#{password}"))
       if auth['error'] == false
