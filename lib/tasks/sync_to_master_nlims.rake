@@ -1,11 +1,7 @@
 namespace :master_nlims do
   desc 'TODO'
   task sync_data: :environment do
-    config = YAML.load_file("#{Rails.root}/config/master_nlims.yml")
-    username = config['username']
-    password = config['password']
-    protocol = config['protocol']
-    port = config['port']
+    protocol, port, username, password = master_configuration.values_at(:protocol, :port, :username, :password)
     res = Test.find_by_sql("SELECT specimen.tracking_number as tracking_number, specimen.id as specimen_id,
                       tests.id as test_id,test_type_id as test_type_id, test_types.name as test_name
                       FROM tests INNER JOIN specimen ON specimen.id = tests.specimen_id
@@ -13,10 +9,9 @@ namespace :master_nlims do
                       WHERE tests.id NOT IN (SELECT test_id FROM test_results where test_id IS NOT NULL)
                       AND DATE(specimen.date_created) > '2023-09-31' AND test_types.name LIKE '%Viral Load%'")
     unless res.blank?
-      auth = JSON.parse(RestClient.get("#{protocol}:#{port}/api/v1/re_authenticate/#{username}/#{password}"))
-      if auth['error'] == false
+      token = master_nlims_aunthication(protocol, port, username, password)
+      unless token == false
         emr_auth_status = authenticate_with_emr
-        token = auth['data']['token']
         headers = {
           content_type: 'application/json',
           token: token
@@ -115,35 +110,52 @@ def already_updated_with_such?(test_id, test_status)
   true
 end
 
-def push_acknwoledgement_to_master_nlims
+def master_configuration
   config = YAML.load_file("#{Rails.root}/config/master_nlims.yml")
-  username = config['username']
-  password = config['password']
-  protocol = config['protocol']
-  port = config['port']
+  {
+    protocol: config['protocol'],
+    port: config['port'],
+    username: config['username'],
+    password: config['password']
+  }
+end
+
+def master_nlims_aunthication(protocol, port, username, password)
+  auth = JSON.parse(RestClient.get("#{protocol}:#{port}/api/v1/re_authenticate/#{username}/#{password}"))
+  return false if auth['error'] == true
+
+  auth['data']['token']
+end
+
+def buid_acknowledment_to_master_data(acknowledgement)
+  dt = Test.find_by_sql(
+    "SELECT test_types.name AS test_name
+    FROM tests
+    INNER JOIN test_types ON test_types.id = tests.test_type_id
+    WHERE tests.id='#{acknowledgement['test_id']}'"
+  )
+  level = TestResultRecepientType.find_by(id: acknowledgement['acknwoledment_level'])
+  level = level['name'] unless level.blank?
+  {
+    'tracking_number': acknowledgement['tracking_number'],
+    'test': dt[0]['test_name'],
+    'date_acknowledged': acknowledgement['acknwoledged_at'],
+    'recipient_type': level,
+    'acknwoledment_by': acknowledgement['acknwoledged_by']
+  }
+end
+
+def push_acknwoledgement_to_master_nlims
   res = ResultsAcknwoledge.find_by_sql("SELECT * FROM results_acknwoledges WHERE acknwoledged_to_nlims ='false'")
   return if res.blank?
 
-  res.each do |order|
-    dt = Test.find_by_sql("SELECT test_types.name AS test_name
-                        FROM tests
-                        INNER JOIN test_types ON test_types.id = tests.test_type_id
-                        WHERE tests.id='#{order['test_id']}'
-                      ")
-    level = TestResultRecepientType.find_by(id: order['acknwoledment_level'])
-    level = level['name'] unless level.blank?
-    data = {
-      'tracking_number': order['tracking_number'],
-      'test': dt[0]['test_name'],
-      'date_acknowledged': order['acknwoledged_at'],
-      'recipient_type': level,
-      'acknwoledment_by': order['acknwoledged_by']
-    }
+  res.each do |acknowledgement|
+    data = buid_acknowledment_to_master_data(acknowledgement)
     begin
-      auth = JSON.parse(RestClient.get("#{protocol}:#{port}/api/v1/re_authenticate/#{username}/#{password}"))
-      next unless auth['error'] == false
+      protocol, port, username, password = master_configuration.values_at(:protocol, :port, :username, :password)
+      token = master_nlims_aunthication(protocol, port, username, password)
+      next if token == false
 
-      token = auth['data']['token']
       headers = {
         content_type: 'application/json',
         token: token
@@ -154,7 +166,7 @@ def push_acknwoledgement_to_master_nlims
         puts "#{order_res} => master ack response"
         next unless order_res['error'] == false
 
-        ackn = ResultsAcknwoledge.find_by(id: order['id'])
+        ackn = ResultsAcknwoledge.find_by(id: acknowledgement['id'])
         ackn.acknwoledged_to_nlims = true
         ackn.save
       rescue StandardError => e
