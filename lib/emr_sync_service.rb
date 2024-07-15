@@ -12,7 +12,7 @@ class EmrSyncService
     @token = authenticate_with_emr
   end
 
-  def push_status_to_emr(tracking_number, status, status_time, _test_name)
+  def push_status_to_emr(tracking_number, status, status_time)
     url = "#{@protocol}:#{@port}/api/v1/lab/orders/order_status"
     payload = {
       tracking_number: tracking_number,
@@ -25,29 +25,25 @@ class EmrSyncService
   def push_result_to_emr(tracking_number)
     url = "#{@protocol}:#{@port}/api/v1/lab/orders/order_result"
     payload = buid_results_payload(tracking_number)
-    return unless payload[:data]
+    return unless payload[:data][:results]
 
-    post_to_emr(url, payload) if payload[:data]
+    post_to_emr(url, payload)
   end
 
   private
 
   # Authenticate with EMR
-  # rubocop:disable Metrics/MethodLength
   def authenticate_with_emr
     url = "#{@protocol}:#{@port}/api/v1/lab/users/login"
-    begin
-      response = RestClient.post(
-        url,
-        { 'username': @username, 'password': @password },
-        content_type: 'application/json'
-      )
-      handle_response(response)
-    rescue StandardError => e
-      handle_error(e)
-    end
+    response = RestClient.post(
+      url,
+      { 'username': @username, 'password': @password },
+      content_type: 'application/json'
+    )
+    handle_response(response)
+  rescue StandardError => e
+    handle_error(e)
   end
-  # rubocop:enable Metrics/MethodLength
 
   def buid_results_payload(tracking_number)
     results = OrderService.query_results_by_tracking_number(tracking_number)
@@ -59,22 +55,23 @@ class EmrSyncService
     }
   end
 
+  # Push the payload to EMR
+  # rubocop:disable Metrics/MethodLength
   def post_to_emr(url, payload)
-    begin
-      user = JSON.parse(RestClient.post(
-                          url,
-                          payload.to_json,
-                          { "content_type": 'application/json', "Authorization": "Bearer #{@token}" }
-                        ))
-      puts user
-      return true unless user['message'].blank?
-
-      false
-    rescue StandardError => e
-      puts "Error: #{e.message}"
-    end
+    response = RestClient.post(
+      url,
+      payload.to_json,
+      content_type: 'application/json',
+      Authorization: "Bearer #{@token}"
+    )
+    user = JSON.parse(response)
+    !user['message'].blank?
+  rescue StandardError => e
+    puts "Error: #{e.message}"
+    SyncErrorLog.create(error_message: e.message, error_details: payload)
     false
   end
+  # rubocop:enable Metrics/MethodLength
 
   def handle_response(response)
     user = JSON.parse(response)
@@ -88,6 +85,7 @@ class EmrSyncService
 
   def handle_error(error)
     puts "Error: #{error.message} ==> EMR Authentication"
+    SyncErrorLog.create(error_message: error.message, error_details: { message: 'EMR Authentication' })
     ''
   end
 
