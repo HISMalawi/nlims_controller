@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 namespace :master_nlims do
-  desc "Create an account in the master NLIMS system"
+  desc 'Create an account in the master NLIMS system'
   task create_account: :environment do
     config = YAML.load_file("#{Rails.root}/config/master_nlims.yml")
     username = config['username']

@@ -92,6 +92,8 @@ class EmrSyncService
       puts 'EMR authentication successful'
       user['auth_token']
     else
+      puts "EMR authentication failed: #{user['errors']}"
+      SyncErrorLog.create(error_message: user['errors'], error_details: { message: 'EMR Authentication' })
       ''
     end
   end
