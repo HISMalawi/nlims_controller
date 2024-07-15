@@ -90,7 +90,7 @@ module TestService
 
               if check_if_result_already_available(test_id, measure.id) == false
                 device_name = params[:platform].blank? ? '' : params[:platform]
-                next if result_value == 'Failed'
+                next if result_value == 'Failed' || result_value.blank?
 
                 TestResult.create(
                   measure_id: measure.id,
