@@ -1,0 +1,97 @@
+# frozen_string_literal: true
+
+require 'order_service'
+# EMRSyncService for syncing status of orders to EMR and results
+class EmrSyncService
+  def initialize
+    config = load_config
+    @username = config['username']
+    @password = config['password']
+    @protocol = config['protocol']
+    @port = config['port']
+    @token = authenticate_with_emr
+  end
+
+  def push_status_to_emr(tracking_number, status, status_time, _test_name)
+    url = "#{@protocol}:#{@port}/api/v1/lab/orders/order_status"
+    payload = {
+      tracking_number: tracking_number,
+      status: status,
+      status_time: status_time
+    }
+    post_to_emr(url, payload)
+  end
+
+  def push_result_to_emr(tracking_number)
+    url = "#{@protocol}:#{@port}/api/v1/lab/orders/order_result"
+    payload = buid_results_payload(tracking_number)
+    return unless payload[:data]
+
+    post_to_emr(url, payload) if payload[:data]
+  end
+
+  private
+
+  # Authenticate with EMR
+  # rubocop:disable Metrics/MethodLength
+  def authenticate_with_emr
+    url = "#{@protocol}:#{@port}/api/v1/lab/users/login"
+    begin
+      response = RestClient.post(
+        url,
+        { 'username': @username, 'password': @password },
+        content_type: 'application/json'
+      )
+      handle_response(response)
+    rescue StandardError => e
+      handle_error(e)
+    end
+  end
+  # rubocop:enable Metrics/MethodLength
+
+  def buid_results_payload(tracking_number)
+    results = OrderService.query_results_by_tracking_number(tracking_number)
+    {
+      data: {
+        tracking_number: tracking_number,
+        results: results
+      }
+    }
+  end
+
+  def post_to_emr(url, payload)
+    begin
+      user = JSON.parse(RestClient.post(
+                          url,
+                          payload.to_json,
+                          { "content_type": 'application/json', "Authorization": "Bearer #{@token}" }
+                        ))
+      puts user
+      return true unless user['message'].blank?
+
+      false
+    rescue StandardError => e
+      puts "Error: #{e.message}"
+    end
+    false
+  end
+
+  def handle_response(response)
+    user = JSON.parse(response)
+    if user['errors'].blank?
+      puts 'EMR authentication successful'
+      user['auth_token']
+    else
+      ''
+    end
+  end
+
+  def handle_error(error)
+    puts "Error: #{error.message} ==> EMR Authentication"
+    ''
+  end
+
+  def load_config
+    YAML.load_file("#{Rails.root}/config/emr_connection.yml")
+  end
+end
