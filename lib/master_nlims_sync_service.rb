@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'sync_util_service'
+
 # Service class for syncing order results and statuses between master nlims and local nlims
 class MasterNlimsSyncService
   def initialize(service_type: nil)
@@ -20,8 +22,8 @@ class MasterNlimsSyncService
     pending_tests = tests_without_results
     exit if pending_tests.empty? || @token.blank?
 
-    pending_tests.each do |_pending_test|
-      tracking_number, test_name, test_id, test_type_id = sample.values_at(
+    pending_tests.each do |pending_test|
+      tracking_number, test_name, test_id, test_type_id = pending_test.values_at(
         :tracking_number, :test_name, :test_id, :test_type_id
       )
       order = query_order_from_master_nlims(tracking_number, test_name)
@@ -30,10 +32,52 @@ class MasterNlimsSyncService
       tests = order['data']['tests']
       results = order['data']['other']['results']
       process_results(tracking_number, results, test_id, test_type_id)
+      tests.each do |test_type_name, details|
+        update_test_status(test_type_name, test_id, details['status'], details['update_details'])
+      end
+    end
+  end
+
+  def push_acknwoledgement_to_master_nlims(pending_acks: nil)
+    pending_acks ||= ResultsAcknwoledge.where(acknwoledged_to_nlims: false)
+    return if pending_acks.empty?
+
+    pending_acks.each do |ack|
+      data = buid_acknowledment_to_master_data(ack)
+      url = "#{@protocol}:#{@port}/api/v1/acknowledge/test/results/recipient"
+      response = JSON.parse(RestClient.post(
+                              url,
+                              data.to_json,
+                              content_type: 'application/json',
+                              token: @token
+                            ))
+      next if response['error']
+
+      ack.update(acknwoledged_to_nlims: true)
+      puts "Pushed acknowledgments for tracking number: #{ack.tracking_number} to Master NLIMS"
+    rescue StandardError => e
+      puts "Error: #{e.message} ==> NLIMS Push Acknowledgement to Master NLIMS"
+      SyncErrorLog.create(
+        error_message: e.message,
+        error_details: { message: 'NLIMS Push Acknowledgement to Master NLIMS' }
+      )
+      next
     end
   end
 
   private
+
+  def buid_acknowledment_to_master_data(acknowledgement)
+    test_to_ack = TestType.find(Test.find(acknowledgement.test_id).test_type_id).name
+    level = TestResultRecepientType.find_by(id: acknowledgement.acknwoledment_level)
+    {
+      'tracking_number': acknowledgement.tracking_number,
+      'test': test_to_ack,
+      'date_acknowledged': acknowledgement.acknwoledged_at,
+      'recipient_type': level&.name,
+      'acknwoledment_by': acknowledgement.acknwoledged_by
+    }
+  end
 
   def process_results(tracking_number, results, test_id, test_type_id)
     return if results.blank?
@@ -45,7 +89,6 @@ class MasterNlimsSyncService
     end
   end
 
-  # rubocop:disable Metrics/MethodLength
   def create_test_results(tracking_number, measures, test_id)
     measures.each do |measure_name, result|
       measure = Measure.find_by(name: measure_name)
@@ -66,7 +109,6 @@ class MasterNlimsSyncService
       )
     end
   end
-  # rubocop:enable Metrics/MethodLength
 
   def acknowledged_already?(tracking_number, acknowledge_by)
     ResultsAcknwoledge.find_by(
@@ -75,8 +117,28 @@ class MasterNlimsSyncService
     ).nil?
   end
 
+  def update_test_status(test_name, test_id, status, details)
+    test_status = 'test-rejected' if status == 'rejected'
+    test_type_id = TestType.find_by(name: test_name)&.id
+    test_status_id = TestStatus.find_by(name: test_status)&.id
+    return if test_status_id.blank? || test_type_id.blank?
+    return if status_updated_already?(test_id, test_status_id)
+
+    Test.find_by(id: test_id)&.update(test_status_id: test_status_id)
+    return unless test_status == details['status']
+
+    TestStatusTrail.create(
+      test_id: test_id,
+      time_updated: details['time_updated'],
+      test_status_id: test_status_id,
+      who_updated_id: details['updater_id'],
+      who_updated_name: details['updater_name'],
+      who_updated_phone_number: ''
+    )
+    puts "Status updated for #{test_id} with status #{test_status}"
+  end
+
   # Acknowledge result at facility level
-  # rubocop:disable Metrics/MethodLength
   def ack_result_at_facility_level(track_n, test_id, result_date, level, ack_by)
     return unless acknowledged_already?(track_n, ack_by)
 
@@ -96,16 +158,15 @@ class MasterNlimsSyncService
       test_result_receipent_types: level
     )
   end
-  # rubocop:enable Metrics/MethodLength
 
-  def status_updated_already?(test_id, test_status)
-    res = Test.find_by(id: test_id, test_status_id: test_status)
+  def status_updated_already?(test_id, test_status_id)
+    res = Test.find_by(id: test_id, test_status_id: test_status_id)
     return false if res.nil?
 
+    puts "Test #{test_id} has already been updated to status #{test_status_id}"
     true
   end
 
-  # rubocop:disable Metrics/MethodLength
   def tests_without_results(date: nil)
     date ||= Date.today - 120
     tests = Test.find_by_sql("SELECT
@@ -133,11 +194,10 @@ class MasterNlimsSyncService
       }
     end
   end
-  # rubocop:enable Metrics/MethodLength
 
-  # rubocop:disable Metrics/MethodLength
   def query_order_from_master_nlims(tracking_number, test_name)
     url = "#{@protocol}:#{@port}/api/v2/query_order_by_tracking_number/#{tracking_number}?test_name=#{test_name}"
+    @token = authenticate_with_master_nlims
     JSON.parse(RestClient.get(
                  url,
                  content_type: 'application/json',
@@ -154,7 +214,6 @@ class MasterNlimsSyncService
     )
     JSON.parse({ error: true, message: e.message }.to_json)
   end
-  # rubocop:enable Metrics/MethodLength
 
   def authenticate_with_master_nlims
     auth = RestClient.get(
@@ -177,7 +236,6 @@ class MasterNlimsSyncService
     exit
   end
 
-  # rubocop:disable Metrics/MethodLength
   def handle_response(response)
     user = JSON.parse(response)
     if user['errors']
@@ -194,7 +252,6 @@ class MasterNlimsSyncService
       user['data']['token']
     end
   end
-  # rubocop:enable Metrics/MethodLength
 
   def handle_error(error)
     puts "Error: #{error.message} ==> Master NLIMS Authentication"
