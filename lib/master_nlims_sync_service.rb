@@ -180,7 +180,7 @@ class MasterNlimsSyncService
                     INNER JOIN specimen ON specimen.id = tests.specimen_id
                     INNER JOIN test_types ON test_types.id = tests.test_type_id
                   WHERE
-                    tests.id IN (SELECT test_id FROM test_results
+                    tests.id NOT IN (SELECT test_id FROM test_results
                       WHERE test_id IS NOT NULL)
                     AND DATE(specimen.date_created) > '#{date}'
                   ")
