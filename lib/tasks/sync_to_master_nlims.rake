@@ -1,6 +1,8 @@
-namespace :master_nlims do
+# frozen_string_literal: true
+
+namespace :master_nlims_back_up do
   desc 'TODO'
-  task sync_data: :environment do
+  task sync_data_backup: :environment do
     protocol, port, username, password = master_configuration.values_at(:protocol, :port, :username, :password)
     res = Test.find_by_sql("SELECT specimen.tracking_number as tracking_number, specimen.id as specimen_id,
                       tests.id as test_id,test_type_id as test_type_id, test_types.name as test_name
@@ -29,7 +31,9 @@ namespace :master_nlims do
             unless order['data']['other']['results'].blank?
               results = order['data']['other']['results']
               results.each do |key, result|
-                next unless TestType.find_by(name: key)['id'] == sample['test_type_id']
+                unless TestType.find_by(name: key)['id'] == sample['test_type_id']
+                  next
+                end
 
                 result.each do |act_rst|
                   measure = act_rst[0]
@@ -47,7 +51,7 @@ namespace :master_nlims do
 
                   token = emr_auth_status[1]
                   push_result_to_emr(token, tracking_number, re_value['result'], re_value['result_date'],
-                                    test_name)
+                                     test_name)
                   acknwoledge_result_at_emr_level(tracking_number, test_id, re_value['result_date'])
                   puts "Pushed result to emr for tracking number: #{tracking_number}"
                 end
@@ -85,7 +89,7 @@ namespace :master_nlims do
                 if emr_auth_status[0] = true
                   token = emr_auth_status[1]
                   push_status_to_emr(token, tracking_number, status, time_updated,
-                                              test_name)
+                                     test_name)
                   puts "Pushed status: #{status} to emr for tracking number: #{tracking_number}"
                 end
               else
@@ -247,7 +251,7 @@ def push_status_to_emr(token, tracking_number, status, status_time, _test_name)
   url = "#{protocol}:#{port}/api/v1/lab/orders/order_status"
   begin
     user = JSON.parse(RestClient.post(url, data.to_json,
-                                      { "content_type": 'application/json', "Authorization": token }))
+                                      "content_type": 'application/json', "Authorization": token))
     return true unless user['message'].blank?
 
     false
@@ -276,7 +280,7 @@ def push_result_to_emr(token, tracking_number, result, result_date, _test_name)
   url = "#{protocol}:#{port}/api/v1/lab/orders/order_result"
   begin
     user = JSON.parse(RestClient.post(url, data.to_json,
-                                      { "content_type": 'application/json', "Authorization": token }))
+                                      "content_type": 'application/json', "Authorization": token))
     return true unless user['message'].blank?
 
     false
