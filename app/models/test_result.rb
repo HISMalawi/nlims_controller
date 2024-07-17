@@ -20,12 +20,14 @@ class TestResult < ApplicationRecord
   end
 
   def push_result_to_emr
+    ResultSyncTracker.create(tracking_number: tracking_number, test_id: test_id)
     emr_service = EmrSyncService.new
     response = emr_service.push_result_to_emr(tracking_number)
     return unless response
 
     emr_service.push_status_to_emr(tracking_number, 'verified', created_at)
     create_emr_test_result_acknowledgement
+    ResultSyncTracker.find_by(tracking_number: tracking_number, test_id: test_id)&.update(sync_status: true)
   end
 
   def tracking_number

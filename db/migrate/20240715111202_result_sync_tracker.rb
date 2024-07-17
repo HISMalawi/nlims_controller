@@ -9,5 +9,9 @@ class ResultSyncTracker < ActiveRecord::Migration[5.1]
       t.boolean :sync_status, default: false
       t.timestamps
     end
+
+    add_index :results_sync_trackers, :tracking_number, name: 'idx_result_sync_on_tracking_number'
+    add_index :results_sync_trackers, :test_id, name: 'idx_result_sync_on_test_id'
+    add_index :results_sync_trackers, %i[tracking_number test_id], name: 'idx_result_sync_on_tracking_and_test_id'
   end
 end
