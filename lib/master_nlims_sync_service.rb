@@ -13,13 +13,13 @@ class MasterNlimsSyncService
     @default_username = config['default_username']
     @default_password = config['default_password']
     @location = config['location']
-    unless service_type == 'account_creation'
-      @token = authenticate_with_master_nlims
-    end
+    return if service_type == 'account_creation'
+
+    @token = authenticate_with_master_nlims
   end
 
   def process_orders(date: nil)
-    pending_tests = tests_without_results
+    pending_tests = tests_without_results(date: date)
     exit if pending_tests.empty? || @token.blank?
 
     pending_tests.each do |pending_test|
