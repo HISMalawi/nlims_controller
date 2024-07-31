@@ -19,7 +19,7 @@ module TrackingNumberService
   # rubocop:disable Metrics/MethodLength,Lint/MissingCopEnableDirective
   # rubocop:disable Metrics/AbcSize
   def self.generate_tracking_number
-    configs = YAML.load_file "#{Rails.root}/config/application.yml"
+    configs = YAML.load_file("#{Rails.root}/config/application.yml", aliases: true)
     site_code = configs['facility_code']
     todate = Time.now.strftime('%Y%m%d')
     year = Time.now.strftime('%y')

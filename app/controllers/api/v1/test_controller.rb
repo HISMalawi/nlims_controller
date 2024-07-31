@@ -317,7 +317,7 @@ class API::V1::TestController < ApplicationController
 
   def socket_status
     begin
-      settings = YAML.load_file("#{Rails.root}/config/results_channel_socket.yml")
+      settings = YAML.load_file("#{Rails.root}/config/results_channel_socket.yml", aliases: true)
       @socket_url = "http://#{settings['host']}:#{settings['port']}"
     rescue StandardError
       @socket_url = 'http://localhost:3011'

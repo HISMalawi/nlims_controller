@@ -82,7 +82,7 @@ module OrderService
       #   end
       # end
       sp_obj = Speciman.create(
-        tracking_number: tracking_number,
+        tracking_number:,
         specimen_type_id: sample_type_id,
         specimen_status_id: sample_status_id,
         couch_id: '',
@@ -92,13 +92,13 @@ module OrderService
         drawn_by_name: "#{params[:who_order_test_first_name]} #{params[:who_order_test_last_name]}",
         drawn_by_phone_number: params[:who_order_test_phone_number],
         target_lab: params[:target_lab],
-        art_start_date: art_start_date,
+        art_start_date:,
         sending_facility: params[:health_facility_name],
         requested_by: params[:requesting_clinician],
         district: params[:district],
         date_created: params[:date_sample_drawn],
-        arv_number: arv_number,
-        art_regimen: art_regimen
+        arv_number:,
+        art_regimen:
       )
       res = Visit.create(
         patient_id: npid,
@@ -176,14 +176,14 @@ module OrderService
         }
       end
       c_order = Order.create(
-        tracking_number: tracking_number,
+        tracking_number:,
         sample_type: params[:sample_type],
         date_created: params[:date_sample_drawn],
         sending_facility: params[:health_facility_name],
         receiving_facility: params[:target_lab],
         tests: couchdb_tests,
         test_results: couch_tests,
-        patient: patient,
+        patient:,
         order_location: params[:order_location],
         district: params[:district],
         priority: params[:sample_priority],
@@ -191,11 +191,11 @@ module OrderService
         sample_statuses: sample_status,
         test_statuses: test_status,
         sample_status: params[:sample_status],
-        arv_number: arv_number,
-        art_regimen: art_regimen,
-        art_start_date: art_start_date
+        arv_number:,
+        art_regimen:,
+        art_start_date:
       )
-      sp = Speciman.find_by(tracking_number: tracking_number)
+      sp = Speciman.find_by(tracking_number:)
       sp.couch_id = c_order['_id']
       sp.save
       couch_order = c_order['_id']
@@ -205,7 +205,7 @@ module OrderService
   end
 
   def self.check_order(tracking_number)
-    order = Speciman.where(tracking_number: tracking_number).first
+    order = Speciman.where(tracking_number:).first
     if order
       true
     else
@@ -287,8 +287,8 @@ module OrderService
             date_created: res.date_created,
             priority: res.priority,
             art_regimen: res.art_regi,
-            arv_number: arv_number,
-            site_code_number: site_code_number,
+            arv_number:,
+            site_code_number:,
             art_start_date: res.art_start_date,
             sample_created_by: {
               id: res.drawe_number,
@@ -305,7 +305,7 @@ module OrderService
             sending_lab: res.health_facility,
             sending_lab_code: site_code_number,
             requested_by: res.requested_by,
-            tracking_number: tracking_number,
+            tracking_number:,
             results: result_val
           },
           tests: tsts
@@ -320,8 +320,8 @@ module OrderService
             date_created: res.date_created,
             priority: res.priority,
             art_regimen: res.art_regi,
-            arv_number: arv_number,
-            site_code_number: site_code_number,
+            arv_number:,
+            site_code_number:,
             art_start_date: res.art_start_date,
             sample_created_by: {
               id: res.drawe_number,
@@ -338,7 +338,7 @@ module OrderService
             sending_lab: res.health_facility,
             sending_lab_code: site_code_number,
             requested_by: res.requested_by,
-            tracking_number: tracking_number
+            tracking_number:
           },
           tests: tsts
         }
@@ -388,7 +388,7 @@ module OrderService
   end
 
   def self.retrieve_order_from_couch(couch_id)
-    settings = YAML.load_file("#{Rails.root}/config/couchdb.yml")[Rails.env]
+    settings = YAML.load_file("#{Rails.root}/config/couchdb.yml", aliases: true)[Rails.env]
     ip = settings['host']
     protocol = settings['protocol']
     port = settings['port']
@@ -403,7 +403,7 @@ module OrderService
   end
 
   def self.update_couch_order(_track_number, order)
-    settings = YAML.load_file("#{Rails.root}/config/couchdb.yml")[Rails.env]
+    settings = YAML.load_file("#{Rails.root}/config/couchdb.yml", aliases: true)[Rails.env]
     ip = settings['host']
     protocol = settings['protocol']
     port = settings['port']
@@ -654,14 +654,14 @@ module OrderService
         dob = res.dob
         dob = Time.new.strftime('%Y-%m-%d') if dob.nil?
         data[counter] = { sample_type: res.sample_type,
-                          tracking_number: tracking_number,
+                          tracking_number:,
                           specimen_status: res.specimen_status,
                           order_location: res.order_location,
                           date_created: res.date_created,
                           priority: res.priority,
                           art_regimen: res.art_regi,
-                          arv_number: arv_number,
-                          site_code_number: site_code_number,
+                          arv_number:,
+                          site_code_number:,
                           art_start_date: res.art_start_date,
                           sample_created_by: {
                             id: res.drawe_number,
@@ -672,7 +672,7 @@ module OrderService
                             id: res.pat_id,
                             name: patient_name,
                             gender: res.sex,
-                            dob: dob
+                            dob:
                           },
                           receiving_lab: res.target_lab,
                           sending_lab: res.health_facility,
@@ -691,18 +691,18 @@ module OrderService
   def self.dispatch_sample(tracking_number, dispatcher, date_dispatched, dispatcher_type, delivery_location = 'pickup')
     if delivery_location == 'pickup'
       SpecimenDispatch.create(
-        tracking_number: tracking_number,
-        dispatcher: dispatcher,
-        date_dispatched: date_dispatched,
+        tracking_number:,
+        dispatcher:,
+        date_dispatched:,
         dispatcher_type_id: dispatcher_type
       )
     else
       SpecimenDispatch.create(
-        tracking_number: tracking_number,
-        dispatcher: dispatcher,
-        date_dispatched: date_dispatched,
+        tracking_number:,
+        dispatcher:,
+        date_dispatched:,
         dispatcher_type_id: dispatcher_type,
-        delivery_location: delivery_location
+        delivery_location:
       )
     end
 
@@ -772,7 +772,7 @@ module OrderService
       }
       sample_status_id = SpecimenStatus.get_specimen_status_id('specimen_not_collected')
       sp_obj = Speciman.create(
-        tracking_number: tracking_number,
+        tracking_number:,
         specimen_type_id: 0,
         specimen_status_id: sample_status_id,
         couch_id: '',
@@ -782,13 +782,13 @@ module OrderService
         drawn_by_name: "#{params[:who_order_test_first_name]} #{params[:who_order_test_last_name]}",
         drawn_by_phone_number: params[:who_order_test_phone_number],
         target_lab: params[:target_lab],
-        art_start_date: art_start_date,
+        art_start_date:,
         sending_facility: params[:health_facility_name],
         requested_by: params[:requesting_clinician],
         district: params[:district],
         date_created: time,
-        arv_number: arv_number,
-        art_regimen: art_regimen
+        arv_number:,
+        art_regimen:
       )
 
       res = Visit.create(
@@ -864,14 +864,14 @@ module OrderService
         }
       end
       c_order = Order.create(
-        tracking_number: tracking_number,
+        tracking_number:,
         sample_type: 'not_assigned',
         date_created: params[:date_sample_drawn],
         sending_facility: params[:health_facility_name],
         receiving_facility: params[:target_lab],
         tests: params[:tests],
         test_results: couch_tests,
-        patient: patient,
+        patient:,
         order_location: params[:order_location],
         district: params[:district],
         priority: params[:sample_priority],
@@ -879,11 +879,11 @@ module OrderService
         sample_statuses: sample_status,
         test_statuses: test_status,
         sample_status: 'specimen_not_collected',
-        art_regimen: art_regimen,
-        arv_number: arv_number,
-        art_start_date: art_start_date
+        art_regimen:,
+        arv_number:,
+        art_start_date:
       )
-      sp = Speciman.find_by(tracking_number: tracking_number)
+      sp = Speciman.find_by(tracking_number:)
       sp.couch_id = c_order['_id']
       sp.save
       couch_order = c_order['_id']
@@ -1015,7 +1015,7 @@ module OrderService
   end
 
   def self.check_if_order_updated?(tracking_number, status_id)
-    obj = Speciman.find_by(tracking_number: tracking_number, specimen_status_id: status_id)
+    obj = Speciman.find_by(tracking_number:, specimen_status_id: status_id)
     if !obj.blank?
       true
     else
@@ -1126,8 +1126,8 @@ module OrderService
           date_created: res.date_created,
           priority: res.priority,
           art_regimen: res.art_regi,
-          arv_number: arv_number,
-          site_code_number: site_code_number,
+          arv_number:,
+          site_code_number:,
           art_start_date: res.art_start_date,
           sample_created_by: {
             id: res.drawe_number,

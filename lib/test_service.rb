@@ -45,7 +45,7 @@ module TestService
           test_results_measures = {}
           results_measure = {}
           TestStatusTrail.create(
-            test_id: test_id,
+            test_id:,
             time_updated: params[:time_updated],
             test_status_id: test_status.id,
             who_updated_id: params[:who_updated]['id_number'].to_s,
@@ -94,15 +94,15 @@ module TestService
 
                 TestResult.create(
                   measure_id: measure.id,
-                  test_id: test_id,
+                  test_id:,
                   result: result_value,
-                  device_name: device_name,
+                  device_name:,
                   time_entered: result_date
                 )
               else
-                test_result_ = TestResult.where(test_id: test_id, measure_id: measure.id).first
+                test_result_ = TestResult.where(test_id:, measure_id: measure.id).first
                 test_result_.update(result: result_value, time_entered: result_date)
-                t = TestStatusTrail.where(test_id: test_id, test_status_id: 5).first
+                t = TestStatusTrail.where(test_id:, test_status_id: 5).first
                 t.update(time_updated: result_date) unless t.blank?
               end
               test_results_measures[measure_name] = { 'result_value': result_value }
@@ -207,7 +207,7 @@ module TestService
   end
 
   def self.query_test_status(tracking_number)
-    spc_id = Speciman.find_by(tracking_number: tracking_number)['id']
+    spc_id = Speciman.find_by(tracking_number:)['id']
     status = Test.find_by_sql("SELECT test_statuses.name,test_types.name AS tst_name FROM test_statuses INNER JOIN tests ON tests.test_status_id = test_statuses.id
 							INNER JOIN test_types ON test_types.id = tests.test_type_id
 							WHERE tests.specimen_id='#{spc_id}'
@@ -269,7 +269,7 @@ module TestService
         test_type_id: te_id.id,
         created_by: updater['first_name'].to_s + ' ' + updater['last_name'].to_s,
         panel_id: '',
-        patient_id: patient_id,
+        patient_id:,
         time_created: Time.now.strftime('%Y%m%d%H%M%S'),
         test_status_id: TestStatus.find_by_sql("SELECT id AS sts_id FROM test_statuses WHERE name='Drawn'")[0]['sts_id']
       )
