@@ -1,0 +1,2233 @@
+[
+  {
+    "name": "TB Microscopic Exam",
+    "short_name": "AFB",
+    "specimen": [
+      "Sputum"
+    ],
+    "test_category": "Microbiology",
+    "measures": [
+      {
+        "name": "tb",
+        "measure_type_id": 2
+      }
+    ]
+  },
+  {
+    "name": "GeneXpert",
+    "short_name": "GXp",
+    "specimen": [
+      "Sputum"
+    ],
+    "test_category": "Microbiology",
+    "measures": [
+      {
+        "name": "MTB",
+        "measure_type_id": 2
+      },
+      {
+        "name": "RIF Resistance",
+        "measure_type_id": 2
+      }
+    ]
+  },
+  {
+    "name": "Gram Stain",
+    "short_name": "GS",
+    "specimen": [
+      "Sputum",
+      "CSF",
+      "Blood",
+      "Pleural Fluid",
+      "Ascitic Fluid",
+      "Pericardial Fluid",
+      "Peritoneal Fluid",
+      "HVS",
+      "Pus Swab",
+      "Pus",
+      "Stool",
+      "Urine",
+      "Other",
+      "Synovial Fluid"
+    ],
+    "test_category": "Microbiology",
+    "measures": [
+      {
+        "name": "Gram",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Clue cells",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Other organism seen",
+        "measure_type_id": 2
+      }
+    ]
+  },
+  {
+    "name": "Culture & Sensitivity",
+    "short_name": "C&S",
+    "specimen": [
+      "Sputum",
+      "CSF",
+      "Blood",
+      "Pleural Fluid",
+      "Ascitic Fluid",
+      "Pericardial Fluid",
+      "Peritoneal Fluid",
+      "HVS",
+      "Pus Swab",
+      "Pus",
+      "Stool",
+      "Urine",
+      "Other",
+      "Semen",
+      "Tissue Biopsies",
+      "Fine Needle Aspirate",
+      "Broncoalveolar Lavage",
+      "Tracheal  Aspirates",
+      "Synovial Fluid"
+    ],
+    "test_category": "Microbiology",
+    "measures": [
+      {
+        "name": "Culture",
+        "measure_type_id": 2
+      }
+    ]
+  },
+  {
+    "name": "Cell Count",
+    "short_name": "ClCt",
+    "specimen": [
+      "CSF",
+      "Pleural Fluid",
+      "Ascitic Fluid",
+      "Pericardial Fluid",
+      "Peritoneal Fluid",
+      "Other"
+    ],
+    "test_category": "Microbiology",
+    "measures": [
+      {
+        "name": "WBC",
+        "measure_type_id": 2
+      },
+      {
+        "name": "RBC",
+        "measure_type_id": 2
+      }
+    ]
+  },
+  {
+    "name": "India Ink",
+    "short_name": "II",
+    "specimen": [
+      "CSF"
+    ],
+    "test_category": "Microbiology",
+    "measures": [
+      {
+        "name": "India ink",
+        "measure_type_id": 2
+      }
+    ]
+  },
+  {
+    "name": "Differential",
+    "short_name": "Diff",
+    "specimen": [
+      "Sputum",
+      "CSF",
+      "Pleural Fluid",
+      "Ascitic Fluid",
+      "Pericardial Fluid",
+      "Peritoneal Fluid",
+      "Synovial Fluid"
+    ],
+    "test_category": "Microbiology",
+    "measures": [
+      {
+        "name": "Polymorphs",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Lymphocytes",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Diff remarks",
+        "measure_type_id": 2
+      }
+    ]
+  },
+  {
+    "name": "ZN Stain",
+    "short_name": "ZN",
+    "specimen": [
+      "CSF",
+      "Pleural Fluid",
+      "Ascitic Fluid",
+      "Pericardial Fluid",
+      "Peritoneal Fluid",
+      "other",
+      "Fine Needle Aspirate"
+    ],
+    "test_category": "Microbiology",
+    "measures": [
+      {
+        "name": "ZN",
+        "measure_type_id": 2
+      }
+    ]
+  },
+  {
+    "name": "Wet prep",
+    "short_name": "WP",
+    "specimen": [
+      "HVS",
+      "Pus Swab"
+    ],
+    "test_category": "Microbiology",
+    "measures": [
+      {
+        "name": "wet prep",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Other organism seen",
+        "measure_type_id": 2
+      }
+    ]
+  },
+  {
+    "name": "TB Gene_Xpert",
+    "short_name": "TB",
+    "specimen": [
+      "Sputum",
+      "CSF",
+      "Pleural Fluid",
+      "Ascitic Fluid",
+      "Pericardial Fluid",
+      "Peritoneal Fluid",
+      "Pus",
+      "Stool",
+      "Gastric Aspirate",
+      "Fine Needle Aspirate",
+      "Broncoalveolar Lavage",
+      "Tracheal  Aspirates"
+    ],
+    "test_category": "Microbiology",
+    "measures": [
+      {
+        "name": "Gene Xpert MTB",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Gene Xpert RIF Resistance",
+        "measure_type_id": 2
+      },
+      {
+        "name": "HIV Status",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Reason For Testing",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Indication for GeneXpert Test",
+        "measure_type_id": 2
+      },
+      {
+        "name": "AMK Resistance",
+        "measure_type_id": 2
+      },
+      {
+        "name": "CAP Resistance",
+        "measure_type_id": 2
+      },
+      {
+        "name": "ETH Resistance",
+        "measure_type_id": 2
+      },
+      {
+        "name": "FLQ Resistance",
+        "measure_type_id": 2
+      },
+      {
+        "name": "INH Resistance",
+        "measure_type_id": 2
+      },
+      {
+        "name": "INVALID",
+        "measure_type_id": 2
+      },
+      {
+        "name": "KAN Resistance",
+        "measure_type_id": 2
+      },
+      {
+        "name": "MTB MDR",
+        "measure_type_id": 2
+      }
+    ]
+  },
+  {
+    "name": "Urine Macroscopy",
+    "short_name": "UA",
+    "specimen": [
+      "Urine"
+    ],
+    "test_category": "Parasitology",
+    "measures": [
+      {
+        "name": "Colour",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Appearance",
+        "measure_type_id": 2
+      }
+    ]
+  },
+  {
+    "name": "Urine Microscopy",
+    "short_name": "UA",
+    "specimen": [
+      "Urine"
+    ],
+    "test_category": "Parasitology",
+    "measures": [
+      {
+        "name": "WBC",
+        "measure_type_id": 2
+      },
+      {
+        "name": "RBC",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Epithelial cells",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Casts",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Crystals",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Parasites",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Yeast cells",
+        "measure_type_id": 2
+      }
+    ]
+  },
+  {
+    "name": "Urine Chemistries",
+    "short_name": "UA",
+    "specimen": [
+      "Urine"
+    ],
+    "test_category": "Parasitology",
+    "measures": [
+      {
+        "name": "Blood",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Urobilinogen",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Bilirubin",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Protein",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Nitrate",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Ketones",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Glucose",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Specific gravity",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Leucocytes",
+        "measure_type_id": 2
+      },
+      {
+        "name": "pH",
+        "measure_type_id": 2
+      }
+    ]
+  },
+  {
+    "name": "Stool Analysis",
+    "short_name": "StoA",
+    "specimen": [
+      "Stool"
+    ],
+    "test_category": "Parasitology",
+    "measures": [
+      {
+        "name": "COLOUR",
+        "measure_type_id": 2
+      },
+      {
+        "name": "CONSISTENCY",
+        "measure_type_id": 2
+      },
+      {
+        "name": "PARASITE/OVA",
+        "measure_type_id": 2
+      },
+      {
+        "name": "WBC",
+        "measure_type_id": 2
+      },
+      {
+        "name": "RBC",
+        "measure_type_id": 2
+      },
+      {
+        "name": "YEAST",
+        "measure_type_id": 2
+      },
+      {
+        "name": "EPITHELIAL CELLS",
+        "measure_type_id": 2
+      }
+    ]
+  },
+  {
+    "name": "Malaria Screening",
+    "short_name": "MalScr",
+    "specimen": [
+      "Blood"
+    ],
+    "test_category": "Parasitology",
+    "measures": [
+      {
+        "name": "Parasite Stage",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Malaria Species",
+        "measure_type_id": 2
+      },
+      {
+        "name": "MRDT",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Malaria density",
+        "measure_type_id": 2
+      }
+    ]
+  },
+  {
+    "name": "Blood Parasites Screen",
+    "short_name": "BF",
+    "specimen": [
+      "Blood"
+    ],
+    "test_category": "Parasitology",
+    "measures": [
+      {
+        "name": "Blood film",
+        "measure_type_id": 2
+      }
+    ]
+  },
+  {
+    "name": "Semen Analysis",
+    "short_name": "SA",
+    "specimen": [
+      "Semen"
+    ],
+    "test_category": "Parasitology",
+    "measures": [
+      {
+        "name": "Appearance",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Liquefaction time",
+        "measure_type_id": 2
+      },
+      {
+        "name": "volume",
+        "measure_type_id": 2
+      },
+      {
+        "name": "pH",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Sperm count",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Sperm morphology",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Progressive motility",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Non-progressive motility",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Immotility",
+        "measure_type_id": 2
+      },
+      {
+        "name": "WBC",
+        "measure_type_id": 2
+      },
+      {
+        "name": "VITALITY",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Epithelial/Transitional Cells",
+        "measure_type_id": 2
+      }
+    ]
+  },
+  {
+    "name": "HVS analysis",
+    "short_name": "HVS",
+    "specimen": [
+      "HVS"
+    ],
+    "test_category": "Microbiology",
+    "measures": [
+      {
+        "name": "Macroscopy",
+        "measure_type_id": 2
+      },
+      {
+        "name": "WBC",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Epithelial cells",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Parasites/Bacteria",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Spermatozoa",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Yeast",
+        "measure_type_id": 2
+      }
+    ]
+  },
+  {
+    "name": "Syphilis Test",
+    "short_name": "STS",
+    "specimen": [
+      "Blood"
+    ],
+    "test_category": "Serology",
+    "measures": [
+      {
+        "name": "VDRL",
+        "measure_type_id": 2
+      }
+    ]
+  },
+  {
+    "name": "Hepatitis B Test",
+    "short_name": "HBsAg",
+    "specimen": [
+      "Blood"
+    ],
+    "test_category": "Serology",
+    "measures": [
+      {
+        "name": "Hepatitis B",
+        "measure_type_id": 2
+      }
+    ]
+  },
+  {
+    "name": "Hepatitis C Test",
+    "short_name": "HCVAB",
+    "specimen": [
+      "Blood"
+    ],
+    "test_category": "Serology",
+    "measures": [
+      {
+        "name": "Hepatitis C",
+        "measure_type_id": 2
+      }
+    ]
+  },
+  {
+    "name": "Rheumatoid Factor Test",
+    "short_name": "RF",
+    "specimen": [
+      "other"
+    ],
+    "test_category": "Serology",
+    "measures": [
+      {
+        "name": "Rheumatoid Factor",
+        "measure_type_id": 2
+      }
+    ]
+  },
+  {
+    "name": "Cryptococcus Antigen Test",
+    "short_name": "CRAG",
+    "specimen": [
+      "Blood"
+    ],
+    "test_category": "Serology",
+    "measures": [
+      {
+        "name": "CrAg",
+        "measure_type_id": 2
+      }
+    ]
+  },
+  {
+    "name": "Anti Streptolysin O",
+    "short_name": "ASO",
+    "specimen": [
+      "Blood"
+    ],
+    "test_category": "Biochemistry",
+    "measures": [
+      {
+        "name": "ASO",
+        "measure_type_id": 2
+      }
+    ]
+  },
+  {
+    "name": "C-reactive protein",
+    "short_name": "CRP",
+    "specimen": [
+      "Blood"
+    ],
+    "test_category": "Biochemistry",
+    "measures": [
+      {
+        "name": "CRP",
+        "measure_type_id": 2
+      }
+    ]
+  },
+  {
+    "name": "Measles",
+    "short_name": "Meas",
+    "specimen": [
+      "Blood"
+    ],
+    "test_category": "Serology",
+    "measures": [
+      {
+        "name": "Measles IgM ELISA-Behring enzygnost",
+        "measure_type_id": 2
+      }
+    ]
+  },
+  {
+    "name": "Rubella",
+    "short_name": "Rub",
+    "specimen": [
+      "other"
+    ],
+    "test_category": "Serology",
+    "measures": [
+      {
+        "name": "Rubella IgM ELISA-Behring enzynost",
+        "measure_type_id": 2
+      }
+    ]
+  },
+  {
+    "name": "CD4",
+    "short_name": "CD4",
+    "specimen": [
+      "Blood"
+    ],
+    "test_category": "Flow Cytometry",
+    "measures": [
+      {
+        "name": "CD4 Count",
+        "measure_type_id": 2
+      },
+      {
+        "name": "CD4 %",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Lymphocyte Count",
+        "measure_type_id": 2
+      },
+      {
+        "name": "CD8 Count",
+        "measure_type_id": 2
+      },
+      {
+        "name": "CD3 Count",
+        "measure_type_id": 2
+      }
+    ]
+  },
+  {
+    "name": "ABO Blood Grouping",
+    "short_name": "ABO",
+    "specimen": [
+      "Blood"
+    ],
+    "test_category": "Blood Bank",
+    "measures": [
+      {
+        "name": "Grouping",
+        "measure_type_id": 2
+      }
+    ]
+  },
+  {
+    "name": "Cross-match",
+    "short_name": "Xmatch",
+    "specimen": [
+      "Blood"
+    ],
+    "test_category": "Blood Bank",
+    "measures": [
+      {
+        "name": "Pack No.",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Pack ABO Group",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Product Type",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Expiry Date",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Volume",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Cross-match Method",
+        "measure_type_id": 2
+      }
+    ]
+  },
+  {
+    "name": "Transfusion Outcome",
+    "short_name": null,
+    "specimen": [
+      "Blood"
+    ],
+    "test_category": "Blood Bank",
+    "measures": [
+      {
+        "name": "Outcome",
+        "measure_type_id": 2
+      }
+    ]
+  },
+  {
+    "name": "Liver Function Tests",
+    "short_name": "LFT",
+    "specimen": [
+      "Blood"
+    ],
+    "test_category": "Biochemistry",
+    "measures": [
+      {
+        "name": "GPT/ALT",
+        "measure_type_id": 2
+      },
+      {
+        "name": "GOT/AST",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Alkaline Phosphate(ALP)",
+        "measure_type_id": 2
+      },
+      {
+        "name": "GGT/r-GT",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Bilirubin Direct(DBIL-DSA)",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Bilirubin Total(TBIL-DSA))",
+        "measure_type_id": 2
+      },
+      {
+        "name": "ALB",
+        "measure_type_id": 2
+      },
+      {
+        "name": "TP",
+        "measure_type_id": 2
+      },
+      {
+        "name": "LDH",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Total Bilirubin (T-BIL-V)",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Direct Bilirubin (D-BIL-V)",
+        "measure_type_id": 2
+      }
+    ]
+  },
+  {
+    "name": "Renal Function Test",
+    "short_name": "RFT",
+    "specimen": [
+      "Blood"
+    ],
+    "test_category": "Biochemistry",
+    "measures": [
+      {
+        "name": "Urea",
+        "measure_type_id": 2
+      },
+      {
+        "name": "CREATININE (S)",
+        "measure_type_id": 2
+      },
+      {
+        "name": "UA",
+        "measure_type_id": 2
+      }
+    ]
+  },
+  {
+    "name": "Lipogram",
+    "short_name": "LIPO",
+    "specimen": [
+      "Blood"
+    ],
+    "test_category": "Biochemistry",
+    "measures": [
+      {
+        "name": "Triglycerides(TG)",
+        "measure_type_id": 2
+      },
+      {
+        "name": "TC",
+        "measure_type_id": 2
+      },
+      {
+        "name": "HDL-C",
+        "measure_type_id": 2
+      },
+      {
+        "name": "LDL-C",
+        "measure_type_id": 2
+      }
+    ]
+  },
+  {
+    "name": "FBC",
+    "short_name": "FBC",
+    "specimen": [
+      "Blood"
+    ],
+    "test_category": "Haematology",
+    "measures": [
+      {
+        "name": "RBC",
+        "measure_type_id": 2
+      },
+      {
+        "name": "HGB",
+        "measure_type_id": 2
+      },
+      {
+        "name": "HCT",
+        "measure_type_id": 2
+      },
+      {
+        "name": "MCV",
+        "measure_type_id": 2
+      },
+      {
+        "name": "MCH",
+        "measure_type_id": 2
+      },
+      {
+        "name": "MCHC",
+        "measure_type_id": 2
+      },
+      {
+        "name": "PLT",
+        "measure_type_id": 2
+      },
+      {
+        "name": "RDW-SD",
+        "measure_type_id": 2
+      },
+      {
+        "name": "RDW-CV",
+        "measure_type_id": 2
+      },
+      {
+        "name": "PDW",
+        "measure_type_id": 2
+      },
+      {
+        "name": "MPV",
+        "measure_type_id": 2
+      },
+      {
+        "name": "NEUT%",
+        "measure_type_id": 2
+      },
+      {
+        "name": "LYMPH%",
+        "measure_type_id": 2
+      },
+      {
+        "name": "MONO%",
+        "measure_type_id": 2
+      },
+      {
+        "name": "EO%",
+        "measure_type_id": 2
+      },
+      {
+        "name": "BASO%",
+        "measure_type_id": 2
+      },
+      {
+        "name": "NEUT#",
+        "measure_type_id": 2
+      },
+      {
+        "name": "LYMPH#",
+        "measure_type_id": 2
+      },
+      {
+        "name": "MONO#",
+        "measure_type_id": 2
+      },
+      {
+        "name": "EO#",
+        "measure_type_id": 2
+      },
+      {
+        "name": "BASO#",
+        "measure_type_id": 2
+      },
+      {
+        "name": "WBC",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Mid#",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Gran#",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Mid%",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Gran%",
+        "measure_type_id": 2
+      },
+      {
+        "name": "EOS%",
+        "measure_type_id": 2
+      },
+      {
+        "name": "MXD%",
+        "measure_type_id": 2
+      },
+      {
+        "name": "MXD#",
+        "measure_type_id": 2
+      },
+      {
+        "name": "NRBC#",
+        "measure_type_id": 2
+      },
+      {
+        "name": "NRBC%",
+        "measure_type_id": 2
+      },
+      {
+        "name": "RET%",
+        "measure_type_id": 2
+      },
+      {
+        "name": "RET#",
+        "measure_type_id": 2
+      },
+      {
+        "name": "IG#",
+        "measure_type_id": 2
+      },
+      {
+        "name": "IG%",
+        "measure_type_id": 2
+      }
+    ]
+  },
+  {
+    "name": "Electrolytes",
+    "short_name": "E",
+    "specimen": [
+      "Blood"
+    ],
+    "test_category": "Biochemistry",
+    "measures": [
+      {
+        "name": "K",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Na",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Cl",
+        "measure_type_id": 2
+      },
+      {
+        "name": "PHO",
+        "measure_type_id": 2
+      },
+      {
+        "name": "MG",
+        "measure_type_id": 2
+      },
+      {
+        "name": "CA",
+        "measure_type_id": 2
+      }
+    ]
+  },
+  {
+    "name": "Enzymes",
+    "short_name": "",
+    "specimen": [
+      "Blood"
+    ],
+    "test_category": "Biochemistry",
+    "measures": [
+      {
+        "name": "a-AMYLASE-H",
+        "measure_type_id": 2
+      },
+      {
+        "name": "ALT-H",
+        "measure_type_id": 2
+      },
+      {
+        "name": "AST-H",
+        "measure_type_id": 2
+      },
+      {
+        "name": "ALP-H",
+        "measure_type_id": 2
+      },
+      {
+        "name": "TP-H",
+        "measure_type_id": 2
+      },
+      {
+        "name": "TC-H",
+        "measure_type_id": 2
+      },
+      {
+        "name": "UREA-H",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Glu-H",
+        "measure_type_id": 2
+      },
+      {
+        "name": "TBIL-DSA-H",
+        "measure_type_id": 2
+      },
+      {
+        "name": "DBIL-DSA-H",
+        "measure_type_id": 2
+      },
+      {
+        "name": "UA-H",
+        "measure_type_id": 2
+      },
+      {
+        "name": "TG-H",
+        "measure_type_id": 2
+      },
+      {
+        "name": "ALB-H",
+        "measure_type_id": 2
+      }
+    ]
+  },
+  {
+    "name": "Glucose",
+    "short_name": "Glu",
+    "specimen": [
+      "CSF",
+      "Blood",
+      "Pleural Fluid",
+      "Ascitic Fluid",
+      "Pericardial Fluid",
+      "Peritoneal Fluid"
+    ],
+    "test_category": "Biochemistry",
+    "measures": [
+      {
+        "name": "Glu-G",
+        "measure_type_id": 2
+      }
+    ]
+  },
+  {
+    "name": "Prothrombin Time",
+    "short_name": "PT",
+    "specimen": [
+      "other"
+    ],
+    "test_category": "Haematology",
+    "measures": [
+      {
+        "name": "PT",
+        "measure_type_id": 2
+      }
+    ]
+  },
+  {
+    "name": "APTT",
+    "short_name": "APTT",
+    "specimen": [
+      "other"
+    ],
+    "test_category": "Haematology",
+    "measures": [
+      {
+        "name": "APTT",
+        "measure_type_id": 2
+      }
+    ]
+  },
+  {
+    "name": "INR",
+    "short_name": "INR",
+    "specimen": [
+      "Blood"
+    ],
+    "test_category": "Haematology",
+    "measures": [
+      {
+        "name": "INR",
+        "measure_type_id": 2
+      }
+    ]
+  },
+  {
+    "name": "ESR",
+    "short_name": "ESR",
+    "specimen": [
+      "Blood"
+    ],
+    "test_category": "Haematology",
+    "measures": [
+      {
+        "name": "ESR",
+        "measure_type_id": 2
+      }
+    ]
+  },
+  {
+    "name": "Sickling Test",
+    "short_name": "Sickling",
+    "specimen": [
+      "Blood"
+    ],
+    "test_category": "Haematology",
+    "measures": [
+      {
+        "name": "Sickling Screen",
+        "measure_type_id": 2
+      }
+    ]
+  },
+  {
+    "name": "Pregnancy Test",
+    "short_name": "PT(ßHCG)",
+    "specimen": [
+      "Urine"
+    ],
+    "test_category": "Parasitology",
+    "measures": [
+      {
+        "name": "Pregnancy Test",
+        "measure_type_id": 2
+      }
+    ]
+  },
+  {
+    "name": "Manual Differential & Cell Morphology",
+    "short_name": "PRSM",
+    "specimen": [
+      "Blood"
+    ],
+    "test_category": "Haematology",
+    "measures": [
+      {
+        "name": "Other",
+        "measure_type_id": 2
+      },
+      {
+        "name": "RBC Comments",
+        "measure_type_id": 2
+      },
+      {
+        "name": "WBC Comments",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Platelet Comments",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Interpretative Comments",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Attempted/ Differential Diagnosis",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Further Tests",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Histology Number",
+        "measure_type_id": 2
+      }
+    ]
+  },
+  {
+    "name": "Pancreatic Function Test",
+    "short_name": "PFT",
+    "specimen": [
+      "Blood"
+    ],
+    "test_category": "Biochemistry",
+    "measures": [
+      {
+        "name": "Amylase",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Lipase",
+        "measure_type_id": 2
+      }
+    ]
+  },
+  {
+    "name": "Direct Coombs Test",
+    "short_name": "",
+    "specimen": [
+      "Blood"
+    ],
+    "test_category": "Blood Bank",
+    "measures": [
+      {
+        "name": "Direct Coombs Test",
+        "measure_type_id": 2
+      }
+    ]
+  },
+  {
+    "name": "Calcium",
+    "short_name": "Ca",
+    "specimen": [
+      "Blood"
+    ],
+    "test_category": "Biochemistry",
+    "measures": [
+      {
+        "name": "Ca",
+        "measure_type_id": 2
+      }
+    ]
+  },
+  {
+    "name": "Phosphorus",
+    "short_name": "P",
+    "specimen": [
+      "Blood"
+    ],
+    "test_category": "Biochemistry",
+    "measures": [
+      {
+        "name": "P",
+        "measure_type_id": 2
+      }
+    ]
+  },
+  {
+    "name": "Magnesium",
+    "short_name": "Mg",
+    "specimen": [
+      "Blood"
+    ],
+    "test_category": "Biochemistry",
+    "measures": [
+      {
+        "name": "Mg",
+        "measure_type_id": 2
+      }
+    ]
+  },
+  {
+    "name": "Creatinine Kinase",
+    "short_name": "CK",
+    "specimen": [
+      "Blood"
+    ],
+    "test_category": "Biochemistry",
+    "measures": [
+      {
+        "name": "CK",
+        "measure_type_id": 2
+      }
+    ]
+  },
+  {
+    "name": "Uric Acid",
+    "short_name": "UA",
+    "specimen": [
+      "Blood"
+    ],
+    "test_category": "Biochemistry",
+    "measures": [
+      {
+        "name": "UA",
+        "measure_type_id": 2
+      }
+    ]
+  },
+  {
+    "name": "ESBL Test",
+    "short_name": "ESBL",
+    "specimen": [
+      "CSF",
+      "Blood",
+      "Pleural Fluid",
+      "Ascitic Fluid",
+      "Pericardial Fluid",
+      "Peritoneal Fluid",
+      "HVS",
+      "Pus Swab",
+      "Pus",
+      "Urine"
+    ],
+    "test_category": "Microbiology",
+    "measures": [
+      {
+        "name": "ESBL",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Cefotaxime",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Cefotaxime + Clavulanate",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Ceftazidime",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Ceftazidime + Clavulanate",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Cefepime",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Cefepime + clavulanate",
+        "measure_type_id": 2
+      }
+    ]
+  },
+  {
+    "name": "APTT Ratio",
+    "short_name": "APTT Ratio",
+    "specimen": [
+      "other"
+    ],
+    "test_category": "Haematology",
+    "measures": [
+      {
+        "name": "APTT Ratio",
+        "measure_type_id": 2
+      }
+    ]
+  },
+  {
+    "name": "Fibronogen",
+    "short_name": "PF",
+    "specimen": [
+      "Blood"
+    ],
+    "test_category": "Haematology",
+    "measures": [
+      {
+        "name": "Fibronogen",
+        "measure_type_id": 2
+      }
+    ]
+  },
+  {
+    "name": "50:50 Normal Plasma",
+    "short_name": "",
+    "specimen": [
+      "other"
+    ],
+    "test_category": "Haematology",
+    "measures": [
+      {
+        "name": "50:50 Normal Plasma",
+        "measure_type_id": 2
+      }
+    ]
+  },
+  {
+    "name": "50:50 Mix FVIII Deficient",
+    "short_name": "",
+    "specimen": [
+      "other"
+    ],
+    "test_category": "Haematology",
+    "measures": [
+      {
+        "name": "50:50 Mix FVIII Deficient",
+        "measure_type_id": 2
+      }
+    ]
+  },
+  {
+    "name": "50:50 Mix F-IX Deficient",
+    "short_name": "",
+    "specimen": [
+      "other"
+    ],
+    "test_category": "Haematology",
+    "measures": [
+      {
+        "name": "50:50 Mix F-IX Deficient",
+        "measure_type_id": 2
+      }
+    ]
+  },
+  {
+    "name": "Factor VIII Assay",
+    "short_name": "",
+    "specimen": [
+      "other"
+    ],
+    "test_category": "Haematology",
+    "measures": [
+      {
+        "name": "Factor VIII Assay",
+        "measure_type_id": 2
+      }
+    ]
+  },
+  {
+    "name": "Factor IX Assay",
+    "short_name": "",
+    "specimen": [
+      "other"
+    ],
+    "test_category": "Haematology",
+    "measures": [
+      {
+        "name": "Factor IX Assay",
+        "measure_type_id": 2
+      }
+    ]
+  },
+  {
+    "name": "Coagulation Assay",
+    "short_name": "",
+    "specimen": [
+      "other"
+    ],
+    "test_category": "Haematology",
+    "measures": [
+      {
+        "name": "PT",
+        "measure_type_id": 2
+      },
+      {
+        "name": "INR",
+        "measure_type_id": 2
+      },
+      {
+        "name": "APTT",
+        "measure_type_id": 2
+      },
+      {
+        "name": "APTT Ratio",
+        "measure_type_id": 2
+      },
+      {
+        "name": "TT",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Fibronogen",
+        "measure_type_id": 2
+      },
+      {
+        "name": "50:50 Mix Normal Plasma",
+        "measure_type_id": 2
+      },
+      {
+        "name": "50:50 Mix FVIII Deficient",
+        "measure_type_id": 2
+      },
+      {
+        "name": "50:50 Mix F-IX Deficient",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Factor IX Assay",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Factor VIII Assay",
+        "measure_type_id": 2
+      }
+    ]
+  },
+  {
+    "name": "Lactate Dehydrogenase",
+    "short_name": "LDH",
+    "specimen": [
+      "CSF",
+      "Blood",
+      "Pleural Fluid",
+      "Ascitic Fluid",
+      "Pericardial Fluid",
+      "Peritoneal Fluid"
+    ],
+    "test_category": "Biochemistry",
+    "measures": [
+      {
+        "name": "LDH",
+        "measure_type_id": 2
+      }
+    ]
+  },
+  {
+    "name": "Total Protein",
+    "short_name": "TP",
+    "specimen": [
+      "CSF",
+      "Blood",
+      "Pleural Fluid",
+      "Ascitic Fluid",
+      "Pericardial Fluid",
+      "Peritoneal Fluid"
+    ],
+    "test_category": "Biochemistry",
+    "measures": [
+      {
+        "name": "TP",
+        "measure_type_id": 2
+      }
+    ]
+  },
+  {
+    "name": "ZN",
+    "short_name": "",
+    "specimen": [
+      "other"
+    ],
+    "test_category": "Microbiology",
+    "measures": [
+      {
+        "name": "Results",
+        "measure_type_id": 2
+      }
+    ]
+  },
+  {
+    "name": "a-Hydroxybutyrate Dehydrogenase",
+    "short_name": "a-HBDH",
+    "specimen": [
+      "Blood"
+    ],
+    "test_category": "Biochemistry",
+    "measures": [
+      {
+        "name": "I-HBDH",
+        "measure_type_id": 2
+      }
+    ]
+  },
+  {
+    "name": "HbA1C",
+    "short_name": "HbA1C",
+    "specimen": [
+      "Blood"
+    ],
+    "test_category": "Biochemistry",
+    "measures": [
+      {
+        "name": "HbA1C",
+        "measure_type_id": 2
+      }
+    ]
+  },
+  {
+    "name": "Gastric Aspirate analysis",
+    "short_name": "Gastrict aspirate",
+    "specimen": [
+
+    ],
+    "test_category": "Microbiology",
+    "measures": [
+
+    ]
+  },
+  {
+    "name": "Gastric Aspirate",
+    "short_name": "",
+    "specimen": [
+      "Other"
+    ],
+    "test_category": "Microbiology",
+    "measures": [
+      {
+        "name": "MTB",
+        "measure_type_id": 2
+      },
+      {
+        "name": "RIF RESISTANCE",
+        "measure_type_id": 2
+      }
+    ]
+  },
+  {
+    "name": "Iron",
+    "short_name": "Fe",
+    "specimen": [
+      "Blood"
+    ],
+    "test_category": "Biochemistry",
+    "measures": [
+      {
+        "name": "Fe",
+        "measure_type_id": 2
+      }
+    ]
+  },
+  {
+    "name": "Fluids",
+    "short_name": "Fluids",
+    "specimen": [
+      "CSF",
+      "Blood",
+      "Pleural Fluid",
+      "Ascitic Fluid",
+      "Pericardial Fluid",
+      "Peritoneal Fluid"
+    ],
+    "test_category": "Biochemistry",
+    "measures": [
+      {
+        "name": "TP",
+        "measure_type_id": 2
+      },
+      {
+        "name": "ALB",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Glu-G",
+        "measure_type_id": 2
+      },
+      {
+        "name": "LDH",
+        "measure_type_id": 2
+      }
+    ]
+  },
+  {
+    "name": "Cardiac Test",
+    "short_name": "",
+    "specimen": [
+      "other"
+    ],
+    "test_category": "Biochemistry",
+    "measures": [
+      {
+        "name": "Ca",
+        "measure_type_id": 2
+      },
+      {
+        "name": "CK",
+        "measure_type_id": 2
+      },
+      {
+        "name": "CREA-J",
+        "measure_type_id": 2
+      },
+      {
+        "name": "LDH",
+        "measure_type_id": 2
+      },
+      {
+        "name": "I-HBDH",
+        "measure_type_id": 2
+      }
+    ]
+  },
+  {
+    "name": "Histology",
+    "short_name": "Histo",
+    "specimen": [
+      "Tissue Biopsies"
+    ],
+    "test_category": "Histopathology",
+    "measures": [
+      {
+        "name": "Histology Number",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Specimen",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Specimen Site",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Clinical Data",
+        "measure_type_id": 2
+      }
+    ]
+  },
+  {
+    "name": "FINE NEEDLE ASPIRATE",
+    "short_name": "FNA",
+    "specimen": [
+
+    ],
+    "test_category": "Microbiology",
+    "measures": [
+
+    ]
+  },
+  {
+    "name": "FNA",
+    "short_name": "FNA",
+    "specimen": [
+      "Fine Needle Aspirate",
+      "Synovial Fluid"
+    ],
+    "test_category": "Microbiology",
+    "measures": [
+      {
+        "name": "GRAM STAIN",
+        "measure_type_id": 2
+      },
+      {
+        "name": "ZN STAIN",
+        "measure_type_id": 2
+      }
+    ]
+  },
+  {
+    "name": "Stool Macroscopy",
+    "short_name": "StolMac",
+    "specimen": [
+      "Stool"
+    ],
+    "test_category": "Parasitology",
+    "measures": [
+
+    ]
+  },
+  {
+    "name": "Grams Differential",
+    "short_name": "Diff",
+    "specimen": [
+      "CSF",
+      "Pleural Fluid",
+      "Ascitic Fluid",
+      "Pus Swab",
+      "Pus",
+      "Gastric Aspirate"
+    ],
+    "test_category": "Microbiology",
+    "measures": [
+      {
+        "name": "Lymphocytes",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Neutrophils",
+        "measure_type_id": 2
+      }
+    ]
+  },
+  {
+    "name": "Cholera",
+    "short_name": "Chol",
+    "specimen": [
+      "Stool"
+    ],
+    "test_category": "Microbiology",
+    "measures": [
+      {
+        "name": "Rapid Test",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Culture",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Serology",
+        "measure_type_id": 2
+      }
+    ]
+  },
+  {
+    "name": "Stool Microscopy",
+    "short_name": "StolM",
+    "specimen": [
+
+    ],
+    "test_category": "Parasitology",
+    "measures": [
+
+    ]
+  },
+  {
+    "name": "Aspirate",
+    "short_name": "asp",
+    "specimen": [
+      "Pus"
+    ],
+    "test_category": "Parasitology",
+    "measures": [
+      {
+        "name": "WET MOUNT",
+        "measure_type_id": 2
+      }
+    ]
+  },
+  {
+    "name": "CREATINE (J)",
+    "short_name": "CREA",
+    "specimen": [
+      "Blood"
+    ],
+    "test_category": "Biochemistry",
+    "measures": [
+      {
+        "name": "CREATININE (J)",
+        "measure_type_id": 2
+      }
+    ]
+  },
+  {
+    "name": "SARS-CoV-2",
+    "short_name": "CoV",
+    "specimen": [
+      "Tissue Biopsies"
+    ],
+    "test_category": "MOLECULAR DIAGNOSTICS",
+    "measures": [
+      {
+        "name": "SARS-CoV-2 PCR",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Ct Value",
+        "measure_type_id": 2
+      }
+    ]
+  },
+  {
+    "name": "Urine Culture",
+    "short_name": "Ucul",
+    "specimen": [
+      "Urine"
+    ],
+    "test_category": "Microbiology",
+    "measures": [
+      {
+        "name": "Culture",
+        "measure_type_id": 2
+      }
+    ]
+  },
+  {
+    "name": "coagulation screening",
+    "short_name": "COAG",
+    "specimen": [
+
+    ],
+    "test_category": "Haematology",
+    "measures": [
+
+    ]
+  },
+  {
+    "name": "Blood Culture",
+    "short_name": "BL C",
+    "specimen": [
+      "Blood"
+    ],
+    "test_category": "Microbiology",
+    "measures": [
+      {
+        "name": "Culture",
+        "measure_type_id": 2
+      }
+    ]
+  },
+  {
+    "name": "MRSA Test",
+    "short_name": "mrsa",
+    "specimen": [
+      "Sputum",
+      "CSF",
+      "Pleural Fluid",
+      "Ascitic Fluid",
+      "Pericardial Fluid",
+      "Peritoneal Fluid",
+      "HVS",
+      "Pus Swab",
+      "Pus",
+      "Urine",
+      "Other",
+      "Semen",
+      "Gastric Aspirate",
+      "Fine Needle Aspirate",
+      "Nasopharyngeal Swab",
+      "Broncoalveolar Lavage",
+      "Tracheal  Aspirates",
+      "Urethral Swab",
+      "Perineal Swab",
+      "Throat Swab",
+      "Synovial Fluid"
+    ],
+    "test_category": "Microbiology",
+    "measures": [
+      {
+        "name": "MRSA Test",
+        "measure_type_id": 2
+      },
+      {
+        "name": "CEFOXITIN",
+        "measure_type_id": 2
+      },
+      {
+        "name": "OXACILLIN",
+        "measure_type_id": 2
+      }
+    ]
+  },
+  {
+    "name": "MCS",
+    "short_name": "mcs",
+    "specimen": [
+      "Sputum",
+      "CSF",
+      "Pleural Fluid",
+      "Ascitic Fluid",
+      "Pericardial Fluid",
+      "Peritoneal Fluid",
+      "HVS",
+      "Pus Swab",
+      "Pus",
+      "Other",
+      "Semen",
+      "other",
+      "Gastric Aspirate",
+      "Tissue Biopsies",
+      "Fine Needle Aspirate",
+      "Nasopharyngeal Swab",
+      "Broncoalveolar Lavage",
+      "Tracheal  Aspirates",
+      "Urethral Swab",
+      "Perineal Swab",
+      "Throat Swab",
+      "Synovial Fluid"
+    ],
+    "test_category": "Microbiology",
+    "measures": [
+      {
+        "name": "Gram Stain",
+        "measure_type_id": 2
+      },
+      {
+        "name": "ZN Stain",
+        "measure_type_id": 2
+      },
+      {
+        "name": "WBC_Cell Count",
+        "measure_type_id": 2
+      },
+      {
+        "name": "RBC_Cell Count",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Polymorphs_Diff",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Lymphocytes_Diff",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Diff Remarks",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Culture",
+        "measure_type_id": 2
+      }
+    ]
+  },
+  {
+    "name": "URINALYSIS",
+    "short_name": "Urls",
+    "specimen": [
+      "Urine"
+    ],
+    "test_category": "Parasitology",
+    "measures": [
+      {
+        "name": "Appearance",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Color",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Blood",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Urobilinogen",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Bilirubin",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Protein",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Nitrate",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Ketones",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Glucose",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Specific Gravity",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Leucocytes",
+        "measure_type_id": 2
+      },
+      {
+        "name": "PH",
+        "measure_type_id": 2
+      },
+      {
+        "name": "WBC",
+        "measure_type_id": 2
+      },
+      {
+        "name": "RBC",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Epithelial Cells",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Casts",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Crystals",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Parasites",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Yeast Cells",
+        "measure_type_id": 2
+      }
+    ]
+  },
+  {
+    "name": "TB_Microscopy",
+    "short_name": "TBmicr",
+    "specimen": [
+      "Sputum",
+      "CSF",
+      "Pleural Fluid",
+      "Pericardial Fluid",
+      "Peritoneal Fluid",
+      "Pus Swab",
+      "Pus",
+      "Other",
+      "Gastric Aspirate",
+      "Fine Needle Aspirate",
+      "Nasopharyngeal Swab",
+      "Tracheal  Aspirates",
+      "Urethral Swab"
+    ],
+    "test_category": "Microbiology",
+    "measures": [
+      {
+        "name": "Macro Exam",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Smear Microscopy Result",
+        "measure_type_id": 2
+      },
+      {
+        "name": "HIV Status",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Reason For Testing",
+        "measure_type_id": 2
+      },
+      {
+        "name": "Sample Results 2",
+        "measure_type_id": 2
+      }
+    ]
+  },
+  {
+    "name": "Stool Culture",
+    "short_name": "StCul",
+    "specimen": [
+      "Stool"
+    ],
+    "test_category": "Microbiology",
+    "measures": [
+      {
+        "name": "Culture",
+        "measure_type_id": 2
+      }
+    ]
+  },
+  {
+    "name": "Shunt Tip",
+    "short_name": "ShT",
+    "specimen": [
+      "VP Shunt Tip"
+    ],
+    "test_category": "Microbiology",
+    "measures": [
+      {
+        "name": "Culture",
+        "measure_type_id": 2
+      }
+    ]
+  },
+  {
+    "name": "A1C2R",
+    "short_name": "A1C2R",
+    "specimen": [
+      "Blood"
+    ],
+    "test_category": "Biochemistry",
+    "measures": [
+      {
+        "name": "A1C2R",
+        "measure_type_id": 2
+      }
+    ]
+  }
+]
