@@ -35,8 +35,6 @@ gem 'rest-client', '~> 2.1'
 
 gem 'couchrest_model', '>= 2.0.4'
 gem 'passenger'
-# gem 'socket.io-client-simple', path: '/home/hopgausi/code/hismalawi/nlims_controller/ruby-socket.io-client-simple'
-gem 'socket.io-client-simple'
 gem 'sucker_punch'
 group :development, :test do
   # Call 'byebug' anywhere in the code to stop execution and get a debugger console
