@@ -30,6 +30,7 @@ def re_push_status_to_emr
 
     StatusSyncTracker.find_by(
       tracking_number: tracker.tracking_number,
+      test_id: tracker.test_id,
       status: tracker.status
     )&.update(sync_status: true)
   end

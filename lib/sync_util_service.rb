@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require 'emr_sync_service'
 # Service class for syncing order results and statuses between master nlims and local nlims
 class SyncUtilService
   def initialize(service_type: nil); end
@@ -22,6 +23,12 @@ class SyncUtilService
       date_result_given: Time.new.strftime('%Y%m%d%H%M%S'),
       test_result_receipent_types: level
     )
+  end
+
+  def emr_instance_for_sync(emr_instance, tracking_number)
+    return emr_instance unless emr_instance.mahis?(tracking_number)
+
+    EmrSyncService.new(app: 'mahis')
   end
 
   private

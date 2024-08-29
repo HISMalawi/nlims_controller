@@ -31,9 +31,7 @@ namespace :master_nlims_back_up do
             unless order['data']['other']['results'].blank?
               results = order['data']['other']['results']
               results.each do |key, result|
-                unless TestType.find_by(name: key)['id'] == sample['test_type_id']
-                  next
-                end
+                next unless TestType.find_by(name: key)['id'] == sample['test_type_id']
 
                 result.each do |act_rst|
                   measure = act_rst[0]

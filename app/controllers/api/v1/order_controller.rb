@@ -1,10 +1,13 @@
+# frozen_string_literal: true
+
 require 'order_service'
 require 'user_service'
 require 'tracking_number_service'
-require 'thread'
 require 'date'
 
 class API::V1::OrderController < ApplicationController
+  before_action :remote_host
+
   def create_order
     if !params['district']
       msg = 'district not provided'
@@ -54,7 +57,7 @@ class API::V1::OrderController < ApplicationController
               tracking_number: tracking_number
             }
           }
-          render plain: response.to_json and return
+          render(plain: response.to_json) && return
         end
       else
         tracking_number = TrackingNumberService.generate_tracking_number
@@ -88,7 +91,7 @@ class API::V1::OrderController < ApplicationController
         data: {}
       }
     end
-    render plain: response.to_json and return
+    render(plain: response.to_json) && return
   end
 
   def check_if_dispatched
@@ -118,7 +121,7 @@ class API::V1::OrderController < ApplicationController
         data: {}
       }
     end
-    render plain: response.to_json and return
+    render(plain: response.to_json) && return
   end
 
   def retrieve_undispatched_samples
@@ -155,7 +158,7 @@ class API::V1::OrderController < ApplicationController
         data: {}
       }
     end
-    render plain: response.to_json and return
+    render(plain: response.to_json) && return
   end
 
   def retrieve_samples
@@ -187,7 +190,7 @@ class API::V1::OrderController < ApplicationController
         data: {}
       }
     end
-    render plain: response.to_json and return
+    render(plain: response.to_json) && return
   end
 
   def dispatch_sample
@@ -327,7 +330,7 @@ class API::V1::OrderController < ApplicationController
         message: 'authentication parameters not provided',
         data: {}
       }
-      render plain: response.to_json and return
+      render(plain: response.to_json) && return
     end
     if msg
       response = {
@@ -337,7 +340,7 @@ class API::V1::OrderController < ApplicationController
         data: {}
       }
     end
-    render plain: response.to_json and return
+    render(plain: response.to_json) && return
   end
 
   def request_order
@@ -383,7 +386,7 @@ class API::V1::OrderController < ApplicationController
               tracking_number: tracking_number
             }
           }
-          render plain: response.to_json and return
+          render(plain: response.to_json) && return
         end
       else
         tracking_number = TrackingNumberService.generate_tracking_number
@@ -409,7 +412,7 @@ class API::V1::OrderController < ApplicationController
         data: {}
       }
     end
-    render plain: response.to_json and return
+    render(plain: response.to_json) && return
   end
 
   def query_requested_order_by_npid
@@ -443,7 +446,7 @@ class API::V1::OrderController < ApplicationController
         data: {}
       }
     end
-    render plain: response.to_json and return
+    render(plain: response.to_json) && return
   end
 
   def query_order_by_npid
@@ -475,7 +478,7 @@ class API::V1::OrderController < ApplicationController
         data: {}
       }
     end
-    render plain: response.to_json and return
+    render(plain: response.to_json) && return
   end
 
   def query_results_by_npid
@@ -506,11 +509,11 @@ class API::V1::OrderController < ApplicationController
         data: {}
       }
     end
-    render plain: response.to_json and return
+    render(plain: response.to_json) && return
   end
 
   def update_order
-    if params['tracking_number'] && params['who_updated']	&& params['status']
+    if params['tracking_number'] && params['who_updated'] && params['status']
       order_availability = OrderService.check_order(params['tracking_number'])
       if order_availability == false
         response = {
@@ -521,7 +524,7 @@ class API::V1::OrderController < ApplicationController
             tracking_number: params['tracking_number']
           }
         }
-        render plain: response.to_json and return
+        render(plain: response.to_json) && return
       end
       status = OrderService.update_order(params)
       response = if status[0] == true
@@ -547,7 +550,7 @@ class API::V1::OrderController < ApplicationController
         data: {}
       }
     end
-    render plain: response.to_json and return
+    render(plain: response.to_json) && return
   end
 
   def query_results_by_tracking_number
@@ -602,7 +605,7 @@ class API::V1::OrderController < ApplicationController
       }
     end
 
-    render plain: response.to_json and return
+    render(plain: response.to_json) && return
   end
 
   def query_results_by_tracking_number_site_code
@@ -635,7 +638,7 @@ class API::V1::OrderController < ApplicationController
         data: {}
       }
     end
-    render plain: response.to_json and return
+    render(plain: response.to_json) && return
   end
 
   def query_order_by_tracking_number
@@ -667,7 +670,7 @@ class API::V1::OrderController < ApplicationController
         data: {}
       }
     end
-    render plain: response.to_json and return
+    render(plain: response.to_json) && return
   end
 
   def query_order_by_tracking_number_site_code
@@ -700,6 +703,17 @@ class API::V1::OrderController < ApplicationController
         data: {}
       }
     end
-    render plain: response.to_json and return
+    render(plain: response.to_json) && return
+  end
+
+  private
+
+  def remote_host
+    return unless params[:tracking_number].present?
+
+    TrackingNumberHost.find_or_create_by(
+      tracking_number: params[:tracking_number],
+      host: request.remote_ip
+    )
   end
 end

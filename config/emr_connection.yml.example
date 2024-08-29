@@ -1,4 +1,12 @@
-protocol: 'http://192.168.100.200'
-port: 3002
-username: local_nlims_macro1
-password: local_nlims_macro1
+emr:
+  active: true
+  protocol: 'http://localhost'
+  port: 3002
+  username: local_nlims_lighthouse233
+  password: local_nlims_lighthouse3
+mahis:
+  active: false
+  protocol: 'http://localhost'
+  port: 3002
+  username: local_nlims_lighthouse233
+  password: local_nlims_lighthouse3

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class FailedTestType < ActiveRecord::Migration[5.1]
   def change
     return if table_exists? :failed_test_types

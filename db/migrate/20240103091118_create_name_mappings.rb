@@ -1,4 +1,4 @@
-# frozen_string_literal: ture
+# frozen_string_literal: true
 
 #  CreateNameMappings model
 class CreateNameMappings < ActiveRecord::Migration[5.1]

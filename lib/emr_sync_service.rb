@@ -3,13 +3,22 @@
 require 'order_service'
 # EMRSyncService for syncing status of orders to EMR and results
 class EmrSyncService
-  def initialize(service_type: nil)
-    config = load_config
+  def initialize(service_type: nil, app: 'emr')
+    config = app == 'emr' ? load_config['emr'] : load_config['mahis']
     @username = config['username']
     @password = config['password']
     @protocol = config['protocol']
     @port = config['port']
+    @active = config['active']
     @token = authenticate_with_emr unless service_type == 'account_creation'
+  end
+
+  def active_connection?
+    @active
+  end
+
+  def mahis?(tracking_number)
+    tracking_number.downcase.include?('test')
   end
 
   def push_status_to_emr(tracking_number, status, status_time)
@@ -69,7 +78,6 @@ class EmrSyncService
   end
 
   # Push the payload to EMR
-  # rubocop:disable Metrics/MethodLength
   def post_to_emr(url, payload)
     response = RestClient.post(
       url,
@@ -84,7 +92,6 @@ class EmrSyncService
     SyncErrorLog.create(error_message: e.message, error_details: payload)
     false
   end
-  # rubocop:enable Metrics/MethodLength
 
   def handle_response(response)
     user = JSON.parse(response)

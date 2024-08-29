@@ -5,8 +5,15 @@ require 'emr_sync_service'
 
 # TestResult Model
 class TestResult < ApplicationRecord
-  after_create :create_test_result_acknowledgement
-  after_create :push_result_to_emr
+  after_commit :create_test_result_acknowledgement, if: :local_nlims?
+  after_commit :push_result_to_emr, if: :local_nlims?
+  after_commit :push_result_to_local_nlims, unless: :local_nlims?
+
+  private
+
+  def local_nlims?
+    Config.local_nlims?
+  end
 
   def create_test_result_acknowledgement
     sync_util_service = SyncUtilService.new
@@ -19,9 +26,16 @@ class TestResult < ApplicationRecord
     )
   end
 
+  def push_result_to_local_nlims
+    ResultSyncTracker.create(tracking_number: tracking_number, test_id: test_id)
+    local_nlims = LocalNlimsSyncService.new(test_id)
+    local_nlims.push_test_actions_to_local_nlims(test_id: test_id, action: 'result_update')
+  end
+
   def push_result_to_emr
     ResultSyncTracker.create(tracking_number: tracking_number, test_id: test_id)
     emr_service = EmrSyncService.new
+    emr_service = emr_service.emr_instance_for_sync(emr_service, tracking_number)
     response = emr_service.push_result_to_emr(tracking_number)
     return unless response
 

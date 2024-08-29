@@ -1,7 +1,11 @@
+# frozen_string_literal: true
+
 require 'order_service'
 module TestService
   def self.update_test(params)
-    return [false, 'tracking number not provided'] if params[:tracking_number].blank?
+    if params[:tracking_number].blank?
+      return [false, 'tracking number not provided']
+    end
     return [false, 'test name not provided'] if params[:test_name].blank?
     return [false, 'test status not provided'] if params[:test_status].blank?
 
@@ -18,8 +22,12 @@ module TestService
       retr_order = OrderService.retrieve_order_from_couch(couch_id)
       tst_name__ = TestType.find_by(name: test_name)
       status__ = TestStatus.find_by(name: params[:test_status])
-      return [false, 'wrong parameter on test name provided'] if tst_name__.blank?
-      return [false, 'test status provided, not within scope of tests statuses'] if status__.blank?
+      if tst_name__.blank?
+        return [false, 'wrong parameter on test name provided']
+      end
+      if status__.blank?
+        return [false, 'test status provided, not within scope of tests statuses']
+      end
 
       test_id = Test.find_by_sql("SELECT tests.id FROM tests INNER JOIN test_types ON tests.test_type_id = test_types.id
 																	WHERE tests.specimen_id = '#{order_id}' AND test_types.name = '#{test_name}'")
@@ -44,74 +52,79 @@ module TestService
           couch_test[test_name] = details
           test_results_measures = {}
           results_measure = {}
-          TestStatusTrail.create(
-            test_id: test_id,
-            time_updated: params[:time_updated],
-            test_status_id: test_status.id,
-            who_updated_id: params[:who_updated]['id_number'].to_s,
-            who_updated_name: "#{params[:who_updated]['first_name']} #{params[:who_updated]['last_name']}",
-            who_updated_phone_number: ''
-          )
-          test_status = TestStatus.where(name: params[:test_status]).first
-          tst_update = Test.find_by(id: test_id)
-          couch_id_updater = tst_update.test_status_id
-          if tst_update.test_status_id == 9 && test_status.id == 5
-            tst_update.test_status_id = test_status.id
-            tst_update.save
-          elsif tst_update.test_status_id == 9 && test_status.id == 4
-            tst_update.test_status_id = test_status.id
-            tst_update.save
-          elsif tst_update.test_status_id == 9 && test_status.id == 2
-            tst_update.test_status_id = test_status.id
-            tst_update.save
-          elsif tst_update.test_status_id == 2 && test_status.id == 3
-            tst_update.test_status_id = test_status.id
-            tst_update.save
-          elsif tst_update.test_status_id == 3 && test_status.id == 4
-            tst_update.test_status_id = test_status.id
-            tst_update.save
-          elsif tst_update.test_status_id == 4 && test_status.id == 5
-            tst_update.test_status_id = test_status.id
-            tst_update.save
-          elsif test_status.id == 11
-            tst_update.test_status_id = test_status.id
-            tst_update.save
-          elsif test_status.id == 10
-            tst_update.test_status_id = test_status.id
-            tst_update.save
-          end
-          if params[:results]
-            results = params[:results]
-            results.each do |key, value|
-              measure_name = key
-              result_value = value
-              measure = Measure.where(name: measure_name).first
-              next if measure.blank?
-
-              if check_if_result_already_available(test_id, measure.id) == false
-                device_name = params[:platform].blank? ? '' : params[:platform]
-                next if result_value == 'Failed' || result_value.blank?
-
-                TestResult.create(
-                  measure_id: measure.id,
-                  test_id: test_id,
-                  result: result_value,
-                  device_name: device_name,
-                  time_entered: result_date
-                )
-              else
-                test_result_ = TestResult.where(test_id: test_id, measure_id: measure.id).first
-                test_result_.update(result: result_value, time_entered: result_date)
-                t = TestStatusTrail.where(test_id: test_id, test_status_id: 5).first
-                t.update(time_updated: result_date) unless t.blank?
-              end
-              test_results_measures[measure_name] = { 'result_value': result_value }
+          ActiveRecord::Base.transaction do
+            TestStatusTrail.create(
+              test_id: test_id,
+              time_updated: params[:time_updated],
+              test_status_id: test_status.id,
+              who_updated_id: params[:who_updated]['id_number'].to_s,
+              who_updated_name: "#{params[:who_updated]['first_name']} #{params[:who_updated]['last_name']}",
+              who_updated_phone_number: ''
+            )
+            test_status = TestStatus.where(name: params[:test_status]).first
+            tst_update = Test.find_by(id: test_id)
+            couch_id_updater = tst_update.test_status_id
+            if tst_update.test_status_id == 9 && test_status.id == 5
+              tst_update.test_status_id = test_status.id
+              tst_update.save
+            elsif tst_update.test_status_id == 9 && test_status.id == 4
+              tst_update.test_status_id = test_status.id
+              tst_update.save
+            elsif tst_update.test_status_id == 9 && test_status.id == 2
+              tst_update.test_status_id = test_status.id
+              tst_update.save
+            elsif tst_update.test_status_id == 2 && test_status.id == 3
+              tst_update.test_status_id = test_status.id
+              tst_update.save
+            elsif tst_update.test_status_id == 3 && test_status.id == 4
+              tst_update.test_status_id = test_status.id
+              tst_update.save
+            elsif tst_update.test_status_id == 4 && test_status.id == 5
+              tst_update.test_status_id = test_status.id
+              tst_update.save
+            elsif test_status.id == 11
+              tst_update.test_status_id = test_status.id
+              tst_update.save
+            elsif test_status.id == 10
+              tst_update.test_status_id = test_status.id
+              tst_update.save
             end
-            results_measure[test_name] = test_results_measures
+            if params[:results]
+              results = params[:results]
+
+              results.each do |key, value|
+                measure_name = key
+                result_value = value
+                measure = Measure.where(name: measure_name).first
+                next if measure.blank?
+
+                if check_if_result_already_available(test_id, measure.id) == false
+                  device_name = params[:platform].blank? ? '' : params[:platform]
+                  next if result_value == 'Failed' || result_value.blank?
+
+                  TestResult.create(
+                    measure_id: measure.id,
+                    test_id: test_id,
+                    result: result_value,
+                    device_name: device_name,
+                    time_entered: result_date
+                  )
+                else
+                  test_result_ = TestResult.where(test_id: test_id, measure_id: measure.id).first
+                  test_result_.update(result: result_value, time_entered: result_date)
+                  t = TestStatusTrail.where(test_id: test_id, test_status_id: 5).first
+                  t.update(time_updated: result_date) unless t.blank?
+                end
+                test_results_measures[measure_name] = { 'result_value': result_value }
+              end
+              results_measure[test_name] = test_results_measures
+            end
           end
           if retr_order != 'false'
             couch_test_statuses = retr_order['test_statuses'][test_name]
-            couch_test_statuses[time] = details unless couch_test_statuses.blank?
+            unless couch_test_statuses.blank?
+              couch_test_statuses[time] = details
+            end
 
             retr_order['test_statuses'][test_name] = couch_test_statuses
             unless results_measure.blank?
@@ -153,7 +166,7 @@ module TestService
   def self.check_if_test_updated?(test_id, status_id)
     obj = Test.find_by(id: test_id, test_status_id: status_id)
     if !obj.blank?
-      !(status_id == 5)
+      status_id != 5
     else
       false
     end
@@ -197,8 +210,8 @@ module TestService
     data = []
     if !res.blank?
       res.each do |d|
-        data.push({ 'tracking_number': d['tracking_number'], 'test_name': d['name'], 'created_at': d['time_created'].to_date,
-                    'status': d['test_status'] })
+        data.push('tracking_number': d['tracking_number'], 'test_name': d['name'], 'created_at': d['time_created'].to_date,
+                  'status': d['test_status'])
       end
       [true, data]
     else
