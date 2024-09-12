@@ -1,0 +1,2 @@
+class OrderSyncTracker < ApplicationRecord
+end

@@ -70,8 +70,7 @@ class API::V1::OrderController < ApplicationController
                      error: false,
                      message: 'order created successfuly',
                      data: {
-                       tracking_number: st[1],
-                       couch_id: st[2]
+                       tracking_number: st[1]
                      }
                    }
                  else

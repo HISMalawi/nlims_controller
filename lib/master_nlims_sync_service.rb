@@ -19,7 +19,7 @@ class MasterNlimsSyncService
   end
 
   def process_orders(date: nil)
-    pending_tests = tests_without_results(date: date)
+    pending_tests = tests_without_results(date:)
     exit if pending_tests.empty? || @token.blank?
 
     pending_tests.each do |pending_test|
@@ -36,6 +36,72 @@ class MasterNlimsSyncService
         update_test_status(test_type_name, test_id, details['status'], details['update_details'])
       end
     end
+  end
+
+  def build_order_payload(tracking_number)
+    order = Speciman.find_by(tracking_number:)
+    return if order.nil?
+
+    tests = Test.where(specimen_id: order&.id)
+    client = Patient.find_by(id: tests&.first&.patient_id)
+    {
+      tracking_number: order.tracking_number,
+      date_sample_drawn: order.date_created,
+      date_received: order.created_at,
+      health_facility_name: order.sending_facility,
+      district: order.district,
+      target_lab: order.target_lab,
+      requesting_clinician: order.requested_by,
+      return_json: 'true',
+      sample_type: SpecimenType.find_by(id: order.specimen_type_id)&.name,
+      tests: TestType.where(id: tests.pluck(:test_type_id)).pluck(:name),
+      sample_status: SpecimenStatus.find_by(id: order.specimen_status_id)&.name,
+      sample_priority: order.priority,
+      reason_for_test: order.priority,
+      order_location: Ward.find_by(id: order.ward_id)&.name || order.sending_facility,
+      who_order_test_id: nil,
+      who_order_test_last_name: tests&.first&.created_by&.split(' ')&.last,
+      who_order_test_first_name: tests&.first&.created_by&.split(' ')&.first,
+      who_order_test_phone_number: '',
+      first_name: client.first_name,
+      last_name: client.last_name,
+      middle_name: client.middle_name,
+      date_of_birth: client[:dob],
+      gender: client.sex,
+      patient_residence: client[:address],
+      patient_location: '',
+      patient_town: '',
+      patient_district: '',
+      national_patient_id: client[:patient_number],
+      phone_number: client[:phone_number],
+      art_start_date: order.art_start_date,
+      art_regimen: order.art_regimen,
+      arv_number: order.arv_number
+    }
+  end
+
+  def push_order_to_master_nlims(payload)
+    url = "#{@protocol}:#{@port}/api/v1/api/v1/create_order/"
+    response = JSON.parse(RestClient.post(
+                            url,
+                            payload.to_json,
+                            content_type: 'application/json',
+                            token: @token
+                          ))
+    return true if response['error'] == false && response['message'] == 'order created successfuly'
+
+    SyncErrorLog.create(
+      error_message: response['message'],
+      error_details: { message: 'NLIMS Push Order to Master NLIMS' }
+    )
+    false
+  rescue StandardError => e
+    puts "Error: #{e.message} ==> NLIMS Push Order to Master NLIMS"
+    SyncErrorLog.create(
+      error_message: e.message,
+      error_details: { message: 'NLIMS Push Order to Master NLIMS' }
+    )
+    false
   end
 
   def push_acknwoledgement_to_master_nlims(pending_acks: nil)
@@ -95,7 +161,7 @@ class MasterNlimsSyncService
       next if measure.nil? || result.blank? || result['result'].blank?
 
       TestResult.create(
-        test_id: test_id,
+        test_id:,
         measure_id: measure.id,
         result: result['result'],
         time_entered: result['result_date']
@@ -112,7 +178,7 @@ class MasterNlimsSyncService
 
   def acknowledged_already?(tracking_number, acknowledge_by)
     ResultsAcknwoledge.find_by(
-      tracking_number: tracking_number,
+      tracking_number:,
       acknwoledged_by: acknowledge_by
     ).nil?
   end
@@ -124,13 +190,13 @@ class MasterNlimsSyncService
     return if test_status_id.blank? || test_type_id.blank?
     return if status_updated_already?(test_id, test_status_id)
 
-    Test.find_by(id: test_id)&.update(test_status_id: test_status_id)
+    Test.find_by(id: test_id)&.update(test_status_id:)
     return unless test_status == details['status']
 
     TestStatusTrail.create(
-      test_id: test_id,
+      test_id:,
       time_updated: details['time_updated'],
-      test_status_id: test_status_id,
+      test_status_id:,
       who_updated_id: details['updater_id'],
       who_updated_name: details['updater_name'],
       who_updated_phone_number: ''
@@ -144,9 +210,9 @@ class MasterNlimsSyncService
 
     ResultsAcknwoledge.create(
       tracking_number: track_n,
-      test_id: test_id,
+      test_id:,
       acknwoledged_at: Time.new.strftime('%Y%m%d%H%M%S'),
-      result_date: result_date,
+      result_date:,
       acknwoledged_by: ack_by,
       acknwoledged_to_nlims: false,
       acknwoledment_level: level
@@ -160,7 +226,7 @@ class MasterNlimsSyncService
   end
 
   def status_updated_already?(test_id, test_status_id)
-    res = Test.find_by(id: test_id, test_status_id: test_status_id)
+    res = Test.find_by(id: test_id, test_status_id:)
     return false if res.nil?
 
     puts "Test #{test_id} has already been updated to status #{test_status_id}"
@@ -209,7 +275,7 @@ class MasterNlimsSyncService
       error_message: e.message,
       error_details: {
         message: 'ERROR Master NLIMS Query',
-        tracking_number: tracking_number, test_name: test_name
+        tracking_number:, test_name:
       }
     )
     JSON.parse({ error: true, message: e.message }.to_json)

@@ -3,7 +3,6 @@
 #  OrderService module
 module OrderService
   def self.create_order(params, tracking_number)
-    couch_order = 0
     ActiveRecord::Base.transaction do
       params[:tests].each do |tst|
         tst = NameMapping.actual_name_of(tst)
@@ -33,95 +32,45 @@ module OrderService
         )
       else
         patient_obj.dob = params[:date_of_birth]
+        patient_obj.update(name: "#{params[:first_name]} #{params[:last_name]}")
         patient_obj.save
       end
-      who_order = {
-        first_name: params[:who_order_test_first_name],
-        last_name: params[:who_order_test_last_name],
-        phone_number: params[:who_order_test_phone_number],
-        id: params[:who_order_test_id]
-      }
-      patient = {
-        first_name: params[:first_name],
-        last_name: params[:last_name],
-        phone_number: params[:phone_number],
-        dob: params[:date_of_birth],
-        id: npid,
-        email: params[:email],
-        gender: params[:gender]
-      }
-      sample_status = {}
-      test_status = {}
-      time = Time.now.strftime('%Y%m%d%H%M%S') if params[:date_sample_drawn].blank?
-      time = params[:date_sample_drawn] unless params[:date_sample_drawn].blank?
-      sample_status[time] = {
-        'status' => 'Drawn',
-        "updated_by": {
-          first_name: params[:who_order_test_first_name],
-          last_name: params[:who_order_test_last_name],
-          phone_number: params[:who_order_test_phone_number],
-          id: params[:who_order_test_id]
-        }
-      }
+      time = params[:date_sample_drawn].blank? ? Date.today : params[:date_sample_drawn]
+
       sample_type_id = SpecimenType.get_specimen_type_id(params[:sample_type])
       params[:sample_status] = 'specimen_accepted' if params[:sample_status] == 'specimen-accepted'
       params[:sample_status] = 'specimen_accepted' if params[:status] == 'specimen-accepted'
       sample_status_id = SpecimenStatus.get_specimen_status_id(params[:sample_status])
       order_ward = Ward.get_ward_id(NameMapping.actual_name_of(params[:order_location]))
-      art_regimen = 'N/A'
-      arv_number = 'N/A'
-      art_start_date = ''
-      art_regimen = params[:art_regimen] unless params[:art_regimen].blank?
-      arv_number = params[:arv_number] unless params[:arv_number].blank?
-      art_start_date = params[:art_start_date] unless params[:art_start_date].blank?
-      # unless params[:date_sample_drawn].blank?
-      #   time_got = Time.new
-      #   time_got = time_got.strftime('%H:%M:%S')
-      #   if params[:date_sample_drawn].split(' ').length == 1
-      #     params[:date_sample_drawn] = "#{params[:date_sample_drawn]} #{time_got}"
-      #   end
-      # end
       sp_obj = Speciman.create(
         tracking_number:,
         specimen_type_id: sample_type_id,
         specimen_status_id: sample_status_id,
-        couch_id: '',
+        couch_id: SecureRandom.uuid,
         ward_id: order_ward,
         priority: params[:sample_priority],
         drawn_by_id: params[:who_order_test_id],
         drawn_by_name: "#{params[:who_order_test_first_name]} #{params[:who_order_test_last_name]}",
         drawn_by_phone_number: params[:who_order_test_phone_number],
         target_lab: params[:target_lab],
-        art_start_date:,
+        art_start_date: params[:art_start_date],
         sending_facility: params[:health_facility_name],
         requested_by: params[:requesting_clinician],
         district: params[:district],
-        date_created: params[:date_sample_drawn],
-        arv_number:,
-        art_regimen:
+        date_created: time,
+        arv_number: params[:arv_number] || 'N/A',
+        art_regimen: params[:art_regimen] || 'N/A'
       )
       res = Visit.create(
         patient_id: npid,
         visit_type_id: '',
         ward_id: order_ward
       )
-      couchdb_tests = []
       params[:tests].each do |tst|
         tst = NameMapping.actual_name_of(tst)
         tst = check_test_name(tst)
         status = check_test(tst)
         if status == false
-          details = {}
-          details[time] = {
-            'status' => 'Drawn',
-            "updated_by": {
-              first_name: params[:who_order_test_first_name],
-              last_name: params[:who_order_test_last_name],
-              phone_number: params[:who_order_test_phone_number],
-              id: params[:who_order_test_id]
-            }
-          }
-          test_status[tst] = details
           rst = TestType.get_test_type_id(tst)
           rst2 = TestStatus.get_test_status_id('drawn')
           Test.create(
@@ -140,17 +89,6 @@ module OrderService
                                                             INNER JOIN panel_types ON panel_types.id = panels.panel_type_id
                                                             WHERE panel_types.id ='#{pa_id.id}'")
           res.each do |tt|
-            details = {}
-            details[time] = {
-              'status' => 'Drawn',
-              "updated_by": {
-                first_name: params[:who_order_test_first_name],
-                last_name: params[:who_order_test_last_name],
-                phone_number: params[:who_order_test_phone_number],
-                id: params[:who_order_test_id]
-              }
-            }
-            test_status[tst] = details
             rst2 = TestStatus.get_test_status_id('drawn')
             Test.create(
               specimen_id: sp_obj.id,
@@ -163,45 +101,10 @@ module OrderService
             )
           end
         end
-        couchdb_tests.push(tst)
       end
-      couch_tests = {}
-      params[:tests].each do |tst|
-        tst = NameMapping.actual_name_of(tst)
-        tst = check_test_name(tst)
-        couch_tests[tst] = {
-          'results': {},
-          'date_result_entered': '',
-          'result_entered_by': {}
-        }
-      end
-      c_order = Order.create(
-        tracking_number:,
-        sample_type: params[:sample_type],
-        date_created: params[:date_sample_drawn],
-        sending_facility: params[:health_facility_name],
-        receiving_facility: params[:target_lab],
-        tests: couchdb_tests,
-        test_results: couch_tests,
-        patient:,
-        order_location: params[:order_location],
-        district: params[:district],
-        priority: params[:sample_priority],
-        who_order_test: who_order,
-        sample_statuses: sample_status,
-        test_statuses: test_status,
-        sample_status: params[:sample_status],
-        arv_number:,
-        art_regimen:,
-        art_start_date:
-      )
-      sp = Speciman.find_by(tracking_number:)
-      sp.couch_id = c_order['_id']
-      sp.save
-      couch_order = c_order['_id']
     end
 
-    [true, tracking_number, couch_order]
+    [true, tracking_number]
   end
 
   def self.check_order(tracking_number)
