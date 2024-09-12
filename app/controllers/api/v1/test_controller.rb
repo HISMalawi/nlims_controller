@@ -4,7 +4,7 @@ require 'test_service'
 require 'user_service'
 
 class API::V1::TestController < ApplicationController
-  before_action :remote_host
+  before_action :update_remote_host, only: [:update_test]
 
   def update_test
     update_details = params
@@ -318,12 +318,17 @@ class API::V1::TestController < ApplicationController
 
   private
 
-  def remote_host
-    return unless params[:tracking_number].present?
-
-    TrackingNumberHost.find_or_create_by(
+  def update_remote_host
+    host = TrackingNumberHost.find_or_create_by(
       tracking_number: params[:tracking_number],
-      host: request.remote_ip
+      source_host: request.remote_ip,
+      source_app_uuid: User.find_by(id: request.headers['token'])&.app_uuid
+    )
+    return if host.nil?
+
+    host.update(
+      update_host: request.remote_ip,
+      update_app_uuid: User.find_by(id: request.headers['token'])&.app_uuid
     )
   end
 

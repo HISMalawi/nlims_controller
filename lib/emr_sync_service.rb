@@ -85,8 +85,8 @@ class EmrSyncService
       content_type: 'application/json',
       Authorization: "Bearer #{@token}"
     )
-    user = JSON.parse(response)
-    !user['message'].blank?
+    res = JSON.parse(response)
+    !res['message'].blank?
   rescue StandardError => e
     puts "Error: #{e.message}"
     SyncErrorLog.create(error_message: e.message, error_details: payload)
@@ -94,13 +94,13 @@ class EmrSyncService
   end
 
   def handle_response(response)
-    user = JSON.parse(response)
-    if user['errors'].blank?
+    res = JSON.parse(response)
+    if res['errors'].blank?
       puts 'EMR authentication successful'
-      user['auth_token']
+      res['auth_token']
     else
-      puts "EMR authentication failed: #{user['errors']}"
-      SyncErrorLog.create(error_message: user['errors'], error_details: { message: 'EMR Authentication' })
+      puts "EMR authentication failed: #{res['errors']}"
+      SyncErrorLog.create(error_message: res['errors'], error_details: { message: 'EMR Authentication' })
       ''
     end
   end

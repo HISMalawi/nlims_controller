@@ -6,7 +6,8 @@ require 'tracking_number_service'
 require 'date'
 
 class API::V1::OrderController < ApplicationController
-  before_action :remote_host
+  before_action :remote_host, only: %i[create_order request_order]
+  before_action :update_remote_host, only: %i[update_order]
 
   def create_order
     if !params['district']
@@ -713,7 +714,16 @@ class API::V1::OrderController < ApplicationController
 
     TrackingNumberHost.find_or_create_by(
       tracking_number: params[:tracking_number],
-      host: request.remote_ip
+      source_host: request.remote_ip,
+      source_app_uuid: User.find_by(id: request.headers['token'])&.app_uuid
+    )
+  end
+
+  def update_remote_host
+    host = remote_host
+    host.update(
+      update_host: request.remote_ip,
+      update_app_uuid: User.find_by(id: request.headers['token'])&.app_uuid
     )
   end
 end

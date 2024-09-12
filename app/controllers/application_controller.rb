@@ -35,10 +35,4 @@ class ApplicationController < ActionController::API
     end
     render(plain: response.to_json) && return
   end
-
-  def remote_host
-    if params[:tracking_number].present?
-      TrackingNumberHost.find_or_create_by(tracking_number: params[:tracking_number], host: request.remote_ip)
-    end
-  end
 end

@@ -1,18 +1,19 @@
 # frozen_string_literal: true
 
 class LocalNlimsSyncService
-  def initialize(test_id)
+  MASTER_IP = '10.44.0.46'
+  def initialize(tracking_number)
+    @host = local_nlims_host(tracking_number)
     config = load_config
     @username = config['username']
     @password = config['password']
     @port = config['port']
     @protocol = config['protocol']
-    @host = local_nlims_host(test_id)
     @address = "#{@protocol}://#{@host}:#{@port}"
     @token = authenticate_with_local_nlims
   end
 
-  def order_payload(order_id)
+  def order_status_payload(order_id)
     order = Speciman.find_by(id: order_id)
     order_status_trail = SpecimenStatusTrail.where(specimen_id: order&.id).order(created_at: :desc).first
     {
@@ -22,8 +23,8 @@ class LocalNlimsSyncService
     }
   end
 
-  def push_order_update_to_local_nlims(order_id)
-    payload = order_payload(order_id)
+  def push_order_update_to_nlims(order_id)
+    payload = order_status_payload(order_id)
     url = "#{@address}/api/v1/update_order"
     response = RestClient.post(url, payload.to_json, content_type: :json, token: @token)
     if response['error'] == false && response['message'] == 'order updated successfuly'
@@ -47,7 +48,7 @@ class LocalNlimsSyncService
     false
   end
 
-  def push_test_actions_to_local_nlims(test_id: nil, action: 'status_update')
+  def push_test_actions_to_nlims(test_id: nil, action: 'status_update')
     test_record = Test.find_by(id: test_id)
     tracking_number = Speciman.find(test_record&.specimen_id)&.tracking_number
     payload = test_action_payload(tracking_number, test_record, action)
@@ -56,12 +57,13 @@ class LocalNlimsSyncService
     if response['error'] == false && response['message'] == 'test updated successfuly'
       puts 'Test actions pushed to Local NLIMS successfully'
       unless action == 'status_update'
-        ResultSyncTracker.find_by(tracking_number: tracking_number, test_id: test_id)&.update(sync_status: true)
+        ResultSyncTracker.find_by(tracking_number: tracking_number, test_id: test_id, app: 'nlims')&.update(sync_status: true)
       end
       StatusSyncTracker.find_by(
         tracking_number: tracking_number,
         test_id: test_id,
-        status: payload[:test_status]
+        status: payload[:test_status],
+        app: 'nlims'
       )&.update(sync_status: true)
       return true
     end
@@ -135,10 +137,10 @@ class LocalNlimsSyncService
 
   def handle_response(response)
     user = JSON.parse(response)
-    if user['errors']
-      puts "Local NLIMS authentication failed: #{user['errors']}"
+    if user['error']
+      puts "Local NLIMS authentication failed: #{user['message']}"
       SyncErrorLog.create(
-        error_message: user['errors'],
+        error_message: user['message'],
         error_details: {
           message: "Local NLIMS Authentication @ #{@address}"
         }
@@ -161,13 +163,23 @@ class LocalNlimsSyncService
     ''
   end
 
-  def local_nlims_host(test_id)
-    track_number = Speciman.find_by(id: Test.find_by(id: test_id)&.specimen_id)&.tracking_number
-    TrackingNumberHost.find_by(tracking_number: track_number)&.host
+  def local_nlims_host(track_number)
+    return MASTER_IP if track_number.nil?
+
+    host = TrackingNumberHost.find_by(tracking_number: track_number)
+    address = host&.source_host
+    address ||= host&.update_host
+    address
   end
 
   def load_config
-    YAML.load_file("#{Rails.root}/config/local_nlims.yml")
+    config = if @host == MASTER_IP
+               YAML.load_file("#{Rails.root}/config/master_nlims.yml")
+             else
+               YAML.load_file("#{Rails.root}/config/local_nlims.yml")
+             end
+    config['protocol'] = 'http' if @host == MASTER_IP
+    config
   rescue StandardError => e
     puts "Error: #{e.message}"
     SyncErrorLog.create(

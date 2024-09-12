@@ -5,9 +5,10 @@ require 'emr_sync_service'
 
 # TestResult Model
 class TestResult < ApplicationRecord
-  after_commit :create_test_result_acknowledgement, if: :local_nlims?
-  after_commit :push_result_to_emr, if: :local_nlims?
-  after_commit :push_result_to_local_nlims, unless: :local_nlims?
+  after_commit :create_test_result_acknowledgement, on: %i[create update], if: :local_nlims?
+  after_commit :push_result_to_emr, on: %i[create update], if: :local_nlims?
+  after_commit :push_result_to_master_nlims, on: %i[create update], if: :local_nlims?
+  after_commit :push_result_to_local_nlims, on: %i[create update], unless: :local_nlims?
 
   private
 
@@ -27,21 +28,31 @@ class TestResult < ApplicationRecord
   end
 
   def push_result_to_local_nlims
-    ResultSyncTracker.create(tracking_number: tracking_number, test_id: test_id)
-    local_nlims = LocalNlimsSyncService.new(test_id)
+    ResultSyncTracker.create(tracking_number: tracking_number, test_id: test_id, app: 'nlims')
+    local_nlims = LocalNlimsSyncService.new(tracking_number)
     local_nlims.push_test_actions_to_local_nlims(test_id: test_id, action: 'result_update')
   end
 
-  def push_result_to_emr
-    ResultSyncTracker.create(tracking_number: tracking_number, test_id: test_id)
-    emr_service = EmrSyncService.new
-    emr_service = emr_service.emr_instance_for_sync(emr_service, tracking_number)
-    response = emr_service.push_result_to_emr(tracking_number)
-    return unless response
+  def push_result_to_master_nlims
+    unless Config.master_update_source?(tracking_number)
+      ResultSyncTracker.create(tracking_number: tracking_number, test_id: test_id, app: 'nlims')
+      local_nlims = LocalNlimsSyncService.new(nil)
+      local_nlims.push_test_actions_to_local_nlims(test_id: test_id, action: 'result_update')
+    end
+  end
 
-    emr_service.push_status_to_emr(tracking_number, 'verified', created_at)
-    create_emr_test_result_acknowledgement
-    ResultSyncTracker.find_by(tracking_number: tracking_number, test_id: test_id)&.update(sync_status: true)
+  def push_result_to_emr
+    unless Config.same_source?(tracking_number)
+      ResultSyncTracker.create(tracking_number: tracking_number, test_id: test_id, app: 'emr')
+      emr_service = EmrSyncService.new
+      # emr_service = emr_service.emr_instance_for_sync(emr_service, tracking_number)
+      response = emr_service.push_result_to_emr(tracking_number)
+      return unless response
+
+      emr_service.push_status_to_emr(tracking_number, 'verified', created_at)
+      create_emr_test_result_acknowledgement
+      ResultSyncTracker.find_by(tracking_number: tracking_number, test_id: test_id, app: 'emr')&.update(sync_status: true)
+    end
   end
 
   def tracking_number
