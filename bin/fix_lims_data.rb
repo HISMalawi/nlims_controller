@@ -1,5 +1,5 @@
-@fc_code = YAML.load_file("#{Rails.root}/config/application.yml")['facility_code']
-@couchdb = YAML.load_file("#{Rails.root}/config/couchdb.yml")['development']
+@fc_code = YAML.load_file("#{Rails.root}/config/application.yml", aliases: true)['facility_code']
+@couchdb = YAML.load_file("#{Rails.root}/config/couchdb.yml", aliases: true)['development']
 
 @url = @couchdb['protocol'] + '://' + @couchdb['host'] \
       + ':' + @couchdb['port'].to_s + '/' + @couchdb['prefix'] \
@@ -11,9 +11,9 @@ puts 'Please enter the path to BHT-EMR-API Format/Default: /var/www/BHT-EMR-API'
 @bht_emr_path = gets.chomp
 
 @art_db = unless @bht_emr_path.blank?
-  YAML.load_file("#{@bht_emr_path}/config/database.yml")
+  YAML.load_file("#{@bht_emr_path}/config/database.yml", aliases: true)
 else
-  YAML.load_file("/var/www/BHT-EMR-API/config/database.yml")
+  YAML.load_file("/var/www/BHT-EMR-API/config/database.yml", aliases: true)
 end
 
 def update_art(acc_num)
@@ -40,8 +40,8 @@ def update_lims(acc_num)
 	  couchdb_doc = JSON.parse(couchdb_doc)
 	  if couchdb_doc['tracking_number'] != updated_ac_num
 		  couchdb_doc['tracking_number'] = updated_ac_num
-		  
-		  response = `curl -XPUT #{@url}/#{spec.couch_id} -d '#{couchdb_doc.to_json}'` 
+
+		  response = `curl -XPUT #{@url}/#{spec.couch_id} -d '#{couchdb_doc.to_json}'`
 	  end
   else
   end
@@ -62,15 +62,15 @@ def update_couchdb_test_result_date(accession_number)
     unless couchdb_doc.blank?
       (couchdb_doc['test_results'] || []).each do |key, value|
             value['date_result_entered'] = result['time_entered']
-            `curl -XPUT #{@url}/#{result['couch_id']} -d '#{couchdb_doc.to_json}'` 
+            `curl -XPUT #{@url}/#{result['couch_id']} -d '#{couchdb_doc.to_json}'`
       end
     end
   end
 end
 
 tracking_numbers = ActiveRecord::Base.connection.select_all <<~SQL
-  SELECT accession_number 
-  FROM #{@art_db['development']['database']}.orders 
+  SELECT accession_number
+  FROM #{@art_db['development']['database']}.orders
   WHERE accession_number is not NULL;
 SQL
 puts "Adding index"
@@ -92,8 +92,8 @@ end
 ActiveRecord::Base.connection.reconnect!
 
 tracking_numbers = ActiveRecord::Base.connection.select_all <<~SQL
-  SELECT accession_number 
-  FROM #{@art_db['development']['database']}.orders 
+  SELECT accession_number
+  FROM #{@art_db['development']['database']}.orders
   WHERE accession_number is not NULL;
 SQL
 

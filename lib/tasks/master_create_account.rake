@@ -3,7 +3,7 @@
 namespace :master_nlims do
   desc 'Create an account in the master NLIMS system'
   task create_account: :environment do
-    config = YAML.load_file("#{Rails.root}/config/master_nlims.yml")
+    config = YAML.load_file("#{Rails.root}/config/master_nlims.yml", aliases: true)
     username = config['username']
     password = config['password']
     protocol = config['protocol']

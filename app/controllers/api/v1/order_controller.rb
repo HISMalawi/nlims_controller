@@ -55,7 +55,7 @@ class API::V1::OrderController < ApplicationController
             error: false,
             message: 'order already available',
             data: {
-              tracking_number: tracking_number
+              tracking_number:
             }
           }
           render(plain: response.to_json) && return
@@ -97,7 +97,7 @@ class API::V1::OrderController < ApplicationController
 
   def check_if_dispatched
     if !params[:tracking_number].blank?
-      res = OrderService.check_if_dispatched(params[:tracking_number])
+      res = OrderService.check_if_dispatched(params[:tracking_number], params[:dispatcher_type])
       response = if res == false
                    {
                      status: 200,
@@ -384,7 +384,7 @@ class API::V1::OrderController < ApplicationController
             error: false,
             message: 'order already available',
             data: {
-              tracking_number: tracking_number
+              tracking_number:
             }
           }
           render(plain: response.to_json) && return
@@ -626,7 +626,7 @@ class API::V1::OrderController < ApplicationController
                      error: false,
                      message: 'results retrieved successfuly',
                      data: {
-                       tracking_number: tracking_number,
+                       tracking_number:,
                        results: res
                      }
                    }
