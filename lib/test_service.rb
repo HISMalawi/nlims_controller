@@ -15,9 +15,7 @@ module TestService
                   end
     if !sql_order == false
       order_id = sql_order.id
-      couch_id = sql_order.couch_id
       test_name = NameMapping.actual_name_of(params[:test_name])
-      retr_order = OrderService.retrieve_order_from_couch(couch_id)
       tst_name__ = TestType.find_by(name: test_name)
       status__ = TestStatus.find_by(name: params[:test_status])
       return [false, 'wrong parameter on test name provided'] if tst_name__.blank?
@@ -26,26 +24,11 @@ module TestService
       test_id = Test.find_by_sql("SELECT tests.id FROM tests INNER JOIN test_types ON tests.test_type_id = test_types.id
 																	WHERE tests.specimen_id = '#{order_id}' AND test_types.name = '#{test_name}'")
       test_status = TestStatus.where(name: params[:test_status]).first
-      couch_id_updater = 0
       if !test_id.blank?
         checker = check_if_test_updated?(test_id, test_status.id)
         if checker == false
           ts = test_id[0]
           test_id = ts['id']
-          couch_test = {}
-          time = Time.now.strftime('%Y%m%d%H%M%S')
-          details = {
-            'status' => params[:test_status],
-            "updated_by": {
-              first_name: params[:who_updated]['first_name'],
-              last_name: params[:who_updated]['last_name'],
-              phone_number: '',
-              id: params[:who_updated]['id_number']
-            }
-          }
-          couch_test[test_name] = details
-          test_results_measures = {}
-          results_measure = {}
           TestStatusTrail.create(
             test_id:,
             time_updated: params[:time_updated],
@@ -56,7 +39,6 @@ module TestService
           )
           test_status = TestStatus.where(name: params[:test_status]).first
           tst_update = Test.find_by(id: test_id)
-          couch_id_updater = tst_update.test_status_id
           if tst_update.test_status_id == 9 && test_status.id == 5
             tst_update.test_status_id = test_status.id
             tst_update.save
@@ -89,11 +71,10 @@ module TestService
               result_value = value
               measure = Measure.where(name: measure_name).first
               next if measure.blank?
+              next if result_value == 'Failed'
 
               if check_if_result_already_available(test_id, measure.id) == false
                 device_name = params[:platform].blank? ? '' : params[:platform]
-                next if result_value == 'Failed'
-
                 TestResult.create(
                   measure_id: measure.id,
                   test_id:,
@@ -102,41 +83,21 @@ module TestService
                   time_entered: result_date
                 )
               else
-                test_result_ = TestResult.where(test_id:, measure_id: measure.id).first
+                test_result_ = TestResult.find_by(test_id:, measure_id: measure.id)
+                TestResultTrail.create(
+                  measure_id: measure.id,
+                  test_id:,
+                  old_result: test_result_.result,
+                  new_result: result_value,
+                  old_device_name: test_result_.device_name,
+                  new_device_name: device_name,
+                  old_time_entered: test_result_.time_entered,
+                  new_time_entered: result_date
+                )
                 test_result_.update(result: result_value, time_entered: result_date)
                 t = TestStatusTrail.where(test_id:, test_status_id: 5).first
                 t.update(time_updated: result_date) unless t.blank?
               end
-              test_results_measures[measure_name] = { 'result_value': result_value }
-            end
-          end
-          if retr_order != 'false'
-            couch_test_statuses = retr_order['test_statuses'][test_name]
-            couch_test_statuses[time] = details unless couch_test_statuses.blank?
-
-            retr_order['test_statuses'][test_name] = couch_test_statuses
-            unless results_measure.blank?
-              retr_order['test_results'][test_name] = {
-                'results': test_results_measures,
-                'date_result_entered': result_date,
-                'result_entered_by': {
-                  first_name: params[:who_updated]['first_name'],
-                  last_name: params[:who_updated]['last_name'],
-                  phone_number: '',
-                  id: params[:who_updated]['id_number']
-                }
-              }
-            end
-            if couch_id_updater == 9 && params[:test_status] == 'started'
-              OrderService.update_couch_order(couch_id, retr_order)
-            elsif couch_id_updater == 3 && params[:test_status] == 'completed'
-              OrderService.update_couch_order(couch_id, retr_order)
-            elsif couch_id_updater == 4 && params[:test_status] == 'verified'
-              OrderService.update_couch_order(couch_id, retr_order)
-            elsif params[:test_status] == 'test-rejected'
-              OrderService.update_couch_order(couch_id, retr_order)
-            elsif params[:test_status] == 'rejected'
-              OrderService.update_couch_order(couch_id, retr_order)
             end
           end
           [true, '']
@@ -243,61 +204,29 @@ module TestService
   end
 
   def self.add_test(params)
-    tests = params['tests']
-    tracking_number = params['tracking_number']
-    sql_order = OrderService.get_order_by_tracking_number_sql(tracking_number)
+    sql_order = OrderService.get_order_by_tracking_number_sql(params['tracking_number'])
     return [false, 'order not available'] if sql_order == false
 
-    spec_id = sql_order.id
     updater = params['who_updated']
-    res = Test.find_by_sql("SELECT patient_id AS patient_id FROM tests WHERE specimen_id='#{spec_id}' LIMIT 1")
-    patient_id = res[0]['patient_id']
-    order = OrderService.retrieve_order_from_couch(sql_order.couch_id)
-    return [false, 'order not available -c'] if order == 'false'
+    patient_id = Test.find_by(specimen_id: sql_order.id).patient_id
+    test_status_id = TestStatus.find_by(name: 'Drawn').id
+    params['tests'].each do |tst|
+      test_name = NameMapping.actual_name_of(tst)
+      test_type = TestType.find_by(name: test_name)
+      return [false, 'test name not available at national lims'] if test_type.blank?
 
-    tet = []
-    test_results = {}
-    details = {}
-    tet = order['tests']
-    test_results = order['test_results']
-    test_statuses = order['test_statuses']
-    tests.each do |tst|
-      te_id = TestType.where(name: tst).first
-      return [false, 'test name not available at national lims'] if te_id.blank?
+      next if Test.find_by(specimen_id: sql_order.id, test_type_id: test_type.id).present?
 
       Test.create(
-        specimen_id: spec_id,
-        test_type_id: te_id.id,
+        specimen_id: sql_order.id,
+        test_type_id: test_type.id,
         created_by: updater['first_name'].to_s + ' ' + updater['last_name'].to_s,
         panel_id: '',
         patient_id:,
         time_created: Time.now.strftime('%Y%m%d%H%M%S'),
-        test_status_id: TestStatus.find_by_sql("SELECT id AS sts_id FROM test_statuses WHERE name='Drawn'")[0]['sts_id']
+        test_status_id:
       )
-      tet.push(tst)
-      test_results[tst] = {
-        'results': {},
-        'date_result_entered': '',
-        'result_entered_by': {}
-      }
-      time = Time.new.strftime('%Y%m%d%H%M%S')
-      details[time] = {
-        'status' => 'Drawn',
-        "updated_by": {
-          first_name: updater['first_name'],
-          last_name: updater['last_name'],
-          phone_number: updater['phone_number'],
-          id: updater['id_number']
-        }
-      }
-      test_statuses[tst] = details
     end
-
-    order['tests'] = tet
-    order['test_results'] = test_results
-    order['test_statuses'] = test_statuses
-
-    OrderService.update_couch_order(sql_order.id, order)
     true
   end
 

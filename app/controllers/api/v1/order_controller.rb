@@ -2,6 +2,7 @@
 
 require 'order_service'
 require 'user_service'
+require 'test_service'
 require 'tracking_number_service'
 require 'date'
 
@@ -50,6 +51,7 @@ class API::V1::OrderController < ApplicationController
         tracking_number = params['tracking_number']
         order_availability = OrderService.check_order(tracking_number)
         if order_availability == true
+          TestService.add_test(params)
           response = {
             status: 200,
             error: false,

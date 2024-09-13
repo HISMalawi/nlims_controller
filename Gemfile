@@ -31,10 +31,8 @@ gem 'bcrypt', '>= 3.1.7'
 # Use Rack CORS for handling Cross-Origin Resource Sharing (CORS), making cross-origin AJAX possible
 # gem 'rack-cors'
 
-gem 'rest-client', '~> 2.1'
-
-gem 'couchrest_model', '>= 2.0.4'
 gem 'passenger'
+gem 'rest-client', '~> 2.1'
 gem 'sucker_punch'
 group :development, :test do
   # Call 'byebug' anywhere in the code to stop execution and get a debugger console
