@@ -290,33 +290,6 @@ module OrderService
     details || false
   end
 
-  def self.retrieve_order_from_couch(couch_id)
-    settings = YAML.load_file("#{Rails.root}/config/couchdb.yml", aliases: true)[Rails.env]
-    ip = settings['host']
-    protocol = settings['protocol']
-    port = settings['port']
-    username = settings['username']
-    password = settings['password']
-    db_name = "#{settings['prefix']}_order_#{settings['suffix']}"
-    begin
-      JSON.parse(RestClient.get("#{protocol}://#{username}:#{password}@#{ip}:#{port}/#{db_name}/#{couch_id}"))
-    rescue StandardError
-      'false'
-    end
-  end
-
-  def self.update_couch_order(_track_number, order)
-    settings = YAML.load_file("#{Rails.root}/config/couchdb.yml", aliases: true)[Rails.env]
-    ip = settings['host']
-    protocol = settings['protocol']
-    port = settings['port']
-    username = settings['username']
-    password = settings['password']
-    db_name = "#{settings['prefix']}_order_#{settings['suffix']}"
-    url = "#{protocol}://#{username}:#{password}@#{ip}:#{port}/#{db_name}"
-    RestClient.post(url, order.to_json, content_type: 'application/json')
-  end
-
   def self.query_results_by_npid(npid)
     ord = Speciman.find_by_sql("SELECT specimen.id AS trc, specimen.tracking_number AS track,
 																specimen_types.name AS spec_name FROM specimen
@@ -618,7 +591,6 @@ module OrderService
   end
 
   def self.request_order(params, tracking_number)
-    couch_order = 0
     ActiveRecord::Base.transaction do
       npid = params[:national_patient_id]
       patient_obj = Patient.where(patient_number: npid)
@@ -637,87 +609,41 @@ module OrderService
 
       else
         patient_obj.dob = params[:date_of_birth]
+        patient_obj.name = "#{params[:first_name]} #{params[:last_name]}"
         patient_obj.save
       end
-
-      art_regimen = 'N/A'
-      arv_number = 'N/A'
-      art_start_date = ''
-      art_regimen = params[:art_regimen] unless params[:art_regimen].blank?
-      arv_number = params[:arv_number] unless params[:arv_number].blank?
-      art_start_date = params[:art_start_date] unless params[:art_start_date].blank?
-      who_order = {
-        first_name: params[:who_order_test_first_name],
-        last_name: params[:who_order_test_last_name],
-        phone_number: params[:who_order_test_phone_number],
-        id: params[:who_order_test_id]
-      }
-      patient = {
-        first_name: params[:first_name],
-        last_name: params[:last_name],
-        phone_number: params[:phone_number],
-        dob: params[:date_of_birth],
-        id: npid,
-        email: params[:email],
-        gender: params[:gender]
-      }
-      sample_status = {}
-      test_status = {}
-      time = Time.now.strftime('%Y%m%d%H%M%S')
-      sample_status[time] = {
-        'status' => 'Drawn',
-        "updated_by": {
-          first_name: params[:who_order_test_first_name],
-          last_name: params[:who_order_test_last_name],
-          phone_number: params[:who_order_test_phone_number],
-          id: params[:who_order_test_id]
-        }
-      }
+      time = params[:date_sample_drawn].blank? ? Date.today : params[:date_sample_drawn]
       sample_status_id = SpecimenStatus.get_specimen_status_id('specimen_not_collected')
       sp_obj = Speciman.create(
         tracking_number:,
         specimen_type_id: 0,
         specimen_status_id: sample_status_id,
-        couch_id: '',
+        couch_id: SecureRandom.uuid,
         ward_id: Ward.get_ward_id(params[:order_location]),
         priority: params[:sample_priority],
         drawn_by_id: params[:who_order_test_id],
         drawn_by_name: "#{params[:who_order_test_first_name]} #{params[:who_order_test_last_name]}",
         drawn_by_phone_number: params[:who_order_test_phone_number],
         target_lab: params[:target_lab],
-        art_start_date:,
+        art_start_date: params[:art_start_date] || '',
         sending_facility: params[:health_facility_name],
         requested_by: params[:requesting_clinician],
         district: params[:district],
         date_created: time,
-        arv_number:,
-        art_regimen:
+        arv_number: params[:arv_number] || 'N/A',
+        art_regimen: params[:art_regimen] || 'N/A'
       )
-
       res = Visit.create(
         patient_id: npid,
         visit_type_id: '',
         ward_id: Ward.get_ward_id(params[:order_location])
       )
-
       params[:tests].each do |tst|
         tst = NameMapping.actual_name_of(tst)
         status = check_test(tst)
         if status == false
-          details = {}
-          details[time] = {
-            'status' => 'Drawn',
-            "updated_by": {
-              first_name: params[:who_order_test_first_name],
-              last_name: params[:who_order_test_last_name],
-              phone_number: params[:who_order_test_phone_number],
-              id: params[:who_order_test_id]
-            }
-          }
-          test_status[tst] = details
           rst = TestType.get_test_type_id(tst)
           rst2 = TestStatus.get_test_status_id('drawn')
-
           Test.create(
             specimen_id: sp_obj.id,
             test_type_id: rst,
@@ -734,17 +660,6 @@ module OrderService
 																			INNER JOIN panel_types ON panel_types.id = panels.panel_type_id
 																			WHERE panel_types.id ='#{pa_id.id}'")
           res.each do |tt|
-            details = {}
-            details[time] = {
-              'status' => 'Drawn',
-              "updated_by": {
-                first_name: params[:who_order_test_first_name],
-                last_name: params[:who_order_test_last_name],
-                phone_number: params[:who_order_test_phone_number],
-                id: params[:who_order_test_id]
-              }
-            }
-            test_status[tst] = details
             rst2 = TestStatus.get_test_status_id('drawn')
             Test.create(
               specimen_id: sp_obj.id,
@@ -758,60 +673,19 @@ module OrderService
           end
         end
       end
-      couch_tests = {}
-      params[:tests].each do |tst|
-        couch_tests[tst] = {
-          'results': {},
-          'date_result_entered': '',
-          'result_entered_by': {}
-        }
-      end
-      c_order = Order.create(
-        tracking_number:,
-        sample_type: 'not_assigned',
-        date_created: params[:date_sample_drawn],
-        sending_facility: params[:health_facility_name],
-        receiving_facility: params[:target_lab],
-        tests: params[:tests],
-        test_results: couch_tests,
-        patient:,
-        order_location: params[:order_location],
-        district: params[:district],
-        priority: params[:sample_priority],
-        who_order_test: who_order,
-        sample_statuses: sample_status,
-        test_statuses: test_status,
-        sample_status: 'specimen_not_collected',
-        art_regimen:,
-        arv_number:,
-        art_start_date:
-      )
-      sp = Speciman.find_by(tracking_number:)
-      sp.couch_id = c_order['_id']
-      sp.save
-      couch_order = c_order['_id']
     end
-    [true, tracking_number, couch_order]
+    sp = Speciman.find_by(tracking_number:)
+    [true, tracking_number, sp&.couch_id]
   end
 
-  def self.confirm_order_request(ord)
-    specimen_type = ord['specimen_type']
-    target_lab = ord['target_lab']
-    st = SpecimenType.find_by_sql("SELECT id AS type_id FROM specimen_types WHERE name='#{specimen_type}'")
-    type_id = st[0]['type_id']
-    obj = Speciman.find_by(tracking_number: ord['tracking_number'])
-    couch_id = obj['couch_id']
-    obj.specimen_type_id = type_id
-    obj.target_lab = target_lab
-    obj.specimen_status_id = SpecimenStatus.find_by(name: 'specimen_collected')['id']
-    obj.save
-    retr_order = OrderService.retrieve_order_from_couch(couch_id)
-    return if retr_order == 'false'
-
-    retr_order['sample_type'] = specimen_type
-    retr_order['receiving_facility'] = target_lab
-    retr_order['sample_status'] = 'specimen_collected'
-    OrderService.update_couch_order(couch_id, retr_order)
+  def self.confirm_order_request(params)
+    order = Speciman.find_by(tracking_number: params['tracking_number'])
+    specimen_type = SpecimenType.find_by(name: params['specimen_type'])
+    order.update(
+      specimen_type_id: specimen_type.id,
+      specimen_status_id: SpecimenStatus.get_specimen_status_id('specimen_collected'),
+      target_lab: params['target_lab']
+    )
   end
 
   def self.query_requested_order_by_npid(npid)
@@ -926,61 +800,28 @@ module OrderService
     end
   end
 
-  def self.update_order(ord)
-    return [false, 'no tracking number'] if ord['tracking_number'].blank?
+  def self.update_order(params)
+    return [false, 'no tracking number'] if params['tracking_number'].blank?
 
-    status = ord['status']
-    couch_id = ''
-    st = SpecimenStatus.find_by_sql("SELECT id AS status_id FROM specimen_statuses WHERE name='#{status}'")
-    return [false, 'wrong parameter for specimen status'] if st.blank?
+    specimen_status = SpecimenStatus.find_by(name: params['status'])
+    return [false, 'wrong parameter for specimen status'] if specimen_status.blank?
 
-    status_id = st[0]['status_id']
-    obj = Speciman.find_by(tracking_number: ord['tracking_number'])
-    couch_id = obj['couch_id'] unless obj['couch_id'].blank?
-    unless ord['specimen_type'].blank?
-      sp_type = SpecimenType.find_by(name: ord['specimen_type'])
-      return [false, 'wrong parameter for specimen type'] if sp_type.blank?
+    order = Speciman.find_by(tracking_number: params['tracking_number'])
+    unless params['specimen_type'].blank?
+      specimen_type = SpecimenType.find_by(name: params['specimen_type'])
+      return [false, 'wrong parameter for specimen type'] if specimen_type.blank?
 
-      obj.specimen_type_id = sp_type['id']
+      order.update(specimen_type_id: specimen_type.id)
     end
-    obj.specimen_status_id = status_id
-    obj.save
+    order.update(specimen_status_id: specimen_status.id)
     SpecimenStatusTrail.create(
-      specimen_id: obj.id,
-      specimen_status_id: status_id,
+      specimen_id: order.id,
+      specimen_status_id: specimen_status.id,
       time_updated: Time.new.strftime('%Y%m%d%H%M%S'),
-      who_updated_id: ord['who_updated']['id'],
-      who_updated_name: "#{ord['who_updated']['first_name']} #{ord['who_updated']['last_name']}",
-      who_updated_phone_number: ord['who_updated']['phone_number']
+      who_updated_id: params['who_updated']['id'],
+      who_updated_name: "#{params['who_updated']['first_name']} #{params['who_updated']['last_name']}",
+      who_updated_phone_number: params['who_updated']['phone_number']
     )
-    retr_order = OrderService.retrieve_order_from_couch(couch_id)
-    return [false, 'order not available -c'] if retr_order == 'false'
-
-    curent_status_trail = retr_order['sample_statuses']
-    curent_status_trail[Time.now.strftime('%Y%m%d%H%M%S')] = {
-      "status": status,
-      "updated_by": {
-        first_name: ord[:who_updated]['first_name'],
-        last_name: ord[:who_updated]['last_name'],
-        phone_number: '',
-        id: ord[:who_updated]['id_number']
-      }
-    }
-    retr_order['sample_statuses'] = curent_status_trail
-    retr_order['sample_status'] = status
-    retr_order['sample_type'] = ord['specimen_type']
-
-    unless ord['who_rejected'].blank?
-      retr_order['who_rejected'] = {
-        'first_name': ord['who_rejected']['first_name'],
-        'last_name': ord['who_rejected']['last_name'],
-        'phone_number': '',
-        'id': ord['who_rejected']['id_number'],
-        'rejection_explained_to': ord['who_rejected']['person_talked_to'],
-        'reason_for_rejection': ord['who_rejected']['reason_for_rejection']
-      }
-    end
-    OrderService.update_couch_order(couch_id, retr_order)
     [true, '']
   end
 
