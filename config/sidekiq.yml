@@ -1,0 +1,4 @@
+:concurrency: 5
+:queues:
+  - default
+:namespace: "nlims_controller"

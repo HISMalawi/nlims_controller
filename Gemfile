@@ -32,6 +32,7 @@ gem 'bcrypt', '>= 3.1.7'
 # gem 'rack-cors'
 #
 gem 'sidekiq'
+gem 'sidekiq-cron'
 
 gem 'passenger'
 gem 'rest-client', '~> 2.1'

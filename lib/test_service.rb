@@ -99,6 +99,7 @@ module TestService
                 t.update(time_updated: result_date) unless t.blank?
               end
             end
+            result_sync_tracker(params[:tracking_number], test_id)
           end
           [true, '']
         else
@@ -110,6 +111,17 @@ module TestService
     else
       [false, 'order not available']
     end
+  end
+
+  def self.result_sync_tracker(tracking_number, test_id)
+    if !Config.local_nlims? && !Config.same_source?(tracking_number)
+      ResultSyncTracker.create(tracking_number:, test_id:, app: 'nlims')
+    end
+    return unless Config.local_nlims?
+
+    ResultSyncTracker.create(tracking_number:, test_id:, app: 'emr') if Config.master_update_source?(tracking_number)
+    ResultSyncTracker.create(tracking_number:, test_id:, app: 'nlims') if Config.same_source?(tracking_number)
+    ResultSyncTracker.create(tracking_number:, test_id:, app: 'emr') unless Config.same_source?(tracking_number)
   end
 
   def self.check_if_test_updated?(test_id, status_id)
