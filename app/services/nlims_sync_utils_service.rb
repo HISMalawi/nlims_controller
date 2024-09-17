@@ -26,7 +26,7 @@ class NlimsSyncUtilsService
       method: :post,
       url:,
       timeout: 10,
-      payload: payload.to_json,
+      payload:,
       content_type: :json,
       token: @token
     )
@@ -60,7 +60,7 @@ class NlimsSyncUtilsService
       method: :post,
       url:,
       timeout: 10,
-      payload: payload.to_json,
+      payload:,
       content_type: :json,
       token: @token
     )
@@ -184,7 +184,7 @@ class NlimsSyncUtilsService
       method: :post,
       url:,
       timeout: 10,
-      payload: payload.to_json,
+      payload:,
       content_type: :json,
       token: @token
     )
@@ -195,16 +195,20 @@ class NlimsSyncUtilsService
 
     SyncErrorLog.create(
       error_message: response['message'],
-      error_details: { message: 'NLIMS Push Order to Master NLIMS' },
-      payload:
+      error_details: {
+        message: 'NLIMS Push Order to Master NLIMS',
+        payload:
+      }
     )
     false
   rescue StandardError => e
     puts "Error: #{e.message} ==> NLIMS Push Order to Master NLIMS"
     SyncErrorLog.create(
       error_message: e,
-      error_details: { message: 'NLIMS Push Order to Master NLIMS' },
-      payload:
+      error_details: {
+        message: 'NLIMS Push Order to Master NLIMS',
+        payload:
+      }
     )
     false
   end
@@ -218,7 +222,7 @@ class NlimsSyncUtilsService
       url = "#{@address}/api/v1/acknowledge/test/results/recipient"
       response = JSON.parse(RestClient.post(
                               url,
-                              data.to_json,
+                              data,
                               content_type: 'application/json',
                               token: @token
                             ))
