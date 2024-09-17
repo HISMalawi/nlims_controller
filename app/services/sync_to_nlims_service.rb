@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'sync_util_service'
-
 # Sync status and result to nlims
 module  SyncToNlimsService
   class << self

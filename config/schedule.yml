@@ -1,0 +1,5 @@
+nlims_sync_job:
+  name: "Sync Between NLIMS Moh Every 5 Minites"
+  cron: "*/5 * * * *"
+  class: "NlimsSyncJob"
+  queue: default
