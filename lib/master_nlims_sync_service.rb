@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'sync_util_service'
-
 # Service class for syncing order results and statuses between master nlims and local nlims
 class MasterNlimsSyncService
   def initialize(service_type: nil)

@@ -6,37 +6,26 @@ require 'local_nlims_sync_service'
 
 # TestResult Model
 class TestResult < ApplicationRecord
-  after_commit :enqueue_create_test_result_acknowledgement, on: %i[create update], if: :local_nlims?
+  after_commit :create_test_result_acknowledgement, on: %i[create update], if: :local_nlims?
   # after_commit :enqueue_push_result_to_emr, on: %i[create update], if: :local_nlims?
   # after_commit :enqueue_push_result_to_master_nlims, on: %i[create update], if: :local_nlims?
   # after_commit :enqueue_push_result_to_local_nlims, on: %i[create update], unless: :local_nlims?
 
+  private
+
+  def local_nlims?
+    Config.local_nlims?
+  end
+
   def create_test_result_acknowledgement
     Rails.logger.debug "Executing create_test_result_acknowledgement with tracking_number: #{tracking_number}"
-    sync_util_service = SyncUtilService.new
-    sync_util_service.ack_result_at_facility_level(
+    SyncUtilService.ack_result_at_facility_level(
       tracking_number,
       test_id,
       time_entered,
       3,
       'local_nlims_at_facility'
     )
-  end
-
-  def push_result_to_local_nlims
-    Rails.logger.debug "Executing push_result_to_local_nlims with tracking_number: #{tracking_number}"
-    ResultSyncTracker.create(tracking_number:, test_id:, app: 'nlims')
-    local_nlims = LocalNlimsSyncService.new(tracking_number)
-    local_nlims.push_test_actions_to_nlims(test_id:, action: 'result_update')
-  end
-
-  def push_result_to_master_nlims
-    Rails.logger.debug "Executing push_result_to_master_nlims with tracking_number: #{tracking_number}"
-    return if Config.master_update_source?(tracking_number)
-
-    ResultSyncTracker.create(tracking_number:, test_id:, app: 'nlims')
-    local_nlims = LocalNlimsSyncService.new(nil)
-    local_nlims.push_test_actions_to_nlims(test_id:, action: 'result_update')
   end
 
   def push_result_to_emr
@@ -68,27 +57,5 @@ class TestResult < ApplicationRecord
       2,
       'emr_at_facility'
     )
-  end
-
-  private
-
-  def enqueue_create_test_result_acknowledgement
-    TestResultJob.perform_async(id, 'create_test_result_acknowledgement')
-  end
-
-  def enqueue_push_result_to_emr
-    TestResultJob.perform_async(id, 'push_result_to_emr')
-  end
-
-  def enqueue_push_result_to_master_nlims
-    TestResultJob.perform_async(id, 'push_result_to_master_nlims')
-  end
-
-  def enqueue_push_result_to_local_nlims
-    TestResultJob.perform_async(id, 'push_result_to_local_nlims')
-  end
-
-  def local_nlims?
-    Config.local_nlims?
   end
 end

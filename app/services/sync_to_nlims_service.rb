@@ -8,6 +8,7 @@ module  SyncToNlimsService
     def push_status_to_nlims
       StatusSyncTracker.where(
         sync_status: false,
+        app: 'nlims',
         created_at: (Date.today - 120)..Date.today + 1
       ).each do |tracker|
         nlims = NlimsSyncUtilsService.new(tracking_number(tracker&.test_id))
@@ -28,6 +29,7 @@ module  SyncToNlimsService
     def push_result_to_nlims
       ResultSyncTracker.where(
         sync_status: false,
+        app: 'nlims',
         created_at: (Date.today - 120)..Date.today + 1
       ).each do |tracker|
         nlims = NlimsSyncUtilsService.new(tracking_number(tracker&.test_id))
@@ -44,6 +46,11 @@ module  SyncToNlimsService
         nlims = NlimsSyncUtilsService.new(order&.tracking_number)
         nlims.push_order_update_to_nlims(order&.id)
       end
+    end
+
+    def push_acknwoledgement_to_master_nlims
+      nlims = NlimsSyncUtilsService.new(nil)
+      nlims.push_acknwoledgement_to_master_nlims
     end
 
     private

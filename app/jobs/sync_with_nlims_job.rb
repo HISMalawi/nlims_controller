@@ -16,6 +16,9 @@ class SyncWithNlimsJob
     elsif type == 'order' && action == 'order_create'
       nlims = NlimsSyncUtilsService.new(identifier)
       nlims.push_order_to_master_nlims(identifier)
+    elsif type == 'acknowlegment'
+      nlims = NlimsSyncUtilsService.new(nil)
+      nlims.push_acknwoledgement_to_master_nlims(pending_acks: identifier)
     end
   end
 end

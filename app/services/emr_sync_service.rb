@@ -3,44 +3,47 @@
 require 'order_service'
 # EMRSyncService for syncing status of orders to EMR and results
 class EmrSyncService
-  def initialize(service_type: nil, app: 'emr')
-    config = app == 'emr' ? load_config['emr'] : load_config['mahis']
+  def initialize(tracking_number, service_type: nil)
+    config = emr_configs(tracking_number)
     @username = config['username']
     @password = config['password']
-    @protocol = config['protocol']
-    @port = config['port']
-    @active = config['active']
+    @address = "#{config['address']}:#{config['port']}"
     @token = authenticate_with_emr unless service_type == 'account_creation'
   end
 
-  def active_connection?
-    @active
-  end
-
-  def mahis?(tracking_number)
-    tracking_number.downcase.include?('test')
-  end
-
-  def push_status_to_emr(tracking_number, status, status_time)
-    url = "#{@protocol}:#{@port}/api/v1/lab/orders/order_status"
+  def push_status_to_emr(tracking_number, status, status_time, test_id)
+    url = "#{@address}/api/v1/lab/orders/order_status"
     payload = {
-      tracking_number: tracking_number,
-      status: status,
-      status_time: status_time
+      tracking_number:,
+      status:,
+      status_time:
     }
-    post_to_emr(url, payload)
+    response = post_to_emr(url, payload)
+    return unless response
+
+    StatusSyncTracker.find_by(tracking_number:, test_id:, status:, app: 'emr')&.update(sync_status: true)
   end
 
-  def push_result_to_emr(tracking_number)
-    url = "#{@protocol}:#{@port}/api/v1/lab/orders/order_result"
+  def push_result_to_emr(tracking_number, test_id, time_entered)
+    url = "#{@address}/api/v1/lab/orders/order_result"
     payload = buid_results_payload(tracking_number)
     return unless payload[:data][:results]
 
-    post_to_emr(url, payload)
+    response = post_to_emr(url, payload)
+    return unless response
+
+    SyncUtilService.ack_result_at_facility_level(
+      tracking_number,
+      test_id,
+      time_entered,
+      2,
+      'emr_at_facility'
+    )
+    ResultSyncTracker.find_by(tracking_number:, test_id:, app: 'emr')&.update(sync_status: true)
   end
 
   def create_account_in_emr
-    url = "#{@protocol}:#{@port}/api/v1/lab/users"
+    url = "#{@address}/api/v1/lab/users"
     JSON.parse(RestClient.post(
                  url,
                  { 'username': @username, 'password': @password }.to_json,
@@ -56,7 +59,7 @@ class EmrSyncService
 
   # Authenticate with EMR
   def authenticate_with_emr
-    url = "#{@protocol}:#{@port}/api/v1/lab/users/login"
+    url = "#{@address}/api/v1/lab/users/login"
     response = RestClient.post(
       url,
       { 'username': @username, 'password': @password },
@@ -71,8 +74,8 @@ class EmrSyncService
     results = OrderService.query_results_by_tracking_number(tracking_number)
     {
       data: {
-        tracking_number: tracking_number,
-        results: results
+        tracking_number:,
+        results:
       }
     }
   end
@@ -111,11 +114,30 @@ class EmrSyncService
     ''
   end
 
-  def load_config
-    YAML.load_file("#{Rails.root}/config/emr_connection.yml")
-  rescue StandardError => e
-    puts "Error: #{e.message}"
-    SyncErrorLog.create(error_message: e.message, error_details: { message: 'EMR Configuration missing' })
-    exit
+  def emr_configs(tracking_number)
+    host = TrackingNumberHost.find_by(tracking_number:)
+    address = host&.source_host
+    address ||= host&.update_host
+    app = application(host)
+    config = load_config(app)
+    config['address'] = address if address
+    config
+  end
+
+  def application(host)
+    app_uuid = host&.source_app_uuid
+    app_uuid ||= host&.update_app_uuid
+    User.find_by(app_uuid:)&.app_name
+  end
+
+  def load_config(app)
+    config = if app == 'MAHIS'
+               Config.configurations('mahis')
+             else
+               Config.configurations('emr')
+             end
+    settings = YAML.load_file("#{Rails.root}/config/settings.yml")
+    config['password'] = app == 'MAHIS' ? settings['mahis'] : settings['emr']
+    config
   end
 end

@@ -23,6 +23,6 @@ class Config < ApplicationRecord
     host = TrackingNumberHost.find_by(tracking_number:)
     return false unless host
 
-    User.find_by(app_uuid: host&.update_app_uuid)&.app_name == "MASTER NLIMS"
+    User.find_by(app_uuid: host&.update_app_uuid)&.app_name == 'MASTER NLIMS'
   end
 end

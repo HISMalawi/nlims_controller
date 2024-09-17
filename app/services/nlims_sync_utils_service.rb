@@ -209,6 +209,45 @@ class NlimsSyncUtilsService
     false
   end
 
+  def push_acknwoledgement_to_master_nlims(pending_acks: nil)
+    pending_acks ||= ResultsAcknwoledge.where(acknwoledged_to_nlims: false)
+    return if pending_acks.empty?
+
+    pending_acks.each do |ack|
+      data = buid_acknowledment_to_master_data(ack)
+      url = "#{@address}/api/v1/acknowledge/test/results/recipient"
+      response = JSON.parse(RestClient.post(
+                              url,
+                              data.to_json,
+                              content_type: 'application/json',
+                              token: @token
+                            ))
+      next if response['error']
+
+      ack.update(acknwoledged_to_nlims: true)
+      puts "Pushed acknowledgments for tracking number: #{ack.tracking_number} to Master NLIMS"
+    rescue StandardError => e
+      puts "Error: #{e.message} ==> NLIMS Push Acknowledgement to Master NLIMS"
+      SyncErrorLog.create(
+        error_message: e.message,
+        error_details: { message: 'NLIMS Push Acknowledgement to Master NLIMS' }
+      )
+      next
+    end
+  end
+
+  def buid_acknowledment_to_master_data(acknowledgement)
+    test_to_ack = TestType.find(Test.find(acknowledgement&.test_id)&.test_type_id)&.name
+    level = TestResultRecepientType.find_by(id: acknowledgement&.acknwoledment_level)
+    {
+      'tracking_number': acknowledgement&.tracking_number,
+      'test': test_to_ack,
+      'date_acknowledged': acknowledgement&.acknwoledged_at,
+      'recipient_type': level&.name,
+      'acknwoledment_by': acknowledgement&.acknwoledged_by
+    }
+  end
+
   def authenticate_with_nlims
     auth = RestClient::Request.execute(
       method: :get,
@@ -251,11 +290,12 @@ class NlimsSyncUtilsService
 
   def nlims_configs(tracking_number)
     configs = load_config
+    return configs if Config.local_nlims? || tracking_number.nil?
 
     host = TrackingNumberHost.find_by(tracking_number:)
     address = host&.source_host
     address ||= host&.update_host
-    configs['address'] = "https://#{address}" unless Config.local_nlims?
+    configs['address'] = "http://#{address}"
     configs
   end
 

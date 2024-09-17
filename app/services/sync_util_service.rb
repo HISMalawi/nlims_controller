@@ -1,18 +1,15 @@
 # frozen_string_literal: true
 
-require 'emr_sync_service'
 # Service class for syncing order results and statuses between master nlims and local nlims
-class SyncUtilService
-  def initialize(service_type: nil); end
-
-  def ack_result_at_facility_level(track_n, test_id, result_date, level, ack_by)
+module SyncUtilService
+  def self.ack_result_at_facility_level(track_n, test_id, result_date, level, ack_by)
     return unless acknowledged_already?(track_n, ack_by)
 
     ResultsAcknwoledge.create(
       tracking_number: track_n,
-      test_id: test_id,
+      test_id:,
       acknwoledged_at: Time.new.strftime('%Y%m%d%H%M%S'),
-      result_date: result_date,
+      result_date:,
       acknwoledged_by: ack_by,
       acknwoledged_to_nlims: false,
       acknwoledment_level: level
@@ -25,17 +22,9 @@ class SyncUtilService
     )
   end
 
-  def emr_instance_for_sync(emr_instance, tracking_number)
-    return emr_instance unless emr_instance.mahis?(tracking_number)
-
-    EmrSyncService.new(app: 'mahis')
-  end
-
-  private
-
-  def acknowledged_already?(tracking_number, acknowledge_by)
+  def self.acknowledged_already?(tracking_number, acknowledge_by)
     ResultsAcknwoledge.find_by(
-      tracking_number: tracking_number,
+      tracking_number:,
       acknwoledged_by: acknowledge_by
     ).nil?
   end
