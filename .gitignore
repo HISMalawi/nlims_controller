@@ -28,6 +28,7 @@ config/emr_connection.yml
 config/results_channel_socket.yml
 config/master_nlims.yml
 config/local_nlims.yml
+config/settings.yml
 
 # Ignore db schema
 db/schema.rb
