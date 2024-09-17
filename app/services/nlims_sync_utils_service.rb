@@ -178,7 +178,7 @@ class NlimsSyncUtilsService
     payload = build_order_payload(tracking_number)
     return false if payload.nil?
 
-    url = "#{@address}/api/v1/api/v1/create_order/"
+    url = "#{@address}/api/v1/create_order/"
     puts payload
     response = RestClient::Request.execute(
       method: :post,

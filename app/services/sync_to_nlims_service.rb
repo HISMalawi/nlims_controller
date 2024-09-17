@@ -15,7 +15,7 @@ module  SyncToNlimsService
     end
 
     def push_order_to_nlims
-      OrderStatusSyncTracker.where(
+      OrderSyncTracker.where(
         synced: false,
         created_at: (Date.today - 120)..Date.today + 1
       ).each do |tracker|
