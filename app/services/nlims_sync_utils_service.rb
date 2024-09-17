@@ -28,7 +28,7 @@ class NlimsSyncUtilsService
       timeout: 10,
       payload:,
       content_type: :json,
-      token: @token
+      headers: { content_type: :json, accept: :json, token: @token }
     )
     if response['error'] == false && response['message'] == 'order updated successfuly'
       puts 'Order actions pushed to Local NLIMS successfully'
@@ -62,7 +62,7 @@ class NlimsSyncUtilsService
       timeout: 10,
       payload:,
       content_type: :json,
-      token: @token
+      headers: { content_type: :json, accept: :json, token: @token }
     )
     if response['error'] == false && response['message'] == 'test updated successfuly'
       puts 'Test actions pushed to Local NLIMS successfully'
@@ -179,14 +179,13 @@ class NlimsSyncUtilsService
     return false if payload.nil?
 
     url = "#{@address}/api/v1/create_order/"
-    puts payload
     response = RestClient::Request.execute(
       method: :post,
       url:,
       timeout: 10,
       payload:,
       content_type: :json,
-      token: @token
+      headers: { content_type: :json, accept: :json, token: @token }
     )
     if response['error'] == false && response['message'] == 'order created successfuly'
       OrderSyncTracker.find_by(tracking_number:).update(synced: true)
@@ -224,7 +223,7 @@ class NlimsSyncUtilsService
                               url,
                               data,
                               content_type: 'application/json',
-                              token: @token
+                              headers: { content_type: :json, accept: :json, token: @token }
                             ))
       next if response['error']
 
