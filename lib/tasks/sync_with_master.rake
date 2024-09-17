@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
 require 'master_nlims_sync_service'
-require 'emr_sync_service'
-require 'sync_util_service'
 
 namespace :master_nlims do
   desc 'TODO'
@@ -21,7 +19,7 @@ def re_push_status_to_emr
     sync_status: false,
     created_at: (Date.today - 120)..Date.today + 1
   ).each do |tracker|
-    emr_service = EmrSyncService.new
+    emr_service = EmrSyncService.new(nil)
     response = emr_service.push_status_to_emr(
       tracker.tracking_number, tracker.status,
       tracker.time_updated
@@ -44,7 +42,7 @@ def re_push_acknwoledgement_to_master_nlims
   pending_acks = nil if pending_acks.empty?
   master_nlims_service = MasterNlimsSyncService.new
   master_nlims_service.push_acknwoledgement_to_master_nlims(
-    pending_acks: pending_acks
+    pending_acks:
   )
 end
 
@@ -53,7 +51,7 @@ def re_push_result_to_emr
     sync_status: false,
     created_at: (Date.today - 120)..Date.today + 1
   ).each do |tracker|
-    emr_service = EmrSyncService.new
+    emr_service = EmrSyncService.new(nil)
     response = emr_service.push_result_to_emr(tracker.tracking_number)
     next unless response
 

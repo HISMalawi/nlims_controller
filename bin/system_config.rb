@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-MASTER_IP_ADDRESS = '10.44.0.46'
+MASTER_IP_ADDRESS = 'localhost'
 
 Config.find_or_create_by(config_type: 'nlims_host').update(configs: { local_nlims: true })
 users = [
@@ -77,7 +77,7 @@ if Config.local_nlims?
             name: 'EMR',
             address: 'http://localhost',
             port: 3002,
-            username: 'local_nlims_lab_daemon'
+            username: 'emr_app_daemon'
           }
         )
   Config.find_or_create_by(config_type: 'mahis')
@@ -86,7 +86,7 @@ if Config.local_nlims?
             name: 'MAHIS',
             address: 'http://localhost',
             port: 3002,
-            username: 'local_nlims_lab_daemon'
+            username: 'mahis_app_daemon'
           }
         )
 else

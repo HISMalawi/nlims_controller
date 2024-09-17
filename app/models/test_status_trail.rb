@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'emr_sync_service'
-
 #  TestStatusTrail Model
 class TestStatusTrail < ApplicationRecord
   after_commit :push_status_to_emr, on: %i[create update], if: :local_nlims?
