@@ -716,7 +716,7 @@ class API::V1::OrderController < ApplicationController
     TrackingNumberHost.find_or_create_by(
       tracking_number: params[:tracking_number],
       source_host: request.remote_ip,
-      source_app_uuid: User.find_by(id: request.headers['token'])&.app_uuid
+      source_app_uuid: User.find_by(token: request.headers['token'])&.app_uuid
     )
   end
 
@@ -724,7 +724,7 @@ class API::V1::OrderController < ApplicationController
     host = remote_host
     host.update(
       update_host: request.remote_ip,
-      update_app_uuid: User.find_by(id: request.headers['token'])&.app_uuid
+      update_app_uuid: User.find_by(token: request.headers['token'])&.app_uuid
     )
   end
 end
