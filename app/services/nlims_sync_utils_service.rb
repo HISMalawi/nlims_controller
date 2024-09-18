@@ -187,7 +187,7 @@ class NlimsSyncUtilsService
                             content_type: :json,
                             headers: { content_type: :json, accept: :json, token: @token }
                           ))
-    if response['error'] == false && response['message'] == 'order created successfuly'
+    if response['error'] == false && (response['message'] == 'order created successfuly' || response['message'] == 'order already available')
       OrderSyncTracker.find_by(tracking_number:).update(synced: true)
       return true
     end

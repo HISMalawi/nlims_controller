@@ -13,7 +13,10 @@ class ResultsAcknwoledge < ApplicationRecord
   end
 
   def push_acknwoledgement_to_master_nlims
-    acknowledgement = ResultsAcknwoledge.find_by(id:)
-    SyncWithNlimsJob.perform_async(acknowledgement, type: 'acknowlegment')
+    SyncWithNlimsJob.perform_async({
+      identifier: id,
+      type: 'acknowlegment',
+      action: nil
+    }.stringify_keys)
   end
 end

@@ -13,8 +13,12 @@ class Test < ApplicationRecord
   def push_order_to_master_nlims
     return if order&.specimen_type_id&.zero?
 
-    OrderSyncTracker.create(tracking_number: order&.tracking_number)
-    SyncWithNlimsJob.perform_async(order&.tracking_number, type: 'order', action: 'order_create')
+    OrderSyncTracker.find_or_create_by(tracking_number: order&.tracking_number)
+    SyncWithNlimsJob.perform_async({
+      identifier: order&.tracking_number,
+      type: 'order',
+      action: 'order_create'
+    }.stringify_keys)
   end
 
   def order

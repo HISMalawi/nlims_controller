@@ -18,7 +18,13 @@ class TestStatusTrail < ApplicationRecord
     status = TestStatus.find_by(id: test_status_id)&.name
     time_updated ||= updated_at
     StatusSyncTracker.create(tracking_number:, test_id:, status:, time_updated:, app: 'emr')
-    SyncWithEmrJob.perform_async(tracking_number, status, test_id, time_updated)
+    SyncWithEmrJob.perform_async({
+      tracking_number:,
+      status:,
+      test_id:,
+      time: time_updated,
+      action: 'status_update'
+    }.stringify_keys)
   end
 
   def push_status_to_master_nlims
@@ -28,7 +34,11 @@ class TestStatusTrail < ApplicationRecord
     time_updated ||= updated_at
     StatusSyncTracker.create(tracking_number:, test_id:, status:,
                              time_updated:, app: 'nlims')
-    SyncWithNlimsJob.perform_async(test_id, type: 'test', action: 'status_update')
+    SyncWithNlimsJob.perform_async({
+      identifier: test_id,
+      type: 'test',
+      action: 'status_update'
+    }.stringify_keys)
   end
 
   def push_status_to_local_nlims
@@ -38,7 +48,11 @@ class TestStatusTrail < ApplicationRecord
     time_updated ||= updated_at
     StatusSyncTracker.create(tracking_number:, test_id:, status:,
                              time_updated:, app: 'nlims')
-    SyncWithNlimsJob.perform_async(test_id, type: 'test', action: 'status_update')
+    SyncWithNlimsJob.perform_async({
+      identifier: test_id,
+      type: 'test',
+      action: 'status_update'
+    }.stringify_keys)
   end
 
   def tracking_number

@@ -15,13 +15,23 @@ class ResultSyncTracker < ApplicationRecord
   def push_result_to_emr
     return if !Config.master_update_source?(tracking_number) && Config.same_source?(tracking_number)
 
-    SyncWithEmrJob.perform_async(tracking_number, nil, test_id, created_at, action: 'result_update')
+    SyncWithEmrJob.perform_async({
+      tracking_number:,
+      status: nil,
+      test_id:,
+      time: created_at,
+      action: 'result_update'
+    }.stringify_keys)
   end
 
   def push_result_to_nlims
     return unless app == 'nlims'
 
     Rails.logger.debug "Executing push_result_to_nlims with tracking_number: #{tracking_number}"
-    SyncWithNlimsJob.perform_async(test_id, type: 'test', action: 'result_update')
+    SyncWithNlimsJob.perform_async({
+      identifier: test_id,
+      type: 'test',
+      action: 'result_update'
+    }.stringify_keys)
   end
 end

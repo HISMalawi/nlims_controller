@@ -15,14 +15,22 @@ class SpecimenStatusTrail < ApplicationRecord
     return if Config.master_update_source?(tracking_number)
 
     OrderStatusSyncTracker.create(tracking_number:, status:)
-    SyncWithNlimsJob.perform_async(tracking_number, type: 'order', action: 'status_update')
+    SyncWithNlimsJob.perform_async({
+      identifier: tracking_number,
+      type: 'order',
+      action: 'status_update'
+    }.stringify_keys)
   end
 
   def push_status_to_local_nlims
     return if Config.same_source?(tracking_number)
 
     OrderStatusSyncTracker.create(tracking_number:, status:)
-    SyncWithNlimsJob.perform_async(tracking_number, type: 'order', action: 'status_update')
+    SyncWithNlimsJob.perform_async({
+      identifier: tracking_number,
+      type: 'order',
+      action: 'status_update'
+    }.stringify_keys)
   end
 
   def tracking_number

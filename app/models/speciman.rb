@@ -14,6 +14,10 @@ class Speciman < ApplicationRecord
     return if specimen_type_id.zero?
 
     OrderSyncTracker.create(tracking_number:)
-    SyncWithNlimsJob.perform_async(tracking_number, type: 'order', action: 'order_create')
+    SyncWithNlimsJob.perform_async({
+      identifier: tracking_number,
+      type: 'order',
+      action: 'order_create'
+    }.stringify_keys)
   end
 end
