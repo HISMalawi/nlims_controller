@@ -2,7 +2,7 @@
 
 #  TestStatusTrail Model
 class TestStatusTrail < ApplicationRecord
-  after_commit :push_status_to_emr, on: %i[create update], if: :local_nlims?
+  # after_commit :push_status_to_emr, on: %i[create update], if: :local_nlims?
   after_commit :push_status_to_local_nlims, on: %i[create update], unless: :local_nlims?
   after_commit :push_status_to_master_nlims, on: %i[create update], if: :local_nlims?
 
@@ -17,7 +17,7 @@ class TestStatusTrail < ApplicationRecord
 
     status = TestStatus.find_by(id: test_status_id)&.name
     time_updated ||= updated_at
-    StatusSyncTracker.create(tracking_number:, test_id:, status:, time_updated:, app: 'emr')
+    StatusSyncTracker.find_or_create_by(tracking_number:, test_id:, status:, app: 'emr').update(time_updated:)
     SyncWithEmrJob.perform_async({
       tracking_number:,
       status:,
@@ -32,8 +32,7 @@ class TestStatusTrail < ApplicationRecord
 
     status = TestStatus.find_by(id: test_status_id)&.name
     time_updated ||= updated_at
-    StatusSyncTracker.create(tracking_number:, test_id:, status:,
-                             time_updated:, app: 'nlims')
+    StatusSyncTracker.find_or_create_by(tracking_number:, test_id:, status:, app: 'nlims').update(time_updated:)
     SyncWithNlimsJob.perform_async({
       identifier: test_id,
       type: 'test',
@@ -46,8 +45,7 @@ class TestStatusTrail < ApplicationRecord
 
     status = TestStatus.find_by(id: test_status_id)&.name
     time_updated ||= updated_at
-    StatusSyncTracker.create(tracking_number:, test_id:, status:,
-                             time_updated:, app: 'nlims')
+    StatusSyncTracker.find_or_create_by(tracking_number:, test_id:, status:, app: 'nlims').update(time_updated:)
     SyncWithNlimsJob.perform_async({
       identifier: test_id,
       type: 'test',

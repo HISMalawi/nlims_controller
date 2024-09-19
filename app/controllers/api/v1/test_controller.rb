@@ -300,14 +300,8 @@ class API::V1::TestController < ApplicationController
   private
 
   def update_remote_host
-    host = TrackingNumberHost.find_or_create_by(
-      tracking_number: params[:tracking_number],
-      source_host: request.remote_ip,
-      source_app_uuid: User.find_by(token: request.headers['token'])&.app_uuid
-    )
-    return if host.nil?
-
-    host.update(
+    host = TrackingNumberHost.find_by(tracking_number: params[:tracking_number])
+    host&.update(
       update_host: request.remote_ip,
       update_app_uuid: User.find_by(token: request.headers['token'])&.app_uuid
     )

@@ -20,4 +20,8 @@ class TestResult < ApplicationRecord
       'local_nlims_at_facility'
     )
   end
+
+  def tracking_number
+    Speciman.find(Test.find(test_id).specimen_id)&.tracking_number
+  end
 end
