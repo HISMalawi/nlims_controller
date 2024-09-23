@@ -64,11 +64,10 @@ class NlimsSyncUtilsService
                             content_type: :json,
                             headers: { content_type: :json, accept: :json, token: @token }
                           ))
-    if response['error'] == false && response['message'] == 'test updated successfuly'
-      puts 'Test actions pushed to Local NLIMS successfully'
+    if response['error'] == false && response['message'].in?(['test updated successfully',
+                                                              'order already updated with such state'])
       unless action == 'status_update'
-        ResultSyncTracker.find_by(tracking_number:, test_id:,
-                                  app: 'nlims')&.update(sync_status: true)
+        ResultSyncTracker.find_by(tracking_number:, test_id:, app: 'nlims')&.update(sync_status: true)
       end
       StatusSyncTracker.find_by(
         tracking_number:,
