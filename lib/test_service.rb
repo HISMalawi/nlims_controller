@@ -122,7 +122,9 @@ module TestService
     if Config.master_update_source?(tracking_number) || !Config.same_source?(tracking_number)
       ResultSyncTracker.create(tracking_number:, test_id:, app: 'emr')
     end
-    ResultSyncTracker.create(tracking_number:, test_id:, app: 'nlims') if Config.same_source?(tracking_number)
+    return if Config.master_update_source?(tracking_number)
+
+    ResultSyncTracker.create(tracking_number:, test_id:, app: 'nlims')
   end
 
   def self.check_if_test_updated?(test_id, status_id)
