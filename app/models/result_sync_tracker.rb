@@ -5,7 +5,7 @@ class ResultSyncTracker < ApplicationRecord
   self.table_name = 'results_sync_trackers'
   after_commit :push_result_to_nlims, on: %i[create]
   after_commit :create_test_result_acknowledgement, on: %i[create], if: :local_nlims?
-  # after_commit :push_result_to_emr, on: %i[create], if: :local_nlims?
+  after_commit :push_result_to_emr, on: %i[create], if: :local_nlims?
 
   private
 
@@ -20,7 +20,6 @@ class ResultSyncTracker < ApplicationRecord
       tracking_number:,
       status: nil,
       test_id:,
-      time: created_at,
       action: 'result_update'
     }.stringify_keys)
   end

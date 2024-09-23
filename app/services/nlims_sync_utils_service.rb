@@ -217,12 +217,14 @@ class NlimsSyncUtilsService
     return if pending_acks.empty?
 
     pending_acks.each do |ack|
-      data = buid_acknowledment_to_master_data(ack)
+      payload = buid_acknowledment_to_master_data(ack)
       url = "#{@address}/api/v1/acknowledge/test/results/recipient"
-      response = JSON.parse(RestClient.post(
-                              url,
-                              data,
-                              content_type: 'application/json',
+      response = JSON.parse(RestClient::Request.execute(
+                              method: :post,
+                              url:,
+                              timeout: 10,
+                              payload:,
+                              content_type: :json,
                               headers: { content_type: :json, accept: :json, token: @token }
                             ))
       next if response['error']

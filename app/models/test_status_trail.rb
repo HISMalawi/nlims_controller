@@ -2,7 +2,7 @@
 
 #  TestStatusTrail Model
 class TestStatusTrail < ApplicationRecord
-  # after_commit :push_status_to_emr, on: %i[create update], if: :local_nlims?
+  after_commit :push_status_to_emr, on: %i[create update], if: :local_nlims?
   after_commit :push_status_to_local_nlims, on: %i[create], unless: :local_nlims?
   after_commit :push_status_to_master_nlims, on: %i[create], if: :local_nlims?
 
@@ -22,7 +22,6 @@ class TestStatusTrail < ApplicationRecord
       tracking_number:,
       status:,
       test_id:,
-      time: time_updated,
       action: 'status_update'
     }.stringify_keys)
   end

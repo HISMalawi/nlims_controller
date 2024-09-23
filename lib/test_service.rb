@@ -119,9 +119,10 @@ module TestService
     end
     return unless Config.local_nlims?
 
-    ResultSyncTracker.create(tracking_number:, test_id:, app: 'emr') if Config.master_update_source?(tracking_number)
+    if Config.master_update_source?(tracking_number) || !Config.same_source?(tracking_number)
+      ResultSyncTracker.create(tracking_number:, test_id:, app: 'emr')
+    end
     ResultSyncTracker.create(tracking_number:, test_id:, app: 'nlims') if Config.same_source?(tracking_number)
-    ResultSyncTracker.create(tracking_number:, test_id:, app: 'emr') unless Config.same_source?(tracking_number)
   end
 
   def self.check_if_test_updated?(test_id, status_id)
