@@ -21,7 +21,7 @@ class SyncWithNlimsJob
                 end
               when 'acknowlegment'
                 nlims = NlimsSyncUtilsService.new(nil)
-                acknowledgement = ResultsAcknwoledge.find_by(id: identifier)
+                acknowledgement = ResultsAcknwoledge.where(id: identifier)
                 nlims.push_acknwoledgement_to_master_nlims(pending_acks: acknowledgement)
               else
                 false

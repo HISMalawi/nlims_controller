@@ -4,6 +4,7 @@
 class ResultSyncTracker < ApplicationRecord
   self.table_name = 'results_sync_trackers'
   after_commit :push_result_to_nlims, on: %i[create update]
+  after_commit :create_test_result_acknowledgement, on: %i[create update], if: :local_nlims?
   # after_commit :push_result_to_emr, on: %i[create update], if: :local_nlims?
 
   private
@@ -33,5 +34,16 @@ class ResultSyncTracker < ApplicationRecord
       type: 'test',
       action: 'result_update'
     }.stringify_keys)
+  end
+
+  def create_test_result_acknowledgement
+    Rails.logger.debug "Executing create_test_result_acknowledgement with tracking_number: #{tracking_number}"
+    SyncUtilService.ack_result_at_facility_level(
+      tracking_number,
+      test_id,
+      created_at,
+      3,
+      'local_nlims_at_facility'
+    )
   end
 end

@@ -721,7 +721,7 @@ class API::V1::OrderController < ApplicationController
   end
 
   def update_remote_host
-    host = remote_host
+    host = TrackingNumberHost.find_by(tracking_number: params[:tracking_number])
     host.update(
       update_host: request.remote_ip,
       update_app_uuid: User.find_by(token: request.headers['token'])&.app_uuid
