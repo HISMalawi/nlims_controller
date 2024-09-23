@@ -3,9 +3,9 @@
 # ResultSyncTracker for tracking the status of results syncing to EMR
 class ResultSyncTracker < ApplicationRecord
   self.table_name = 'results_sync_trackers'
-  after_commit :push_result_to_nlims, on: %i[create update]
-  after_commit :create_test_result_acknowledgement, on: %i[create update], if: :local_nlims?
-  # after_commit :push_result_to_emr, on: %i[create update], if: :local_nlims?
+  after_commit :push_result_to_nlims, on: %i[create]
+  after_commit :create_test_result_acknowledgement, on: %i[create], if: :local_nlims?
+  # after_commit :push_result_to_emr, on: %i[create], if: :local_nlims?
 
   private
 
