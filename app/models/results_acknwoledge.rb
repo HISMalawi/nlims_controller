@@ -1,10 +1,8 @@
 # frozen_string_literal: true
 
-require 'master_nlims_sync_service'
-
 # ResultsAcknwoledge Model
 class ResultsAcknwoledge < ApplicationRecord
-  after_commit :push_acknwoledgement_to_master_nlims, if: :local_nlims?
+  after_commit :push_acknwoledgement_to_master_nlims, on: %i[create], if: :local_nlims?
 
   private
 

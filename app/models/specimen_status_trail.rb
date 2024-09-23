@@ -2,8 +2,8 @@
 
 # Model class for specimen status trail
 class SpecimenStatusTrail < ApplicationRecord
-  after_commit :push_status_to_master_nlims, on: %i[create update], if: :local_nlims?
-  after_commit :push_status_to_local_nlims, on: %i[create update], unless: :local_nlims?
+  after_commit :push_status_to_master_nlims, on: %i[create], if: :local_nlims?
+  after_commit :push_status_to_local_nlims, on: %i[create], unless: :local_nlims?
 
   private
 
