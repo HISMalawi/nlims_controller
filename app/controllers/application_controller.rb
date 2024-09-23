@@ -9,28 +9,21 @@ class ApplicationController < ActionController::API
     token = request.headers['token']
     status = UserService.check_token(token)
     if token
-      if status == false
+      return status unless status == false
 
-        response = {
-          status: 401,
-          error: true,
-          message: 'token expired',
-          data: {
+      response = {
+        status: 401,
+        error: true,
+        message: 'token expired',
+        data: {}
+      }
 
-          }
-        }
-
-      else
-        return status
-      end
     else
       response = {
         status: 401,
         error: true,
         message: 'token not provided',
-        data: {
-
-        }
+        data: {}
       }
     end
     render(plain: response.to_json) && return
