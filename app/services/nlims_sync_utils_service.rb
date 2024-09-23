@@ -64,19 +64,20 @@ class NlimsSyncUtilsService
                             content_type: :json,
                             headers: { content_type: :json, accept: :json, token: @token }
                           ))
-    if (response['error'] == false && response['message'] == 'test updated successfully') || (response['error'] == true && response['message'] == 'order already updated with such state')
-      unless action == 'status_update'
-        ResultSyncTracker.find_by(tracking_number:, test_id:, app: 'nlims')&.update(sync_status: true)
-      end
-      StatusSyncTracker.find_by(
-        tracking_number:,
-        test_id:,
-        status: payload[:test_status],
-        app: 'nlims'
-      )&.update(sync_status: true)
-      return true
+    unless (response['error'] == false && response['message'] == 'test updated successfuly') || (response['error'] == true && response['message'] == 'order already updated with such state')
+      return false
     end
-    false
+
+    unless action == 'status_update'
+      ResultSyncTracker.find_by(tracking_number:, test_id:, app: 'nlims')&.update(sync_status: true)
+    end
+    StatusSyncTracker.find_by(
+      tracking_number:,
+      test_id:,
+      status: payload[:test_status],
+      app: 'nlims'
+    )&.update(sync_status: true)
+    true
   rescue StandardError => e
     puts "Error: #{e.message} ==> NLIMS test actions Push"
     SyncErrorLog.create(
