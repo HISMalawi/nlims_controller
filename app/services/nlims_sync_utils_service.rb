@@ -64,8 +64,8 @@ class NlimsSyncUtilsService
                             content_type: :json,
                             headers: { content_type: :json, accept: :json, token: @token }
                           ))
-    if response['error'] == false && response['message'].in?(['test updated successfully',
-                                                              'order already updated with such state'])
+    if response['error'] == false && ['test updated successfully',
+                                      'order already updated with such state'].include?(response['message'])
       unless action == 'status_update'
         ResultSyncTracker.find_by(tracking_number:, test_id:, app: 'nlims')&.update(sync_status: true)
       end
