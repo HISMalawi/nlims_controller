@@ -38,15 +38,18 @@ class NlimsSyncUtilsService
       )&.update(sync_status: true)
       return true
     end
+    SyncUtilService.log_error(
+      error_message: e.message,
+      custom_message: "Failed to push order actions to Local NLIMS @ #{@address}",
+      payload:
+    )
     false
   rescue StandardError => e
     puts "Error: #{e.message} ==> Local NLIMS Order Push"
-    SyncErrorLog.create(
+    SyncUtilService.log_error(
       error_message: e.message,
-      error_details: {
-        message: "Failed to push order actions to Local NLIMS @ #{@address}",
-        payload:
-      }
+      custom_message: "Failed to push order actions to Local NLIMS @ #{@address}",
+      payload:
     )
     false
   end
