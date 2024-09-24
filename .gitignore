@@ -33,3 +33,5 @@ config/settings.yml
 # Ignore db schema
 db/schema.rb
 public/tracker.json
+
+/config/master.key
