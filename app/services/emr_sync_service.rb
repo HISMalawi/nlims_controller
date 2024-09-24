@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require 'order_service'
 # EMRSyncService for syncing status of orders to EMR and results
 class EmrSyncService
   def initialize(tracking_number, service_type: nil)
@@ -89,9 +88,10 @@ class EmrSyncService
       Authorization: "Bearer #{@token}"
     )
     res = JSON.parse(response)
-    unless res['message'].blank?
+    if res['message'].blank?
+      payload[:response] = res
       SyncUtilService.log_error(
-        error_message: res['message'],
+        error_message: 'Failed to push',
         custom_message: "Push to EMR @ #{@address}",
         payload:
       )

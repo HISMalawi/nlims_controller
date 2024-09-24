@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'order_service'
-
 specimens = Speciman.find_by_sql(
   "SELECT
     st.name AS specimen_type, s.couch_id, s.target_lab, s.id

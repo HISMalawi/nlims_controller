@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'master_nlims_sync_service'
-
 namespace :master_nlims do
   desc 'TODO'
   task sync_data: :environment do

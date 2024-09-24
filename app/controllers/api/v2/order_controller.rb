@@ -1,7 +1,3 @@
-require 'order_service'
-require 'user_service'
-require 'tracking_number_service'
-
 class API::V2::OrderController < ApplicationController
   before_action :remote_host, only: %i[request_order]
   def request_order

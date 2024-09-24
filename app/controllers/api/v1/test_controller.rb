@@ -1,8 +1,5 @@
 # frozen_string_literal: true
 
-require 'test_service'
-require 'user_service'
-
 class API::V1::TestController < ApplicationController
   before_action :update_remote_host, only: [:update_test]
 

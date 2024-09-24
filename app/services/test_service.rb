@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require 'order_service'
 module TestService
   def self.update_test(params)
     return [false, 'tracking number not provided'] if params[:tracking_number].blank?

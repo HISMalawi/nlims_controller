@@ -1,9 +1,5 @@
 # frozen_string_literal: true
 
-require 'order_service'
-require 'user_service'
-require 'test_service'
-require 'tracking_number_service'
 require 'date'
 
 class API::V1::OrderController < ApplicationController

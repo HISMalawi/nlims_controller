@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'user_service.rb'
-
 class API::V1::UserController < ApplicationController
   def create_user
     token = request.headers['token']
