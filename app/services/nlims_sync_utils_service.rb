@@ -80,12 +80,10 @@ class NlimsSyncUtilsService
     true
   rescue StandardError => e
     puts "Error: #{e.message} ==> NLIMS test actions Push"
-    SyncErrorLog.create(
-      error_message: e,
-      error_details: {
-        message: "Failed to push test actions to NLIMS @ #{@address}",
-        payload:
-      }
+    SyncUtilService.log_error(
+      error_message: e.message,
+      custom_message: "Failed to push test actions to NLIMS @ #{@address}",
+      payload:
     )
     false
   end
@@ -190,23 +188,18 @@ class NlimsSyncUtilsService
       OrderSyncTracker.find_by(tracking_number:).update(synced: true)
       return true
     end
-
-    SyncErrorLog.create(
+    SyncUtilService.log_error(
       error_message: response['message'],
-      error_details: {
-        message: 'NLIMS Push Order to Master NLIMS',
-        payload:
-      }
+      custom_message: "NLIMS Push Order to Master NLIMS @ #{@address}",
+      payload:
     )
     false
   rescue StandardError => e
     puts "Error: #{e.message} ==> NLIMS Push Order to Master NLIMS"
-    SyncErrorLog.create(
-      error_message: e,
-      error_details: {
-        message: 'NLIMS Push Order to Master NLIMS',
-        payload:
-      }
+    SyncUtilService.log_error(
+      error_message: e.message,
+      custom_message: "NLIMS Push Order to Master NLIMS @ #{@address}",
+      payload:
     )
     false
   end
@@ -226,15 +219,22 @@ class NlimsSyncUtilsService
                               content_type: :json,
                               headers: { content_type: :json, accept: :json, token: @token }
                             ))
-      next if response['error']
+      if response['error']
+        SyncUtilService.log_error(
+          error_message: e.message,
+          custom_message: "NLIMS Push Acknowledgement to Master NLIMS @ #{@address}",
+          payload:
+        )
+      end
 
       ack.update(acknwoledged_to_nlims: true)
       puts "Pushed acknowledgments for tracking number: #{ack.tracking_number} to Master NLIMS"
     rescue StandardError => e
       puts "Error: #{e.message} ==> NLIMS Push Acknowledgement to Master NLIMS"
-      SyncErrorLog.create(
+      SyncUtilService.log_error(
         error_message: e.message,
-        error_details: { message: 'NLIMS Push Acknowledgement to Master NLIMS' }
+        custom_message: "NLIMS Push Acknowledgement to Master NLIMS @ #{@address}",
+        payload:
       )
       next
     end

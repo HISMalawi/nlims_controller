@@ -28,4 +28,12 @@ module SyncUtilService
       acknwoledged_by: acknowledge_by
     ).nil?
   end
+
+  def self.log_error(error_message: nil, custom_message: nil, payload: nil)
+    log = SyncErrorLog.create(
+      error_message:,
+      error_details: { message: custom_message, payload: }
+    )
+    raise StandardError, log.to_json
+  end
 end

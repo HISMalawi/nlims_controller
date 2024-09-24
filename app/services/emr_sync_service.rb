@@ -92,7 +92,11 @@ class EmrSyncService
     !res['message'].blank?
   rescue StandardError => e
     puts "Error: #{e.message}"
-    SyncErrorLog.create(error_message: e.message, error_details: payload)
+    SyncUtilService.log_error(
+      error_message: e.message,
+      custom_message: "Push to EMR @ #{@address}",
+      payload:
+    )
     false
   end
 
