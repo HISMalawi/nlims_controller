@@ -89,9 +89,9 @@ class EmrSyncService
       Authorization: "Bearer #{@token}"
     )
     res = JSON.parse(response)
-    if res['message'].blank?
+    unless res['message'].blank?
       SyncUtilService.log_error(
-        error_message: e.message,
+        error_message: res['message'],
         custom_message: "Push to EMR @ #{@address}",
         payload:
       )

@@ -39,7 +39,7 @@ class NlimsSyncUtilsService
       return true
     end
     SyncUtilService.log_error(
-      error_message: e.message,
+      error_message: response['message'],
       custom_message: "Failed to push order actions to Local NLIMS @ #{@address}",
       payload:
     )
@@ -224,7 +224,7 @@ class NlimsSyncUtilsService
                             ))
       if response['error']
         SyncUtilService.log_error(
-          error_message: e.message,
+          error_message: response['message'],
           custom_message: "NLIMS Push Acknowledgement to Master NLIMS @ #{@address}",
           payload:
         )
