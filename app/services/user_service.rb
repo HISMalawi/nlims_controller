@@ -1,26 +1,17 @@
 module UserService
   def self.create_user(params)
-    location = params[:location]
-    app_name = params[:app_name]
-    password = params[:password]
-    username = params[:username]
-    token = params[:token]
-    partner = params[:partner]
-
     details = compute_expiry_time
-    token = details[:token]
-    expiry_time = details[:expiry_time]
-    password = encrypt_password(password)
-
-    User.create(app_name: app_name,
-                partner: partner,
-                location: location,
-                password: password,
-                username: username,
-                token: token,
-                token_expiry_time: expiry_time)
-
-    { token: token, expiry_time: expiry_time }
+    User.create(
+      app_name: params[:app_name],
+      partner: params[:partner],
+      location: params[:location],
+      password: encrypt_password(params[:password]),
+      username: params[:username],
+      token: details[:token],
+      app_uuid: params[:app_uuid],
+      token_expiry_time: details[:expiry_time]
+    )
+    { token: details[:token], expiry_time: details[:expiry_time] }
   end
 
   def self.check_account_creation_request(token)
@@ -40,11 +31,11 @@ module UserService
     token = create_token
     time = Time.now
     time += 14_400
-    { token: token, expiry_time: time.strftime('%Y%m%d%H%M%S') }
+    { token:, expiry_time: time.strftime('%Y%m%d%H%M%S') }
   end
 
   def self.check_token(token)
-    user = User.where(token: token).first
+    user = User.where(token:).first
 
     return false unless user
     return true if user.token_expiry_time > Time.now.strftime('%Y%m%d%H%M%S')
@@ -53,7 +44,7 @@ module UserService
   end
 
   def self.authenticate(username, password)
-    user = User.where(username: username).first
+    user = User.where(username:).first
 
     return false unless user
 
@@ -80,14 +71,14 @@ module UserService
   end
 
   def self.check_user(username)
-    user = User.where(username: username).first
+    user = User.where(username:).first
     return true if user
 
     false
   end
 
   def self.re_authenticate(username, password)
-    user = User.where(username: username).first
+    user = User.where(username:).first
     token = create_token
     expiry_time = compute_expiry_time
 
@@ -96,8 +87,8 @@ module UserService
     secured_pass = decrypt_password(user.password)
     return false unless secured_pass == password
 
-    User.update(user.id, token: token, token_expiry_time: expiry_time[:expiry_time])
-    { token: token, expiry_time: expiry_time[:expiry_time] }
+    User.update(user.id, token:, token_expiry_time: expiry_time[:expiry_time])
+    { token:, expiry_time: expiry_time[:expiry_time] }
   end
 
   def self.encrypt_password(password)

@@ -29,6 +29,8 @@ config/results_channel_socket.yml
 config/master_nlims.yml
 config/local_nlims.yml
 config/settings.yml
+bin/system_config.rb
+users_credentials.txt
 
 # Ignore db schema
 db/schema.rb

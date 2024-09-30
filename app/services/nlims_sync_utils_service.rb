@@ -1,12 +1,14 @@
 # frozen_string_literal: true
 
 class NlimsSyncUtilsService
-  def initialize(tracking_number)
+  def initialize(tracking_number, action_type: nil)
     config = nlims_configs(tracking_number)
     @username = config['username']
-    @password = config['password']
+    @password = config['password']['main']
+    @default_password = config['password']['default']
     @address = "#{config['address']}:#{config['port']}"
-    @token = authenticate_with_nlims
+    @token = authenticate_with_nlims if action_type.nil?
+    @token = default_authentication if action_type == 'account_creation'
   end
 
   def order_status_payload(order_id)
@@ -265,6 +267,40 @@ class NlimsSyncUtilsService
   rescue StandardError => e
     puts "Error: #{e.message} ==> NLIMS Authentication"
     handle_error(e)
+  end
+
+  def default_authentication
+    url = "#{@address}/api/v1/authenticate/admin/#{@default_password}"
+    response = RestClient.get(
+      url,
+      content_type: 'application/json'
+    )
+    res = JSON.parse(response)
+    res['status'] == 200 ? res['data']['token'] : ''
+  rescue StandardError => e
+    puts "Error: #{e.message} ==> NLIMS Authentication"
+  end
+
+  def create_account
+    payload = {
+      username: @username,
+      password: @password,
+      partner: 'EGPAF',
+      app_name: 'Local NLIMS',
+      location: 'Malawi',
+      app_uuid: User.find_by(username: @username)&.app_uuid
+    }
+    response = JSON.parse(RestClient::Request.execute(
+                            method: :post,
+                            url: "#{@address}/api/v1/create_user",
+                            timeout: 10,
+                            payload:,
+                            content_type: :json,
+                            headers: { content_type: :json, accept: :json, token: @token }
+                          ))
+    puts response
+  rescue StandardError => e
+    puts "Error: #{e.message} ==> Failed to create user at master"
   end
 
   def handle_response(response)
