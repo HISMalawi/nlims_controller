@@ -364,7 +364,7 @@ class NlimsSyncUtilsService
              else
                Config.configurations('local_nlims')
              end
-    config['password'] = Config.local_nlims? ? settings['master_nlims'] : settings['local_nlims']
+    config['password'] = Config.local_nlims? ? settings['local_nlims'] : settings['master_nlims']
     config
   rescue StandardError => e
     puts "Error: #{e.message}"

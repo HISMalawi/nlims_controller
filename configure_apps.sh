@@ -71,14 +71,14 @@ confirm_data() {
   if [[ "${MAHIS_AVAILABLE,,}" == "yes" || "${MAHIS_AVAILABLE,,}" == "y" ]]; then
     echo "MAHIS Password: $MAHIS_PASSWORD"
   fi
-   if [[ "${IBLIS_AVAILABLE,,}" == "yes" || "${IBLIS_AVAILABLE,,}" == "y" ]]; then
+  if [[ "${IBLIS_AVAILABLE,,}" == "yes" || "${IBLIS_AVAILABLE,,}" == "y" ]]; then
     echo "IBLIS Password: $IBLIS_PASSWORD"
   fi
   echo "---------------------------------------"
   read -p "Is this information correct? (yes/no): " CONFIRMATION
   if [[ "${CONFIRMATION,,}" == "yes" || "${CONFIRMATION,,}" == "y" ]]; then
     echo "Proceeding"
-   else
+  else
     echo "Let's re-enter the information."
     main
   fi
@@ -99,40 +99,42 @@ main() {
     # Ask if MAHIS is available
     read -p "Is MAHIS available? (yes/no): " MAHIS_AVAILABLE
     if [[ "${MAHIS_AVAILABLE,,}" == "yes" || "${MAHIS_AVAILABLE,,}" == "y" ]]; then
-    prompt_ip_port "MAHIS" MAHIS_IP MAHIS_PORT
+      prompt_ip_port "MAHIS" MAHIS_IP MAHIS_PORT
     else
-    MAHIS_IP=""
-    MAHIS_PORT=""
+      MAHIS_IP=""
+      MAHIS_PORT=""
     fi
     echo '---------------------------------------------------------------'
     # Ask if IBLIS is available
     read -p "Is IBLIS available? (yes/no): " IBLIS_AVAILABLE
-    if [[ "${IBLIS_AVAILABLE,,}" == "yes" || "${MAHIS_AVAILABLE,,}" == "y" ]]; then
-    read -s -p "Enter the password for IBLIS(Used by IBLIS to Send order to Local NLIMS): " IBLIS_PASSWORD
-    echo
+    if [[ "${IBLIS_AVAILABLE,,}" == "yes" || "${IBLIS_AVAILABLE,,}" == "y" ]]; then
+      read -p "Enter the password for IBLIS(Used by IBLIS to Send order to Local NLIMS): " IBLIS_PASSWORD
+      echo
     else
-    IBLIS_PASSWORD=""
+      IBLIS_PASSWORD=""
     fi
 
     # Ask for passwords for each application
-    read -s -p "Enter the password for LOCAL NLIMS(Used sending to send local NLIMS action to Master): " LOCAL_NLIMS_PASSWORD
+    read -p "Enter the password for LOCAL NLIMS(Used sending to send local NLIMS action to Master): " LOCAL_NLIMS_PASSWORD
     echo
-    read -s -p "Enter the DEFAULT PASSWORD for MASTER NLIMS(Used for account creation): " DEFAULT_MASTER_NLIMS_PASSWORD
+    read -p "Enter the DEFAULT PASSWORD for MASTER NLIMS(Used for account creation): " DEFAULT_MASTER_NLIMS_PASSWORD
     echo
-    read -s -p "Enter the password for MASTER NLIMS(Used by Master NLIMS for any other action e.g status update to Local NLIMS): " MASTER_NLIMS_PASSWORD
+    read -p "Enter the password for MASTER NLIMS(Used by Master NLIMS for any other action e.g status update to Local NLIMS): " MASTER_NLIMS_PASSWORD
     echo
-    read -s -p "Enter the password for EMR(Used to send Local NLIMS actions to EMR): " EMR_PASSWORD
+    read -p "Enter the password for EMR(Used to send Local NLIMS actions to EMR): " EMR_PASSWORD
     echo
-    if [ "$MAHIS_AVAILABLE" = "yes" ]; then
-    read -s -p "Enter the password for MAHIS: " MAHIS_PASSWORD
-    echo
+    if [[ "${MAHIS_AVAILABLE,,}" == "yes" || "${MAHIS_AVAILABLE,,}" == "y" ]]; then
+      read -p "Enter the password for MAHIS: " MAHIS_PASSWORD
+      echo
     else
-    MAHIS_PASSWORD=""
+      MAHIS_PASSWORD=""
     fi
 
     # Generate a random string and prepend it to local_nlims_lab_daemon
     RANDOM_STRING=$(generate_random_string)
     NEW_LOCAL_NLIMS_USER="${RANDOM_STRING}_local_nlims_lab_daemon"
+    EMR_RANDOM_STRING=$(generate_random_string)
+    NEW_EMR_LOCAL_NLIMS_USER="${EMR_RANDOM_STRING}_emr_local_nlims_lab_daemon"
 
     # Confirm the entered data
     confirm_data
@@ -153,14 +155,13 @@ EOL
 cat <<EOL > users_credentials.txt
 Username: $NEW_LOCAL_NLIMS_USER, Password: $LOCAL_NLIMS_PASSWORD
 Username: master_nlims_lab_daemon, Password: $MASTER_NLIMS_PASSWORD
-Username: emr_nlims_lab_daemon, Password: $EMR_PASSWORD
+Username: $NEW_EMR_LOCAL_NLIMS_USER, Password: $EMR_PASSWORD
 EOL
-if [ "$MAHIS_AVAILABLE" = "yes" ]; then
-echo "Username: mahis_nlims_lab_daemon, Password: $MAHIS_PASSWORD" >> users_credentials.txt
+if [[ "${MAHIS_AVAILABLE,,}" == "yes" || "${MAHIS_AVAILABLE,,}" == "y" ]]; then
+  echo "Username: mahis_nlims_lab_daemon, Password: $MAHIS_PASSWORD" >> users_credentials.txt
 fi
-EOL
-if [ "$IBLIS_AVAILABLE" = "yes" ]; then
-echo "Username: iblis_nlims_lab_daemon, Password: $IBLIS_PASSWORD" >> users_credentials.txt
+if [[ "${IBLIS_AVAILABLE,,}" == "yes" || "${IBLIS_AVAILABLE,,}" == "y" ]]; then
+  echo "Username: iblis_nlims_lab_daemon, Password: $IBLIS_PASSWORD" >> users_credentials.txt
 fi
 
 # Overwrite the bin/system_config.rb file with the new content
@@ -192,7 +193,7 @@ users = [
     app_uuid: 'c1bcdaa3-a835-4481-84dc-92dace6bea59'
 },
 {
-    username: 'emr_nlims_lab_daemon',
+    username: '$NEW_EMR_LOCAL_NLIMS_USER',
     password: BCrypt::Password.create('$EMR_PASSWORD'),
     app_name: 'EMR',
     partner: 'EGPAF',
@@ -245,7 +246,7 @@ Config.find_or_create_by(config_type: 'emr')
             name: 'EMR',
             address: 'http://$EMR_IP',
             port: $EMR_PORT,
-            username: 'emr_nlims_lab_daemon'
+            username: '$$NEW_EMR_LOCAL_NLIMS_USER'
         }
         )
 $([ "$MAHIS_AVAILABLE" = "yes" ] && echo "
@@ -305,8 +306,27 @@ cat <<EOL > bin/system_config.rb
 # frozen_string_literal: true
 
 Config.find_or_create_by(config_type: 'nlims_host').update(configs: { local_nlims: false })
+Config.find_or_create_by(config_type: 'local_nlims')
+        .update(
+        configs: {
+            name: 'LOCAL NLIMS',
+            address: 'http://$LOCAL_NLIMS_IP',
+            port: $LOCAL_NLIMS_PORT,
+            username: 'master_nlims_lab_daemon'
+        }
+        )
 EOL
-
+read -p "Enter the password for MASTER NLIMS(Used by Master NLIMS for any other action e.g status update to Local NLIMS): " MASTER_NLIMS_PASSWORD
+cat <<EOL > config/settings.yml
+local_nlims:
+ default:
+ main:
+master_nlims:
+ default:
+ main: $MASTER_NLIMS_PASSWORD
+emr:
+mahis:
+EOL
 echo "Configuration complete! bin/system_config.rb has been updated."
 echo "Running system_config.rb..."
 bundle exec rails r bin/system_config.rb
