@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class ApplicationController < ActionController::API
+class ApplicationController < ActionController::Base
   before_action :authenticate_request, except: %w[
     re_authenticate check_token_validity authenticate_user create_user dispatch_sample
   ]

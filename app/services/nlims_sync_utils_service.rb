@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class NlimsSyncUtilsService
+  attr_reader :address
+
   def initialize(tracking_number, action_type: nil)
     config = nlims_configs(tracking_number)
     @username = config['username']
@@ -267,6 +269,19 @@ class NlimsSyncUtilsService
   rescue StandardError => e
     puts "Error: #{e.message} ==> NLIMS Authentication"
     handle_error(e)
+  end
+
+  def application_status
+    url = "#{@address}/api/v1/ping"
+    response = RestClient.get(
+      url,
+      content_type: 'application/json'
+    )
+    res = JSON.parse(response)
+    res['ping']
+  rescue StandardError => e
+    puts "Error: #{e.message}"
+    false
   end
 
   def default_authentication

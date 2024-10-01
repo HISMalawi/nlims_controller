@@ -129,6 +129,7 @@ GEM
     net-imap (0.4.14)
       date
       net-protocol
+    net-ping (2.0.8)
     net-pop (0.1.2)
       net-protocol
     net-protocol (0.2.2)
@@ -239,6 +240,7 @@ DEPENDENCIES
   listen (>= 3.0.5)
   mime-types (~> 3.3)
   mysql2 (>= 0.3.18)
+  net-ping
   parallel
   passenger
   puma (>= 3.7)

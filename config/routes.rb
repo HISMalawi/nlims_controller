@@ -6,6 +6,7 @@ require 'sidekiq/cron/web'
 Rails.application.routes.draw do
   # For details on the DSL available within this file, see http://guides.rubyonrails.org/routing.html
   mount Sidekiq::Web => '/sidekiq'
+  root to: 'home#index'
   namespace :api do
     namespace :v1 do
       # order routes
@@ -40,6 +41,9 @@ Rails.application.routes.draw do
       # other routes
       get '/retrieve_order_location'	=> 'test#retrieve_order_location'
       get '/retrieve_target_labs'	=> 'test#retrieve_target_labs'
+
+      # status of the app
+      get '/ping' => 'status#ping'
     end
 
     namespace :v2 do
