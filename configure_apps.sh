@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Default IP and port for LOCAL NLIMS
+LOCAL_NLIMS_IP="localhost"
+LOCAL_NLIMS_PORT="3009"
 # Function to generate a random string
 generate_random_string() {
   echo $(cat /dev/urandom | tr -dc 'a-zA-Z' | fold -w 10 | head -n 1)
@@ -91,10 +94,6 @@ main() {
 
     # Ask for EMR IP address and port
     prompt_ip_port "EMR-Backend" EMR_IP EMR_PORT
-
-    # Default IP and port for LOCAL NLIMS
-    LOCAL_NLIMS_IP="localhost"
-    LOCAL_NLIMS_PORT="3009"
 
     # Ask if MAHIS is available
     read -p "Is MAHIS available? (yes/no): " MAHIS_AVAILABLE
