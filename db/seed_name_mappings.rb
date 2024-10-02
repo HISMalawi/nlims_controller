@@ -61,7 +61,8 @@ name_mappings = {
   'Gateway' => 'Gateway Clinic (Blantyre)',
   'urine chemistry' => 'Urine Chemistries',
   'cryptococcal antigen test' => 'Cryptococcus Antigen Test',
-  '50:50 Mix F Ix Deficient' => '50:50 Mix F-Ix Deficient'
+  '50:50 Mix F Ix Deficient' => '50:50 Mix F-Ix Deficient',
+  'Urine dipstick' => 'urine chemistries'
 }
 
 name_mappings.each do |manually_created_name, actual_name|
