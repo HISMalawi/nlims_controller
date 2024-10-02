@@ -5,9 +5,14 @@ class HomeController < ApplicationController
     @info = 'NLIMS SERVICE'
     @git_tag = git_tag
     nlims = NlimsSyncUtilsService.new(nil)
+    emr = EmrSyncService.new(nil)
     @master_status = nlims.application_status ? 'Running' : 'Down'
     @pinger = Net::Ping::External.new('10.44.0.46').ping ? 'Successful' : 'Cannot be reached'
+    @master_auth = nlims.token.blank? ? 'Failed' : 'Successful'
     @nlims_chsu_address = nlims.address
+    @local_nlims = Config.local_nlims? ? 'Local' : 'Master'
+    @emr_auth = emr.token.blank? ? 'Failed' : 'Successful'
+    @emr_address = emr.address
   end
 
   def git_tag

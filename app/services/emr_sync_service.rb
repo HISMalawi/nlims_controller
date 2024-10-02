@@ -2,6 +2,8 @@
 
 # EMRSyncService for syncing status of orders to EMR and results
 class EmrSyncService
+  attr_reader :token, :address
+
   def initialize(tracking_number, service_type: nil)
     config = emr_configs(tracking_number)
     @username = config['username']

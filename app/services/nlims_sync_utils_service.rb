@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class NlimsSyncUtilsService
-  attr_reader :address
+  attr_reader :address, :token
 
   def initialize(tracking_number, action_type: nil)
     config = nlims_configs(tracking_number)
