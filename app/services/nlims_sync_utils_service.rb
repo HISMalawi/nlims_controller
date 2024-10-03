@@ -142,6 +142,8 @@ class NlimsSyncUtilsService
 
     tests = Test.where(specimen_id: order&.id)
     client = Patient.find_by(id: tests&.first&.patient_id)
+    who_order_test_last_name = tests&.first&.created_by&.split(' ')&.last
+    who_order_test_first_name = tests&.first&.created_by&.split(' ')&.first
     {
       tracking_number: order.tracking_number,
       date_sample_drawn: order.date_created,
@@ -158,8 +160,8 @@ class NlimsSyncUtilsService
       reason_for_test: order.priority,
       order_location: Ward.find_by(id: order.ward_id)&.name || order.sending_facility,
       who_order_test_id: nil,
-      who_order_test_last_name: tests&.first&.created_by&.split(' ')&.last,
-      who_order_test_first_name: tests&.first&.created_by&.split(' ')&.first,
+      who_order_test_last_name: who_order_test_last_name.blank? ? '' : who_order_test_last_name,
+      who_order_test_first_name: who_order_test_first_name.blank? ? '' : who_order_test_first_name,
       who_order_test_phone_number: '',
       first_name: client.first_name,
       last_name: client.last_name,
