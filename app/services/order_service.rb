@@ -565,7 +565,7 @@ module OrderService
   end
 
   def self.dispatch_sample(tracking_number, dispatcher, date_dispatched, dispatcher_type, delivery_location = 'pickup')
-    return if check_if_dispatched(tracking_number, dispatcher_type)
+    return true if check_if_dispatched(tracking_number, dispatcher_type)
 
     if delivery_location == 'pickup'
       SpecimenDispatch.create(
