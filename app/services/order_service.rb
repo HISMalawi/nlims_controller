@@ -568,14 +568,14 @@ module OrderService
     return if check_if_dispatched(tracking_number, dispatcher_type)
 
     if delivery_location == 'pickup'
-      SpecimenDispatch.create(
+      SpecimenDispatch.find_or_create_by(
         tracking_number:,
         dispatcher:,
         date_dispatched:,
         dispatcher_type_id: dispatcher_type
       )
     else
-      SpecimenDispatch.create(
+      SpecimenDispatch.find_or_create_by(
         tracking_number:,
         dispatcher:,
         date_dispatched:,
