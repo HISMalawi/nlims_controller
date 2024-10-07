@@ -3,6 +3,10 @@
 # Default IP and port for LOCAL NLIMS
 LOCAL_NLIMS_IP="localhost"
 LOCAL_NLIMS_PORT="3009"
+echo "-----------------------------------------------------------------------------------------"
+echo "THIS SCRIPT HELPS IN SETTING UP NLIMS TO INTEGRATE WITH EMR, MASTER NLIMS, IBLIS AND MAHIS"
+echo "-----------------------------------------------------------------------------------------"
+echo
 # Function to generate a random string
 generate_random_string() {
   echo $(cat /dev/urandom | tr -dc 'a-zA-Z' | fold -w 10 | head -n 1)
