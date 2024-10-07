@@ -261,6 +261,20 @@ class NlimsSyncUtilsService
     }
   end
 
+  def register_order_source(tracking_number)
+    url = "#{@address}/api/v1/register_order_source"
+    JSON.parse(RestClient::Request.execute(
+                 method: :post,
+                 url:,
+                 timeout: 10,
+                 payload: { tracking_number: },
+                 content_type: :json,
+                 headers: { content_type: :json, accept: :json, token: @token }
+               ))
+  rescue StandardError => e
+    puts "Error: #{e.message} ==> NLIMS Register Source to Master NLIMS"
+  end
+
   def authenticate_with_nlims
     auth = RestClient::Request.execute(
       method: :get,
