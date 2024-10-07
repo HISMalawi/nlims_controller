@@ -565,6 +565,8 @@ module OrderService
   end
 
   def self.dispatch_sample(tracking_number, dispatcher, date_dispatched, dispatcher_type, delivery_location = 'pickup')
+    return if check_if_dispatched(tracking_number, dispatcher_type)
+
     if delivery_location == 'pickup'
       SpecimenDispatch.create(
         tracking_number:,
@@ -585,9 +587,8 @@ module OrderService
     true
   end
 
-  def self.check_if_dispatched(tracking_number, dispatcher_type)
-    dispatched = SpecimenDispatch.find_by_sql("SELECT * FROM specimen_dispatches WHERE tracking_number='#{tracking_number}' AND dispatcher_type_id='#{dispatcher_type}'")
-    !dispatched.empty?
+  def self.check_if_dispatched(tracking_number, dispatcher_type_id)
+    SpecimenDispatch.find_by(tracking_number:, dispatcher_type_id:).present?
   end
 
   def self.request_order(params, tracking_number)
