@@ -37,5 +37,3 @@ else
     echo "Error: $sql_file does not exist or is not readable."
 fi
 done
-
-rails db:migrate
