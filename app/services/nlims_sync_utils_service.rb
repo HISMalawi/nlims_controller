@@ -9,7 +9,7 @@ class NlimsSyncUtilsService
     @password = config['password']['main']
     @default_password = config['password']['default']
     @address = "#{config['address']}:#{config['port']}"
-    @token = authenticate_with_nlims if action_type.nil?
+    @token = token_valid(@username) || authenticate_with_nlims if action_type.nil?
     @token = default_authentication if action_type == 'account_creation'
   end
 
@@ -347,6 +347,7 @@ class NlimsSyncUtilsService
       ''
     else
       puts 'NLIMS authentication successful'
+      TokenTracker.find_or_create_by(username: @username)&.update(token: user['data']['token'])
       user['data']['token']
     end
   end
@@ -389,5 +390,21 @@ class NlimsSyncUtilsService
       error_details: { message: 'NLIMS Configuration missing' }
     )
     exit
+  end
+
+  def token_valid(username)
+    token = TokenTracker.find_by_username(username)&.token
+    return nil if token.nil?
+
+    response = JSON.parse(RestClient::Request.execute(
+                            method: :get,
+                            url: "#{@address}/api/v1/check_token_validity",
+                            timeout: 10,
+                            headers: { content_type: :json, accept: :json, token: }
+                          ))
+    response['error'] == false && response['message'] == 'token active' ? token : nil
+  rescue StandardError => e
+    puts "Error: #{e.message} ==> NLIMS Token Validity"
+    nil
   end
 end

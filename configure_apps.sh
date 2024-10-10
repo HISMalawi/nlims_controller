@@ -135,7 +135,8 @@ main() {
 
     # Generate a random string and prepend it to local_nlims_lab_daemon
     RANDOM_STRING=$(generate_random_string)
-    NEW_LOCAL_NLIMS_USER="${RANDOM_STRING}_local_nlims${RANDOM_STRING}_lab_daemon"
+    RANDOM_STRINGX=$(generate_random_string)
+    NEW_LOCAL_NLIMS_USER="${RANDOM_STRING}_local_nlims${RANDOM_STRINGX}_lab_daemon"
     EMR_RANDOM_STRING=$(generate_random_string)
     NEW_EMR_LOCAL_NLIMS_USER="${EMR_RANDOM_STRING}_emr_local_nlims_lab_daemon"
 
