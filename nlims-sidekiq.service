@@ -1,0 +1,16 @@
+[Unit]
+Description=Sidekiq
+After=syslog.target network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/var/www/nlims_controller
+Environment="RAILS_ENV=development"
+ExecStart=/bin/bash -lc 'exec /home/emr-user/.rbenv/shims/bundle exec sidekiq -e development'
+User=emr-user
+UMask=0002
+RestartSec=5
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

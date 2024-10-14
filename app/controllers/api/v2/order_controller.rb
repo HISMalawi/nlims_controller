@@ -1,8 +1,5 @@
-require 'order_service'
-require 'user_service'
-require 'tracking_number_service'
-
 class API::V2::OrderController < ApplicationController
+  before_action :remote_host, only: %i[request_order]
   def request_order
     if !params['district']
       msg = 'district not provided'
@@ -128,5 +125,17 @@ class API::V2::OrderController < ApplicationController
       }
     end
     render plain: response.to_json and return
+  end
+
+  private
+
+  def remote_host
+    return unless params[:tracking_number].present?
+
+    TrackingNumberHost.find_or_create_by(
+      tracking_number: params[:tracking_number],
+      source_host: request.remote_ip,
+      source_app_uuid: User.find_by(token: request.headers['token'])&.app_uuid
+    )
   end
 end
