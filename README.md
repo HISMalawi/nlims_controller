@@ -74,11 +74,61 @@ If you already had NLIMS running before and want to update it, follow these step
    ```
 
 ## Configuring the integration with other systems
-1. Run the following command to configure the integration with other systems and follow the prompts:
+1. Run the following command to configure the integration with other systems and follow the prompts(In production: use the production credentials for master as directed in the setup instruction):
    ```bash
       ./configure_apps.sh
    ```
 2. Get the user credentials created in the user_credentials.txt file following the script run and and use them in subsequent steps
+
+## Running the Application
+To start the application:
+```bash
+rails s -p3000 -b 0.0.0.0
+```
+To start the sidekiq worker:
+```bash
+bundle exec sidekiq
+```
+OR
+Copy the nlims-api.service file to /etc/systemd/system/. Note that the service file is configured to run the application on port 3009 and rbenv is used. And the service user is set to emr-user, rails enviroment to development and working directory is set to /var/www/nlims_controller which you can change to your desired location and user and environment(production or development).
+```bash
+sudo cp nlims-api.service /etc/systemd/system/
+```
+Then run the following command to start the application:
+```bash
+sudo systemctl start nlims-api
+```
+Enable the service to start on boot:
+```bash
+sudo systemctl enable nlims-api
+```
+Check the status of the service:
+```bash
+sudo systemctl status nlims-api
+```
+
+## Running sidekiq to handle background jobs such as syncing data between the ART application and the central CHSU NLIMS.
+Copy the nlims-sidekiq.service file to /etc/systemd/system/. Note that the service user is set to emr-user, rails enviroment to development and working directory is set to /var/www/nlims_controller which you can change to your desired location and user and environment(production or development).
+```bash
+sudo cp nlims-sidekiq.service /etc/systemd/system/
+```
+Then run the following command to start the service:
+```bash
+sudo systemctl start nlims-sidekiq
+```
+Enable the service to start on boot:
+```bash
+sudo systemctl enable nlims-sidekiq
+```
+Check the status of the service:
+```bash
+sudo systemctl status nlims-sidekiq
+```
+
+NOTE: The above steps for running the application are for the ART server and the CHSU server. For the ART server, the application is run on port 3009 and for the CHSU server, the application is run on port 3010 which is configured in the service file. 
+
+NOTE: The rails environment in which nlims-api is running should be the same envinronment in which the sidekiq worker is running. If development, sidekiq should also be development. If production, sidekiq should also be production. You can change the environments in the services file.
+
 # Local NLIMS at Sites 
 
 ## Overview
