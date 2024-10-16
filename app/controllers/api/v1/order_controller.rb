@@ -42,7 +42,6 @@ class API::V1::OrderController < ApplicationController
     elsif !params['who_order_test_last_name']
       msg = 'last name for person ordering not provided'
     else
-      order_availability = false
       if params['tracking_number'] && !params['tracking_number'].blank?
         tracking_number = params['tracking_number']
         order_availability = OrderService.check_order(tracking_number)
@@ -212,6 +211,7 @@ class API::V1::OrderController < ApplicationController
               time_of_delivery = time_of_delivery[0..7]
             end
             date_dispatched = "#{date_dispatched} #{time_of_delivery}"
+            date_dispatched ||= Time.current.strftime('%Y-%m-%d %H:%M:%S')
             delivery_type = 'sample_dispatched_from_facility'
             dispatcher = 'rh4'
             if tracking_number && date_dispatched
@@ -260,6 +260,7 @@ class API::V1::OrderController < ApplicationController
               time_of_delivery = time_of_delivery[0..7]
             end
             date_dispatched = "#{date_dispatched} #{time_of_delivery}"
+            date_dispatched ||= Time.current.strftime('%Y-%m-%d %H:%M:%S')
             delivery_type = params[:properties]['delivery_type']
             delivery_location = params[:properties]['delivery_location']
             dispatcher = 'rh4'
@@ -371,7 +372,6 @@ class API::V1::OrderController < ApplicationController
     elsif !params['who_order_test_last_name']
       msg = 'last name for person ordering not provided'
     else
-      order_availability = false
       if params['tracking_number']
         tracking_number = params['tracking_number']
         order_availability = OrderService.check_order(tracking_number)
