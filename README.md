@@ -90,7 +90,7 @@ To start the sidekiq worker:
 bundle exec sidekiq
 ```
 OR
-Copy the nlims-api.service file to /etc/systemd/system/. Note that the service file is configured to run the application on port 3009 and rbenv is used. And the service user is set to emr-user, rails enviroment to development and working directory is set to /var/www/nlims_controller which you can change to your desired location and user and environment(production or development).
+Copy the nlims-api.service file to /etc/systemd/system/. Note that the service file is configured to run the application on port 3009 and rbenv is used(If you are using other environment managers e.g rvm, update accordingly). And the service user is set to emr-user, rails enviroment to development and working directory is set to /var/www/nlims_controller which you can change to your desired location and user and environment(production or development).
 ```bash
 sudo cp nlims-api.service /etc/systemd/system/
 ```
