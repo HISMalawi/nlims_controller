@@ -567,12 +567,14 @@ module OrderService
   def self.dispatch_sample(tracking_number, dispatcher, date_dispatched, dispatcher_type_id, delivery_location = 'pickup')
     return true if check_if_dispatched(tracking_number, dispatcher_type_id)
 
+    tracking_number = tracking_number.encode('UTF-8', 'ISO-8859-1')
     SpecimenDispatch.find_or_create_by(tracking_number:, dispatcher_type_id:)
                     .update(dispatcher:, date_dispatched:, delivery_location:)
     true
   end
 
   def self.check_if_dispatched(tracking_number, dispatcher_type_id)
+    tracking_number = tracking_number.encode('UTF-8', 'ISO-8859-1')
     SpecimenDispatch.find_by(tracking_number:, dispatcher_type_id:).present?
   end
 
