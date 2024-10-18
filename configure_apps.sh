@@ -336,7 +336,7 @@ echo "Running system_config.rb..."
 bundle exec rails r bin/system_config.rb
 }
 
-read -p "Is the setup for local site and not CHSU? (yes/no): " IS_LOCAL_NLIMS
+read -p "Is the setup for local site and not CHSU(Master)? (yes/no): " IS_LOCAL_NLIMS
 if [[ "${IS_LOCAL_NLIMS,,}" == "yes" || "${IS_LOCAL_NLIMS,,}" == "y" ]]; then
  main
 else
