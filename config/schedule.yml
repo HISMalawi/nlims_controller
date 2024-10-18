@@ -1,5 +1,5 @@
 nlims_sync_job:
-  name: "Sync Between NLIMS Moh Every 1 hours"
-  cron: "* */11 * * *"
+  name: "Sync Between NLIMS Every 30 mins"
+  cron: "*/30 * * * *"
   class: "NlimsSyncJob"
   queue: default
