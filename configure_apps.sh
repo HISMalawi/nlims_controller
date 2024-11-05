@@ -250,7 +250,7 @@ Config.find_or_create_by(config_type: 'emr')
             name: 'EMR',
             address: 'http://$EMR_IP',
             port: $EMR_PORT,
-            username: '$$NEW_EMR_LOCAL_NLIMS_USER'
+            username: '$NEW_EMR_LOCAL_NLIMS_USER'
         }
         )
 $([ "$MAHIS_AVAILABLE" = "yes" ] && echo "
