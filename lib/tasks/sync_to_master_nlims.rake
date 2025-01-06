@@ -6,13 +6,13 @@ namespace :master_nlims do
     password = config['password']
     protocol = config['protocol']
     port = config['port']
-    # last_date = Date.today - 1.day
+    last_date = (Date.today - 4.months).to_s
     res = Test.find_by_sql("SELECT specimen.tracking_number as tracking_number, specimen.id as specimen_id,
                       tests.id as test_id,test_type_id as test_type_id, test_types.name as test_name
                       FROM tests INNER JOIN specimen ON specimen.id = tests.specimen_id
                       INNER JOIN test_types ON test_types.id = tests.test_type_id
                       WHERE tests.id NOT IN (SELECT test_id FROM test_results where test_id IS NOT NULL)
-                      AND DATE(specimen.date_created) > '2023-09-31' AND test_types.name LIKE '%Viral Load%'")
+                      AND DATE(specimen.date_created) > '#{last_date}' AND test_types.name LIKE '%Viral Load%'")
     unless res.blank?
       auth = JSON.parse(RestClient.get("#{protocol}:#{port}/api/v1/re_authenticate/#{username}/#{password}"))
       if auth['error'] == false
