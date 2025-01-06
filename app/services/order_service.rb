@@ -253,28 +253,23 @@ module OrderService
 
   def self.get_site_code_number(site_code_alpha)
     site_code_number = ''
-    unless site_code_alpha.blank?
-      if site_code_alpha[0..0] == 'L'
-        res = Speciman.find_by_sql("SELECT sending_facility FROM specimen WHERE tracking_number='#{site_code_alpha}'")
-        unless res.blank?
-          sending_facility = res[0]['sending_facility']
-          res = Site.find_by_sql("SELECT site_code_number FROM sites where name='#{sending_facility}'").first
-          site_code_number = res['site_code_number'] unless res.blank?
-        end
-      else
-        if site_code_alpha[3..3].match?(/[[:digit:]]/)
-          site_code_alpha = site_code_alpha[1..2]
-        elsif site_code_alpha[4..4].match?(/[[:digit:]]/)
-          site_code_alpha = site_code_alpha[1..3]
-        elsif site_code_alpha[5..5].match?(/[[:digit:]]/)
-          site_code_alpha = site_code_alpha[1..4]
-        end
+    return site_code_number if site_code_alpha.blank?
 
-        res = Site.find_by_sql("SELECT site_code_number FROM sites where site_code='#{site_code_alpha}'").first
-        site_code_number = res['site_code_number'] unless res.blank?
-      end
+    if site_code_alpha[0..0].upcase == 'L' || site_code_alpha[0..0] == '0'
+      site_code_number = site_code_number_by_facility(site_code_alpha)
+    else
+      match = site_code_alpha[/^[A-Za-z]+/]
+      code_alpha = match && match.upcase.start_with?('X') ? match[1..-1] : match
+      site_code_number = Site.find_by(site_code: code_alpha)&.site_code_number
+      site_code_number ||= site_code_number_by_facility(site_code_alpha)
+      site_code_number = site_code_number_by_facility(site_code_alpha) if code_alpha == 'KCH'
     end
     site_code_number
+  end
+
+  def self.site_code_number_by_facility(tracking_number)
+    sending_facility = Speciman.find_by(tracking_number:)&.sending_facility
+    Site.find_by(name: sending_facility)&.site_code_number || ''
   end
 
   def self.check_test_name(test_name)
@@ -564,7 +559,8 @@ module OrderService
     end
   end
 
-  def self.dispatch_sample(tracking_number, dispatcher, date_dispatched, dispatcher_type_id, delivery_location = 'pickup')
+  def self.dispatch_sample(tracking_n, dispatcher, date_dispatched, dispatcher_type_id, delivery_location = 'pickup')
+    tracking_number = tracking_n.strip
     return true if check_if_dispatched(tracking_number, dispatcher_type_id)
 
     tracking_number = tracking_number.encode('UTF-8', 'ISO-8859-1')
