@@ -31,3 +31,6 @@ config/master_nlims.yml
 # Ignore db schema
 db/schema.rb
 public/tracker.json
+users_credentials.txt
+bin/system_config.rb
+config/settings.yml

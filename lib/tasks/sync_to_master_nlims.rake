@@ -6,6 +6,7 @@ namespace :master_nlims do
     password = config['password']
     protocol = config['protocol']
     port = config['port']
+    # last_date = Date.today - 1.day
     res = Test.find_by_sql("SELECT specimen.tracking_number as tracking_number, specimen.id as specimen_id,
                       tests.id as test_id,test_type_id as test_type_id, test_types.name as test_name
                       FROM tests INNER JOIN specimen ON specimen.id = tests.specimen_id
@@ -52,7 +53,7 @@ namespace :master_nlims do
 
                   token = emr_auth_status[1]
                   push_result_to_emr(token, tracking_number, re_value['result'], re_value['result_date'],
-                                    test_name)
+                                     test_name)
                   acknwoledge_result_at_emr_level(tracking_number, test_id, re_value['result_date'])
                   puts "Pushed result to emr for tracking number: #{tracking_number}"
                 end
