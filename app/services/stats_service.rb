@@ -12,6 +12,7 @@ module StatsService
             MAX(created_at) date_order_created_in_nlims
         FROM
             specimen
+        WHERE date_created >= '2024-01-01'
         GROUP BY sending_facility
         ORDER BY date_order_created_in_nlims DESC"
       )
@@ -43,6 +44,7 @@ module StatsService
           FROM
             specimen s INNER JOIN tests t ON t.specimen_id = s.id
             INNER JOIN test_results tr ON tr.test_id = t.id AND tr.measure_id = 294
+          WHERE s.date_created >= '2024-01-01'
           GROUP BY s.sending_facility
           ORDER BY max_result_date_nlims DESC"
         )

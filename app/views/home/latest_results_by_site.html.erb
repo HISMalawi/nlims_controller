@@ -1,20 +1,55 @@
 <h1 style="text-align: center;">Latest Results by Site</h1>
 
+<div style="display: flex; justify-content: center; margin-bottom: 20px;">
+  <label for="search-input">Search by Sending Facility:</label>
+  <input type="text" id="search-input" placeholder="Enter sending facility" onkeyup="filterTable()">
+</div>
+
 <div style="display: flex; justify-content: center;">
-  <table style="border: 1px solid #000; width: 80%; text-align: center; border-collapse: collapse;">
-    <tr style="background-color: #f2f2f2;">
-      <th style="padding: 12px; border: 1px solid #000;">Sending Facility</th>
-      <th style="padding: 12px; border: 1px solid #000;">Tracking Number</th>
-      <th style="padding: 12px; border: 1px solid #000;">Max Result Date (EID/VL)</th>
-      <th style="padding: 12px; border: 1px solid #000;">Max Result Date (NLIMS)</th>
-    </tr>
-    <% @latest_results_by_site.each do |result| %>
-      <tr>
-        <td style="padding: 12px; border: 1px solid #000;"><%= result[:sending_facility] %></td>
-        <td style="padding: 12px; border: 1px solid #000;"><%= result[:tracking_number] %></td>
-        <td style="padding: 12px; border: 1px solid #000;"><%= result[:max_results_date_eid_vl] %></td>
-        <td style="padding: 12px; border: 1px solid #000;"><%= result[:max_result_date_nlims] %></td>
+  <table id="results-table" style="border: 1px solid #000; width: 80%; text-align: center; border-collapse: collapse;">
+    <thead>
+      <tr style="background-color: #f2f2f2;">
+        <th style="padding: 12px; border: 1px solid #000;">#</th>
+        <th style="padding: 12px; border: 1px solid #000;">Sending Facility</th>
+        <th style="padding: 12px; border: 1px solid #000;">Tracking Number</th>
+        <th style="padding: 12px; border: 1px solid #000;">Max Result Date (EID/VL)</th>
+        <th style="padding: 12px; border: 1px solid #000;">Max Result Date (NLIMS)</th>
       </tr>
-    <% end %>
+    </thead>
+    <tbody>
+      <% @latest_results_by_site.each_with_index do |result, index| %>
+        <tr>
+          <td style="padding: 12px; border: 1px solid #000;"><%= index + 1 %></td>
+          <td style="padding: 12px; border: 1px solid #000;"><%= result[:sending_facility] %></td>
+          <td style="padding: 12px; border: 1px solid #000;"><%= result[:tracking_number] %></td>
+          <td style="padding: 12px; border: 1px solid #000;"><%= result[:max_results_date_eid_vl] %></td>
+          <td style="padding: 12px; border: 1px solid #000;"><%= result[:max_result_date_nlims] %></td>
+        </tr>
+      <% end %>
+    </tbody>
   </table>
 </div>
+
+<p id="no-results-message" style="text-align: center; display: none;">No results found.</p>
+
+<script>
+  function filterTable() {
+    const input = document.getElementById('search-input').value.toLowerCase();
+    const table = document.getElementById('results-table');
+    const rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+    let hasResults = false;
+
+    for (const row of rows) {
+      const sendingFacility = row.cells[0].innerText.toLowerCase();
+      if (sendingFacility.includes(input)) {
+        row.style.display = '';
+        hasResults = true;
+      } else {
+        row.style.display = 'none';
+      }
+    }
+
+    // Show/hide "No results found" message
+    document.getElementById('no-results-message').style.display = hasResults ? 'none' : 'block';
+  }
+</script>
