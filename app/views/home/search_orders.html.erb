@@ -15,13 +15,15 @@
         <tr style="background-color: #f2f2f2;">
           <th style="padding: 12px; border: 1px solid #000;">Sending Facility</th>
           <th style="padding: 12px; border: 1px solid #000;">Tracking Number</th>
-          <th style="padding: 12px; border: 1px solid #000;">Date Created</th>
+          <th style="padding: 12px; border: 1px solid #000;">Date Created(EMR)</th>
+          <th style="padding: 12px; border: 1px solid #000;">Date Created(NLIMS)</th>
         </tr>
         <% @orders.each do |order| %>
           <tr>
             <td style="padding: 12px; border: 1px solid #000;"><%= order.sending_facility %></td>
             <td style="padding: 12px; border: 1px solid #000;"><%= order.tracking_number %></td>
             <td style="padding: 12px; border: 1px solid #000;"><%= order.date_created %></td>
+            <td style="padding: 12px; border: 1px solid #000;"><%= order.created_at %></td>
           </tr>
         <% end %>
       </table>
