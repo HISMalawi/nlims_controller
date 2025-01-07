@@ -7,10 +7,10 @@
     <div style="display: flex; justify-content: center; margin-bottom: 20px;">
   <nav>
     <ul style="list-style: none; display: flex; gap: 10px;">
-      <li><%= link_to 'Home', root_path, style: "text-decoration: none; color: #{'blue' if request.path != root_path};", class: ('active' if request.path == root_path) %></li>
-      <li><%= link_to 'Search Orders', search_orders_path, style: "text-decoration: none; color: #{'blue' if request.path != search_orders_path};", class: ('active' if request.path == search_orders_path) %></li>
-      <li><%= link_to 'Search Results', search_results_path, style: "text-decoration: none; color: #{'blue' if request.path != search_results_path};", class: ('active' if request.path == search_results_path) %></li>
-      <li><%= link_to 'Latest Results by Site', latest_results_by_site_path, style: "text-decoration: none; color: #{'blue' if request.path != latest_results_by_site_path};", class: ('active' if request.path == latest_results_by_site_path) %></li>
+      <li><%= link_to 'Home', root_path, style: "text-decoration: none; color: #{'blue' if request.path != root_path};", class: ('active' if request.path == root_path) %></li>|
+      <li><%= link_to 'Search Orders', search_orders_path, style: "text-decoration: none; color: #{'blue' if request.path != search_orders_path};", class: ('active' if request.path == search_orders_path) %></li>|
+      <li><%= link_to 'Search Results', search_results_path, style: "text-decoration: none; color: #{'blue' if request.path != search_results_path};", class: ('active' if request.path == search_results_path) %></li>|
+      <li><%= link_to 'Latest Results by Site', latest_results_by_site_path, style: "text-decoration: none; color: #{'blue' if request.path != latest_results_by_site_path};", class: ('active' if request.path == latest_results_by_site_path) %></li>|
       <li><%= link_to 'Latest Orders by Site', latest_orders_by_site_path, style: "text-decoration: none; color: #{'blue' if request.path != latest_orders_by_site_path};", class: ('active' if request.path == latest_orders_by_site_path) %></li>
     </ul>
   </nav>
