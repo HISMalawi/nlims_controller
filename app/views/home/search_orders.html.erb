@@ -1,0 +1,32 @@
+<h1 style="text-align: center;">Search Orders</h1>
+
+<div style="display: flex; justify-content: center; margin-bottom: 20px;">
+  <form action="<%= search_orders_path %>" method="get">
+    <label for="tracking_number">Tracking Number:</label>
+    <input type="text" name="tracking_number" id="tracking_number" value="<%= params[:tracking_number] %>">
+    <button type="submit">Search</button>
+  </form>
+</div>
+
+<% if params[:tracking_number].present? %>
+  <% if @orders.any? %>
+    <div style="display: flex; justify-content: center;">
+      <table style="border: 1px solid #000; width: 80%; text-align: center; border-collapse: collapse;">
+        <tr style="background-color: #f2f2f2;">
+          <th style="padding: 12px; border: 1px solid #000;">Sending Facility</th>
+          <th style="padding: 12px; border: 1px solid #000;">Tracking Number</th>
+          <th style="padding: 12px; border: 1px solid #000;">Date Created</th>
+        </tr>
+        <% @orders.each do |order| %>
+          <tr>
+            <td style="padding: 12px; border: 1px solid #000;"><%= order.sending_facility %></td>
+            <td style="padding: 12px; border: 1px solid #000;"><%= order.tracking_number %></td>
+            <td style="padding: 12px; border: 1px solid #000;"><%= order.date_created %></td>
+          </tr>
+        <% end %>
+      </table>
+    </div>
+  <% else %>
+    <p style="text-align: center;">No orders found.</p>
+  <% end %>
+<% end %>

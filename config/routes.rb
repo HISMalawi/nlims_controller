@@ -7,6 +7,10 @@ Rails.application.routes.draw do
   # For details on the DSL available within this file, see http://guides.rubyonrails.org/routing.html
   mount Sidekiq::Web => '/sidekiq'
   root to: 'home#index'
+  get 'latest_orders_by_site', to: 'home#latest_orders_by_site'
+  get 'latest_results_by_site', to: 'home#latest_results_by_site'
+  get 'search_orders', to: 'home#search_orders'
+  get 'search_results', to: 'home#search_results'
   namespace :api do
     namespace :v1 do
       # order routes

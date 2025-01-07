@@ -1,0 +1,20 @@
+<h1 style="text-align: center;">Latest Results by Site</h1>
+
+<div style="display: flex; justify-content: center;">
+  <table style="border: 1px solid #000; width: 80%; text-align: center; border-collapse: collapse;">
+    <tr style="background-color: #f2f2f2;">
+      <th style="padding: 12px; border: 1px solid #000;">Sending Facility</th>
+      <th style="padding: 12px; border: 1px solid #000;">Tracking Number</th>
+      <th style="padding: 12px; border: 1px solid #000;">Max Result Date (EID/VL)</th>
+      <th style="padding: 12px; border: 1px solid #000;">Max Result Date (NLIMS)</th>
+    </tr>
+    <% @latest_results_by_site.each do |result| %>
+      <tr>
+        <td style="padding: 12px; border: 1px solid #000;"><%= result[:sending_facility] %></td>
+        <td style="padding: 12px; border: 1px solid #000;"><%= result[:tracking_number] %></td>
+        <td style="padding: 12px; border: 1px solid #000;"><%= result[:max_results_date_eid_vl] %></td>
+        <td style="padding: 12px; border: 1px solid #000;"><%= result[:max_result_date_nlims] %></td>
+      </tr>
+    <% end %>
+  </table>
+</div>
