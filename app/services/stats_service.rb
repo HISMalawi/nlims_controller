@@ -70,7 +70,7 @@ module StatsService
           FROM
             specimen s INNER JOIN tests t ON t.specimen_id = s.id
             INNER JOIN test_results tr ON tr.test_id = t.id AND tr.measure_id = 294
-         WHERE s.tracking_number=#{tracking_number}"
+         WHERE s.tracking_number='#{tracking_number}'"
         )
       results.map do |result|
         {
