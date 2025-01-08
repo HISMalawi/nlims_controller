@@ -40,7 +40,7 @@
     let hasResults = false;
 
     for (const row of rows) {
-      const sendingFacility = row.cells[0].innerText.toLowerCase();
+      const sendingFacility = row.cells[1].innerText.toLowerCase();
       if (sendingFacility.includes(input)) {
         row.style.display = '';
         hasResults = true;
