@@ -1,7 +1,8 @@
-require 'test_service'
-require 'user_service'
+# frozen_string_literal: true
 
 class API::V1::TestController < ApplicationController
+  before_action :update_remote_host, only: [:update_test]
+
   def update_test
     update_details = params
     if update_details
@@ -15,45 +16,25 @@ class API::V1::TestController < ApplicationController
             tracking_number: update_details['tracking_number']
           }
         }
-        render plain: response.to_json and return
+        render(plain: response.to_json) && return
       end
       stat = TestService.update_test(params)
-      if stat[0] == true
-        response = {
-          status: 200,
-          error: false,
-          message: 'test updated successfuly',
-          data: {}
-        }
-        if update_details['results']
-          sock_status = socket_status
-          if sock_status
-            socket = SocketIO::Client::Simple.connect @socket_url
-            socket.on :connect do
-              puts 'connect!!!'
-              puts 'Putting result on socket'
-              response = socket.emit :results, {
-                "tracking_number": update_details['tracking_number'],
-                "results": update_details['results'],
-                "test_status": update_details['test_status'],
-                "test_name": update_details['test_name'],
-                "date_updated": update_details['date_updated'],
-                "who_updated": update_details['who_updated']
-              }
-              puts response
-              socket.disconnect
-            end
-          end
-        end
-      else
-        response = {
-          status: 401,
-          error: true,
-          message: stat[1],
-          data: {}
-        }
+      response = if stat[0] == true
+                   {
+                     status: 200,
+                     error: false,
+                     message: 'test updated successfuly',
+                     data: {}
+                   }
+                 else
+                   {
+                     status: 401,
+                     error: true,
+                     message: stat[1],
+                     data: {}
+                   }
 
-      end
+                 end
     else
       response = {
         status: 401,
@@ -62,17 +43,17 @@ class API::V1::TestController < ApplicationController
         data: {}
       }
     end
-    render plain: response.to_json and return
+    render(plain: response.to_json) && return
   end
 
   def test_no_results
     npid = params[:npid]
     res = TestService.test_no_results(npid)
     response = if res[0] == true
-                 {	status: 200,
-                   error: false,
-                   message: 'test retrieved successfuly',
-                   data: res[1] }
+                 {  status: 200,
+                    error: false,
+                    message: 'test retrieved successfuly',
+                    data: res[1] }
                else
                  {
                    status: 401,
@@ -82,7 +63,7 @@ class API::V1::TestController < ApplicationController
                  }
                end
 
-    render plain: response.to_json and return
+    render(plain: response.to_json) && return
   end
 
   def query_test_status
@@ -111,7 +92,7 @@ class API::V1::TestController < ApplicationController
         data: {}
       }
     end
-    render plain: response.to_json and return
+    render(plain: response.to_json) && return
   end
 
   def query_test_measures
@@ -142,7 +123,7 @@ class API::V1::TestController < ApplicationController
       }
 
     end
-    render plain: response.to_json and return
+    render(plain: response.to_json) && return
   end
 
   def retrieve_order_location
@@ -162,7 +143,7 @@ class API::V1::TestController < ApplicationController
                    data: dat
                  }
                end
-    render plain: response.to_json and return
+    render(plain: response.to_json) && return
   end
 
   def retrieve_target_labs
@@ -182,7 +163,7 @@ class API::V1::TestController < ApplicationController
                    data: dat
                  }
                end
-    render plain: response.to_json and return
+    render(plain: response.to_json) && return
   end
 
   def retrieve_test_catelog
@@ -202,7 +183,7 @@ class API::V1::TestController < ApplicationController
                    data: dat
                  }
                end
-    render plain: response.to_json and return
+    render(plain: response.to_json) && return
   end
 
   def add_test
@@ -233,11 +214,11 @@ class API::V1::TestController < ApplicationController
         data: {}
       }
     end
-    render plain: response.to_json and return
+    render(plain: response.to_json) && return
   end
 
   def edit_test_result
-    test_details  = params
+    test_details = params
     if test_details
       stat = TestService.edit_test_result(params)
       response = if stat == true
@@ -264,7 +245,7 @@ class API::V1::TestController < ApplicationController
         data: {}
       }
     end
-    render plain: response.to_json and return
+    render(plain: response.to_json) && return
   end
 
   def acknowledge_test_results_receiptient
@@ -310,14 +291,22 @@ class API::V1::TestController < ApplicationController
         data: {}
       }
     end
-    render plain: response.to_json and return
+    render(plain: response.to_json) && return
   end
 
   private
 
+  def update_remote_host
+    host = TrackingNumberHost.find_by(tracking_number: params[:tracking_number])
+    host&.update(
+      update_host: request.remote_ip,
+      update_app_uuid: User.find_by(token: request.headers['token'])&.app_uuid
+    )
+  end
+
   def socket_status
     begin
-      settings = YAML.load_file("#{Rails.root}/config/results_channel_socket.yml")
+      settings = YAML.load_file("#{Rails.root}/config/results_channel_socket.yml", aliases: true)
       @socket_url = "http://#{settings['host']}:#{settings['port']}"
     rescue StandardError
       @socket_url = 'http://localhost:3011'

@@ -1,2 +1,2 @@
-module ApiControllerHelper
+module APIControllerHelper
 end

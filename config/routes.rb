@@ -1,5 +1,16 @@
+# frozen_string_literal: true
+
+require 'sidekiq/web'
+require 'sidekiq/cron/web'
+
 Rails.application.routes.draw do
   # For details on the DSL available within this file, see http://guides.rubyonrails.org/routing.html
+  mount Sidekiq::Web => '/sidekiq'
+  root to: 'home#index'
+  get 'latest_orders_by_site', to: 'home#latest_orders_by_site'
+  get 'latest_results_by_site', to: 'home#latest_results_by_site'
+  get 'search_orders', to: 'home#search_orders'
+  get 'search_results', to: 'home#search_results'
   namespace :api do
     namespace :v1 do
       # order routes
@@ -34,6 +45,10 @@ Rails.application.routes.draw do
       # other routes
       get '/retrieve_order_location'	=> 'test#retrieve_order_location'
       get '/retrieve_target_labs'	=> 'test#retrieve_target_labs'
+
+      # status of the app
+      get '/ping' => 'status#ping'
+      post '/register_order_source' => 'source_tracker#register_order_source'
     end
 
     namespace :v2 do

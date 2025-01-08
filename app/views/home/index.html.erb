@@ -1,0 +1,40 @@
+<h1 style="text-align: center;"><%= @info %></h1>
+
+<div style="display: flex; justify-content: center;">
+  <table style="border: 1px solid #000; width: 50%; text-align: center; border-collapse: collapse;">
+    <tr style="background-color: #f2f2f2;">
+      <th style="padding: 12px; border: 1px solid #000;">Indicator</th>
+      <th style="padding: 12px; border: 1px solid #000;">Value</th>
+    </tr>
+    <tr>
+      <td style="padding: 12px; border: 1px solid #000;">NLIMS Version(<%= @local_nlims%>)</td>
+      <td style="padding: 12px; border: 1px solid #000;"><%= @git_tag %></td>
+    </tr>
+    <%if @local_nlims == 'Local' %>
+      <tr>
+        <td style="padding: 12px; border: 1px solid #000;">NLIMS CHSU Application Status</td>
+        <td style="padding: 12px; border: 1px solid #000;"><%= @master_status %></td>
+      </tr>
+      <tr>
+        <td style="padding: 12px; border: 1px solid #000;">Ping CHSU Server Status(10.44.0.46)</td>
+        <td style="padding: 12px; border: 1px solid #000;"><%= @pinger %></td>
+      </tr>
+      <tr>
+      <td style="padding: 12px; border: 1px solid #000;">NLIMS CHSU URL</td>
+      <td style="padding: 12px; border: 1px solid #000;"><%= @nlims_chsu_address %></td>
+    </tr>
+      <tr>
+        <td style="padding: 12px; border: 1px solid #000;">NLIMS CHSU Authentication</td>
+        <td style="padding: 12px; border: 1px solid #000;"><%= @master_auth %></td>
+      </tr>
+      <tr>
+        <td style="padding: 12px; border: 1px solid #000;">EMR Authentication</td>
+        <td style="padding: 12px; border: 1px solid #000;"><%= @emr_auth %></td>
+      </tr>
+      <tr>
+        <td style="padding: 12px; border: 1px solid #000;">EMR URL</td>
+        <td style="padding: 12px; border: 1px solid #000;"><%= @emr_address %></td>
+      </tr>
+    <%end%>
+  </table>
+</div>

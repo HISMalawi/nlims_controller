@@ -1,7 +1,0 @@
-protocol: 'http://192.168.100.200'
-port: 3010
-username: facilityname_locallims
-password: facilityname_locallims_password
-default_username: admin
-default_password: knock_knock
-location: "Mzuzu Central Hospital"

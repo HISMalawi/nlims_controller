@@ -30,7 +30,7 @@ name_mappings = {
   'B-HCG' => 'Beta Human Chorionic Gonatropin',
   'Serum calcium' => 'calcium',
   'GeneXpert' => 'TB Tests',
-  'FBS' => 'FBC',
+  'FBS' => 'FBS',
   'Renal Function Tests' => 'Renal Function Test',
   'D/Coombs' => 'Direct Coombs Test',
   'creat' => 'Creatinine',
@@ -60,7 +60,9 @@ name_mappings = {
   'Kamuzu (KCH) Central Hospital' => 'Kamuzu Central Hospital',
   'Gateway' => 'Gateway Clinic (Blantyre)',
   'urine chemistry' => 'Urine Chemistries',
-  'cryptococcal antigen test' => 'Cryptococcus Antigen Test'
+  'cryptococcal antigen test' => 'Cryptococcus Antigen Test',
+  '50:50 Mix F Ix Deficient' => '50:50 Mix F-Ix Deficient',
+  'Urine dipstick' => 'urine chemistries'
 }
 
 name_mappings.each do |manually_created_name, actual_name|

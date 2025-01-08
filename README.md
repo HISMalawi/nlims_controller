@@ -4,13 +4,10 @@
 
 Before installing `NLIMS`, ensure that the following requirements are met:
 
-- Ruby 2.5.3
-- MySQL 5.6
-- Rails 5
-- Couchdb 3.2.1
-
-## Installing CouchDB
-Install by following this guide: [Couchdb installation](https://github.com/HISMalawi/couchdb_installation/tree/main)
+- Ruby 3.2.0
+- MySQL 8
+- Rails 7
+- redis 7+
 
 ## Configuration
 
@@ -28,11 +25,7 @@ Install by following this guide: [Couchdb installation](https://github.com/HISMa
    ```
 
    - `database.yml`: Configure your database settings.
-   - `couchdb.yml`: Configure your CouchDB settings.
-   - `results_channel_socket.yml`: Configure your results channel socket settings.
    - `application.yml`: Edit application-specific configurations as required.
-   - `emr_connection` : Configure connection to emr for updating results and statuses.
-   - `master_nlims.yml`: Configure your CouchDB settings.
 
 3. Update the configuration settings in these files to match your environment.
 
@@ -41,7 +34,7 @@ Install by following this guide: [Couchdb installation](https://github.com/HISMa
 1. Install project dependencies using Bundler. Run the following command in your project directory:
 
    ```bash
-   bundle install
+   bundle install --local
    ```
 ## First-Time Setup
 
@@ -52,15 +45,15 @@ If you are installing the app for the first time, follow these steps:
    ```bash
    rails db:create
    ```
-2. Run database migrations:
+2. Seed the database with initial data:
 
    ```bash
-   rails db:migrate
+   ./bin/initialize_db.sh development
    ```
-3. Seed the database with initial data:
+3. Update metadata:
 
    ```bash
-   rails db:seed
+   ./bin/update_metadata.sh development
    ```
 ## Updating NLIMS
 
@@ -70,12 +63,72 @@ If you already had NLIMS running before and want to update it, follow these step
    ```bash
    git checkout [tag]
    ```
-2. Run update metadata:
-
+2. Run bundle install
+   ```bash
+   rm Gemfile.lock
+   bundle install --local
+   ```
+3. Run update metadata:
    ```bash
    ./bin/update_metadata.sh
    ```
-3. NOTE: Check that the configurations in all ```.yml``` files in the ```config``` folder are ok. This will not be necessary once everything is stable and consolidated.
+
+## Configuring the integration with other systems
+1. Run the following command to configure the integration with other systems and follow the prompts(In production: use the production credentials for master as directed in the setup instruction):
+   ```bash
+      ./configure_apps.sh
+   ```
+2. Get the user credentials created in the user_credentials.txt file following the script run and and use them in subsequent steps
+
+## Running the Application
+To start the application:
+```bash
+rails s -p3000 -b 0.0.0.0
+```
+To start the sidekiq worker:
+```bash
+bundle exec sidekiq
+```
+OR
+Copy the nlims-api.service file to /etc/systemd/system/. Note that the service file is configured to run the application on port 3009 and rbenv is used(If you are using other environment managers e.g rvm, update accordingly). And the service user is set to emr-user, rails enviroment to development and working directory is set to /var/www/nlims_controller which you can change to your desired location and user and environment(production or development).
+```bash
+sudo cp nlims-api.service /etc/systemd/system/
+```
+Then run the following command to start the application:
+```bash
+sudo systemctl start nlims-api
+```
+Enable the service to start on boot:
+```bash
+sudo systemctl enable nlims-api
+```
+Check the status of the service:
+```bash
+sudo systemctl status nlims-api
+```
+
+## Running sidekiq to handle background jobs such as syncing data between the ART application and the central CHSU NLIMS.
+Copy the nlims-sidekiq.service file to /etc/systemd/system/. Note that the service user is set to emr-user, rails enviroment to development and working directory is set to /var/www/nlims_controller which you can change to your desired location and user and environment(production or development).
+```bash
+sudo cp nlims-sidekiq.service /etc/systemd/system/
+```
+Then run the following command to start the service:
+```bash
+sudo systemctl start nlims-sidekiq
+```
+Enable the service to start on boot:
+```bash
+sudo systemctl enable nlims-sidekiq
+```
+Check the status of the service:
+```bash
+sudo systemctl status nlims-sidekiq
+```
+
+NOTE: The above steps for running the application are for the ART server and the CHSU server. For the ART server, the application is run on port 3009 and for the CHSU server, the application is run on port 3010 which is configured in the service file. 
+
+NOTE: The rails environment in which nlims-api is running should be the same envinronment in which the sidekiq worker is running. If development, sidekiq should also be development. If production, sidekiq should also be production. You can change the environments in the services file.
+
 # Local NLIMS at Sites 
 
 ## Overview
@@ -98,55 +151,20 @@ Local NLIMS (National Laboratory Information Management System) is an integral p
 
 ART communicates with the Local NLIMS through its backend, which is the API module. To configure this communication, follow these steps:
 
-1. **Check `application.yml`**: Within the API, locate the `application.yml` file.
+1. **Check `application.yml`**: Within the EMR API, locate the `application.yml` file.
 
 2. **Configuration Settings**:
    - Ensure that `lims_api` is not commented out, as this allows the API to interact with the Local NLIMS.
    - Verify that `lims_port` specifies the correct port number on which the Local NLIMS is running.
-   - Set `lims_default_username` to "admini" for access during account creation.
-   - Set `lims_default_password` to "knock_knock" for access during account creation.
-   - Customize `lims_username` and `lims_password` with your desired credentials for accounts created on the Local NLIMS.
+   - Customize `lims_username` and `lims_password` with the appropriate credentials from the user_credentials.txt file created during the nlims setup.
 
-3. **Create an Account**: To create an account with the Local NLIMS at the facility, run the following command within the BHT-EMR-API application:
-   ```bash
-   rake nlims:create_user
-   ```
-
-4. With these configurations in place, BHT-EMR-API can now interact with the Local NLIMS. Additionally, a job within the EMR-API allows transactions to and from the Local NLIMS. This job should be scheduled in the crontab to execute at specified intervals. The job is found under `bin/lab/sync_worker.rb`.  
+3. With these configurations in place, BHT-EMR-API can now interact with the Local NLIMS. Additionally, a job within the EMR-API allows transactions to and from the Local NLIMS. This job should be scheduled in the crontab to execute at specified intervals. The job is found under `bin/lab/sync_worker.rb`.  
 ```bash
 * * * * * /bin/bash -l -c 'cd /var/www/BHT-EMR-API && bin/rails runner -e development '\''bin/lab/sync_worker.rb'\'''
 ```
+## How IBLIS Communicates with Local NLIMS 
+1. **Check `application.yml`**: Within the MLAB API, locate the `application.yml` file.
 
-## How Local NLIMS Communicates with CHSU NLIMS
-
-Local NLIMS communicates with the CHSU NLIMS and requires an account for proper setup. Follow these steps:
-
-1. **Edit `master_nlims.yml`**:
-   - Set the `protocol` to the IP address of the CHSU NLIMS (e.g., 10.44.0.46).
-   - Set `port` to the port number on which the CHSU NLIMS is running (e.g., 3010).
-   - Ensure that `default_username` and `default_password` are set to "admin" and "knock_knock," respectively, to permit account creation at CHSU NLIMS.
-   - Customize `password` and `username` with your desired credentials for the account created at CHSU NLIMS.
-
-2. **Create an Account with CHSU NLIMS**:
-   Run the following command to create an account with the CHSU NLIMS:
-   ```bash
-   rake master_nlims:create_account
-   ```
-3. **Account Configuration with ART**
-   - Edit the `emr_connection.yml` file to specify the IP address and port number where the ART application (BHT-EMR-API) is running.
-   - Customize `username` and `password` with your desired credentials, which will be used for the account created within the ART application.
-   - Run the following command to create account with emr
-   ```bash
-      rake emr:create_user
-   ```
-4. **Data Retrieval from CHSU NLIMS and Sharing**:
-   Local NLIMS pulls statuses and results from the CHSU NLIMS and shares this data with the ART application. This is accomplished through the `master_nlims:sync_data` job. It can also send these statuses and results to the ART application proactively without waiting for a request. This job ensures that data is sent to the CHSU NLIMS.
-      ```bash
-      0 */2 * * *  /bin/bash -l -c 'cd /var/www/nlims_controller && rvm use 2.5.3 && RAILS_ENV=development bundle exec rake master_nlims:sync_data --silent >> log/pull_from_master_nlims.log 2>&1'
-      ```
-
-4. **Data Synchronization to CHSU NLIMS**:
-   2. To Synchronization data orders between local NLIMS and CHSU NLIMS: Install ```NLIMS DATA SYNCHRONISER``` as guided through the following guide: [NLIMS DATA SYNCRONISER](https://github.com/HISMalawi/nlims_data_syncroniser/tree/master)
-
-
-By following these steps, Local NLIMS establishes effective communication with both the ART application and the CHSU NLIMS, facilitating efficient data exchange within the healthcare system.
+2. **Configuration Settings**:
+- Customize `username` and `password` of the nlims_service block with the appropriate credentials from the user_credentials.txt file created during the nlims setup.
+- Ensure the base_url is pointing to the correct nlims.
