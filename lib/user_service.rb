@@ -25,9 +25,16 @@ module UserService
 
   def self.check_account_creation_request(token)
     tokens = JSON.parse(File.read("#{Rails.root}/tmp/nlims_account_creating_token.json"))
-    return true if tokens['tokens'].include?(token)
-
+    if tokens['tokens'].include?(token)
+      remove_token_for_account_creation(token)
+      return true
+    end
     false
+  end
+
+  def self.remove_token_for_account_creation(token)
+    tokens = JSON.parse(File.read("#{Rails.root}/tmp/nlims_account_creating_token.json"))
+    tokens['tokens'].delete(token)
   end
 
   def self.create_token
