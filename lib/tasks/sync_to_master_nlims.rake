@@ -127,6 +127,7 @@ namespace :master_nlims do
     end
     emr_auth_status = authenticate_with_emr
     status = {
+      local_nlims_data_available_for_syncing: res.present? ? 'Yes' : 'No',
       nlims_authenticate_with_emr: emr_auth_status && emr_auth_status[0] == true ? 'Success' : 'Failed',
       nlims_authenticate_with_nlims_chsu: auth && auth['error'] == 'false' ? 'Success' : 'Failed'
     }
