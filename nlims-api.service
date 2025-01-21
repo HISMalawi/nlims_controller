@@ -1,0 +1,14 @@
+[Unit]
+Description=nlims Puma Server
+After=network.target
+
+[Service]
+Type=simple
+User=emr-user
+WorkingDirectory=/var/www/nlims_controller
+ExecStartPre=/bin/bash -lc 'rm -f tmp/pids/server.pid && (fuser -k 3009/tcp || true)'
+ExecStart=/bin/bash -lc "/home/emr-user/.rbenv/shims/rails s -b 0.0.0.0 -p 3009 -e development"
+Restart=always
+KillMode=process
+[Install]
+WantedBy=multi-user.target
