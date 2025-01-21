@@ -12,7 +12,7 @@ module StatsService
             MAX(created_at) date_order_created_in_nlims
         FROM
             specimen
-        WHERE date_created >= '2024-01-01'
+        WHERE date_created >= ''2024-11-01''
         GROUP BY sending_facility
         ORDER BY date_order_created_in_nlims DESC"
       )
@@ -44,7 +44,7 @@ module StatsService
           FROM
             specimen s INNER JOIN tests t ON t.specimen_id = s.id
             INNER JOIN test_results tr ON tr.test_id = t.id AND tr.measure_id = 294
-          WHERE s.date_created >= '2024-01-01'
+          WHERE s.date_created >= '2024-11-01'
           GROUP BY s.sending_facility
           ORDER BY max_result_date_nlims DESC"
         )
@@ -66,10 +66,12 @@ module StatsService
             s.sending_facility,
             s.tracking_number,
             tr.time_entered max_results_date_eid_vl,
-            tr.created_at max_result_date_nlims
+            tr.created_at max_result_date_nlims,
+            trrt.name
           FROM
             specimen s INNER JOIN tests t ON t.specimen_id = s.id
             INNER JOIN test_results tr ON tr.test_id = t.id AND tr.measure_id = 294
+            LEFT JOIN test_result_recepient_types trrt on trrt.id = t.test_result_receipent_types
          WHERE s.tracking_number='#{tracking_number}'"
         )
       results.map do |result|
@@ -77,7 +79,8 @@ module StatsService
           sending_facility: result.sending_facility,
           tracking_number: result.tracking_number,
           max_results_date_eid_vl: result.max_results_date_eid_vl,
-          max_result_date_nlims: result.max_result_date_nlims
+          max_result_date_nlims: result.max_result_date_nlims,
+          ack_type: result.name
         }
       end
     end

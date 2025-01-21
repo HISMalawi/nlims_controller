@@ -17,6 +17,7 @@
           <th style="padding: 12px; border: 1px solid #000;">Tracking Number</th>
           <th style="padding: 12px; border: 1px solid #000;">Result Date (EID/VL)</th>
           <th style="padding: 12px; border: 1px solid #000;">Result Date (NLIMS)</th>
+          <th style="padding: 12px; border: 1px solid #000;">Acknowledgement</th>
         </tr>
         <% @results.each do |result| %>
           <tr>
@@ -24,6 +25,7 @@
             <td style="padding: 12px; border: 1px solid #000;"><%= result[:tracking_number] %></td>
             <td style="padding: 12px; border: 1px solid #000;"><%= result[:max_results_date_eid_vl] %></td>
             <td style="padding: 12px; border: 1px solid #000;"><%= result[:max_result_date_nlims] %></td>
+            <td style="padding: 12px; border: 1px solid #000;"><%= result[:ack_type] %></td>
           </tr>
         <% end %>
       </table>
