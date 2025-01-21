@@ -1,0 +1,7 @@
+# frozen_string_literal: true
+
+SyncToNlimsService.push_order_to_nlims if Config.local_nlims?
+SyncToNlimsService.push_order_update_to_nlims
+SyncToNlimsService.push_status_to_nlims
+SyncToNlimsService.push_result_to_nlims
+SyncToNlimsService.push_acknwoledgement_to_master_nlims if Config.local_nlims?
