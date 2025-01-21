@@ -4,7 +4,7 @@ module UserService
     app_name = params[:app_name]
     password = params[:password]
     username = params[:username]
-    token = params[:token]
+    params[:token]
     partner = params[:partner]
 
     details = compute_expiry_time
@@ -25,16 +25,22 @@ module UserService
 
   def self.check_account_creation_request(token)
     tokens = JSON.parse(File.read("#{Rails.root}/tmp/nlims_account_creating_token.json"))
-    if tokens['tokens'].include?(token)
-      remove_token_for_account_creation(token)
-      return true
-    end
+    return true if tokens['tokens'].include?(token)
+
     false
   end
 
-  def self.remove_token_for_account_creation(token)
+  def self.remove_tokens_for_account_creation
     tokens = JSON.parse(File.read("#{Rails.root}/tmp/nlims_account_creating_token.json"))
-    tokens['tokens'].delete(token)
+    return unless tokens['tokens'].length > 10
+
+    header = {}
+    File.unlink("#{Rails.root}/tmp/nlims_account_creating_token.json")
+    FileUtils.touch "#{Rails.root}/tmp/nlims_account_creating_token.json"
+    header['tokens'] = ['0']
+    File.open("#{Rails.root}/tmp/nlims_account_creating_token.json", 'w') do |f|
+      f.write(header.to_json)
+    end
   end
 
   def self.create_token
@@ -79,6 +85,7 @@ module UserService
         f.write(header.to_json)
       end
     end
+    remove_tokens_for_account_creation
     tokens = JSON.parse(File.read("#{Rails.root}/tmp/nlims_account_creating_token.json"))
     tokens['tokens'].push(token)
     File.open("#{Rails.root}/tmp/nlims_account_creating_token.json", 'w') do |f|
