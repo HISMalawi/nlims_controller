@@ -21,6 +21,19 @@ module UserService
     false
   end
 
+  def self.remove_tokens_for_account_creation
+    tokens = JSON.parse(File.read("#{Rails.root}/tmp/nlims_account_creating_token.json"))
+    return unless tokens['tokens'].length > 10
+
+    header = {}
+    File.unlink("#{Rails.root}/tmp/nlims_account_creating_token.json")
+    FileUtils.touch "#{Rails.root}/tmp/nlims_account_creating_token.json"
+    header['tokens'] = ['0']
+    File.open("#{Rails.root}/tmp/nlims_account_creating_token.json", 'w') do |f|
+      f.write(header.to_json)
+    end
+  end
+
   def self.create_token
     token_chars = ('a'..'z').to_a + ('A'..'Z').to_a + ('0'..'9').to_a
     token_length = 12
@@ -63,6 +76,7 @@ module UserService
         f.write(header.to_json)
       end
     end
+    remove_tokens_for_account_creation
     tokens = JSON.parse(File.read("#{Rails.root}/tmp/nlims_account_creating_token.json"))
     tokens['tokens'].push(token)
     File.open("#{Rails.root}/tmp/nlims_account_creating_token.json", 'w') do |f|
