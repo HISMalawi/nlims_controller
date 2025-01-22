@@ -37,4 +37,16 @@ class HomeController < ApplicationController
   def search_results
     @results = StatsService.search_results(params[:tracking_number])
   end
+
+  def counts
+    @count_data = StatsService.count_by_sending_facility(params[:from_date], params[:to_date])
+  end
+
+  def sites_by_orders
+    from = params[:from_date]
+    to = params[:to_date]
+    sending_facility = params[:sending_facility]
+    @sites = StatsService.sites
+    @orders_data = StatsService.orders_per_sending_facility(from, to, sending_facility)
+  end
 end

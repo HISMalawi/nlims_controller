@@ -85,5 +85,29 @@ module StatsService
         }
       end
     end
+
+    def count_by_sending_facility(from, to)
+      from ||= Date.today
+      to ||= Date.today
+      {
+        from:,
+        to:,
+        data: Speciman.where("DATE(date_created) BETWEEN '#{from}' AND '#{to}'").group(:sending_facility).count
+      }
+    end
+
+    def orders_per_sending_facility(from, to, sending_facility)
+      from ||= Date.today
+      to ||= Date.today
+      {
+        from:,
+        to:,
+        data: Speciman.where("DATE(date_created) BETWEEN '#{from}' AND '#{to}'").where(sending_facility:).order(date_created: :desc).limit(1000)
+      }
+    end
+
+    def sites
+      Speciman.where("DATE(date_created) > '#{DATE_CREATED}'").order(:sending_facility).distinct.pluck(:sending_facility)
+    end
   end
 end

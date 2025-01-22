@@ -1,0 +1,32 @@
+<h1 style="text-align: center;">Counts by Sending Facility</h1>
+
+<div style="display: flex; justify-content: center; margin-bottom: 20px;">
+  <form action="<%= count_by_sending_facility_path %>" method="get">
+    <label for="from_date">From Date:</label>
+    <input type="date" name="from_date" id="from_date" value="<%= params[:from_date] || Date.today %>">
+
+    <label for="to_date" style="margin-left: 10px;">To Date:</label>
+    <input type="date" name="to_date" id="to_date" value="<%= params[:to_date] || Date.today %>">
+
+    <button type="submit" style="margin-left: 10px;">Search</button>
+  </form>
+</div>
+
+<% if @count_data[:data].any? %>
+  <div style="display: flex; justify-content: center;">
+    <table style="border: 1px solid #000; width: 80%; text-align: center; border-collapse: collapse;">
+      <tr style="background-color: #f2f2f2;">
+        <th style="padding: 12px; border: 1px solid #000;">Sending Facility</th>
+        <th style="padding: 12px; border: 1px solid #000;">Total Count</th>
+      </tr>
+      <% @count_data[:data].each do |facility, count| %>
+        <tr>
+          <td style="padding: 12px; border: 1px solid #000;"><%= facility %></td>
+          <td style="padding: 12px; border: 1px solid #000;"><%= count %></td>
+        </tr>
+      <% end %>
+    </table>
+  </div>
+<% else %>
+  <p style="text-align: center;">No data available for the selected date range.</p>
+<% end %>
