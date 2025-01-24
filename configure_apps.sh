@@ -118,13 +118,13 @@ main() {
     fi
 
     # Ask for passwords for each application
-    read -p "Enter the password for LOCAL NLIMS(Used sending to send local NLIMS action to Master): " LOCAL_NLIMS_PASSWORD
+    read -p "Enter the password for LOCAL NLIMS(Used Local NLIMS sending to send local NLIMS action to Master): " LOCAL_NLIMS_PASSWORD
     echo
     read -p "Enter the DEFAULT PASSWORD for MASTER NLIMS(Used for account creation): " DEFAULT_MASTER_NLIMS_PASSWORD
     echo
     read -p "Enter the password for MASTER NLIMS(Used by Master NLIMS for any other action e.g status update to Local NLIMS): " MASTER_NLIMS_PASSWORD
     echo
-    read -p "Enter the password for EMR(Used to send Local NLIMS actions to EMR): " EMR_PASSWORD
+    read -p "Enter the password for EMR(Used by Local NLIMS to send Local NLIMS actions --Results and Statuses-- to EMR): " EMR_PASSWORD
     echo
     if [[ "${MAHIS_AVAILABLE,,}" == "yes" || "${MAHIS_AVAILABLE,,}" == "y" ]]; then
       read -p "Enter the password for MAHIS: " MAHIS_PASSWORD

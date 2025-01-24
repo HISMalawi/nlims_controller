@@ -15,6 +15,7 @@ class HomeController < ApplicationController
     @nlims_chsu_address = nlims.address
     @emr_auth = emr.token.blank? ? 'Failed' : 'Successful'
     @emr_address = emr.address
+    @sidekiq_service_status = SystemctlService.sidekiq_service_status
   end
 
   def git_tag
