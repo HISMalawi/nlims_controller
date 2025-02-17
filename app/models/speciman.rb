@@ -2,6 +2,8 @@
 
 # Specimen model
 class Speciman < ApplicationRecord
+  belongs_to :specimen_types, class_name: 'SpecimenType', foreign_key: 'specimen_type_id'
+
   after_commit :push_order_to_master_nlims, on: %i[create], if: :local_nlims?
   after_commit :push_order_update_to_master_nlims, on: %i[update], if: :local_nlims?
 
