@@ -23,22 +23,22 @@ module TestCatalogService
       ],
       measures: [
         {
-          name: 'measure',
-          short_name: 'measure',
-          unit: 'measure',
-          measure_type_id: 1,
-          description: 'measure',
-          loinc_code: 'measure',
-          moh_code: 'measure',
-          nlims_code: 'measure',
-          preferred_name: 'measure',
-          scientific_name: 'measure',
-          measure_ranges: [
+          name: 'measure1',
+          short_name: 'measure1',
+          unit: 'measure1',
+          measure_type_id: 5,
+          description: 'measure1',
+          loinc_code: 'measure1',
+          moh_code: 'measure1',
+          nlims_code: 'measure1',
+          preferred_name: 'measure1',
+          scientific_name: 'measure1',
+          measure_ranges_attributes: [
             age_min: 1,
             age_max: 1,
             range_lower: 2,
             range_upper: 2,
-            sex: 'Male' || 'Female' || 'Both',
+            sex: 'Male',
             value: 'measure',
             interpretation: 'measure'
           ]
@@ -55,6 +55,15 @@ module TestCatalogService
     end
 
     def self.create_test_indicator(params)
-      Measure.create!(params['measures'])
+      Measure.create!(params[:measures])
+      # params[:measures]
+      # params[:measures][:measure_ranges].each do |_measure_range|
+      #   params[:measure_ranges][:measures_id] = measure.id
+      #   MeasureRange.find_or_create!(params[:measure_ranges])
+      # end
+    end
+
+    def self.create_organism(params)
+      Organism.create!(params[:organisms])
     end
 end

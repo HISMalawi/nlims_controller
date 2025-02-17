@@ -2,5 +2,5 @@
 
 # MeasureRange model
 class MeasureRange < ApplicationRecord
-  belongs_to :measure, class_name: 'Measure', foreign_key: 'measure_id'
+  belongs_to :measure, class_name: 'Measure', foreign_key: 'measures_id', inverse_of: :measure_ranges
 end

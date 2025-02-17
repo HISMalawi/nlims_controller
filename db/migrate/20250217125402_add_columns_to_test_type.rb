@@ -4,6 +4,7 @@
 class AddColumnsToTestType < ActiveRecord::Migration[7.1]
   def change
     add_column :test_types, :can_be_done_on_sex, :string
+    add_column :measures, :short_name, :string
     rename_column :measure_ranges, :alphanumeric, :value
     rename_column :measure_ranges, :gender, :sex
   end
