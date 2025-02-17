@@ -49,6 +49,9 @@ Rails.application.routes.draw do
       # status of the app
       get '/ping' => 'status#ping'
       post '/register_order_source' => 'source_tracker#register_order_source'
+
+      # Test Types
+      get '/test_types' => 'test_type#index'
     end
 
     namespace :v2 do
