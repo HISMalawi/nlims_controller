@@ -14,56 +14,120 @@ module TestCatalogService
         targetTAT: 'test_type hrs',
         preferred_name: 'test_type',
         scientific_name: 'test_type',
-        can_be_done_on_sex: 'Female' || 'Male' || 'Both',
+        can_be_done_on_sex: 'Female',
         test_category_id: 1
       },
-      specimen_types: [
-        { id: 1, name: 'specimen_Type' },
-        { id: 2, name: 'specimen_type' }
-      ],
+      specimen_types: [1, 2],
       measures: [
         {
-          name: 'measure1',
-          short_name: 'measure1',
-          unit: 'measure1',
+          name: 'measure122333',
+          short_name: 'measure122333',
+          unit: 'measure122333',
           measure_type_id: 5,
-          description: 'measure1',
-          loinc_code: 'measure1',
-          moh_code: 'measure1',
-          nlims_code: 'measure1',
-          preferred_name: 'measure1',
-          scientific_name: 'measure1',
+          description: 'measure122333',
+          loinc_code: 'measure122333',
+          moh_code: 'measure122333',
+          nlims_code: 'measure122333',
+          preferred_name: 'measure122333',
+          scientific_name: 'measure122333',
           measure_ranges_attributes: [
-            age_min: 1,
-            age_max: 1,
-            range_lower: 2,
-            range_upper: 2,
-            sex: 'Male',
-            value: 'measure',
-            interpretation: 'measure'
+            {
+              age_min: 1,
+              age_max: 1,
+              range_lower: 2,
+              range_upper: 2,
+              sex: 'Male',
+              value: 'measure',
+              interpretation: 'measure'
+            },
+            {
+              age_min: 1,
+              age_max: 1,
+              range_lower: 2,
+              range_upper: 2,
+              sex: 'Male',
+              value: 'measure',
+              interpretation: 'measure'
+            }
+          ]
+        },
+        {
+          name: 'measure122344',
+          short_name: 'measure122344',
+          unit: 'measure122344',
+          measure_type_id: 5,
+          description: 'measure122344',
+          loinc_code: 'measure122344',
+          moh_code: 'measure122344',
+          nlims_code: 'measure122344',
+          preferred_name: 'measure122344',
+          scientific_name: 'measure122344',
+          measure_ranges_attributes: [
+            {
+              age_min: 1,
+              age_max: 1,
+              range_lower: 2,
+              range_upper: 2,
+              sex: 'Male',
+              value: 'measure',
+              interpretation: 'measure'
+            },
+            {
+              age_min: 1,
+              age_max: 1,
+              range_lower: 2,
+              range_upper: 2,
+              sex: 'Male',
+              value: 'measure',
+              interpretation: 'measure'
+            }
           ]
         }
       ],
-      organisms: [
-        { id: 1, name: 'organism' }, { id: 2, name: 'organism' }
-      ]
+      organisms: [1, 3]
     }
   end
 
-    def self.create_test_type(params)
-      TestType.create!(params['test_type'])
+  # rubocop:disable Metrics/MethodLength
+  # rubocop:disable Metrics/AbcSize
+  def self.create_test_type(params)
+    ActiveRecord::Base.transaction do
+      @test_type = TestType.create!(params[:test_type])
+      params[:specimen_types].each do |specimen_type_id|
+        TesttypeSpecimentype.create!(specimen_type_id:, test_type_id: @test_type.id)
+      end
+      measures = create_test_indicator(params)
+      measures.each do |measure|
+        TesttypeMeasure.create!(measure_id: measure.id, test_type_id: @test_type.id)
+      end
+      params[:organisms].each do |organism_id|
+        TesttypeOrganism.create!(organism_id:, test_type_id: @test_type.id)
+      end
     end
+    @test_type
+  end
+  # rubocop:enable Metrics/AbcSize
+  # rubocop:enable Metrics/MethodLength
 
-    def self.create_test_indicator(params)
-      Measure.create!(params[:measures])
-      # params[:measures]
-      # params[:measures][:measure_ranges].each do |_measure_range|
-      #   params[:measure_ranges][:measures_id] = measure.id
-      #   MeasureRange.find_or_create!(params[:measure_ranges])
-      # end
-    end
+  def self.create_test_indicator(params)
+    Measure.create!(params[:measures])
+  end
 
-    def self.create_organism(params)
-      Organism.create!(params[:organisms])
-    end
+  def self.create_organism(params)
+    Organism.create!(params[:organisms])
+  end
+
+  def self.create_specimen_type(params)
+    SpecimenType.create!(params[:specimen_types])
+  end
+
+  def self.create_drug(params)
+    Drug.create!(params[:drugs])
+  end
+
+  # def self.update_test_type(params)
+  #   @test_type = TestType.find(params[:id])
+  #   @test_type.update!(params[:test_type])
+
+  # end
 end
