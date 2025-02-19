@@ -51,7 +51,7 @@ Rails.application.routes.draw do
       post '/register_order_source' => 'source_tracker#register_order_source'
 
       # Test Types
-      get '/test_types' => 'test_type#index'
+      resources :test_types
     end
 
     namespace :v2 do

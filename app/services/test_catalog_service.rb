@@ -125,9 +125,11 @@ module TestCatalogService
     Drug.create!(params[:drugs])
   end
 
-  # def self.update_test_type(params)
-  #   @test_type = TestType.find(params[:id])
-  #   @test_type.update!(params[:test_type])
-
-  # end
+  def self.get_test_types(params)
+    if params[:search]
+      TestType.where("name LIKE '%#{params[:search]}%'")
+    else
+      TestType.all
+    end
+  end
 end
