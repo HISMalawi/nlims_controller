@@ -5,7 +5,7 @@ module API
     # OrganismsController class for V1
     class OrganismsController < ApplicationController
       before_action :set_organism, only: %i[show edit update destroy]
-      skip_before_action :authenticate_request # , only: %i[index show]
+      skip_before_action :authenticate_request, only: %i[index show]
 
       # GET /organisms
       def index
