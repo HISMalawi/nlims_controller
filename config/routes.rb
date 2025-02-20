@@ -52,6 +52,7 @@ Rails.application.routes.draw do
 
       # Test Types
       resources :test_types
+      resources :drugs
     end
 
     namespace :v2 do
