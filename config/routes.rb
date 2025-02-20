@@ -50,10 +50,10 @@ Rails.application.routes.draw do
       get '/ping' => 'status#ping'
       post '/register_order_source' => 'source_tracker#register_order_source'
 
-      # Test Types
       resources :test_types
       resources :drugs
       resources :organisms
+      resources :test_statuses
     end
 
     namespace :v2 do
