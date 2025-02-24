@@ -42,9 +42,4 @@ class TestType < ApplicationRecord
             super()
         end
     end
-
-    # def organisms
-    #   testtype_organisms = TesttypeOrganism.where(test_type_id: id).map(&:organism_id)
-    #   Organism.where(id: testtype_organisms)
-    # end
 end
