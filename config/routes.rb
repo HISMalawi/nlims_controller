@@ -60,6 +60,7 @@ Rails.application.routes.draw do
       resources :organisms
       resources :test_statuses
       resources :departments
+      resources :specimen_types
     end
 
     namespace :v2 do
