@@ -18,7 +18,7 @@ module Codeable
   def set_nlims_code
     return if nlims_code.present?
 
-    prefix = self.class.const_defined?(:NLIMS_CODE_PREFIX) ? self.class::NLIMS_CODE_PREFIX : 'UNKNOWN'
-    update_column(:nlims_code, "#{prefix}#{id}MW")
+    prefix = self.class.const_defined?(:NLIMS_CODE_PREFIX) ? "NLIMS_#{self.class::NLIMS_CODE_PREFIX}_" : 'UNKNOWN_'
+    update_column(:nlims_code, "#{prefix}#{id.to_s.rjust(4, '0')}_MWI")
   end
 end
