@@ -38,6 +38,15 @@ module API
         render json: @measures
       end
 
+      def measure_types
+        @measure_types = if params[:search].present?
+                           MeasureType.where('name LIKE ?', "%#{params[:search]}%")
+                         else
+                           MeasureType.all
+                         end
+        render json: @measure_types
+      end
+
       def destroy
         @test_type.destroy
         render json: { message: 'Test type deleted successfully' }, status: :ok

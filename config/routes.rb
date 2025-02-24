@@ -53,6 +53,7 @@ Rails.application.routes.draw do
       resources :test_types, only: %i[index create show update destroy] do
         collection do
           get '/measures' => 'test_types#measures'
+          get '/measure_types' => 'test_types#measure_types'
         end
       end
       resources :drugs
