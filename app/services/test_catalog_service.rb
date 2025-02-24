@@ -88,26 +88,21 @@ module TestCatalogService
     }
   end
 
-  # rubocop:disable Metrics/MethodLength
-  # rubocop:disable Metrics/AbcSize
   def self.create_test_type(params)
     ActiveRecord::Base.transaction do
       @test_type = TestType.create!(params[:test_type])
-      params[:specimen_types].each do |specimen_type_id|
-        TesttypeSpecimentype.create!(specimen_type_id:, test_type_id: @test_type.id)
-      end
-      measures = create_test_indicator(params)
-      measures.each do |measure|
-        TesttypeMeasure.create!(measure_id: measure.id, test_type_id: @test_type.id)
-      end
-      params[:organisms].each do |organism_id|
-        TesttypeOrganism.create!(organism_id:, test_type_id: @test_type.id)
-      end
+      @test_type.specimen_types = SpecimenType.where(id: params[:specimen_types])
+      @test_type.measures = update_test_measures(params)
+      @test_type.organisms = Organism.where(id: params[:organisms])
+      # measures.each do |measure|
+      #   TesttypeMeasure.create!(measure_id: measure.id, test_type_id: @test_type.id)
+      # end
+      # params[:organisms].each do |organism_id|
+      #   TesttypeOrganism.create!(organism_id:, test_type_id: @test_type.id)
+      # end
     end
     @test_type
   end
-  # rubocop:enable Metrics/AbcSize
-  # rubocop:enable Metrics/MethodLength
 
   def self.create_test_indicator(params)
     Measure.create!(params[:measures])
@@ -131,5 +126,48 @@ module TestCatalogService
     else
       TestType.all
     end
+  end
+
+  def self.update_test_type(test_type, params)
+    ActiveRecord::Base.transaction do
+      @test_type = test_type
+      @test_type.update!(params[:test_type])
+      @test_type.specimen_types = SpecimenType.where(id: params[:specimen_types])
+      @test_type.measures = update_test_measures(params)
+      @test_type.organisms = Organism.where(id: params[:organisms])
+    end
+    @test_type
+  end
+
+  # rubo
+  def self.update_test_measures(params)
+    measure_params = params[:measures] || []
+    measure_ids = measure_params.map { |m| m[:id] }.compact
+    existing_measures = Measure.where(id: measure_ids).index_by(&:id)
+    measures = []
+    measure_params.map do |measure_data|
+      measure = existing_measures[measure_data[:id]]
+      update_measure_ranges(measure, measure_data[:measure_ranges_attributes])
+    end
+    measure_params.map do |measure_data|
+      measure_record = if measure_data[:id].present?
+                          measure = existing_measures[measure_data[:id]]
+                          measure.update!(measure_data.except(:measure_ranges_attributes))
+                          measure.measure_ranges.create!(measure_data[:measure_ranges_attributes])
+                          measure
+                       else
+                          Measure.create!(measure_data)
+                       end
+      measures << measure_record&.id
+    end
+    Measure.where(id: measures)
+  end
+
+  def self.update_measure_ranges(measure, measure_ranges_params)
+    measure_ranges_ids = measure_ranges_params.map { |m| m[:id] }.compact
+    MeasureRange.where.not(
+      id: measure_ranges_ids,
+      measures_id: measure.id
+    ).destroy_all
   end
 end
