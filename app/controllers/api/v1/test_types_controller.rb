@@ -5,9 +5,14 @@ module API
     class TestTypesController < ApplicationController
       skip_before_action :authenticate_request
       before_action :set_test_type, only: %i[show update destroy]
+
       def index
-        test_types = TestType.all
-        render json: test_types
+        @test_types = if params[:search].present?
+                        TestType.where('name LIKE ?', "%#{params[:search]}%")
+                      else
+                        TestType.all
+                      end
+        render json: @test_types
       end
 
       def show
@@ -22,6 +27,15 @@ module API
       def update
         TestCatalogService.update_test_type(@test_type, test_type_params)
         render json: @test_type.as_json(context: :single_item), status: :ok
+      end
+
+      def measures
+        @measures = if params[:search].present?
+                      Measure.where('name LIKE ?', "%#{params[:search]}%")
+                    else
+                      Measure.all
+                    end
+        render json: @measures
       end
 
       def destroy

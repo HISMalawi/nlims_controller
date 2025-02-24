@@ -50,7 +50,11 @@ Rails.application.routes.draw do
       get '/ping' => 'status#ping'
       post '/register_order_source' => 'source_tracker#register_order_source'
 
-      resources :test_types
+      resources :test_types, only: %i[index create show update destroy] do
+        collection do
+          get '/measures' => 'test_types#measures'
+        end
+      end
       resources :drugs
       resources :organisms
       resources :test_statuses
