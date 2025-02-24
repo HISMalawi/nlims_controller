@@ -54,6 +54,7 @@ Rails.application.routes.draw do
       resources :drugs
       resources :organisms
       resources :test_statuses
+      resources :departments
     end
 
     namespace :v2 do
