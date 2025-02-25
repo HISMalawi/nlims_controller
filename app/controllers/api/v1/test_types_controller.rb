@@ -59,6 +59,7 @@ module API
           test_type: %i[
             name short_name description loinc_code moh_code nlims_code
             targetTAT preferred_name scientific_name can_be_done_on_sex test_category_id
+            assay_format equipment_required hr_cadre_required
           ],
           specimen_types: [],
           measures: [
@@ -68,7 +69,8 @@ module API
               id age_min age_max range_lower range_upper sex value interpretation
             ] }
           ],
-          organisms: []
+          organisms: [],
+          lab_test_sites: []
         )
       end
 

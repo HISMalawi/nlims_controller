@@ -18,6 +18,7 @@ module TestCatalogService
         test_category_id: 1
       },
       specimen_types: [1, 2],
+      lab_test_sites: [1, 2],
       measures: [
         {
           name: 'measure122333',
@@ -94,12 +95,7 @@ module TestCatalogService
       @test_type.specimen_types = SpecimenType.where(id: params[:specimen_types])
       @test_type.measures = update_test_measures(params)
       @test_type.organisms = Organism.where(id: params[:organisms])
-      # measures.each do |measure|
-      #   TesttypeMeasure.create!(measure_id: measure.id, test_type_id: @test_type.id)
-      # end
-      # params[:organisms].each do |organism_id|
-      #   TesttypeOrganism.create!(organism_id:, test_type_id: @test_type.id)
-      # end
+      @test_type.lab_test_sites = LabTestSite.where(id: params[:lab_test_sites])
     end
     @test_type
   end
@@ -135,6 +131,7 @@ module TestCatalogService
       @test_type.specimen_types = SpecimenType.where(id: params[:specimen_types])
       @test_type.measures = update_test_measures(params)
       @test_type.organisms = Organism.where(id: params[:organisms])
+      @test_type.lab_test_sites = LabTestSite.where(id: params[:lab_test_sites])
     end
     @test_type
   end

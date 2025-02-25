@@ -9,8 +9,10 @@ class TestType < ApplicationRecord
     has_many :specimen_types, through: :testtype_specimentypes
     has_many :testtype_measures, class_name: 'TesttypeMeasure'
     has_many :measures, through: :testtype_measures
-     has_many :testtype_organisms, class_name: 'TesttypeOrganism'
+    has_many :testtype_organisms, class_name: 'TesttypeOrganism'
     has_many :organisms, through: :testtype_organisms
+    has_many :test_type_lab_test_sites, class_name: 'TestTypeLabTestSite'
+    has_many :lab_test_sites, through: :test_type_lab_test_sites
 
     NLIMS_CODE_PREFIX = 'TT'
 
@@ -35,7 +37,8 @@ class TestType < ApplicationRecord
                     include: {
                         drugs: {}
                     }
-                  }
+                  },
+                  lab_test_sites: {}
                 }
               ))
         else
