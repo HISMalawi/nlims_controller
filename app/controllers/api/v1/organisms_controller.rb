@@ -24,7 +24,7 @@ module API
 
       # POST /organisms
       def create
-        @organism = Organism.new(organism_params.except(:drug_ids))
+        @organism = Organism.new(organism_params.except(:drugs))
         if @organism.save
           update_organism_drugs
           render json: @organism, status: :created
@@ -35,7 +35,7 @@ module API
 
       # PATCH/PUT /organisms/:id
       def update
-        if @organism.update(organism_params.except(:drug_ids))
+        if @organism.update(organism_params.except(:drugs))
           update_organism_drugs
           render json: @organism
         else
@@ -59,13 +59,13 @@ module API
 
       def organism_params
         params.require(:organism).permit(:name, :description, :short_name, :moh_code, :nlims_code, :loinc_code,
-                                         :preferred_name, :scientific_name, drug_ids: [])
+                                         :preferred_name, :scientific_name, drugs: [])
       end
 
       def update_organism_drugs
-        return unless params[:organism][:drug_ids].present?
+        return unless params[:organism][:drugs].present?
 
-        @organism.drugs = Drug.where(id: params[:organism][:drug_ids])
+        @organism.drugs = Drug.where(id: params[:organism][:drugs])
       end
     end
   end
