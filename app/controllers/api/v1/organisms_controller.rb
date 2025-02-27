@@ -63,9 +63,9 @@ module API
       end
 
       def update_organism_drugs
-        return unless params[:organism][:drugs].present?
+        return unless params[:drugs].present?
 
-        @organism.drugs = Drug.where(id: params[:organism][:drugs])
+        @organism.drugs = Drug.where(id: params[:drugs])
       end
     end
   end
