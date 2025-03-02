@@ -38,7 +38,7 @@ module API
 
       def specimen_type_params
         params.require(:specimen_type).permit(:name, :moh_code, :nlims_code, :loinc_code,
-                                              :preferred_name, :scientific_name, :description)
+                                              :preferred_name, :scientific_name, :description, :iblis_mapping_name)
       end
 
       def set_specimen_type
