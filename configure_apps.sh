@@ -336,9 +336,11 @@ echo "Running system_config.rb..."
 bundle exec rails r bin/system_config.rb
 }
 
-read -p "Is the setup for local site and not CHSU(Master)? (yes/no): " IS_LOCAL_NLIMS
-if [[ "${IS_LOCAL_NLIMS,,}" == "yes" || "${IS_LOCAL_NLIMS,,}" == "y" ]]; then
- main
+LOCAL_IP="10.44.0.46"
+CURRENT_IP=$(hostname -I | awk '{print $1}')
+
+if [[ "$CURRENT_IP" == "$LOCAL_IP" ]]; then
+    master_setup
 else
- master_setup
+    main
 fi
