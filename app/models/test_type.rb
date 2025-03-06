@@ -22,7 +22,7 @@ class TestType < ApplicationRecord
 
     def as_json(options = {})
         if options[:context] == :single_item
-            super(options.merge(
+          json_data = super(options.merge(
                 except: %i[test_category_id],
                 include: {
                   test_category: {},
@@ -41,6 +41,11 @@ class TestType < ApplicationRecord
                   lab_test_sites: {}
                 }
               ))
+          json_data['measures'] = json_data['measures'].map do |measure|
+            measure['measure_ranges_attributes'] = measure.delete('measure_ranges') if measure['measure_ranges']
+            measure
+          end
+          json_data
         else
             super()
         end
