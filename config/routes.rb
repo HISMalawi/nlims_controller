@@ -61,6 +61,7 @@ Rails.application.routes.draw do
       resources :test_statuses
       resources :departments
       resources :specimen_types
+      resources :lab_test_sites
     end
 
     namespace :v2 do
