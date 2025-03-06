@@ -144,7 +144,7 @@ module TestCatalogService
     measures = []
     measure_params.map do |measure_data|
       measure = existing_measures[measure_data[:id]]
-      update_measure_ranges(measure, measure_data[:measure_ranges_attributes])
+      update_measure_ranges(measure, measure_data[:measure_ranges_attributes]) if measure.present?
     end
     measure_params.map do |measure_data|
       measure_record = if measure_data[:id].present?
