@@ -337,25 +337,20 @@ module  OrderService
                   return false
             end
       end
-  
-      def self.get_site_code_number(site_code_alpha)
-              site_code_number = ''
-             return site_code_number if site_code_alpha.blank?
-             if site_code_alpha[0..0].upcase == 'L' || site_code_alpha[0..0] == '0'
-                      site_code_number = site_code_number_by_facility(site_code_alpha)
-             else
-                        match = site_code_alpha[/^[A-Za-z]+/]
-                        code_alpha = match && match.upcase.start_with?('X') ? match[1..-1] : match
-                        site_code_number = Site.find_by(site_code: code_alpha)&.site_code_number
-			site_code_number ||= site_code_number_by_facility(site_code_alpha)
-                        site_code_number = site_code_number_by_facility(site_code_alpha) if code_alpha == 'KCH'
-            end 
-            site_code_number
-        end
 
-        def self.site_code_number_by_facility(tracking_number)
-                sending_facility = Speciman.find_by(tracking_number: tracking_number)&.sending_facility
-                Site.find_by(name: sending_facility)&.site_code_number || ''
+        def self.get_site_code_number(site_code_alpha)
+            site_code_number = ''
+            return site_code_number if site_code_alpha.blank?
+
+            if site_code_alpha[0..0] == 'L' || site_code_alpha[0..0] == '0'
+                sending_facility = Speciman.find_by(tracking_number: site_code_alpha)&.sending_facility
+                site_code_number = Site.find_by(name: sending_facility)&.site_code_number || ''
+            else
+                match = site_code_alpha[/^[A-Za-z]+/]
+                site_code_alpha = match && match.upcase.start_with?('X') ? match[1..-1] : match
+                site_code_number = Site.find_by(site_code: site_code_alpha)&.site_code_number || ''
+            end
+          site_code_number
         end
 
         def self.retrieve_samples(date,date_from,region)
@@ -407,8 +402,6 @@ module  OrderService
         		end
                         #dob = Time.new.strftime("%Y-%m-%d")  if res.dob == 'NULL'
 			next if tracking_number[0..4] == "XCHSU"
-			#next if site_code_number.blank?
-
 			dob = res.dob
 			dob = Time.new.strftime("%Y-%m-%d")  if dob.nil?
 			data[counter] =  {   sample_type: res.sample_type,
@@ -441,7 +434,7 @@ module  OrderService
                         counter = counter + 1
                   end
                   counter = 0
-		  puts orders.length	
+			
                   return data
             else
                   return false

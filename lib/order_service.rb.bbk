@@ -337,26 +337,43 @@ module  OrderService
                   return false
             end
       end
-  
-      def self.get_site_code_number(site_code_alpha)
-              site_code_number = ''
-             return site_code_number if site_code_alpha.blank?
-             if site_code_alpha[0..0].upcase == 'L' || site_code_alpha[0..0] == '0'
-                      site_code_number = site_code_number_by_facility(site_code_alpha)
-             else
-                        match = site_code_alpha[/^[A-Za-z]+/]
-                        code_alpha = match && match.upcase.start_with?('X') ? match[1..-1] : match
-                        site_code_number = Site.find_by(site_code: code_alpha)&.site_code_number
-			site_code_number ||= site_code_number_by_facility(site_code_alpha)
-                        site_code_number = site_code_number_by_facility(site_code_alpha) if code_alpha == 'KCH'
-            end 
-            site_code_number
-        end
 
-        def self.site_code_number_by_facility(tracking_number)
-                sending_facility = Speciman.find_by(tracking_number: tracking_number)&.sending_facility
-                Site.find_by(name: sending_facility)&.site_code_number || ''
-        end
+      def self.get_site_code_number(site_code_alpha)
+            site_code_number = ""
+      	
+	    if site_code_alpha[0..0] == "L"
+                  res = Speciman.find_by_sql("SELECT sending_facility FROM specimen WHERE tracking_number='#{site_code_alpha}'")
+                  if !res.blank?
+                        sending_facility = res[0]['sending_facility']
+                        res = Site.find_by_sql("SELECT site_code_number FROM sites where name='#{sending_facility}'").first
+                        if !res.blank?
+                        site_code_number = res['site_code_number']
+                        end
+                  end
+            else
+	
+
+	        if site_code_alpha[3..3].match?(/[[:digit:]]/)
+                	  site_code_alpha = site_code_alpha[1..2]
+            	else
+                  	if site_code_alpha[4..4].match?(/[[:digit:]]/)
+                        	site_code_alpha = site_code_alpha[1..3]
+                  	else
+                          	if site_code_alpha[5..5].match?(/[[:digit:]]/)
+                              		site_code_alpha = site_code_alpha[1..4]
+                        	end
+                        end
+            	end
+
+            	res = Site.find_by_sql("SELECT site_code_number FROM sites where site_code='#{site_code_alpha}'").first
+            	if !res.blank?
+                	site_code_number = res['site_code_number']
+            	end
+	    end
+
+            return site_code_number
+
+      end
 
         def self.retrieve_samples(date,date_from,region)
             orders = Speciman.find_by_sql("SELECT specimen_types.name AS sample_type, specimen_statuses.name AS specimen_status,
@@ -400,15 +417,10 @@ module  OrderService
                         end
 			patient_name = res.pat_name.gsub("'"," ")
 			drawer_name = res.drawer_name.gsub("'"," ")
-			arv_number = res.arv_number
-			if arv_number.present?
-          			arv_number = arv_number.split('-')
-          			arv_number = arv_number[arv_number.length - 1]
-        		end
+                        arv_number = res.arv_number.split("-")
+                        arv_number = arv_number[arv_number.length - 1]
                         #dob = Time.new.strftime("%Y-%m-%d")  if res.dob == 'NULL'
 			next if tracking_number[0..4] == "XCHSU"
-			#next if site_code_number.blank?
-
 			dob = res.dob
 			dob = Time.new.strftime("%Y-%m-%d")  if dob.nil?
 			data[counter] =  {   sample_type: res.sample_type,
@@ -441,7 +453,7 @@ module  OrderService
                         counter = counter + 1
                   end
                   counter = 0
-		  puts orders.length	
+			
                   return data
             else
                   return false

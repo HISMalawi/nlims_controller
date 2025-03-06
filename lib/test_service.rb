@@ -150,7 +150,38 @@ module TestService
                                                         #                )
 
 							#end	
-							if tst_update.test_status_id == 9 && test_status.id == 2
+							 if tst_update.test_status_id == 9 && test_status.id == 5
+                                                                   tst_update.test_status_id = test_status.id
+                                                                        tst_update.save
+
+                                                                        TestStatusTrail.create(
+                                                                                test_id: test_id,
+                                                                                time_updated: params[:time_updated],
+                                                                                test_status_id: test_status.id,
+                                                                               who_updated_id: params[:who_updated]['id_number'].to_s,
+                                                                                who_updated_name: params[:who_updated]['first_name'].to_s + " " + params[:who_updated]['last_name'].to_s,
+                                                                               who_updated_phone_number: ''
+
+                                                                        )
+
+                                                        end     
+
+                                                                  if tst_update.test_status_id == 9 && test_status.id == 4
+                                                                   tst_update.test_status_id = test_status.id
+                                                                        tst_update.save 
+
+                                                                        TestStatusTrail.create(
+                                                                                test_id: test_id,
+                                                                                time_updated: params[:time_updated],
+                                                                                test_status_id: test_status.id,
+                                                                               who_updated_id: params[:who_updated]['id_number'].to_s,
+                                                                                who_updated_name: params[:who_updated]['first_name'].to_s + " " + params[:who_updated]['last_name'].to_s,
+                                                                               who_updated_phone_number: ''
+
+                                                                        )
+
+                                                        end
+								if tst_update.test_status_id == 9 && test_status.id == 2
 									tst_update.test_status_id = test_status.id
 									tst_update.save
 
@@ -247,6 +278,37 @@ module TestService
 						tst_update = Test.find_by(:id => test_id)
 						
 							couch_id_updater = tst_update.test_status_id
+							 if tst_update.test_status_id == 9 && test_status.id == 5
+                                                                   tst_update.test_status_id = test_status.id
+                                                                        tst_update.save
+
+                                                                        TestStatusTrail.create(
+                                                                                test_id: test_id,
+                                                                                time_updated: params[:time_updated],
+                                                                                test_status_id: test_status.id,
+                                                                               who_updated_id: params[:who_updated]['id_number'].to_s,
+                                                                                who_updated_name: params[:who_updated]['first_name'].to_s + " " + params[:who_updated]['last_name'].to_s,
+                                                                               who_updated_phone_number: ''
+
+                                                                        )
+
+                                                        end     
+
+                                                                  if tst_update.test_status_id == 9 && test_status.id == 4
+                                                                   tst_update.test_status_id = test_status.id
+                                                                        tst_update.save 
+
+                                                                        TestStatusTrail.create(
+                                                                                test_id: test_id,
+                                                                                time_updated: params[:time_updated],
+                                                                                test_status_id: test_status.id,
+                                                                               who_updated_id: params[:who_updated]['id_number'].to_s,
+                                                                                who_updated_name: params[:who_updated]['first_name'].to_s + " " + params[:who_updated]['last_name'].to_s,
+                                                                               who_updated_phone_number: ''
+
+                                                                        )
+
+                                                        end
 
 								if tst_update.test_status_id == 9 && test_status.id == 2
 									tst_update.test_status_id = test_status.id

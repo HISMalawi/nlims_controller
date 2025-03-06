@@ -248,7 +248,8 @@ class API::V1::OrderController < ApplicationController
 						else 
 							time_of_delivery = time_of_delivery[0..7]
 						end
-						date_dispatched = date_dispatched +" "+ time_of_delivery
+						date_dispatched = "#{date_dispatched} #{time_of_delivery}"
+                                                date_dispatched = date_dispatched || Time.current
 						delivery_type = "sample_dispatched_from_facility"
 						dispatcher = "rh4"
 						if tracking_number && date_dispatched
@@ -301,7 +302,8 @@ class API::V1::OrderController < ApplicationController
 						else 
 							time_of_delivery = time_of_delivery[0..7]
 						end
-						date_dispatched = date_dispatched + " " + time_of_delivery
+						date_dispatched = "#{date_dispatched} #{time_of_delivery}"
+                                                date_dispatched = date_dispatched || Time.current
 						delivery_type = params[:properties]["delivery_type"]
 						delivery_location = params[:properties]["delivery_location"]
 						dispatcher = "rh4"

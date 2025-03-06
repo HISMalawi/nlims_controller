@@ -1,10 +1,9 @@
+# frozen_string_literal: true
+
+# Ward model
 class Ward < ApplicationRecord
-
     def self.get_ward_id(type)
-        res = Ward.where(:name => type)
-        if !res.blank?
-            return res[0]['id']
-        end
+        Ward.find_or_create_by(name: type).id
     end
-
 end
+
