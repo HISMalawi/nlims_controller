@@ -72,6 +72,7 @@ def test_types
            test_category_id:
          )
      end
+     measures(test_type['id'], nlims_testtype)
      specimen_test_type_mappings(test_type['id'], nlims_testtype)
      testtype_organism(test_type['id'], nlims_testtype)
    end
@@ -117,6 +118,69 @@ def testtype_organism(test_type_id, nlims_testtype)
       organisms o ON ttom.organism_id=o.id WHERE test_type_id=#{test_type_id}
     ")
     nlims_testtype.organisms = Organism.where(name: testtype_organims.pluck('name'))
+end
+
+def measures(test_type_id, nlims_testtype)
+  measures = MlabBase.find_by_sql("SELECT
+      ti.id,
+      ti.name,
+      ti.unit,
+      ti.description,
+      tt.name AS test_name,
+      CASE ti.test_indicator_type
+          WHEN 0 THEN 'AutoComplete'
+          WHEN 1 THEN 'Free Text'
+          WHEN 2 THEN 'Numeric'
+          WHEN 3 THEN 'AlphaNumeric'
+          ELSE 'Rich Text'
+      END AS test_indicator_type_name
+  FROM
+      test_indicators ti
+          INNER JOIN test_type_indicator_mappings ttm
+              ON ttm.test_indicators_id = ti.id
+          INNER JOIN test_types tt
+              ON tt.id = ttm.test_types_id
+              AND tt.id = #{test_type_id} AND ti.name IS NOT NULL AND ti.name <>''")
+    nlims_measures = []
+    measures.each do |measure|
+      m = Measure.find_by(name: measure['name'], unit: measure['unit'])
+      if m.nil?
+        m = Measure.create!(
+          name: measure['name'],
+          unit: measure['unit'],
+          measure_type_id: MeasureType.find_by(name: measure['test_indicator_type_name']).id,
+          description: measure['description'],
+          iblis_mapping_name: measure['name']
+        )
+      end
+      m.update_columns(
+        nlims_code: m.nlims_code || "NLIMS_TI#{m.id.to_s.rjust(4, '0')}_MWI",
+        measure_type_id: MeasureType.find_by(name: measure['test_indicator_type_name']).id,
+        description: measure['description'],
+        iblis_mapping_name: measure['name']
+      )
+      nlims_measures << m.id
+      measure_ranges(measure['id'], m)
+    end
+    nlims_testtype.measures = Measure.where(id: nlims_measures)
+end
+
+def measure_ranges(measure_id, nlims_measure)
+  measure_ranges = MlabBase.find_by_sql("select * from test_indicator_ranges where test_indicator_id = #{measure_id}")
+  nlims_measure_ranges = []
+  measure_ranges.each do |measure_range|
+    nlims_measure_range = MeasureRange.find_or_create_by!(
+      measures_id: nlims_measure.id,
+      age_min: measure_range['min_age'],
+      age_max: measure_range['max_age'],
+      sex: measure_range['sex'],
+      range_lower: measure_range['lower_range'],
+      range_upper: measure_range['upper_range'],
+      interpretation: measure_range['interpretation'],
+      value: measure_range['value']
+    )
+    nlims_measure_ranges << nlims_measure_range.id
+  end
 end
 
 specimen
