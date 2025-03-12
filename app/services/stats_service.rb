@@ -3,23 +3,25 @@
 # StatsService class for stats
 module StatsService
   class << self
+    DATE_CREATED = Date.today - 6.months
     def get_latest_orders_by_site
       orders = Speciman.find_by_sql(
         "SELECT
             sending_facility,
-            MAX(tracking_number) AS tracking_number,
             DATE(MAX(date_created)) date_order_created_emr,
             MAX(created_at) date_order_created_in_nlims
         FROM
             specimen
-        WHERE date_created >= '2024-01-01'
+        WHERE date_created >= '#{DATE_CREATED}'
         GROUP BY sending_facility
         ORDER BY date_order_created_in_nlims DESC"
       )
       orders.map do |order|
         {
           sending_facility: order.sending_facility,
-          tracking_number: order.tracking_number,
+          tracking_number: Speciman.where(
+            sending_facility: order.sending_facility
+          ).where("DATE(date_created) = DATE('#{order.date_order_created_emr}')").last&.tracking_number,
           date_order_created_emr: order.date_order_created_emr,
           date_order_created_in_nlims: order.date_order_created_in_nlims
         }
@@ -38,20 +40,19 @@ module StatsService
       results = Speciman.find_by_sql(
         "SELECT
             s.sending_facility,
-            MAX(s.tracking_number) tracking_number,
             MAX(tr.time_entered) max_results_date_eid_vl,
             MAX(tr.created_at) max_result_date_nlims
           FROM
             specimen s INNER JOIN tests t ON t.specimen_id = s.id
             INNER JOIN test_results tr ON tr.test_id = t.id AND tr.measure_id = 294
-          WHERE s.date_created >= '2024-01-01'
+          WHERE s.date_created >= '#{DATE_CREATED}'
           GROUP BY s.sending_facility
           ORDER BY max_result_date_nlims DESC"
         )
       results.map do |result|
         {
           sending_facility: result.sending_facility,
-          tracking_number: result.tracking_number,
+          tracking_number: Speciman.find_by(id: Test.find_by(id: TestResult.where(created_at: result.max_result_date_nlims).last&.test_id)&.specimen_id)&.tracking_number,
           max_results_date_eid_vl: result.max_results_date_eid_vl,
           max_result_date_nlims: result.max_result_date_nlims
         }
@@ -66,10 +67,12 @@ module StatsService
             s.sending_facility,
             s.tracking_number,
             tr.time_entered max_results_date_eid_vl,
-            tr.created_at max_result_date_nlims
+            tr.created_at max_result_date_nlims,
+            trrt.name
           FROM
             specimen s INNER JOIN tests t ON t.specimen_id = s.id
             INNER JOIN test_results tr ON tr.test_id = t.id AND tr.measure_id = 294
+            LEFT JOIN test_result_recepient_types trrt on trrt.id = t.test_result_receipent_types
          WHERE s.tracking_number='#{tracking_number}'"
         )
       results.map do |result|
@@ -77,9 +80,34 @@ module StatsService
           sending_facility: result.sending_facility,
           tracking_number: result.tracking_number,
           max_results_date_eid_vl: result.max_results_date_eid_vl,
-          max_result_date_nlims: result.max_result_date_nlims
+          max_result_date_nlims: result.max_result_date_nlims,
+          ack_type: result.name
         }
       end
+    end
+
+    def count_by_sending_facility(from, to)
+      from ||= Date.today
+      to ||= Date.today
+      {
+        from:,
+        to:,
+        data: Speciman.where("DATE(date_created) BETWEEN '#{from}' AND '#{to}'").group(:sending_facility).count
+      }
+    end
+
+    def orders_per_sending_facility(from, to, sending_facility)
+      from ||= Date.today
+      to ||= Date.today
+      {
+        from:,
+        to:,
+        data: Speciman.where("DATE(date_created) BETWEEN '#{from}' AND '#{to}'").where(sending_facility:).order(date_created: :desc).limit(1000)
+      }
+    end
+
+    def sites
+      Speciman.where("DATE(date_created) > '#{DATE_CREATED}'").order(:sending_facility).distinct.pluck(:sending_facility)
     end
   end
 end

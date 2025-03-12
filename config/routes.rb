@@ -11,6 +11,9 @@ Rails.application.routes.draw do
   get 'latest_results_by_site', to: 'home#latest_results_by_site'
   get 'search_orders', to: 'home#search_orders'
   get 'search_results', to: 'home#search_results'
+  get 'count_by_sending_facility', to: 'home#counts'
+  get 'order_per_sending_facility', to: 'home#order_per_site'
+  get 'sites_by_orders', to: 'home#sites_by_orders'
   namespace :api do
     namespace :v1 do
       # order routes
