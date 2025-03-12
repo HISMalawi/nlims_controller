@@ -7,27 +7,26 @@ class ApplicationController < ActionController::Base
   ]
 
   def authenticate_request
-    return true
-    # token = request.headers['token']
-    # status = UserService.check_token(token)
-    # if token
-    #   return status unless status == false
+    token = request.headers['token']
+    status = UserService.check_token(token)
+    if token
+      return status unless status == false
 
-    #   response = {
-    #     status: 401,
-    #     error: true,
-    #     message: 'token expired',
-    #     data: {}
-    #   }
+      response = {
+        status: 401,
+        error: true,
+        message: 'token expired',
+        data: {}
+      }
 
-    # else
-    #   response = {
-    #     status: 401,
-    #     error: true,
-    #     message: 'token not provided',
-    #     data: {}
-    #   }
-    # end
-    # render(plain: response.to_json) && return
+    else
+      response = {
+        status: 401,
+        error: true,
+        message: 'token not provided',
+        data: {}
+      }
+    end
+    render(plain: response.to_json) && return
   end
 end
