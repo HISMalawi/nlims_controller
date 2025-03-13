@@ -12,7 +12,7 @@ module API
                       else
                         TestType.all
                       end
-        render json: @test_types
+        render json: @test_types.order(:name)
       end
 
       def show
