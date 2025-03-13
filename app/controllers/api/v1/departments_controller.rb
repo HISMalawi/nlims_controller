@@ -51,7 +51,7 @@ module API
 
       private
 
-      def set_set_department
+      def set_department
         @department = TestCategory.find(params[:id])
       rescue ActiveRecord::RecordNotFound
         render json: { error: 'Department not found' }, status: :not_found
