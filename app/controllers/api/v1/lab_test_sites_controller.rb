@@ -6,7 +6,8 @@ module API
   module V1
     # LabSite class for V1
     class LabTestSitesController < ApplicationController
-      skip_before_action :authenticate_request, only: %i[index show]
+      skip_before_action :authenticate_request
+      # before_action :authenticate_frontend_ui_service, only: %i[create show edit update destroy]
 
       # GET /Departments
       def index

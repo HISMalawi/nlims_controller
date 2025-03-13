@@ -7,7 +7,8 @@ module API
     # TestStatusesController class
     class TestStatusesController < ApplicationController
       before_action :set_test_status, only: %i[show edit update destroy]
-      skip_before_action :authenticate_request, only: %i[index show]
+      skip_before_action :authenticate_request
+      before_action :authenticate_frontend_ui_service, only: %i[create show edit update destroy]
 
       # GET /test_statuses
       def index

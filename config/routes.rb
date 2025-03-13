@@ -41,6 +41,8 @@ Rails.application.routes.draw do
       get	 '/authenticate/:username/:password'	=>	'user#authenticate_user'
       get	 '/re_authenticate/:username/:password'	=>	'user#re_authenticate'
       get	 '/check_token_validity'	=>	'user#check_token_validity'
+      post '/login' => 'user#login'
+      post '/refresh_token' => 'user#refresh_token'
 
       # other routes
       get '/retrieve_order_location'	=> 'test#retrieve_order_location'

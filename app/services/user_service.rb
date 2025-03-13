@@ -105,6 +105,17 @@ module UserService
     { token:, expiry_time: expiry_time[:expiry_time] }
   end
 
+  def self.refresh_token(app_uuid)
+    user = User.find_by(app_uuid:)
+    return false unless user
+
+    token = create_token
+    expiry_time = compute_expiry_time
+
+    User.update(user.id, token:, token_expiry_time: expiry_time[:expiry_time])
+    { token:, expiry_time: expiry_time[:expiry_time] }
+  end
+
   def self.encrypt_password(password)
     BCrypt::Password.create(password)
   end

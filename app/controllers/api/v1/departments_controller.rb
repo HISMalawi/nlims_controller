@@ -6,8 +6,9 @@ module API
   module V1
     # DepartmentsController class for V1
     class DepartmentsController < ApplicationController
+      skip_before_action :authenticate_request
+      before_action :authenticate_frontend_ui_service, only: %i[create show edit update destroy]
       before_action :set_department, only: %i[show edit update destroy]
-      skip_before_action :authenticate_request, only: %i[index show]
 
       # GET /Departments
       def index

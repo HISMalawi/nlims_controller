@@ -23,9 +23,7 @@ class API::V1::UserController < ApplicationController
             status: 401,
             error: true,
             message: 'can not create account',
-            data: {
-
-            }
+            data: {}
           }
         end
       else
@@ -33,9 +31,7 @@ class API::V1::UserController < ApplicationController
           status: 401,
           error: true,
           message: 'username already taken',
-          data: {
-
-          }
+          data: {}
         }
       end
 
@@ -44,9 +40,7 @@ class API::V1::UserController < ApplicationController
         status: 401,
         error: true,
         message: 'missing parameter, please check',
-        data: {
-
-        }
+        data: {}
       }
     end
 
@@ -102,18 +96,14 @@ class API::V1::UserController < ApplicationController
                      status: 200,
                      error: false,
                      message: 'token active',
-                     data: {
-
-                     }
+                     data: {}
                    }
                  else
                    {
                      status: 401,
                      error: true,
                      message: 'token expired',
-                     data: {
-
-                     }
+                     data: {}
                    }
                  end
 
@@ -122,9 +112,7 @@ class API::V1::UserController < ApplicationController
         status: 401,
         error: true,
         message: 'token not provided',
-        data: {
-
-        }
+        data: {}
       }
     end
 
@@ -139,9 +127,7 @@ class API::V1::UserController < ApplicationController
                      status: 401,
                      error: true,
                      message: 'wrong password or username',
-                     data: {
-
-                     }
+                     data: {}
                    }
                  else
                    {
@@ -160,11 +146,33 @@ class API::V1::UserController < ApplicationController
         status: 401,
         error: true,
         message: 'password or username not provided',
-        data: {
-
-        }
+        data: {}
       }
     end
     render(plain: response.to_json) && return
+  end
+
+  def login
+    if params[:username] && params[:password]
+      auth = UserService.re_authenticate(params[:username], params[:password])
+      return render json: { message: 'Wrong username or password' } if auth == false
+
+      render json: { user: User.where(username: params[:username]).select(:id, :username, :app_name, :app_uuid).first,
+                     data: { token: auth[:token], expiry_time: auth[:expiry_time] } }
+    else
+      render json: { message: 'Username or Password not provided' }, status: 401
+    end
+  end
+
+  def refresh_token
+    auth = UserService.refresh_token(params[:app_uuid])
+    if auth == false
+      render json: { message: 'refresh token failed' }, status: 401
+    else
+      render json: {
+        user: User.where(app_uuid: params[:app_uuid]).select(:id, :username, :app_name, :app_uuid).first,
+        data: { token: auth[:token], expiry_time: auth[:expiry_time] }
+      }
+    end
   end
 end

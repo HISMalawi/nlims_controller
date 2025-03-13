@@ -3,7 +3,8 @@
 module API
   module V1
     class TestTypesController < ApplicationController
-      skip_before_action :authenticate_request, only: %i[index show]
+      skip_before_action :authenticate_request
+      before_action :authenticate_frontend_ui_service, only: %i[create show edit update destroy]
       before_action :set_test_type, only: %i[show update destroy]
 
       def index
