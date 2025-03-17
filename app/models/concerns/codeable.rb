@@ -5,11 +5,11 @@ module Codeable
   extend ActiveSupport::Concern
 
   included do
-    if column_names.include?('unit')
-      validates :name, uniqueness: { scope: :unit, case_sensitive: false }, allow_nil: true
-    else
-      validates :name, uniqueness: { case_sensitive: false }, allow_nil: false
-    end
+    # if column_names.include?('unit')
+    #   validates :name, uniqueness: { scope: :unit, case_sensitive: false }, allow_nil: true
+    # else
+    #   validates :name, uniqueness: { case_sensitive: false }, allow_nil: false
+    # end
     validates :nlims_code, uniqueness: { case_sensitive: false }, allow_nil: true
     validates :moh_code, uniqueness: { case_sensitive: false }, allow_nil: true
     validates :loinc_code, uniqueness: { case_sensitive: false }, allow_nil: true

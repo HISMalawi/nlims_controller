@@ -128,6 +128,7 @@ module TestCatalogService
     ActiveRecord::Base.transaction do
       @test_type = test_type
       @test_type.update!(params[:test_type])
+      @test_type.update_columns(nlims_code: @test_type.nlims_code || "NLIMS_TT#{@test_type.id.to_s.rjust(4, '0')}_MWI")
       @test_type.specimen_types = SpecimenType.where(id: params[:specimen_types])
       @test_type.measures = update_test_measures(params)
       @test_type.organisms = Organism.where(id: params[:organisms])
@@ -150,6 +151,8 @@ module TestCatalogService
       measure_record = if measure_data[:id].present?
                           measure = existing_measures[measure_data[:id]]
                           measure.update!(measure_data.except(:measure_ranges_attributes))
+                          measure.update_columns(nlims_code: measure.nlims_code || "NLIMS_TI#{measure.id.to_s.rjust(4,
+                                                                                                                    '0')}_MWI")
                           measure.measure_ranges.create!(measure_data[:measure_ranges_attributes])
                           measure
                        else

@@ -43,11 +43,11 @@ module UserService
   def self.compute_expiry_time
     token = create_token
     time = Time.now
-    time += 20.minutes
+    time += 6.hours
     { token:, expiry_time: time.strftime('%Y%m%d%H%M%S') }
   end
 
-  def self.check_token(token)     
+  def self.check_token(token)
     user = User.where(token:).first
 
     return false if user.nil?
