@@ -107,7 +107,7 @@ module UserService
 
   def self.refresh_token(app_uuid)
     user = User.find_by(app_uuid:)
-    return false unless user
+    return false if user.nil?
 
     token = create_token
     expiry_time = compute_expiry_time
