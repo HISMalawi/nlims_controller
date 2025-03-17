@@ -43,15 +43,15 @@ module UserService
   def self.compute_expiry_time
     token = create_token
     time = Time.now
-    time += 14_400
+    time += 20.minutes
     { token:, expiry_time: time.strftime('%Y%m%d%H%M%S') }
   end
 
-  def self.check_token(token)
+  def self.check_token(token)     
     user = User.where(token:).first
 
-    return false unless user
-    return true if user.token_expiry_time > Time.now.strftime('%Y%m%d%H%M%S')
+    return false if user.nil?
+    return true if user.token_expiry_time > Time.now
 
     false
   end
@@ -59,7 +59,7 @@ module UserService
   def self.authenticate(username, password)
     user = User.where(username:).first
 
-    return false unless user
+    return false if user.nil?
 
     secured_pass = BCrypt::Password.new(user['password'])
     return true if secured_pass == password
