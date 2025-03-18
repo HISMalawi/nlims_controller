@@ -25,7 +25,7 @@ def specimen
         specimen.update_columns(
           description: specimen_mlab['description'],
           iblis_mapping_name: specimen_mlab['name'],
-          nlims_code: "NLIMS_SP#{specimen.id.to_s.rjust(4, '0')}_MWI"
+          nlims_code: "NLIMS_SP_#{specimen.id.to_s.rjust(4, '0')}_MWI"
           )
    end
 end
@@ -56,7 +56,7 @@ def test_types
                   iblis_mapping_name: test_type['name'],
                   can_be_done_on_sex: test_type['sex'],
                   targetTAT: "#{test_type['value']} #{test_type['unit']}",
-                  nlims_code: "NLIMS_TT#{nlims_testtype.id.to_s.rjust(4, '0')}_MWI"
+                  nlims_code: "NLIMS_TT_#{nlims_testtype.id.to_s.rjust(4, '0')}_MWI"
                 )
      else
        department = MlabBase.find_by_sql("SELECT * FROM departments where id=#{test_type['department_id']}").first
@@ -95,7 +95,7 @@ def organisms
    ).each do |organism|
      nlims_organism = Organism.find_or_create_by!(name: organism['name'])
      nlims_organism.update_columns(
-                   nlims_code: "NLIMS_ORG#{nlims_organism.id.to_s.rjust(4, '0')}_MWI",
+                   nlims_code: "NLIMS_ORG_#{nlims_organism.id.to_s.rjust(4, '0')}_MWI",
                    short_name: organism['short_name'],
                    description: organism['description']
                  )
@@ -154,7 +154,7 @@ def measures(test_type_id, nlims_testtype)
         )
       end
       m.update_columns(
-        nlims_code: m.nlims_code || "NLIMS_TI#{m.id.to_s.rjust(4, '0')}_MWI",
+        nlims_code: m.nlims_code || "NLIMS_TI_#{m.id.to_s.rjust(4, '0')}_MWI",
         measure_type_id: MeasureType.find_by(name: measure['test_indicator_type_name']).id,
         description: measure['description'],
         iblis_mapping_name: measure['name']
