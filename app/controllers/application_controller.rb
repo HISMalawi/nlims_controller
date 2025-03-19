@@ -34,11 +34,19 @@ class ApplicationController < ActionController::Base
   def authenticate_frontend_ui_service
     token = request.headers['token']
     app_uuid = request.headers['appuuid']
-    return User.find_by(app_uuid:).present? if app_uuid.present?
+    if app_uuid.present?
+      user = User.find_by(app_uuid:)
+      User.current = user if user.present?
+      return user.present?
+    end
 
     if token.present?
       status = UserService.check_token(token)
-      return true if status == true
+      if status == true
+        user = User.find_by(token:)
+        User.current = user if user.present?
+        return true
+      end
 
       render json: { message: 'Token expired' }, status: 401
     else

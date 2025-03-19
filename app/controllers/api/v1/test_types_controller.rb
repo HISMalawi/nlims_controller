@@ -4,7 +4,9 @@ module API
   module V1
     class TestTypesController < ApplicationController
       skip_before_action :authenticate_request
-      before_action :authenticate_frontend_ui_service, only: %i[create show edit update destroy]
+      before_action :authenticate_frontend_ui_service,
+                    only: %i[create show edit update destroy approve_test_catalog retrieve_test_catalog
+                             new_test_catalog_version_available retrieve_test_catalog_versions]
       before_action :set_test_type, only: %i[show update destroy]
 
       def index
@@ -46,6 +48,23 @@ module API
                            MeasureType.all
                          end
         render json: @measure_types
+      end
+
+      def approve_test_catalog
+        TestCatalogService.approve_test_catalog
+      end
+
+      def retrieve_test_catalog
+        render json: TestCatalogService.retrieve_test_catalog(params[:version])
+      end
+
+      def retrieve_test_catalog_versions
+        render json: TestCatalogService.test_catalog_versions
+      end
+
+      def new_test_catalog_version_available
+        previous_version = TestCatalogVersion.find_by(version: params[:version])&.version || '0'
+        render json: TestCatalogService.new_version_available?(previous_version)
       end
 
       def destroy

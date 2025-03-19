@@ -30,7 +30,6 @@ Rails.application.routes.draw do
       post '/update_test' => 'test#update_test'
       post '/add_test' => 'test#add_test'
       put  '/edit_test_result' => 'test#edit_test_result'
-      get  '/retrieve_test_Catelog'	=> 'test#retrieve_test_catelog'
       get	 '/query_test_measures/:test_name'	=> 'test#query_test_measures'
       get  '/query_test_status/:tracking_number'	=> 'test#query_test_status'
       get  '/query_tests_with_no_results_by_npid/:npid'	=> 'test#test_no_results'
@@ -58,6 +57,13 @@ Rails.application.routes.draw do
           get '/measure_types' => 'test_types#measure_types'
         end
       end
+
+      # test catalog routes
+      post '/approve_test_catalog' => 'test_types#approve_test_catalog'
+      get  '/retrieve_test_catalog'	=> 'test_types#retrieve_test_catalog'
+      get '/retrieve_test_catalog_versions' => 'test_types#retrieve_test_catalog_versions'
+      get '/check_new_test_catalog_version_available' => 'test_types#new_test_catalog_version_available'
+
       resources :drugs
       resources :organisms
       resources :test_statuses

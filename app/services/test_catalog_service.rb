@@ -80,4 +80,37 @@ module TestCatalogService
     measure_ranges_ids = measure_ranges_params.map { |m| m[:id] }.compact
     measure.measure_ranges.where.not(id: measure_ranges_ids).destroy_all
   end
+
+  def self.get_test_catalog
+    {
+      specimen_types: SpecimenType.all.as_json({ context: :single_item }),
+      drugs: Drug.all.as_json,
+      organisms: Organism.all.as_json({ context: :single_item }),
+      test_types: TestType.all.as_json({ context: :single_item })
+    }
+  end
+
+  def self.approve_test_catalog
+    TestCatalogVersion.create!(catalog: get_test_catalog, creator: User.current&.id)
+  end
+
+  def self.retrieve_test_catalog(version)
+    return TestCatalogVersion.find_by(version:) if version.present?
+
+    TestCatalogVersion.last
+  end
+
+  def self.test_catalog_versions
+    TestCatalogVersion.all.select(:id, :version, :created_at).order(created_at: :desc)
+  end
+
+  def self.new_version_available?(previous_version)
+    latest_version = TestCatalogVersion.order(version: :desc).pick(:version)
+    return { is_new_version_available: false, version: latest_version } unless latest_version.present?
+
+    {
+      is_new_version_available: latest_version > previous_version,
+      version: latest_version
+    }
+  end
 end
