@@ -113,7 +113,7 @@ module TestService
   end
 
   def self.result_sync_tracker(tracking_number, test_id)
-    if !Config.local_nlims? && !Config.same_source?(tracking_number)
+    if !Config.local_nlims? && !Config.same_source?(tracking_number) && Config.host_valid?(tracking_number)
       ResultSyncTracker.create(tracking_number:, test_id:, app: 'nlims')
     end
     return unless Config.local_nlims?
