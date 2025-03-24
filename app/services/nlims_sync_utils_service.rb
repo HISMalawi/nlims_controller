@@ -8,9 +8,14 @@ class NlimsSyncUtilsService
     @username = config['username']
     @password = config['password']['main']
     @default_password = config['password']['default']
+    @host = config['address']
     @address = "#{config['address']}:#{config['port']}"
     @token = token_valid(@username) || authenticate_with_nlims if action_type.nil?
     @token = default_authentication if action_type == 'account_creation'
+  end
+
+  def host_valid?
+    @host.present?
   end
 
   def order_status_payload(order_id)
@@ -26,6 +31,8 @@ class NlimsSyncUtilsService
   def push_order_update_to_nlims(order_id)
     payload = order_status_payload(order_id)
     url = "#{@address}/api/v1/update_order"
+    return unless host_valid?
+
     response = JSON.parse(RestClient::Request.execute(
                             method: :post,
                             url:,
@@ -63,6 +70,8 @@ class NlimsSyncUtilsService
     tracking_number = Speciman.find(test_record&.specimen_id)&.tracking_number
     payload = test_action_payload(tracking_number, test_record, action)
     url = "#{@address}/api/v1/update_test"
+    return unless host_valid?
+
     response = JSON.parse(RestClient::Request.execute(
                             method: :post,
                             url:,
@@ -185,6 +194,8 @@ class NlimsSyncUtilsService
     return false if payload.nil?
 
     url = "#{@address}/api/v1/create_order/"
+    return unless host_valid?
+
     response = JSON.parse(RestClient::Request.execute(
                             method: :post,
                             url:,
@@ -220,6 +231,8 @@ class NlimsSyncUtilsService
     pending_acks.each do |ack|
       payload = buid_acknowledment_to_master_data(ack)
       url = "#{@address}/api/v1/acknowledge/test/results/recipient"
+      return unless host_valid?
+
       response = JSON.parse(RestClient::Request.execute(
                               method: :post,
                               url:,
@@ -263,6 +276,8 @@ class NlimsSyncUtilsService
 
   def register_order_source(tracking_number)
     url = "#{@address}/api/v1/register_order_source"
+    return unless host_valid?
+
     JSON.parse(RestClient::Request.execute(
                  method: :post,
                  url:,
@@ -289,6 +304,8 @@ class NlimsSyncUtilsService
 
   def application_status
     url = "#{@address}/api/v1/ping"
+    return unless host_valid?
+
     response = RestClient.get(
       url,
       content_type: 'application/json'
