@@ -97,7 +97,7 @@ module TestCatalogService
   def self.retrieve_test_catalog(version)
     return TestCatalogVersion.find_by(version:) if version.present?
 
-    TestCatalogVersion.last
+    TestCatalogVersion.last || {}
   end
 
   def self.test_catalog_versions

@@ -154,6 +154,7 @@ def measures(test_type_id, nlims_testtype)
         )
       end
       m.update_columns(
+        unit: measure['unit'],
         nlims_code: m.nlims_code || "NLIMS_TI_#{m.id.to_s.rjust(4, '0')}_MWI",
         measure_type_id: MeasureType.find_by(name: measure['test_indicator_type_name']).id,
         description: measure['description'],
