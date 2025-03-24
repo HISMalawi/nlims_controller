@@ -25,4 +25,8 @@ class Config < ApplicationRecord
 
     User.find_by(app_uuid: host&.update_app_uuid)&.app_name == 'MASTER NLIMS'
   end
+
+  def self.host_valid?(tracking_number)
+    TrackingNumberHost.find_by(tracking_number:)&.source_host.present?
+  end
 end
