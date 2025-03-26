@@ -46,7 +46,8 @@ fix_site_names = [
   { sending_facility: 'Malingunde Health Center', district: 'Lilongwe', new_name: 'Malingunde Health Centre' },
   { sending_facility: 'Mangochi Hospital District', district: 'Mangochi', new_name: 'Mangochi District Hospital' },
   { sending_facility: 'Matawale Health Centre', district: 'Zomba', new_name: 'Matawale Urban Health Centre' },
-  { sending_facility: 'MAULA PRISON HEALTH CENTER', district: 'Lilongwe', new_name: 'Maula Prison Health Centre' }
+  { sending_facility: 'MAULA PRISON HEALTH CENTER', district: 'Lilongwe', new_name: 'Maula Prison Health Centre' },
+  { sending_facility: 'Mbulumbudzi Health Center', district: 'Chiradzulu', new_name: 'Mbulumbudzi Health Centre' }
 ]
 fix_site_names.each do |fix_site_name|
   puts "Updating district for ==> #{fix_site_name.sending_facility}"
@@ -201,24 +202,18 @@ facilities = [
   { sending_facility: 'Matiki Health Centre', district: 'Nkhotakota' },
   { sending_facility: 'Matiya Health Centre', district: 'Zomba' },
   { sending_facility: 'Maula Prison Health Centre', district: 'Lilongwe' },
-
-  { sending_facility: 'Mauwa Health Centre', district: '' },
-  { sending_facility: 'Mayaka Health Centre', district: '' },
+  { sending_facility: 'Mauwa Health Centre', district: 'Chiradzulu' },
   { sending_facility: 'Mayaka Health Centre', district: 'Zomba' },
-  { sending_facility: 'Mbabvi Health Centre', district: '' },
   { sending_facility: 'Mbabvi Health Centre', district: 'Lilongwe' },
-  { sending_facility: 'Mbayani Health Centre', district: '' },
   { sending_facility: 'Mbayani Health Centre', district: 'Blantyre' },
-  { sending_facility: 'Mbenje Health Centre', district: '' },
-  { sending_facility: 'Mbiza Health Centre', district: '' },
-  { sending_facility: 'Mbulumbudzi Health Center', district: 'Chiradzulu' },
-  { sending_facility: 'Mbulumbudzi Health Centre', district: '' },
-  { sending_facility: 'Mchinji District Hospital', district: '' },
+
+  { sending_facility: 'Mbenje Health Centre', district: 'Mulanje' },
+  { sending_facility: 'Mbiza Health Centre', district: 'Mulanje' },
+  { sending_facility: 'Mbulumbudzi Health Centre', district: 'Chiradzulu' },
   { sending_facility: 'Mchinji District Hospital', district: 'Mchinji' },
   { sending_facility: 'Mdeka Health Center', district: 'Blantyre' },
-  { sending_facility: 'Mehboob Clinic', district: '' },
-  { sending_facility: 'Mfera Health Centre', district: '' },
-  { sending_facility: 'Migowi Health Centre', district: '' },
+  { sending_facility: 'Mehboob Clinic', district: 'Mangochi' },
+  { sending_facility: 'Mfera Health Centre', district: 'Chikwawa' },
   { sending_facility: 'Migowi Health Centre', district: 'Phalombe' },
   { sending_facility: 'Mikolongwe Health Centre', district: '' },
   { sending_facility: 'Milepa Health Centre', district: 'Chiradzulu' },
