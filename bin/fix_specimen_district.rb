@@ -1,15 +1,7 @@
 # frozen_string_literal: true
 
 puts 'Initiating update...'
-sending_facility_districts = Speciman.where("created_at > '2023-09-11' AND district IS NOT NULL")
-                                     .group('sending_facility, district').select('DISTINCT sending_facility, district')
-
-sending_facility_districts.each do |send_facility_district|
-  puts "Updating district for ==> #{send_facility_district.sending_facility}"
-  Speciman.where("sending_facility = '#{send_facility_district.sending_facility}'
-  AND district IS NULL AND created_at > '2024-01-01'").update_all(district: send_facility_district.district)
-end
-
+starting_from = '2018-01-01'
 fix_site_names = [
   { sending_facility: 'Chileka Health Centre', district: 'Lilongwe', new_name: 'Chileka Health Centre (Lilongwe)' },
   { sending_facility: 'Chileka (Lilongwe) Health Center', district: 'Lilongwe',
@@ -60,11 +52,13 @@ fix_site_names = [
   { sending_facility: 'Trinity Fatima Hospital', district: '', new_name: 'Trinity - Fatima Hospital' },
   { sending_facility: 'Zingwangwa Health Center', district: 'Blantyre', new_name: 'Zingwangwa Urban Health Centre' }
 ]
-fix_site_names.each do |fix_site_name|
+Parallel.each(fix_site_names, in_processes: 4) do |fix_site_name|
   puts "Updating name from: #{fix_site_name[:sending_facility]} To: #{fix_site_name[:new_name]}  "
-  Speciman.where(sending_facility: fix_site_name[:sending_facility], district: fix_site_name[:district]).update_all(
-    sending_facility: fix_site_name[:new_name]
-  )
+  Speciman.where(
+    sending_facility: fix_site_name[:sending_facility],
+    district: fix_site_name[:district],
+    created_at: starting_from..
+    ).update_all(sending_facility: fix_site_name[:new_name])
 end
 facilities = [
   { sending_facility: 'DAEYANG ST LUKE', district: 'Blantyre' },
@@ -349,8 +343,11 @@ facilities = [
   { sending_facility: 'Zingwangwa Urban Health Centre', district: 'Blantyre' },
   { sending_facility: 'Zomba Central Hospital Laboratory', district: 'Zomba' }
 ]
-facilities.each do |facility|
+Parallel.each(facilities, in_processes: 4) do |facility|
   puts "Updating district for ==> #{facility[:sending_facility]}"
-  Speciman.where(sending_facility: facility[:sending_facility]).update_all(district: facility[:district])
+  Speciman.where(
+    sending_facility: facility[:sending_facility],
+    created_at: starting_from..
+    ).update_all(district: facility[:district])
 end
 puts 'Updating districts done'
