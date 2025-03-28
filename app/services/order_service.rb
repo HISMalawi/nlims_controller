@@ -402,6 +402,7 @@ module OrderService
     facilities.each do |facility|
       res = Site.find_by_sql("SELECT name AS site_name FROM sites WHERE id='#{facility}'")
       unless res.blank?
+        ActiveRecord::Base.connection.execute("SET SESSION sql_mode = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION'")
         res_ = Speciman.find_by_sql("SELECT specimen.tracking_number AS tracking_number,
 																		specimen_types.name AS sample_type, specimen_statuses.name AS specimen_status,
 																		wards.name AS order_location, specimen.date_created AS date_created,
@@ -411,7 +412,8 @@ module OrderService
 																		specimen.sending_facility AS health_facility, specimen.requested_by AS requested_by,
 																		specimen.date_created AS date_drawn,
 																		patients.patient_number AS pat_id, patients.name AS pat_name,
-																		patients.dob AS dob, patients.gender AS sex
+																		patients.dob AS dob, patients.gender AS sex,
+                                    specimen.arv_number AS arv_number
 																		FROM specimen INNER JOIN specimen_statuses ON specimen_statuses.id = specimen.specimen_status_id
 																		LEFT JOIN specimen_types ON specimen_types.id = specimen.specimen_type_id
 																		INNER JOIN tests ON tests.specimen_id = specimen.id
@@ -419,7 +421,7 @@ module OrderService
 																		LEFT JOIN wards ON specimen.ward_id = wards.id
 						      									WHERE specimen.sending_facility ='#{res[0]['site_name'].gsub("'", "\\\\'")}'
 																		AND specimen.tracking_number NOT IN (SELECT tracking_number FROM specimen_dispatches)
-																		GROUP BY specimen.id DESC limit 500")
+																		GROUP BY specimen.id ORDER BY specimen.id DESC limit 500")
         tsts = {}
         if !res_.empty?
           res_.each do |ress|
@@ -454,7 +456,8 @@ module OrderService
                   id: ress.pat_id,
                   name: ress.pat_name,
                   gender: ress.sex,
-                  dob: ress.dob
+                  dob: ress.dob,
+                  arv_number: ress.arv_number
                 },
 
                 tests: tsts
