@@ -79,7 +79,7 @@ module API
           test_type: %i[
             name short_name description loinc_code moh_code nlims_code
             targetTAT preferred_name scientific_name can_be_done_on_sex test_category_id
-            assay_format equipment_required hr_cadre_required iblis_mapping_name
+            assay_format hr_cadre_required iblis_mapping_name
           ],
           specimen_types: [],
           measures: [
@@ -90,7 +90,8 @@ module API
             ] }
           ],
           organisms: [],
-          lab_test_sites: []
+          lab_test_sites: [],
+          equipment: []
         )
       end
 

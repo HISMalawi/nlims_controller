@@ -6,9 +6,9 @@ module API
   module V1
     # DrugsController class for V1
     class DrugsController < ApplicationController
-      before_action :set_drug, only: %i[show edit update destroy]
       skip_before_action :authenticate_request
       before_action :authenticate_frontend_ui_service, only: %i[create show edit update destroy]
+      before_action :set_drug, only: %i[show edit update destroy]
 
       # GET /drugs
       def index

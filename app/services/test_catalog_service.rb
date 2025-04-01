@@ -9,6 +9,7 @@ module TestCatalogService
       @test_type.measures = update_test_measures(params)
       @test_type.organisms = Organism.where(id: params[:organisms])
       @test_type.lab_test_sites = LabTestSite.where(id: params[:lab_test_sites])
+      @test_type.equipment = Equipment.where(id: params[:equipment])
     end
     @test_type
   end
@@ -46,6 +47,7 @@ module TestCatalogService
       @test_type.measures = update_test_measures(params)
       @test_type.organisms = Organism.where(id: params[:organisms])
       @test_type.lab_test_sites = LabTestSite.where(id: params[:lab_test_sites])
+      @equipment = Equipment.where(id: params[:equipment])
     end
     @test_type
   end

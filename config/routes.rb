@@ -70,6 +70,8 @@ Rails.application.routes.draw do
       resources :departments
       resources :specimen_types
       resources :lab_test_sites
+      resources :equipments
+      resources :products
     end
 
     namespace :v2 do
