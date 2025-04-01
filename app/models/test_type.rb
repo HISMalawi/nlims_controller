@@ -39,7 +39,8 @@ class TestType < ApplicationRecord
                         drugs: {}
                     }
                   },
-                  lab_test_sites: {}
+                  lab_test_sites: {},
+                  equipment: {}
                 }
               ))
           json_data['measures'] = json_data['measures'].map do |measure|
