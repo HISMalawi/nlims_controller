@@ -66,7 +66,7 @@ facilities = [
   { sending_facility: 'Adventist Health Center', district: 'Lilongwe' },
   { sending_facility: 'Adventist Health Centre (Lilongwe)', district: 'Lilongwe' },
   { sending_facility: 'Adventist Hospital (Blantyre)', district: 'Blantyre' },
-  { sending_facility: 'Airwing Clinic (Lilongwe)', district: 'Liilongwe' },
+  { sending_facility: 'Airwing Clinic (Lilongwe)', district: 'Lilongwe' },
   { sending_facility: 'Alinafe Community Hospital', district: 'Nkhotakota' },
   { sending_facility: 'Alinafe Rehabilitation Centre', district: 'Nkhotakota' },
   { sending_facility: 'Amalika Health Centre', district: 'Thyolo' },
