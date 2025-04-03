@@ -72,6 +72,7 @@ Rails.application.routes.draw do
       resources :lab_test_sites
       resources :equipments
       resources :products
+      resources :test_panels
     end
 
     namespace :v2 do

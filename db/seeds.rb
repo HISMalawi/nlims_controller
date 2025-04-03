@@ -25,9 +25,24 @@ def specimen
         specimen.update_columns(
           description: specimen_mlab['description'],
           iblis_mapping_name: specimen_mlab['name'],
+          preferred_name: specimen_mlab['name'],
           nlims_code: "NLIMS_SP_#{specimen.id.to_s.rjust(4, '0')}_MWI"
           )
    end
+end
+
+def test_panels
+  MlabBase.find_by_sql("SELECT tp.* FROM test_panels tp WHERE tp.name NOT LIKE '%(cancer%'	AND tp.name NOT LIKE '%(paeds%'").each do |test_panel|
+    test_types_panels = MlabBase.find_by_sql("SELECT tt.* FROM test_types tt INNER JOIN test_type_panel_mappings ttp ON ttp.test_type_id=tt.id WHERE ttp.test_panel_id=#{test_panel['id']}")
+    t_panel = PanelType.find_or_create_by!(name: test_panel['name'])
+    t_panel.update_columns(
+      description: test_panel['description'],
+      short_name: test_panel['short_name'],
+      preferred_name: test_panel['name'],
+      nlims_code: "NLIMS_TP_#{t_panel.id.to_s.rjust(4, '0')}_MWI"
+    )
+    t_panel.test_types = TestType.where(name: test_types_panels.pluck('name').uniq)
+  end
 end
 
 def specimen_test_type_mappings(test_type_id, nlims_testtype)
@@ -55,6 +70,7 @@ def test_types
            nlims_testtype.update_columns(
                   iblis_mapping_name: test_type['name'],
                   can_be_done_on_sex: test_type['sex'],
+                  preferred_name: test_type['name'],
                   targetTAT: "#{test_type['value']} #{test_type['unit']}",
                   nlims_code: "NLIMS_TT_#{nlims_testtype.id.to_s.rjust(4, '0')}_MWI"
                 )
@@ -69,6 +85,7 @@ def test_types
            targetTAT: "#{test_type['value']} #{test_type['unit']}",
            can_be_done_on_sex: test_type['sex'],
            iblis_mapping_name: test_type['name'],
+           preferred_name: test_type['name'],
            test_category_id:
          )
      end
@@ -84,6 +101,7 @@ def drugs
     drug.update_columns(
       description: nlims_drug['description'],
       short_name: nlims_drug['short_name'],
+      preferred_name: nlims_drug['name'],
       nlims_code: "NLIMS_DRG_#{drug.id.to_s.rjust(4, '0')}_MWI"
       )
   end
@@ -97,7 +115,8 @@ def organisms
      nlims_organism.update_columns(
                    nlims_code: "NLIMS_ORG_#{nlims_organism.id.to_s.rjust(4, '0')}_MWI",
                    short_name: organism['short_name'],
-                   description: organism['description']
+                   description: organism['description'],
+                   preferred_name: organism['name']
                  )
 
      organism_drug_mappings(organism['id'], nlims_organism)
@@ -150,7 +169,8 @@ def measures(test_type_id, nlims_testtype)
           unit: measure['unit'],
           measure_type_id: MeasureType.find_by(name: measure['test_indicator_type_name']).id,
           description: measure['description'],
-          iblis_mapping_name: measure['name']
+          iblis_mapping_name: measure['name'],
+          preferred_name: measure['name']
         )
       end
       m.update_columns(
@@ -158,7 +178,8 @@ def measures(test_type_id, nlims_testtype)
         nlims_code: m.nlims_code || "NLIMS_TI_#{m.id.to_s.rjust(4, '0')}_MWI",
         measure_type_id: MeasureType.find_by(name: measure['test_indicator_type_name']).id,
         description: measure['description'],
-        iblis_mapping_name: measure['name']
+        iblis_mapping_name: measure['name'],
+        preferred_name: measure['name']
       )
       nlims_measures << m.id
       measure_ranges(measure['id'], m)
@@ -184,7 +205,13 @@ def measure_ranges(measure_id, nlims_measure)
   end
 end
 
+puts 'Importing specimen'
 specimen
+puts 'Importing test types'
 test_types
+puts 'Importing drugs'
 drugs
+puts 'Importing organisms'
 organisms
+puts 'Importing test panels'
+test_panels

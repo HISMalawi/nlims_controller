@@ -11,7 +11,7 @@ module API
 
       # GET /Departments
       def index
-        render json: LabTestSite.all
+        render json: LabTestSite.all.order(:name)
       end
 
       def show

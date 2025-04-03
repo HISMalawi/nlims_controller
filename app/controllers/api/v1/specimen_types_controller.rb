@@ -13,7 +13,7 @@ module API
                           else
                             SpecimenType.all
                           end
-        render json: @specimen_types
+        render json: @specimen_types.order(:name)
       end
 
       def show

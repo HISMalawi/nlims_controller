@@ -17,7 +17,7 @@ module API
                  else
                    Drug.all
                  end
-        render json: @drugs
+        render json: @drugs.order(:name)
       end
 
       # GET /drugs/:id

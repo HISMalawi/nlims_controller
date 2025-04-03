@@ -15,7 +15,7 @@ module API
                      else
                        Organism.all
                      end
-        render json: @organisms
+        render json: @organisms.order(:name)
       end
 
       # GET /organisms/:id
