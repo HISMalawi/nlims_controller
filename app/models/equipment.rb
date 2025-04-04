@@ -3,7 +3,7 @@
 # Equipment model
 class Equipment < ApplicationRecord
   include Codeable
-  has_many :product_equipments
+  has_many :product_equipments, dependent: :destroy
   has_many :products, through: :product_equipments
   has_and_belongs_to_many :test_types
 

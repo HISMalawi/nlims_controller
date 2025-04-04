@@ -3,7 +3,7 @@
 # Product model
 class Product < ApplicationRecord
   include Codeable
-  has_many :product_equipments
+  has_many :product_equipments, dependent: :destroy
   has_many :equipments, through: :product_equipments
 
   validates_uniqueness_of :name
