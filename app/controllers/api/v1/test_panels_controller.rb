@@ -64,9 +64,9 @@ module API
       end
 
       def update_test_panel_test_type
-        return unless test_panel_params[:test_types].present?
+        return unless params[:test_types].present?
 
-        @test_panel.test_types = TestType.where(id: test_panel_params[:test_types])
+        @test_panel.test_types = TestType.where(id: params[:test_types])
       end
     end
   end

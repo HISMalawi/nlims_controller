@@ -62,9 +62,9 @@ module API
         end
 
         def update_equipment_products
-          return unless params[:equipment][:products].present?
+          return unless params[:products].present?
 
-          @equipment.products = Product.where(id: params[:equipment][:products])
+          @equipment.products = Product.where(id: params[:products])
         end
 
         # Only allow a list of trusted parameters through.
