@@ -88,12 +88,17 @@ module TestCatalogService
       specimen_types: SpecimenType.all.as_json({ context: :single_item }),
       drugs: Drug.all.as_json,
       organisms: Organism.all.as_json({ context: :single_item }),
-      test_types: TestType.all.as_json({ context: :single_item })
+      test_types: TestType.all.as_json({ context: :single_item }),
+      test_panels: PanelType.all.as_json
     }
   end
 
-  def self.approve_test_catalog
-    TestCatalogVersion.create!(catalog: get_test_catalog, creator: User.current&.id)
+  def self.approve_test_catalog(version_details)
+    TestCatalogVersion.create!(
+      catalog: get_test_catalog,
+      creator: User.current&.id,
+      version_details:
+    )
   end
 
   def self.retrieve_test_catalog(version)

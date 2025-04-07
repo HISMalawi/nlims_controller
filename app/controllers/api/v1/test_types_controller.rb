@@ -51,7 +51,7 @@ module API
       end
 
       def approve_test_catalog
-        TestCatalogService.approve_test_catalog
+        TestCatalogService.approve_test_catalog(params.require(:version_details))
       end
 
       def retrieve_test_catalog
