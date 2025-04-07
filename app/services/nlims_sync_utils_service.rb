@@ -407,4 +407,26 @@ class NlimsSyncUtilsService
     puts "Error: #{e.message} ==> NLIMS Token Validity"
     nil
   end
+
+  def get_test_catalog(version)
+    response = RestClient::Request.execute(
+        method: :get,
+        url: "#{@address}/api/v1/retrieve_test_catalog?version=#{version}",
+        headers: { content_type: :json, accept: :json, 'token': @token }
+      )
+    if response.code == 200
+      JSON.parse(response.body, symbolize_names: true)
+    else
+      {}
+    end
+  end
+
+  def check_new_test_catalog_version(version)
+    response = RestClient::Request.execute(
+        method: :get,
+        url: "#{@address}/api/v1/check_new_test_catalog_version_available?version=#{version}",
+        headers: { content_type: :json, accept: :json, 'token': @token }
+      )
+    JSON.parse(response.body, symbolize_names: true)
+  end
 end

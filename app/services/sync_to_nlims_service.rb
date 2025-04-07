@@ -51,6 +51,10 @@ module  SyncToNlimsService
       nlims.push_acknwoledgement_to_master_nlims
     end
 
+    def synchronize_test_catalog
+      ProcessTestCatalogService.synchronize_test_catalog
+    end
+
     private
 
     def tracking_number(id)
