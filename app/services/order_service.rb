@@ -457,7 +457,8 @@ module OrderService
                   name: ress.pat_name,
                   gender: ress.sex,
                   dob: ress.dob,
-                  arv_number: ress.arv_number
+                  arv_number: ress.arv_number,
+                  site_code_number: get_site_code_number(ress.tracking_number)
                 },
 
                 tests: tsts
