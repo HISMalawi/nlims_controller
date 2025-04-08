@@ -48,6 +48,7 @@ Rails.application.routes.draw do
       # other routes
       get '/retrieve_order_location'	=> 'test#retrieve_order_location'
       get '/retrieve_target_labs'	=> 'test#retrieve_target_labs'
+      get '/sites' => 'test#sites'
 
       # status of the app
       get '/ping' => 'status#ping'

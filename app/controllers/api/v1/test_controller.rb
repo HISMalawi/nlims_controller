@@ -294,6 +294,10 @@ class API::V1::TestController < ApplicationController
     render(plain: response.to_json) && return
   end
 
+  def sites
+    render json: Site.all.order(:name)
+  end
+
   private
 
   def update_remote_host
