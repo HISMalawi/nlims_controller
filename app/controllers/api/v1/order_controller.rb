@@ -705,7 +705,8 @@ class API::V1::OrderController < ApplicationController
   end
 
   def order_tracking_numbers_to_logged
-    tracking_numbers = Speciman.where('id > ?', params.require(:order_id))
+    order_id = params.require(:order_id)
+    tracking_numbers = Speciman.where('id > ?', order_id.to_i).where('tracking_number IS NOT NULL').order('id ASC')
                                .limit(params[:limit] || 100).select(:id, :tracking_number)
     render json: tracking_numbers
   end
