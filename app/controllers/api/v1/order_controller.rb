@@ -711,6 +711,11 @@ class API::V1::OrderController < ApplicationController
     render json: tracking_numbers
   end
 
+  def verify_order_tracking_number_exist
+    exist = TrackingNumberLogger.where(tracking_number: params[:tracking_number]).exists? || Speciman.where(tracking_number: params[:tracking_number]).exists?
+    render json: exist
+  end
+
   private
 
   def remote_host

@@ -29,6 +29,7 @@ Rails.application.routes.draw do
       get  '/retrieve_undispatched_samples'	=> 'order#retrieve_undispatched_samples'
       get  '/retrieve_samples/:order_date/:from_date/:region'	=> 'order#retrieve_samples'
       get 'get_order_tracking_numbers' => 'order#order_tracking_numbers_to_logged'
+      get '/verify_order_tracking_number_exist/:tracking_number' => 'order#verify_order_tracking_number_exist'
 
       # test routes
       post '/update_test' => 'test#update_test'
