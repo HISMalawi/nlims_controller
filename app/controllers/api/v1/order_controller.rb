@@ -704,6 +704,12 @@ class API::V1::OrderController < ApplicationController
     render(plain: response.to_json) && return
   end
 
+  def order_tracking_numbers_to_logged
+    tracking_numbers = Speciman.where('id > ?', params.require(:order_id))
+                               .limit(params[:limit] || 100).select(:id, :tracking_number)
+    render json: tracking_numbers
+  end
+
   private
 
   def remote_host

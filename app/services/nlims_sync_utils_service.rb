@@ -392,6 +392,18 @@ class NlimsSyncUtilsService
     exit
   end
 
+  def order_tracking_numbers(order_id, limit: 100)
+    response = JSON.parse(RestClient::Request.execute(
+                            method: :get,
+                            url: "#{@address}/api/v1/get_order_tracking_numbers?order_id=#{order_id}&limit=#{limit}",
+                            headers: { content_type: :json, accept: :json, token: @token }
+                          ))
+    response['data']
+  rescue StandardError => e
+      puts "Error: #{e.message} ==> Failed to get order tracking numbers to be logged"
+      []
+  end
+
   def token_valid(username)
     token = TokenTracker.find_by_username(username)&.token
     return nil if token.nil?
