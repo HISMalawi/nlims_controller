@@ -30,7 +30,6 @@ class API::V2::OrderController < ApplicationController
     elsif !params['who_order_test_last_name']
       msg = 'last name for person ordering not provided'
     else
-      order_availability = false
       if params['tracking_number']
         tracking_number = params['tracking_number']
         order_availability = OrderService.check_order(tracking_number)
@@ -40,7 +39,7 @@ class API::V2::OrderController < ApplicationController
             error: false,
             message: 'order already available',
             data: {
-              tracking_number: tracking_number
+              tracking_number:
             }
           }
           render plain: response.to_json and return
@@ -76,7 +75,11 @@ class API::V2::OrderController < ApplicationController
 
   def query_order_by_tracking_number
     if params[:tracking_number]
-      res = OrderService.query_order_by_tracking_number_v2(params[:tracking_number], params[:test_name])
+      res = OrderService.query_order_by_tracking_number_v2(
+        params[:tracking_number],
+        params[:test_name],
+        params[:couch_id]
+      )
       response = if res == false
                    {
                      status: 200,

@@ -111,8 +111,9 @@ module OrderService
     Speciman.where(tracking_number:).exists? || TrackingNumberLogger.where(tracking_number:).exists?
   end
 
-  def self.query_order_by_tracking_number_v2(tracking_number, test_name)
+  def self.query_order_by_tracking_number_v2(tracking_number, test_name, couch_id)
     test_name = NameMapping.actual_name_of(test_name)
+    couch_id_condition = couch_id.blank? ? '' : "AND specimen.couch_id='#{couch_id}'"
     res = Speciman.find_by_sql("SELECT specimen_types.name AS sample_type, specimen_statuses.name AS specimen_status,
                         wards.name AS order_location, specimen.date_created AS date_created, specimen.priority AS priority,
                         specimen.drawn_by_id AS drawer_id, specimen.drawn_by_name AS drawer_name,
@@ -128,7 +129,7 @@ module OrderService
                         INNER JOIN tests ON tests.specimen_id = specimen.id
                         INNER JOIN patients ON patients.id = tests.patient_id
                         LEFT JOIN wards ON specimen.ward_id = wards.id
-                        WHERE specimen.tracking_number ='#{tracking_number}'")
+                        WHERE specimen.tracking_number ='#{tracking_number}' #{couch_id_condition}")
     tsts = {}
     result_status = false
     result_measures = {}
