@@ -721,7 +721,9 @@ class API::V1::OrderController < ApplicationController
   def remote_host
     return unless params[:tracking_number].present?
 
-    TrackingNumberHost.find_or_create_by(
+    return if TrackingNumberHost.where(tracking_number: params[:tracking_number]).exists?
+
+    TrackingNumberHost.create(
       tracking_number: params[:tracking_number],
       source_host: request.remote_ip,
       source_app_uuid: User.find_by(token: request.headers['token'])&.app_uuid
