@@ -6,7 +6,7 @@ module TestService
     return [false, 'test name not provided'] if params[:test_name].blank?
     return [false, 'test status not provided'] if params[:test_status].blank?
 
-    sql_order = OrderService.get_order_by_tracking_number_sql(params[:tracking_number])
+    sql_order = OrderService.get_order_by_tracking_number_sql(params[:tracking_number], params[:arv_number])
     result_date = if params[:result_date].blank?
                     Time.now.strftime('%Y%m%d%H%M%S')
                   else
@@ -218,7 +218,7 @@ module TestService
   end
 
   def self.add_test(params)
-    sql_order = OrderService.get_order_by_tracking_number_sql(params['tracking_number'])
+    sql_order = OrderService.get_order_by_tracking_number_sql(params['tracking_number'], params['arv_number'])
     return [false, 'order not available'] if sql_order == false
 
     updater = params['who_updated']
