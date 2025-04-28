@@ -4,6 +4,8 @@
 class SyncErrorLog < ApplicationRecord
   after_create :clean_up_after_24_hours
 
+  private
+
   def clean_up_after_24_hours
     SyncErrorLog.where('created_at < ?', 24.hours.ago).delete_all
   end
