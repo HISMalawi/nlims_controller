@@ -276,9 +276,14 @@ module OrderService
     false
   end
 
-  def self.get_order_by_tracking_number_sql(track_number)
-    details = Speciman.where(tracking_number: track_number).first
-    details || false
+  def self.get_order_by_tracking_number_sql(tracking_number, arv_number)
+    arv_number = arv_number&.to_s&.split('-')&.last
+    order = if arv_number.present?
+              Speciman.where(tracking_number:).where("arv_number LIKE '%#{arv_number}%'").first
+            else
+              Speciman.find_by(tracking_number:)
+            end
+    order || false
   end
 
   def self.query_results_by_npid(npid)
