@@ -108,12 +108,7 @@ module OrderService
   end
 
   def self.check_order(tracking_number)
-    order = Speciman.where(tracking_number:).first
-    if order
-      true
-    else
-      false
-    end
+    Speciman.where(tracking_number:).exists? || TrackingNumberLogger.where(tracking_number:).exists?
   end
 
   def self.query_order_by_tracking_number_v2(tracking_number, test_name, couch_id)
