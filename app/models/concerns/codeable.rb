@@ -11,8 +11,6 @@ module Codeable
     #   validates :name, uniqueness: { case_sensitive: false }, allow_nil: false
     # end
     validates :nlims_code, uniqueness: { case_sensitive: false }, allow_nil: true
-    validates :moh_code, uniqueness: { case_sensitive: false }, allow_nil: true
-    validates :loinc_code, uniqueness: { case_sensitive: false }, allow_nil: true
 
     after_create :set_nlims_code
   end

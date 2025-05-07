@@ -11,7 +11,9 @@ module API
 
       def index
         @test_types = if params[:search].present?
-                        TestType.where('name LIKE ?', "%#{params[:search]}%")
+                        TestType.where('name LIKE ?', "%#{params[:search]}%").orWhere('short_name LIKE ?', "%#{params[:search]}%").orWhere(
+                          'preferred_name LIKE ?', "%#{params[:search]}%"
+                        )
                       else
                         TestType.all
                       end
