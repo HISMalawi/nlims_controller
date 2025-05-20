@@ -86,7 +86,16 @@ class IntegrationStatusService
   # rubocop:enable Metrics/MethodLength
   # rubocop:enable Metrics/AbcSize
 
+  def generate_status_report
+    data = check_integration_status.sort_by { |site| site[:name].to_s.downcase }
+    Report.find_or_create_by(name: 'integration_status').update(data:)
+  end
+
   def collect_outdated_sync_sites
-    check_integration_status.sort_by { |site| site[:name].to_s.downcase }
+    report = Report.where(name: 'integration_status').where(updated_at: (Time.now - 6.hour)..Time.now).first
+    return report&.data if report.present?
+
+    generate_status_report
+    Report.where(name: 'integration_status').where(updated_at: (Time.now - 6.hour)..Time.now).first&.data
   end
 end

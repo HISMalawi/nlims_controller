@@ -1,0 +1,11 @@
+daily_integration_status_email_jon:
+  name: "Send Daily Integration Status Email Every Day at 8am"
+  cron: "0 8 * * *"
+  class: "DailyIntegrationStatusEmailWorker"
+  queue: default
+
+generate_integration_status_report_job:
+  name: "Generate Integration Status Report Every 5 hours"
+  cron: "0 */5 * * *"
+  class: "GenerateIntegrationStatusReportJob"
+  queue: default
