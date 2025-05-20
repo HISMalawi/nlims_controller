@@ -1,0 +1,39 @@
+<h2 style="font-family: system-ui, sans-serif; margin-bottom: 0.5em;">
+  System Status – <%= Time.current.strftime('%B %e, %Y %H:%M') %>
+</h2>
+
+<table width="100%" cellpadding="6" cellspacing="0"
+       style="border-collapse: collapse; font-family: system-ui, sans-serif;
+              font-size: 14px; text-align: left;">
+  <thead>
+    <tr style="background:#f3f4f6;">
+      <th style="border:1px solid #e5e7eb;">Site</th>
+      <th style="border:1px solid #e5e7eb;">IP</th>
+      <th style="border:1px solid #e5e7eb;">NLIMS Application Port</th>
+      <th style="border:1px solid #e5e7eb;">App&nbsp;Status</th>
+      <th style="border:1px solid #e5e7eb;">Ping&nbsp;Status</th>
+      <th style="border:1px solid #e5e7eb;">Last&nbsp;Sync</th>
+    </tr>
+  </thead>
+
+  <tbody>
+  <% @site_reports.each do |r| %>
+    <tr>
+      <td style="border:1px solid #e5e7eb;"><%= r[:name] %></td>
+      <td style="border:1px solid #e5e7eb;"><%= r[:ip_address] %></td>
+      <td style="border:1px solid #e5e7eb;"><%= r[:app_port] %></td>
+      <td style="border:1px solid #e5e7eb; color:<%= r[:app_status].present? ? '#16a34a' : '#dc2626' %>;">
+        <%= r[:app_status].present? ? 'Running' : 'Down' %>
+      </td>
+      <td style="border:1px solid #e5e7eb; color:<%= r[:ping_status].present? ? '#16a34a' : '#dc2626' %>;">
+        <%= r[:ping_status].present? ? 'Successful' : 'Failed' %>
+      </td>
+      <td style="border:1px solid #e5e7eb;"><%= r[:last_sync_date] %></td>
+    </tr>
+  <% end %>
+  </tbody>
+</table>
+
+<p style="font-family: system-ui, sans-serif; font-size: 12px; color:#6b7280;">
+  Generated automatically by <strong>NLIMS CHSU</strong>. Please do not reply.
+</p>
