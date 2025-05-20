@@ -7,6 +7,7 @@
               font-size: 14px; text-align: left;">
   <thead>
     <tr style="background:#f3f4f6;">
+      <th style="border:1px solid #e5e7eb;">#</th>
       <th style="border:1px solid #e5e7eb;">Site</th>
       <th style="border:1px solid #e5e7eb;">IP</th>
       <th style="border:1px solid #e5e7eb;">NLIMS Application Port</th>
@@ -17,8 +18,9 @@
   </thead>
 
   <tbody>
-  <% @site_reports.each do |r| %>
+  <% @site_reports.each_with_index do |r, index| %>
     <tr>
+      <td style="border:1px solid #e5e7eb;"><%= index + 1 %></td>
       <td style="border:1px solid #e5e7eb;"><%= r[:name] %></td>
       <td style="border:1px solid #e5e7eb;"><%= r[:ip_address] %></td>
       <td style="border:1px solid #e5e7eb;"><%= r[:app_port] %></td>
