@@ -6996,8 +6996,8 @@
     "id": 1154,
     "name": "Unknown facilities from PIH Lab",
     "application_port": "3009",
-    "host_address": "10.41.0.3",
-    "enabled": true,
+    "host_address": "",
+    "enabled": false,
     "district": "Lilongwe",
     "region": "Central"
   },
