@@ -98,4 +98,31 @@ class IntegrationStatusService
     generate_status_report
     Report.where(name: 'integration_status').where(updated_at: (Time.now - 6.hour)..Time.now).first&.data
   end
+
+  def generate_csv_report(site_reports)
+    require 'csv'
+
+    csv_data = CSV.generate do |csv|
+      # Add headers
+      csv << ['Site', 'IP Address', 'Application Port', 'Application Status', 'Ping Status', 'Last Sync Date']
+
+      # Add data rows
+      site_reports.each do |report|
+        csv << [
+          report['name'],
+          report['ip_address'],
+          report['app_port'],
+          report['app_status'] ? 'Running' : 'Down',
+          report['ping_status'] ? 'Successful' : 'Failed',
+          report['last_sync_date']
+        ]
+      end
+    end
+
+    # Create a temporary file
+    file_path = "tmp/integration_status_report_#{Time.now.strftime('%Y%m%d%H%M%S')}.csv"
+    File.write(file_path, csv_data)
+
+    file_path
+  end
 end

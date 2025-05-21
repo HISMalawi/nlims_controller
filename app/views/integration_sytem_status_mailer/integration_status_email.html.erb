@@ -21,16 +21,16 @@
   <% @site_reports.each_with_index do |r, index| %>
     <tr>
       <td style="border:1px solid #e5e7eb;"><%= index + 1 %></td>
-      <td style="border:1px solid #e5e7eb;"><%= r[:name] %></td>
-      <td style="border:1px solid #e5e7eb;"><%= r[:ip_address] %></td>
-      <td style="border:1px solid #e5e7eb;"><%= r[:app_port] %></td>
-      <td style="border:1px solid #e5e7eb; color:<%= r[:app_status].present? ? '#16a34a' : '#dc2626' %>;">
-        <%= r[:app_status].present? ? 'Running' : 'Down' %>
+      <td style="border:1px solid #e5e7eb;"><%= r['name'] %></td>
+      <td style="border:1px solid #e5e7eb;"><%= r['ip_address'] %></td>
+      <td style="border:1px solid #e5e7eb;"><%= r['app_port'] %></td>
+      <td style="border:1px solid #e5e7eb; color:<%= r['app_status'].present? ? '#16a34a' : '#dc2626' %>;">
+        <%= r['app_status'].present? ? 'Running' : 'Down' %>
       </td>
-      <td style="border:1px solid #e5e7eb; color:<%= r[:ping_status].present? ? '#16a34a' : '#dc2626' %>;">
-        <%= r[:ping_status].present? ? 'Successful' : 'Failed' %>
+      <td style="border:1px solid #e5e7eb; color:<%= r['ping_status'].present? ? '#16a34a' : '#dc2626' %>;">
+        <%= r['ping_status'].present? ? 'Successful' : 'Failed' %>
       </td>
-      <td style="border:1px solid #e5e7eb;"><%= r[:last_sync_date] %></td>
+      <td style="border:1px solid #e5e7eb;"><%= r['last_sync_date'] %></td>
     </tr>
   <% end %>
   </tbody>

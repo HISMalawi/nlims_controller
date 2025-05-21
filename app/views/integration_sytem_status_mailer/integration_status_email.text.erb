@@ -5,8 +5,8 @@ System Status — <%= Time.current.strftime('%B %e, %Y %H:%M') %>
 <%= "-"*80 %>
 <% @site_reports.each do |r| %>
 <%= sprintf "%-20s %-15s %-5s %-10s %-14s %s",
-            r[:name], r[:ip_address], r[:app_port], r[:app_status], r[:ping_status],
-            r[:last_sync_date] %>
+            r['name'], r['ip_address'], r['app_port'], r['app_status'], r['ping_status'],
+            r['last_sync_date'] %>
 <% end %>
 
 (automatic email – do not reply)
