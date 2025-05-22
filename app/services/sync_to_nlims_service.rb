@@ -42,7 +42,7 @@ module  SyncToNlimsService
       ).each do |tracker|
         order = Speciman.find_by(tracking_number: tracker&.tracking_number)
         nlims = NlimsSyncUtilsService.new(order&.tracking_number)
-        nlims.push_order_update_to_nlims(order&.id)
+        nlims.push_order_update_to_nlims(order&.id, status: tracker&.status)
       end
     end
 

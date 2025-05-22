@@ -13,18 +13,24 @@ class NlimsSyncUtilsService
     @token = default_authentication if action_type == 'account_creation'
   end
 
-  def order_status_payload(order_id)
+  def order_status_payload(order_id, status)
     order = Speciman.find_by(id: order_id)
-    order_status_trail = SpecimenStatusTrail.where(specimen_id: order&.id).order(created_at: :desc).first
+    if status.nil?
+      status = OrderStatusSyncTracker.find_by(tracking_number: order&.tracking_number, sync_status: false)&.status
+    end
+    specimen_status_id = SpecimenStatus.find_by(name: status)&.id
+    order_status_trail = SpecimenStatusTrail.find_by(specimen_id: order&.id, specimen_status_id:)
+    return nil if order_status_trail.nil?
+
     {
       tracking_number: order&.tracking_number,
-      status: SpecimenStatus.find_by(id: order_status_trail&.specimen_status_id)&.name,
+      status: status,
       who_updated: who_updated(order_status_trail)
     }
   end
 
-  def push_order_update_to_nlims(order_id)
-    payload = order_status_payload(order_id)
+  def push_order_update_to_nlims(order_id, status: nil)
+    payload = order_status_payload(order_id, status)
     url = "#{@address}/api/v1/update_order"
     response = JSON.parse(RestClient::Request.execute(
                             method: :post,
@@ -104,10 +110,12 @@ class NlimsSyncUtilsService
 
       results_object[Measure.find_by(id: result.measure_id)&.name] = result&.result
     end
-    test_status_trail = TestStatusTrail.where(test_id: test_record&.id).order(created_at: :desc).first
+    test_status = StatusSyncTracker.find_by(tracking_number:, test_id: test_record&.id, sync_status: false)&.status
+    test_status_id = TestStatus.find_by(name: test_status)&.id
+    test_status_trail = TestStatusTrail.where(test_id: test_record&.id, test_status_id:).order(created_at: :desc).first
     payload = {
       tracking_number:,
-      test_status: TestStatus.find_by(id: test_status_trail&.test_status_id)&.name,
+      test_status: test_status,
       test_name: TestType.find_by(id: test_record&.test_type_id)&.name,
       result_date: '',
       who_updated: who_updated(test_status_trail)

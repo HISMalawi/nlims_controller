@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
 if Config.local_nlims?
-  last_logged_tracking_number = TrackingNumberLogger.last
+  last_logged_tracking_number = TrackingNumberLogger.maximum(:chsu_tracking_number_order_id)
 
-  chsu_tracking_number_order_id = last_logged_tracking_number&.chsu_tracking_number_order_id || 0
+  chsu_tracking_number_order_id = last_logged_tracking_number || 0
 
   nlims_service = NlimsSyncUtilsService.new(nil)
   order_tracking_numbers = nlims_service.order_tracking_numbers(chsu_tracking_number_order_id, limit: 50_000)
