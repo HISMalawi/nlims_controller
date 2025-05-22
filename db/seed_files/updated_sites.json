@@ -6995,7 +6995,7 @@
   {
     "id": 1154,
     "name": "Unknown facilities from PIH Lab",
-    "application_port": "3009",
+    "application_port": "",
     "host_address": "",
     "enabled": false,
     "district": "Lilongwe",
