@@ -193,7 +193,8 @@ class NlimsSyncUtilsService
                             content_type: :json,
                             headers: { content_type: :json, accept: :json, token: @token }
                           ))
-    if response['error'] == false && (response['message'] == 'order created successfuly' || response['message'] == 'order already available')
+    if response['error'] == false && ['order created successfuly',
+                                      'order already available'].include?(response['message'])
       OrderSyncTracker.find_by(tracking_number:).update(synced: true)
       return true
     end
@@ -392,15 +393,15 @@ class NlimsSyncUtilsService
     exit
   end
 
-  def order_tracking_numbers(order_id, limit: 100)
+  def order_tracking_numbers(order_id, limit: 200_000)
     JSON.parse(RestClient::Request.execute(
-                            method: :get,
-                            url: "#{@address}/api/v1/get_order_tracking_numbers?order_id=#{order_id}&limit=#{limit}",
-                            headers: { content_type: :json, accept: :json, token: @token }
-                          ), symbolize_names: true)
+                 method: :get,
+                 url: "#{@address}/api/v1/get_order_tracking_numbers?order_id=#{order_id}&limit=#{limit}",
+                 headers: { content_type: :json, accept: :json, token: @token }
+               ), symbolize_names: true)
   rescue StandardError => e
-      puts "Error: #{e.message} ==> Failed to get order tracking numbers to be logged"
-      []
+    puts "Error: #{e.message} ==> Failed to get order tracking numbers to be logged"
+    []
   end
 
   def token_valid(username)

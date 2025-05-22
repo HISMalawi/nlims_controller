@@ -1,5 +1,5 @@
 #!/bin/bash
-rails db:migrate && (
+bundle install --local && rails db:migrate && (
   rake db:seed:specific\[seed_dispatcher_types.rb\] &&
   rake db:seed:specific\[seed_test_results_recepient_types.rb\] &&
   rake db:seed:specific\[seed_name_mappings.rb\] &&

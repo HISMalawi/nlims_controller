@@ -527,8 +527,6 @@ module OrderService
         end
         next if tracking_number[0..4] == 'XCHSU'
 
-        dob = res.dob
-        dob = Time.new.strftime('%Y-%m-%d') if dob.nil?
         data[counter] = { sample_type: res.sample_type,
                           tracking_number:,
                           specimen_status: res.specimen_status,
@@ -548,7 +546,7 @@ module OrderService
                             id: res.pat_id,
                             name: patient_name,
                             gender: res.sex,
-                            dob:
+                            dob: res.dob
                           },
                           receiving_lab: res.target_lab,
                           sending_lab: res.health_facility,
