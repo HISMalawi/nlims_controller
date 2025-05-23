@@ -35,9 +35,10 @@ module UserService
   end
 
   def self.create_token
-    token_chars = ('a'..'z').to_a + ('A'..'Z').to_a + ('0'..'9').to_a
-    token_length = 12
-    Array.new(token_length) { token_chars[rand(token_chars.length)] }.join
+    # token_chars = ('a'..'z').to_a + ('A'..'Z').to_a + ('0'..'9').to_a
+    # token_length = 12
+    # Array.new(token_length) { token_chars[rand(token_chars.length)] }.join
+    SecureRandom.uuid
   end
 
   def self.compute_expiry_time
@@ -93,7 +94,9 @@ module UserService
 
   def self.re_authenticate(username, password)
     user = User.where(username:).first
-    token = create_token
+    token_valid = check_token(user.token) if user
+
+    token = token_valid ? user.token : create_token
     expiry_time = compute_expiry_time
 
     return false unless user
