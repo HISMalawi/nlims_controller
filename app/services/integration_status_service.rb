@@ -53,7 +53,9 @@ class IntegrationStatusService
       }
     end
 
-    Parallel.map(site_data, in_threads: 4, finish: ->(item, i, result) {}) do |site|
+    results = []
+
+    site_data.each do |site|
       ip_address = site[:ip_address]
       sending_facility = site[:name]
       application_port = site[:app_port]
@@ -70,7 +72,8 @@ class IntegrationStatusService
 
       puts "checking application status #{ip_address}"
       app_status = application_status(ip_address, application_port)
-      {
+
+      results << {
         name: sending_facility,
         ip_address: ip_address,
         app_port: application_port,
@@ -79,10 +82,12 @@ class IntegrationStatusService
         last_sync_date: last_sync_date&.strftime('%Y-%m-%d %H:%M:%S')
       }
     rescue StandardError => e
-      puts "[Parallel Error] #{e.class}: #{e.message}"
-      nil
-    end.compact
+      puts "[Error] #{e.class}: #{e.message}"
+    end
+
+    results
   end
+
   # rubocop:enable Metrics/MethodLength
   # rubocop:enable Metrics/AbcSize
 
