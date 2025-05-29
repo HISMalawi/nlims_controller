@@ -7,6 +7,6 @@ class SyncErrorLog < ApplicationRecord
   private
 
   def clean_up_after_24_hours
-    SyncErrorLog.where('created_at < ?', 24.hours.ago).delete_all
+    SyncErrorLog.where('created_at < ?', 6.hours.ago).limit(1000).delete_all
   end
 end
