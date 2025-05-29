@@ -280,6 +280,11 @@ class NlimsSyncUtilsService
                  content_type: :json,
                  headers: { content_type: :json, accept: :json, token: @token }
                ))
+    TrackingNumberHost.find_or_create_by(
+      tracking_number:,
+      source_host: Config.find_by(config_type: 'emr').configs['address'] || '127.0.0.1',
+      source_app_uuid: User.find_by(app_name: 'EMR')&.app_uuid || User.last&.app_uuid
+    )
   rescue StandardError => e
     puts "Error: #{e.message} ==> NLIMS Register Source to Master NLIMS"
   end
