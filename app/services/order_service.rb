@@ -421,7 +421,6 @@ module OrderService
 																		INNER JOIN patients ON patients.id = tests.patient_id
 																		LEFT JOIN wards ON specimen.ward_id = wards.id
 						      									WHERE specimen.sending_facility ='#{res[0]['site_name'].gsub("'", "\\\\'")}'
-                                    AND district = '#{res[0]['district']}'
 																		AND specimen.tracking_number NOT IN (SELECT tracking_number FROM specimen_dispatches)
 																		GROUP BY specimen.id ORDER BY specimen.id DESC limit 500")
         tsts = {}
