@@ -401,7 +401,7 @@ module OrderService
     master_facility = {}
     facility_samples = []
     facilities.each do |facility|
-      res = Site.find_by_sql("SELECT name AS site_name FROM sites WHERE id='#{facility}'")
+      res = Site.find_by_sql("SELECT name AS site_name, district FROM sites WHERE id='#{facility}'")
       unless res.blank?
         ActiveRecord::Base.connection.execute("SET SESSION sql_mode = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION'")
         res_ = Speciman.find_by_sql("SELECT specimen.tracking_number AS tracking_number,
@@ -421,6 +421,7 @@ module OrderService
 																		INNER JOIN patients ON patients.id = tests.patient_id
 																		LEFT JOIN wards ON specimen.ward_id = wards.id
 						      									WHERE specimen.sending_facility ='#{res[0]['site_name'].gsub("'", "\\\\'")}'
+                                    AND district = '#{res[0]['district']}'
 																		AND specimen.tracking_number NOT IN (SELECT tracking_number FROM specimen_dispatches)
 																		GROUP BY specimen.id ORDER BY specimen.id DESC limit 500")
         tsts = {}
