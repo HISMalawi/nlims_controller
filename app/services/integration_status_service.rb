@@ -5,14 +5,16 @@ require 'parallel'
 # IntegrationStatusService
 class IntegrationStatusService
   def initialize
-    @sites = Site.where(enabled: true, region: 'central').where("host_address <> '' AND host_address IS NOT NULL")
+    @sites = Site.where(enabled: true)
   end
 
   def ping_server(ip_address)
-    Net::Ping::External.new(ip_address).ping
+    Net::Ping::External.new(ip_address || '').ping
   end
 
   def application_status(ip_address, port)
+    return false if ip_address.blank? || port.blank?
+
     url = "http://#{ip_address}:#{port}/api/v1/ping"
 
     response = RestClient::Request.execute(
@@ -32,10 +34,8 @@ class IntegrationStatusService
     false
   end
 
-  def last_sync_date(ip_address, sending_facility)
-    tracking_number_hosts = TrackingNumberHost.where("source_host = '#{ip_address}'").limit(5).pluck(:tracking_number)
-    specimen = Speciman.where(tracking_number: tracking_number_hosts).order('created_at DESC').first
-    specimen&.create_at || Speciman.where(sending_facility: sending_facility).order('created_at DESC').first&.created_at
+  def last_sync_date(sending_facility)
+    Speciman.where(sending_facility: sending_facility).order('created_at DESC').first&.created_at
   end
 
   def last_sync_date_gt_24hr?(last_sync_date)
@@ -61,16 +61,16 @@ class IntegrationStatusService
       application_port = site[:app_port]
 
       last_sync_date = ActiveRecord::Base.connection_pool.with_connection do
-        puts "checking last sync date #{ip_address}"
-        last_sync_date(ip_address, sending_facility)
+        puts "checking last sync date #{sending_facility} : #{ip_address}"
+        last_sync_date(sending_facility)
       end
 
       next unless last_sync_date_gt_24hr?(last_sync_date)
 
-      puts "pinging #{ip_address}"
+      puts "pinging #{sending_facility} : #{ip_address}"
       ping_status = ping_server(ip_address)
 
-      puts "checking application status #{ip_address}"
+      puts "checking application status #{sending_facility} : #{ip_address}"
       app_status = application_status(ip_address, application_port)
 
       results << {
