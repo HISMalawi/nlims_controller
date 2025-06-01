@@ -29,13 +29,22 @@ module StatsService
     end
 
     def integrated_sites
-      Speciman.where(sending_facility: Site.where(enabled: true).pluck(:name))
-              .group(:sending_facility)
-              .select('sending_facility, MAX(created_at) AS last_sync').map do |site|
+      enabled_sites = Site.where(enabled: true).pluck(:name)
+
+      # Step 1: Get latest sync for sites that have Specimen records
+      latest_syncs = Speciman
+                     .where(sending_facility: enabled_sites)
+                     .group(:sending_facility)
+                     .maximum(:created_at)
+
+      # Step 2: Merge with all enabled sites
+      enabled_sites.map do |site_name|
+        last_sync = latest_syncs[site_name]
+
         {
-          sending_facility: site.sending_facility,
-          last_sync: site.last_sync,
-          is_gt_24hr: site.last_sync < 24.hours.ago
+          sending_facility: site_name,
+          last_sync: last_sync ? last_sync.strftime('%d/%b/%Y %H:%M') : 'Has Never Synced with NLIMS',
+          is_gt_24hr: last_sync.nil? || last_sync < 24.hours.ago
         }
       end
     end

@@ -79,7 +79,7 @@ class IntegrationStatusService
         app_port: application_port,
         ping_status: ping_status,
         app_status: app_status,
-        last_sync_date: last_sync_date&.strftime('%Y-%m-%d %H:%M:%S')
+        last_sync_date: last_sync_date.present? ? last_sync_date.strftime('%d/%b/%Y %H:%M') : 'Has Never Synced with NLIMS'
       }
     rescue StandardError => e
       puts "[Error] #{e.class}: #{e.message}"
