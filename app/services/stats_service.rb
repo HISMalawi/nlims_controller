@@ -28,6 +28,18 @@ module StatsService
       end
     end
 
+    def integrated_sites
+      Speciman.where(sending_facility: Site.where(enabled: true).pluck(:name))
+              .group(:sending_facility)
+              .select('sending_facility, MAX(created_at) AS last_sync').map do |site|
+        {
+          sending_facility: site.sending_facility,
+          last_sync: site.last_sync,
+          is_gt_24hr: site.last_sync < 24.hours.ago
+        }
+      end
+    end
+
     def search_orders(tracking_number)
       Speciman.where(tracking_number:)
     end
@@ -48,7 +60,7 @@ module StatsService
           WHERE s.date_created >= '#{DATE_CREATED}'
           GROUP BY s.sending_facility
           ORDER BY max_result_date_nlims DESC"
-        )
+      )
       results.map do |result|
         {
           sending_facility: result.sending_facility,
@@ -74,7 +86,7 @@ module StatsService
             INNER JOIN test_results tr ON tr.test_id = t.id AND tr.measure_id = 294
             LEFT JOIN test_result_recepient_types trrt on trrt.id = t.test_result_receipent_types
          WHERE s.tracking_number='#{tracking_number}'"
-        )
+      )
       results.map do |result|
         {
           sending_facility: result.sending_facility,
