@@ -14,7 +14,7 @@
       <li><%= link_to 'Latest Orders by Site', latest_orders_by_site_path, style: "text-decoration: none; color: #{'blue' if request.path != latest_orders_by_site_path};", class: ('active' if request.path == latest_orders_by_site_path) %></li>|
       <li><%= link_to 'Orders Count by Site', count_by_sending_facility_path, style: "text-decoration: none; color: #{'blue' if request.path != count_by_sending_facility_path};", class: ('active' if request.path == count_by_sending_facility_path) %></li>|
       <li><%= link_to 'Orders Per Site', sites_by_orders_path, style: "text-decoration: none; color: #{'blue' if request.path != sites_by_orders_path};", class: ('active' if request.path == sites_by_orders_path) %></li> |
-      <li><%= link_to 'Integrated Sites', integrated_sites_path, style: "text-decoration: none; color: #{'blue' if request.path != integrated_sites_path};", class: ('active' if request.path == integrated_sites_path) %></li>|
+      <li><%= link_to 'Integrated Sites', integrated_sites_path, style: "text-decoration: none; color: #{'blue' if request.path != integrated_sites_path};", class: ('active' if request.path == integrated_sites_path) %></li>
     </ul>
   </nav>
 </div>
