@@ -12,4 +12,3 @@ class DailyIntegrationStatusEmailWorker
     ).deliver_now
   end
 end
-DailyIntegrationStatusEmailWorker.perform_async

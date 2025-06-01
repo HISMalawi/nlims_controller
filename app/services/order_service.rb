@@ -801,6 +801,9 @@ module OrderService
       order.update(specimen_type_id: specimen_type.id)
     end
     order.update(specimen_status_id: specimen_status.id)
+    return [true, ''] if SpecimenStatusTrail.exists?(specimen_id: order.id, specimen_status_id: specimen_status.id)
+
+    # Create the status trail
     SpecimenStatusTrail.create(
       specimen_id: order.id,
       specimen_status_id: specimen_status.id,

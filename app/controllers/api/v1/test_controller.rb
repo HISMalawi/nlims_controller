@@ -303,12 +303,17 @@ class API::V1::TestController < ApplicationController
   def update_remote_host
     return unless params[:tracking_number].present?
 
-    if Config.local_nlims?
-      host = TrackingNumberHost.find_or_create_by(
-        tracking_number: params[:tracking_number],
-        source_host: request.remote_ip
-      )
-    end
+    host = if Config.local_nlims?
+             TrackingNumberHost.find_or_create_by(
+               tracking_number: params[:tracking_number],
+               source_host: request.remote_ip
+             )
+           else
+             TrackingNumberHost.find_by(
+               tracking_number: params[:tracking_number],
+               source_host: request.remote_ip
+             )
+           end
 
     return unless host.present?
 

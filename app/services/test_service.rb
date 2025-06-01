@@ -7,108 +7,92 @@ module TestService
     return [false, 'test status not provided'] if params[:test_status].blank?
 
     sql_order = OrderService.get_order_by_tracking_number_sql(params[:tracking_number], params[:arv_number])
-    result_date = if params[:result_date].blank?
-                    Time.now.strftime('%Y%m%d%H%M%S')
-                  else
-                    params[:result_date]
-                  end
-    if !sql_order == false
-      order_id = sql_order.id
-      test_name = NameMapping.actual_name_of(params[:test_name])
-      tst_name__ = TestType.find_by(name: test_name)
-      status__ = TestStatus.find_by(name: params[:test_status])
-      return [false, 'wrong parameter on test name provided'] if tst_name__.blank?
-      return [false, 'test status provided, not within scope of tests statuses'] if status__.blank?
+    return [false, 'order not available'] if sql_order == false
 
-      test_id = Test.find_by_sql("SELECT tests.id FROM tests INNER JOIN test_types ON tests.test_type_id = test_types.id
-																	WHERE tests.specimen_id = '#{order_id}' AND test_types.name = '#{test_name}'")
-      test_status = TestStatus.where(name: params[:test_status]).first
-      if !test_id.blank?
-        checker = check_if_test_updated?(test_id, test_status.id)
-        if checker == false
-          ts = test_id[0]
-          test_id = ts['id']
-          TestStatusTrail.create(
-            test_id:,
-            time_updated: params[:time_updated],
-            test_status_id: test_status.id,
-            who_updated_id: params[:who_updated]['id_number'].to_s,
-            who_updated_name: "#{params[:who_updated]['first_name']} #{params[:who_updated]['last_name']}",
-            who_updated_phone_number: ''
-          )
-          test_status = TestStatus.where(name: params[:test_status]).first
-          tst_update = Test.find_by(id: test_id)
-          if tst_update.test_status_id == 9 && test_status.id == 5
-            tst_update.test_status_id = test_status.id
-            tst_update.save
-          elsif tst_update.test_status_id == 9 && test_status.id == 4
-            tst_update.test_status_id = test_status.id
-            tst_update.save
-          elsif tst_update.test_status_id == 9 && test_status.id == 2
-            tst_update.test_status_id = test_status.id
-            tst_update.save
-          elsif tst_update.test_status_id == 2 && test_status.id == 3
-            tst_update.test_status_id = test_status.id
-            tst_update.save
-          elsif tst_update.test_status_id == 3 && test_status.id == 4
-            tst_update.test_status_id = test_status.id
-            tst_update.save
-          elsif tst_update.test_status_id == 4 && test_status.id == 5
-            tst_update.test_status_id = test_status.id
-            tst_update.save
-          elsif test_status.id == 11
-            tst_update.test_status_id = test_status.id
-            tst_update.save
-          elsif test_status.id == 10
-            tst_update.test_status_id = test_status.id
-            tst_update.save
-          end
-          if params[:results]
-            results = params[:results]
-            results.each do |key, value|
-              measure_name = key
-              result_value = value
-              measure = Measure.where(name: measure_name).first
-              next if measure.blank?
-              next if result_value == 'Failed'
+    test_name = NameMapping.actual_name_of(params[:test_name])
+    test_status = TestStatus.find_by(name: params[:test_status])
+    return [false, 'wrong parameter on test name provided'] unless TestType.exists?(name: test_name)
+    return [false, 'test status provided, not within scope of tests statuses'] if test_status.blank?
 
-              if check_if_result_already_available(test_id, measure.id) == false
-                device_name = params[:platform].blank? ? '' : params[:platform]
-                TestResult.create(
-                  measure_id: measure.id,
-                  test_id:,
-                  result: result_value,
-                  device_name:,
-                  time_entered: result_date
-                )
-              else
-                test_result_ = TestResult.find_by(test_id:, measure_id: measure.id)
-                TestResultTrail.create(
-                  measure_id: measure.id,
-                  test_id:,
-                  old_result: test_result_.result,
-                  new_result: result_value,
-                  old_device_name: test_result_.device_name,
-                  new_device_name: device_name,
-                  old_time_entered: test_result_.time_entered,
-                  new_time_entered: result_date
-                )
-                test_result_.update(result: result_value, time_entered: result_date)
-                t = TestStatusTrail.where(test_id:, test_status_id: 5).first
-                t.update(time_updated: result_date) unless t.blank?
-              end
-            end
-            result_sync_tracker(params[:tracking_number], test_id)
-          end
-          [true, '']
-        else
-          [false, 'order already updated with such state']
-        end
-      else
-        [false, 'order with such test not available']
+    test_id = Test.find_by_sql("SELECT tests.id FROM tests INNER JOIN test_types ON tests.test_type_id = test_types.id
+											WHERE tests.specimen_id = '#{sql_order.id}' AND test_types.name = '#{test_name}'").first&.id
+
+    return [false, 'order with such test not available'] if test_id.blank?
+    return [false, 'order already updated with such state'] if check_if_test_updated?(test_id, test_status.id)
+
+    ActiveRecord::Base.transaction do
+      unless TestStatusTrail.exists?(test_id: test_id, test_status_id: test_status.id)
+        TestStatusTrail.create!(
+          test_id: test_id,
+          time_updated: params[:time_updated].blank? ? Time.now.strftime('%Y%m%d%H%M%S') : params[:time_updated],
+          test_status_id: test_status.id,
+          who_updated_id: params[:who_updated]['id_number'].to_s,
+          who_updated_name: "#{params[:who_updated]['first_name']} #{params[:who_updated]['last_name']}",
+          who_updated_phone_number: ''
+        )
       end
+      update_test_status(test_id, test_status)
+      if test_status.id == 5 && params[:results]
+        result_date = params[:result_date].blank? ? Time.now.strftime('%Y%m%d%H%M%S') : params[:result_date]
+        params[:results].each do |measure_name, result_value|
+          measure_id = Measure.where(name: measure_name).first&.id
+          next if measure_id.blank?
+          next if result_value == 'Failed'
+          next if result_value.blank?
+          next if result_already_available?(test_id, measure_id, result_value)
+
+          if TestResult.exists?(test_id:, measure_id:)
+            test_result = TestResult.find_by(test_id:, measure_id: measure_id)
+            TestResultTrail.create!(
+              measure_id: measure_id,
+              test_id: test_id,
+              old_result: test_result.result,
+              new_result: result_value,
+              old_device_name: test_result.device_name,
+              new_device_name: device_name,
+              old_time_entered: test_result.time_entered,
+              new_time_entered: result_date
+            )
+            test_result.update!(result: result_value, time_entered: result_date)
+            test_status_trail = TestStatusTrail.where(test_id:, test_status_id: 5).first
+            test_status_trail.update!(time_updated: result_date) unless test_status_trail.blank?
+            result_sync_tracker(params[:tracking_number], test_id)
+          else
+            device_name = params[:platform].blank? ? '' : params[:platform]
+            test_result = TestResult.create!(measure_id: measure_id, test_id: test_id, result: result_value, device_name: device_name,
+                                             time_entered: result_date)
+            result_sync_tracker(params[:tracking_number], test_id) if test_result&.persisted?
+          end
+        end
+      end
+      [true, '']
+    rescue StandardError => e
+      Rails.logger.error("Update test failed: #{e.message}")
+      [false, "an error occurred while updating the test: #{e.message}"]
+    end
+  end
+
+  def self.update_test_status(test_id, new_status)
+    allowed_transitions = {
+      9 => [2, 3, 4, 5],
+      2 => [3, 4, 5],
+      3 => [4, 5],
+      4 => [5],
+      nil => [10, 11]
+    }.freeze
+    test = Test.find_by(id: test_id)
+
+    return false unless test && new_status
+
+    current_status = test.test_status_id
+    new_status_id = new_status.id
+
+    # Check if transition is allowed
+    if allowed_transitions[current_status]&.include?(new_status_id) ||
+       allowed_transitions[nil]&.include?(new_status_id)
+      test.update!(test_status_id: new_status_id)
     else
-      [false, 'order not available']
+      false
     end
   end
 
@@ -142,13 +126,11 @@ module TestService
     end
   end
 
-  def self.check_if_result_already_available(test_id, measure_id)
-    res = TestResult.find_by_sql("SELECT * FROM test_results where test_id=#{test_id} AND measure_id=#{measure_id}")
-    if !res.blank?
-      true
-    else
-      false
-    end
+  def self.result_already_available?(test_id, measure_id, value)
+    test_result = TestResult.find_by(test_id:, measure_id:)
+    return false if test_result.blank?
+
+    test_result&.result == value
   end
 
   def self.acknowledge_test_results_receiptient(tracking_number, test_name, date, recipient_type)
