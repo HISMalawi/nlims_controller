@@ -29,7 +29,7 @@ module StatsService
     end
 
     def integrated_sites
-      enabled_sites = Site.where(enabled: true).pluck(:name)
+      enabled_sites = Site.where(enabled: true).order(:name).pluck(:name)
 
       # Step 1: Get latest sync for sites that have Specimen records
       latest_syncs = Speciman
