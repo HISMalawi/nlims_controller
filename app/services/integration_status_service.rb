@@ -65,7 +65,7 @@ class IntegrationStatusService
         last_sync_date(sending_facility)
       end
 
-      next unless last_sync_date_gt_24hr?(last_sync_date)
+      # next unless last_sync_date_gt_24hr?(last_sync_date)
 
       puts "pinging #{sending_facility} : #{ip_address}"
       ping_status = ping_server(ip_address)
@@ -79,6 +79,7 @@ class IntegrationStatusService
         app_port: application_port,
         ping_status: ping_status,
         app_status: app_status,
+        last_sync_date_gt_24hr: last_sync_date_gt_24hr?(last_sync_date),
         last_sync_date: last_sync_date.present? ? last_sync_date.strftime('%d/%b/%Y %H:%M') : 'Has Never Synced with NLIMS'
       }
     rescue StandardError => e
@@ -98,10 +99,11 @@ class IntegrationStatusService
 
   def collect_outdated_sync_sites
     report = Report.where(name: 'integration_status').where(updated_at: (Time.now - 6.hour)..Time.now).first
-    return report&.data if report.present?
+    return report&.data&.select { |site| site['last_sync_date_gt_24hr'] } if report.present?
 
     generate_status_report
-    Report.where(name: 'integration_status').where(updated_at: (Time.now - 6.hour)..Time.now).first&.data
+    data = Report.where(name: 'integration_status').where(updated_at: (Time.now - 6.hour)..Time.now).first&.data
+    data&.select { |site| site['last_sync_date_gt_24hr'] } if data.present?
   end
 
   def generate_csv_report(site_reports)
