@@ -50,6 +50,13 @@ class NlimsSyncUtilsService
       )&.update(sync_status: true)
       return true
     end
+    if response['error'] == false && response['message'] == 'order not available'
+      OrderStatusSyncTracker.find_by(
+        tracking_number: payload[:tracking_number],
+        status: payload[:status]
+      )&.update(sync_status: true)
+      return true
+    end
     SyncUtilService.log_error(
       error_message: response['message'],
       custom_message: "Failed to push order actions to Local NLIMS @ #{@address}",
