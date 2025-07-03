@@ -296,6 +296,7 @@ class NlimsSyncUtilsService
       source_host: Config.find_by(config_type: 'emr').configs['address'] || '127.0.0.1',
       source_app_uuid: User.find_by(app_name: 'EMR')&.app_uuid || User.last&.app_uuid
     )
+    OrderSyncTracker.create(tracking_number: tracking_number)
     SyncWithNlimsJob.perform_async({
       identifier: tracking_number,
       type: 'order',
