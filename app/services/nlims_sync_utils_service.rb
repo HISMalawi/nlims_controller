@@ -296,6 +296,11 @@ class NlimsSyncUtilsService
       source_host: Config.find_by(config_type: 'emr').configs['address'] || '127.0.0.1',
       source_app_uuid: User.find_by(app_name: 'EMR')&.app_uuid || User.last&.app_uuid
     )
+    SyncWithNlimsJob.perform_async({
+      identifier: tracking_number,
+      type: 'order',
+      action: 'order_create'
+    }.stringify_keys)
   rescue StandardError => e
     puts "Error: #{e.message} ==> NLIMS Register Source to Master NLIMS"
   end
