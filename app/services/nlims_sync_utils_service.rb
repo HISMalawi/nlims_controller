@@ -31,6 +31,8 @@ class NlimsSyncUtilsService
 
   def push_order_update_to_nlims(order_id, status: nil)
     payload = order_status_payload(order_id, status)
+    return true if payload.nil?
+
     url = "#{@address}/api/v1/update_order"
     response = JSON.parse(RestClient::Request.execute(
                             method: :post,
@@ -68,6 +70,8 @@ class NlimsSyncUtilsService
     test_record = Test.find_by(id: test_id)
     tracking_number = Speciman.find(test_record&.specimen_id)&.tracking_number
     payload = test_action_payload(tracking_number, test_record, action)
+    return true if payload.nil?
+
     url = "#{@address}/api/v1/update_test"
     response = JSON.parse(RestClient::Request.execute(
                             method: :post,
