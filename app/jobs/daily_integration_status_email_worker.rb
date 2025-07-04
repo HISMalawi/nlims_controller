@@ -7,7 +7,6 @@ class DailyIntegrationStatusEmailWorker
   def perform
     return if Config.local_nlims?
 
-    sidekiq_options queue: :critical
     IntegrationSytemStatusMailer.integration_status_email(
       Mailinglist.all.pluck(:email)
     ).deliver_now
