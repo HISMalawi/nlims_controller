@@ -50,8 +50,8 @@ module UserService
 
   def self.check_token(token)
     user = User.where(token:).first
-
     return false unless user
+    return false unless user.token_expiry_time.present?
     return true if user.token_expiry_time > Time.now.strftime('%Y%m%d%H%M%S')
 
     false
