@@ -14,6 +14,7 @@ Rails.application.routes.draw do
   get 'count_by_sending_facility', to: 'home#counts'
   get 'order_per_sending_facility', to: 'home#order_per_site'
   get 'sites_by_orders', to: 'home#sites_by_orders'
+  get 'integrated_sites', to: 'home#integrated_sites'
   namespace :api do
     namespace :v1 do
       # order routes

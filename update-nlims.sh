@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # SETTINGS : Set variables 
-NLIMS_VERSION="v2.2.3" # Replace with the actual version
+NLIMS_VERSION="v2.3.0" # Replace with the actual version
 NLIMS_CONTROLLER_DIR="/var/www/nlims_controller" 
 EMR_API_DIR="/var/www/EMR-API" 
 MLAB_API_DIR="/var/www/mlab_api" 
@@ -164,7 +164,9 @@ fi
  
  # Rake Task  
 cd "$NLIMS_CONTROLLER_DIR"
-bundle exec rake master_nlims:register_order_source
+nohup bundle exec rake master_nlims:register_order_source > log/register_order_source.log 2>&1 &
+cd "$NLIMS_CONTROLLER_DIR"
+nohup bundle exec rake tracking_number_loggers:load_data > log/tracking_number_loggers.log 2>&1 &
 
 # DONE WITH THE SCRIPT
 echo "✅ NLIMS  completed successfully"

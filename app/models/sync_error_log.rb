@@ -2,11 +2,11 @@
 
 # SyncErrorLog for logging errors in syncing orders to EMR
 class SyncErrorLog < ApplicationRecord
-  after_create :clean_up_after_24_hours
+  after_commit :schedule_cleanup, on: :create
 
   private
 
-  def clean_up_after_24_hours
-    SyncErrorLog.where('created_at < ?', 24.hours.ago).delete_all
+  def schedule_cleanup
+    SyncErrorLogCleanupWorker.perform_async
   end
 end

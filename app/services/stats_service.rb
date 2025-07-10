@@ -28,6 +28,46 @@ module StatsService
       end
     end
 
+    def integrated_sites
+      enabled_sites = Site.where(enabled: true).order(:name).pluck(:name)
+
+      # Step 1: Get latest sync for sites that have Specimen records
+      latest_syncs = Speciman
+                     .where(sending_facility: enabled_sites)
+                     .group(:sending_facility)
+                     .maximum(:created_at)
+
+      # Step 2: Get integration status data and last update time
+      integration_status_report = Report.where(name: 'integration_status').first
+      integration_status_data = integration_status_report&.data || []
+      integration_status_hash = integration_status_data.index_by { |site| site['name'] }
+      integration_status_last_update = integration_status_report&.updated_at
+
+      # Step 3: Merge with all enabled sites
+      sites_data = enabled_sites.map do |site_name|
+        last_sync = latest_syncs[site_name]
+        site = Site.find_by(name: site_name)
+        integration_status = integration_status_hash[site_name] || {}
+
+        {
+          sending_facility: site_name,
+          district: site&.district,
+          ip_address: site&.host_address,
+          port: site&.application_port,
+          app_status: integration_status['app_status'] || false ? 'Running' : 'Down',
+          ping_status: integration_status['ping_status'] || false ? 'Success' : 'Failed',
+          last_sync: last_sync ? last_sync.strftime('%d/%b/%Y %H:%M') : 'Has Never Synced with NLIMS',
+          is_gt_24hr: last_sync.nil? || last_sync < 24.hours.ago
+        }
+      end
+
+      # Step 4: Return segregated data with last update information
+      {
+        data: sites_data,
+        integration_status_last_update: integration_status_last_update ? integration_status_last_update.strftime('%d/%b/%Y %H:%M') : 'Never Updated'
+      }
+    end
+
     def search_orders(tracking_number)
       Speciman.where(tracking_number:)
     end
@@ -48,7 +88,7 @@ module StatsService
           WHERE s.date_created >= '#{DATE_CREATED}'
           GROUP BY s.sending_facility
           ORDER BY max_result_date_nlims DESC"
-        )
+      )
       results.map do |result|
         {
           sending_facility: result.sending_facility,
@@ -74,7 +114,7 @@ module StatsService
             INNER JOIN test_results tr ON tr.test_id = t.id AND tr.measure_id = 294
             LEFT JOIN test_result_recepient_types trrt on trrt.id = t.test_result_receipent_types
          WHERE s.tracking_number='#{tracking_number}'"
-        )
+      )
       results.map do |result|
         {
           sending_facility: result.sending_facility,

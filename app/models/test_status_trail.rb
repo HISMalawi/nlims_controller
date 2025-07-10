@@ -17,6 +17,8 @@ class TestStatusTrail < ApplicationRecord
 
     status = TestStatus.find_by(id: test_status_id)&.name
     time_updated ||= updated_at
+    return if StatusSyncTracker.exists?(tracking_number:, test_id:, status:, app: 'emr')
+
     StatusSyncTracker.find_or_create_by(tracking_number:, test_id:, status:, app: 'emr').update(time_updated:)
     SyncWithEmrJob.perform_async({
       tracking_number:,
@@ -31,6 +33,8 @@ class TestStatusTrail < ApplicationRecord
 
     status = TestStatus.find_by(id: test_status_id)&.name
     time_updated ||= updated_at
+    return if StatusSyncTracker.exists?(tracking_number:, test_id:, status:, app: 'nlims')
+
     StatusSyncTracker.find_or_create_by(tracking_number:, test_id:, status:, app: 'nlims').update(time_updated:)
     SyncWithNlimsJob.perform_async({
       identifier: test_id,
@@ -46,6 +50,8 @@ class TestStatusTrail < ApplicationRecord
 
     status = TestStatus.find_by(id: test_status_id)&.name
     time_updated ||= updated_at
+    return if StatusSyncTracker.exists?(tracking_number:, test_id:, status:, app: 'nlims')
+
     StatusSyncTracker.find_or_create_by(tracking_number:, test_id:, status:, app: 'nlims').update(time_updated:)
     SyncWithNlimsJob.perform_async({
       identifier: test_id,

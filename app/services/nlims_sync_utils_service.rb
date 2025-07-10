@@ -13,18 +13,26 @@ class NlimsSyncUtilsService
     @token = default_authentication if action_type == 'account_creation'
   end
 
-  def order_status_payload(order_id)
+  def order_status_payload(order_id, status)
     order = Speciman.find_by(id: order_id)
-    order_status_trail = SpecimenStatusTrail.where(specimen_id: order&.id).order(created_at: :desc).first
+    if status.nil?
+      status = OrderStatusSyncTracker.find_by(tracking_number: order&.tracking_number, sync_status: false)&.status
+    end
+    specimen_status_id = SpecimenStatus.find_by(name: status)&.id
+    order_status_trail = SpecimenStatusTrail.find_by(specimen_id: order&.id, specimen_status_id:)
+    return nil if order_status_trail.nil?
+
     {
       tracking_number: order&.tracking_number,
-      status: SpecimenStatus.find_by(id: order_status_trail&.specimen_status_id)&.name,
+      status: status,
       who_updated: who_updated(order_status_trail)
     }
   end
 
-  def push_order_update_to_nlims(order_id)
-    payload = order_status_payload(order_id)
+  def push_order_update_to_nlims(order_id, status: nil)
+    payload = order_status_payload(order_id, status)
+    return true if payload.nil?
+
     url = "#{@address}/api/v1/update_order"
     response = JSON.parse(RestClient::Request.execute(
                             method: :post,
@@ -36,6 +44,13 @@ class NlimsSyncUtilsService
                           ))
     if response['error'] == false && response['message'] == 'order updated successfuly'
       puts 'Order actions pushed to Local NLIMS successfully'
+      OrderStatusSyncTracker.find_by(
+        tracking_number: payload[:tracking_number],
+        status: payload[:status]
+      )&.update(sync_status: true)
+      return true
+    end
+    if response['error'] == false && response['message'] == 'order not available'
       OrderStatusSyncTracker.find_by(
         tracking_number: payload[:tracking_number],
         status: payload[:status]
@@ -62,6 +77,8 @@ class NlimsSyncUtilsService
     test_record = Test.find_by(id: test_id)
     tracking_number = Speciman.find(test_record&.specimen_id)&.tracking_number
     payload = test_action_payload(tracking_number, test_record, action)
+    return true if payload.nil?
+
     url = "#{@address}/api/v1/update_test"
     response = JSON.parse(RestClient::Request.execute(
                             method: :post,
@@ -104,10 +121,12 @@ class NlimsSyncUtilsService
 
       results_object[Measure.find_by(id: result.measure_id)&.name] = result&.result
     end
-    test_status_trail = TestStatusTrail.where(test_id: test_record&.id).order(created_at: :desc).first
+    test_status = StatusSyncTracker.find_by(tracking_number:, test_id: test_record&.id, sync_status: false)&.status
+    test_status_id = TestStatus.find_by(name: test_status)&.id
+    test_status_trail = TestStatusTrail.where(test_id: test_record&.id, test_status_id:).order(created_at: :desc).first
     payload = {
       tracking_number:,
-      test_status: TestStatus.find_by(id: test_status_trail&.test_status_id)&.name,
+      test_status: test_status,
       test_name: TestType.find_by(id: test_record&.test_type_id)&.name,
       result_date: '',
       who_updated: who_updated(test_status_trail)
@@ -193,7 +212,8 @@ class NlimsSyncUtilsService
                             content_type: :json,
                             headers: { content_type: :json, accept: :json, token: @token }
                           ))
-    if response['error'] == false && (response['message'] == 'order created successfuly' || response['message'] == 'order already available')
+    if response['error'] == false && ['order created successfuly',
+                                      'order already available'].include?(response['message'])
       OrderSyncTracker.find_by(tracking_number:).update(synced: true)
       return true
     end
@@ -271,6 +291,17 @@ class NlimsSyncUtilsService
                  content_type: :json,
                  headers: { content_type: :json, accept: :json, token: @token }
                ))
+    TrackingNumberHost.find_or_create_by(
+      tracking_number:,
+      source_host: Config.find_by(config_type: 'emr').configs['address'] || '127.0.0.1',
+      source_app_uuid: User.find_by(app_name: 'EMR')&.app_uuid || User.last&.app_uuid
+    )
+    OrderSyncTracker.create(tracking_number: tracking_number)
+    SyncWithNlimsJob.perform_async({
+      identifier: tracking_number,
+      type: 'order',
+      action: 'order_create'
+    }.stringify_keys)
   rescue StandardError => e
     puts "Error: #{e.message} ==> NLIMS Register Source to Master NLIMS"
   end
@@ -392,15 +423,15 @@ class NlimsSyncUtilsService
     exit
   end
 
-  def order_tracking_numbers(order_id, limit: 100)
+  def order_tracking_numbers(order_id, limit: 200_000)
     JSON.parse(RestClient::Request.execute(
-                            method: :get,
-                            url: "#{@address}/api/v1/get_order_tracking_numbers?order_id=#{order_id}&limit=#{limit}",
-                            headers: { content_type: :json, accept: :json, token: @token }
-                          ), symbolize_names: true)
+                 method: :get,
+                 url: "#{@address}/api/v1/get_order_tracking_numbers?order_id=#{order_id}&limit=#{limit}",
+                 headers: { content_type: :json, accept: :json, token: @token }
+               ), symbolize_names: true)
   rescue StandardError => e
-      puts "Error: #{e.message} ==> Failed to get order tracking numbers to be logged"
-      []
+    puts "Error: #{e.message} ==> Failed to get order tracking numbers to be logged"
+    []
   end
 
   def token_valid(username)

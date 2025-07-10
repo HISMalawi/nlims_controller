@@ -1,28 +1,207 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Nlims Controller API</title>
+    <title>NLIMS Controller API</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <%= csrf_meta_tags %>
-    
-    <div style="display: flex; justify-content: center; margin-bottom: 20px;">
-  <nav>
-    <ul style="list-style: none; display: flex; gap: 10px;">
-      <li><%= link_to 'Home', root_path, style: "text-decoration: none; color: #{'blue' if request.path != root_path};", class: ('active' if request.path == root_path) %></li>|
-      <li><%= link_to 'Search Orders', search_orders_path, style: "text-decoration: none; color: #{'blue' if request.path != search_orders_path};", class: ('active' if request.path == search_orders_path) %></li>|
-      <li><%= link_to 'Search Results', search_results_path, style: "text-decoration: none; color: #{'blue' if request.path != search_results_path};", class: ('active' if request.path == search_results_path) %></li>|
-      <li><%= link_to 'Latest Results by Site', latest_results_by_site_path, style: "text-decoration: none; color: #{'blue' if request.path != latest_results_by_site_path};", class: ('active' if request.path == latest_results_by_site_path) %></li>|
-      <li><%= link_to 'Latest Orders by Site', latest_orders_by_site_path, style: "text-decoration: none; color: #{'blue' if request.path != latest_orders_by_site_path};", class: ('active' if request.path == latest_orders_by_site_path) %></li>|
-      <li><%= link_to 'Orders Count by Site', count_by_sending_facility_path, style: "text-decoration: none; color: #{'blue' if request.path != count_by_sending_facility_path};", class: ('active' if request.path == count_by_sending_facility_path) %></li>|
-      <li><%= link_to 'Orders Per Site', sites_by_orders_path, style: "text-decoration: none; color: #{'blue' if request.path != sites_by_orders_path};", class: ('active' if request.path == sites_by_orders_path) %></li>
-    </ul>
-  </nav>
-</div>
+
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        background-color: #f8f9fa;
+        color: #495057;
+        line-height: 1.6;
+      }
+
+      .navbar {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        padding: 0;
+        margin-bottom: 0;
+      }
+
+      .navbar-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 20px;
+      }
+
+      .navbar-nav {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0;
+      }
+
+      .nav-item {
+        margin: 0;
+      }
+
+      .nav-link {
+        display: block;
+        padding: 15px 18px;
+        color: rgba(255, 255, 255, 0.9);
+        text-decoration: none;
+        font-weight: 500;
+        font-size: 14px;
+        transition: all 0.3s ease;
+        border-bottom: 3px solid transparent;
+        white-space: nowrap;
+      }
+
+      .nav-link:hover {
+        color: white;
+        background-color: rgba(255, 255, 255, 0.1);
+        border-bottom-color: rgba(255, 255, 255, 0.5);
+      }
+
+      .nav-link.active {
+        color: white;
+        background-color: rgba(255, 255, 255, 0.15);
+        border-bottom-color: white;
+        font-weight: 600;
+      }
+
+      .main-content {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 30px 20px;
+        min-height: calc(100vh - 180px);
+      }
+
+      .footer {
+        background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+        color: rgba(255, 255, 255, 0.9);
+        padding: 20px 0;
+        margin-top: auto;
+        border-top: 1px solid #dee2e6;
+      }
+
+      .footer-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 15px;
+      }
+
+      .footer-text {
+        font-size: 14px;
+        margin: 0;
+      }
+
+      .footer-link {
+        color: rgba(255, 255, 255, 0.9);
+        text-decoration: none;
+        font-weight: 500;
+        transition: color 0.3s ease;
+      }
+
+      .footer-link:hover {
+        color: white;
+        text-decoration: underline;
+      }
+
+      .footer-attribution {
+        font-size: 13px;
+        color: rgba(255, 255, 255, 0.7);
+      }
+
+      @media (max-width: 768px) {
+        .navbar-nav {
+          flex-direction: column;
+        }
+
+        .nav-link {
+          padding: 12px 18px;
+          font-size: 13px;
+        }
+
+        .main-content {
+          padding: 20px 15px;
+          min-height: calc(100vh - 200px);
+        }
+
+        .footer-container {
+          flex-direction: column;
+          text-align: center;
+          gap: 10px;
+        }
+
+        .footer-text, .footer-attribution {
+          font-size: 13px;
+        }
+      }
+    </style>
 
     <%# <%= stylesheet_link_tag    'application', media: 'all', 'data-turbolinks-track': 'reload' %>
     <%# <%= javascript_include_tag 'application', 'data-turbolinks-track': 'reload' %>
   </head>
 
   <body>
-    <%= yield %>
+    <header class="navbar">
+      <div class="navbar-container">
+        <nav>
+          <ul class="navbar-nav">
+            <li class="nav-item">
+              <%= link_to 'Dashboard', root_path,
+                  class: "nav-link #{'active' if request.path == root_path}" %>
+            </li>
+            <li class="nav-item">
+              <%= link_to 'Search Orders', search_orders_path,
+                  class: "nav-link #{'active' if request.path == search_orders_path}" %>
+            </li>
+            <li class="nav-item">
+              <%= link_to 'Search Results', search_results_path,
+                  class: "nav-link #{'active' if request.path == search_results_path}" %>
+            </li>
+            <li class="nav-item">
+              <%= link_to 'Latest Results', latest_results_by_site_path,
+                  class: "nav-link #{'active' if request.path == latest_results_by_site_path}" %>
+            </li>
+            <li class="nav-item">
+              <%= link_to 'Latest Orders', latest_orders_by_site_path,
+                  class: "nav-link #{'active' if request.path == latest_orders_by_site_path}" %>
+            </li>
+            <li class="nav-item">
+              <%= link_to 'Order Counts', count_by_sending_facility_path,
+                  class: "nav-link #{'active' if request.path == count_by_sending_facility_path}" %>
+            </li>
+            <li class="nav-item">
+              <%= link_to 'Orders by Site', sites_by_orders_path,
+                  class: "nav-link #{'active' if request.path == sites_by_orders_path}" %>
+            </li>
+            <li class="nav-item">
+              <%= link_to 'Integrated Sites', integrated_sites_path,
+                  class: "nav-link #{'active' if request.path == integrated_sites_path}" %>
+            </li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main class="main-content">
+      <%= yield %>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-container">
+        <div class="footer-text">
+          © <%= Date.current.year %> NLIMS Controller API -
+          <a href="https://www.egpaf.org" target="_blank" class="footer-link">@EGPAF</a>
+        </div>
+        <div class="footer-attribution">
+          Elizabeth Glaser Pediatric AIDS Foundation
+        </div>
+      </div>
+    </footer>
   </body>
 </html>

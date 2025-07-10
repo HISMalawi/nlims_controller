@@ -50,4 +50,8 @@ class HomeController < ApplicationController
     @sites = StatsService.sites
     @orders_data = StatsService.orders_per_sending_facility(from, to, sending_facility)
   end
+
+  def integrated_sites
+    @sites = StatsService.integrated_sites
+  end
 end

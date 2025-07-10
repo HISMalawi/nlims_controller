@@ -401,7 +401,7 @@ module OrderService
     master_facility = {}
     facility_samples = []
     facilities.each do |facility|
-      res = Site.find_by_sql("SELECT name AS site_name FROM sites WHERE id='#{facility}'")
+      res = Site.find_by_sql("SELECT name AS site_name, district FROM sites WHERE id='#{facility}'")
       unless res.blank?
         ActiveRecord::Base.connection.execute("SET SESSION sql_mode = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION'")
         res_ = Speciman.find_by_sql("SELECT specimen.tracking_number AS tracking_number,
@@ -527,8 +527,6 @@ module OrderService
         end
         next if tracking_number[0..4] == 'XCHSU'
 
-        dob = res.dob
-        dob = Time.new.strftime('%Y-%m-%d') if dob.nil?
         data[counter] = { sample_type: res.sample_type,
                           tracking_number:,
                           specimen_status: res.specimen_status,
@@ -548,7 +546,7 @@ module OrderService
                             id: res.pat_id,
                             name: patient_name,
                             gender: res.sex,
-                            dob:
+                            dob: res.dob
                           },
                           receiving_lab: res.target_lab,
                           sending_lab: res.health_facility,
@@ -803,6 +801,9 @@ module OrderService
       order.update(specimen_type_id: specimen_type.id)
     end
     order.update(specimen_status_id: specimen_status.id)
+    return [true, ''] if SpecimenStatusTrail.exists?(specimen_id: order.id, specimen_status_id: specimen_status.id)
+
+    # Create the status trail
     SpecimenStatusTrail.create(
       specimen_id: order.id,
       specimen_status_id: specimen_status.id,
