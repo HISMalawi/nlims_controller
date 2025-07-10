@@ -19,9 +19,9 @@
         <th style="padding: 8px; border: 1px solid #000; font-size: 12px; text-align: left;">District</th>
         <th style="padding: 8px; border: 1px solid #000; font-size: 12px; text-align: left;">IP Address</th>
         <th style="padding: 8px; border: 1px solid #000; font-size: 12px; text-align: center;">Port</th>
+        <th style="padding: 8px; border: 1px solid #000; font-size: 12px; text-align: left;">Last Synced Order Timestamp (CHSU)</th>
         <th style="padding: 8px; border: 1px solid #000; font-size: 12px; text-align: center;">App Status</th>
         <th style="padding: 8px; border: 1px solid #000; font-size: 12px; text-align: center;">Ping Status</th>
-        <th style="padding: 8px; border: 1px solid #000; font-size: 12px; text-align: left;">Last Synced</th>
       </tr>
     </thead>
     <tbody>
@@ -32,14 +32,14 @@
           <td style="padding: 8px; border: 1px solid #000; font-size: 11px; text-align: left;"><%= site[:district] || 'N/A' %></td>
           <td style="padding: 8px; border: 1px solid #000; font-size: 11px; text-align: left;"><%= site[:ip_address] || 'N/A' %></td>
           <td style="padding: 8px; border: 1px solid #000; font-size: 11px; text-align: center;"><%= site[:port] || 'N/A' %></td>
+          <td style="padding: 8px; border: 1px solid #000; font-size: 11px; text-align: left; background-color: <%= site[:is_gt_24hr] ? '#f8d7da' : '#d4edda' %>; color: <%= site[:is_gt_24hr] ? '#721c24' : '#155724' %>;">
+            <%= site[:last_sync] %>
+          </td>
           <td style="padding: 8px; border: 1px solid #000; font-size: 11px; text-align: center; background-color: <%= site[:app_status] == 'Running' ? '#d4edda' : '#f8d7da' %>; color: <%= site[:app_status] == 'Running' ? '#155724' : '#721c24' %>;">
             <strong><%= site[:app_status] %></strong>
           </td>
           <td style="padding: 8px; border: 1px solid #000; font-size: 11px; text-align: center; background-color: <%= site[:ping_status] == 'Success' ? '#d4edda' : '#f8d7da' %>; color: <%= site[:ping_status] == 'Success' ? '#155724' : '#721c24' %>;">
             <strong><%= site[:ping_status] %></strong>
-          </td>
-          <td style="padding: 8px; border: 1px solid #000; font-size: 11px; text-align: left; background-color: <%= site[:is_gt_24hr] ? '#f8d7da' : '#d4edda' %>; color: <%= site[:is_gt_24hr] ? '#721c24' : '#155724' %>;">
-            <%= site[:last_sync] %>
           </td>
         </tr>
       <% end %>
