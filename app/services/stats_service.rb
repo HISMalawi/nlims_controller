@@ -37,16 +37,35 @@ module StatsService
                      .group(:sending_facility)
                      .maximum(:created_at)
 
-      # Step 2: Merge with all enabled sites
-      enabled_sites.map do |site_name|
+      # Step 2: Get integration status data and last update time
+      integration_status_report = Report.where(name: 'integration_status').first
+      integration_status_data = integration_status_report&.data || []
+      integration_status_hash = integration_status_data.index_by { |site| site['name'] }
+      integration_status_last_update = integration_status_report&.updated_at
+
+      # Step 3: Merge with all enabled sites
+      sites_data = enabled_sites.map do |site_name|
         last_sync = latest_syncs[site_name]
+        site = Site.find_by(name: site_name)
+        integration_status = integration_status_hash[site_name] || {}
 
         {
           sending_facility: site_name,
+          district: site&.district,
+          ip_address: site&.host_address,
+          port: site&.application_port,
+          app_status: integration_status['app_status'] || false ? 'Running' : 'Down',
+          ping_status: integration_status['ping_status'] || false ? 'Success' : 'Failed',
           last_sync: last_sync ? last_sync.strftime('%d/%b/%Y %H:%M') : 'Has Never Synced with NLIMS',
           is_gt_24hr: last_sync.nil? || last_sync < 24.hours.ago
         }
       end
+
+      # Step 4: Return segregated data with last update information
+      {
+        data: sites_data,
+        integration_status_last_update: integration_status_last_update ? integration_status_last_update.strftime('%d/%b/%Y %H:%M') : 'Never Updated'
+      }
     end
 
     def search_orders(tracking_number)

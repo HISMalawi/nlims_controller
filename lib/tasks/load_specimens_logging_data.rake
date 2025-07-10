@@ -39,6 +39,7 @@ namespace :tracking_number_loggers do
       puts "Found #{total_specimens} specimens in the file"
 
       # Get the highest existing chsu_tracking_number_order_id to avoid duplicates
+      ActiveRecord::Base.connection.execute("TRUNCATE TABLE tracking_number_loggers")
       last_logged_id = TrackingNumberLogger.maximum(:chsu_tracking_number_order_id) || 0
       puts "Last logged ID in database: #{last_logged_id}"
 

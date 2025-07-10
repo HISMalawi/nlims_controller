@@ -1,25 +1,46 @@
 <h1 style="text-align: center;">Integrated Sites</h1>
 
+<!-- Integration Status Last Update Info -->
+<div style="text-align: center; margin-bottom: 20px; padding: 10px; background-color: #e8f4fd; border: 1px solid #bee5eb; border-radius: 5px;">
+  <strong>App Status & Ping Status Last Updated:</strong> <%= @sites[:integration_status_last_update] %>
+</div>
+
 <div style="display: flex; justify-content: center; margin-bottom: 20px;">
   <label for="search-input">Search by Sending Facility:</label>
   <input type="text" id="search-input" placeholder="Enter sending facility" onkeyup="filterTable()">
 </div>
 
 <div style="display: flex; justify-content: center;">
-  <table id="orders-table" style="border: 1px solid #000; width: 80%; text-align: center; border-collapse: collapse;">
+  <table id="orders-table" style="border: 1px solid #000; width: 95%; border-collapse: collapse;">
     <thead>
       <tr style="background-color: #f2f2f2;">
-        <th style="padding: 12px; border: 1px solid #000;">#</th>
-        <th style="padding: 12px; border: 1px solid #000;">Sending Facility</th>
-        <th style="padding: 12px; border: 1px solid #000;">Last Synced</th>
+        <th style="padding: 8px; border: 1px solid #000; font-size: 12px; text-align: center;">#</th>
+        <th style="padding: 8px; border: 1px solid #000; font-size: 12px; text-align: left;">Sending Facility</th>
+        <th style="padding: 8px; border: 1px solid #000; font-size: 12px; text-align: left;">District</th>
+        <th style="padding: 8px; border: 1px solid #000; font-size: 12px; text-align: left;">IP Address</th>
+        <th style="padding: 8px; border: 1px solid #000; font-size: 12px; text-align: center;">Port</th>
+        <th style="padding: 8px; border: 1px solid #000; font-size: 12px; text-align: center;">App Status</th>
+        <th style="padding: 8px; border: 1px solid #000; font-size: 12px; text-align: center;">Ping Status</th>
+        <th style="padding: 8px; border: 1px solid #000; font-size: 12px; text-align: left;">Last Synced</th>
       </tr>
     </thead>
     <tbody>
-      <% @sites.each_with_index do |order, index| %>
+      <% @sites[:data].each_with_index do |site, index| %>
         <tr>
-          <td style="padding: 12px; border: 1px solid #000;"><%= index + 1 %></td>
-          <td style="padding: 12px; border: 1px solid #000;"><%= order[:sending_facility] %></td>
-          <td style="padding: 12px; border: 1px solid #000; background-color: <%= order[:is_gt_24hr] ? 'red' : '#f2f2f2;' %>;"><%= order[:last_sync] %></td>
+          <td style="padding: 8px; border: 1px solid #000; font-size: 11px; text-align: center;"><%= index + 1 %></td>
+          <td style="padding: 8px; border: 1px solid #000; font-size: 11px; text-align: left;"><%= site[:sending_facility] %></td>
+          <td style="padding: 8px; border: 1px solid #000; font-size: 11px; text-align: left;"><%= site[:district] || 'N/A' %></td>
+          <td style="padding: 8px; border: 1px solid #000; font-size: 11px; text-align: left;"><%= site[:ip_address] || 'N/A' %></td>
+          <td style="padding: 8px; border: 1px solid #000; font-size: 11px; text-align: center;"><%= site[:port] || 'N/A' %></td>
+          <td style="padding: 8px; border: 1px solid #000; font-size: 11px; text-align: center; background-color: <%= site[:app_status] == 'Running' ? '#d4edda' : '#f8d7da' %>; color: <%= site[:app_status] == 'Running' ? '#155724' : '#721c24' %>;">
+            <strong><%= site[:app_status] %></strong>
+          </td>
+          <td style="padding: 8px; border: 1px solid #000; font-size: 11px; text-align: center; background-color: <%= site[:ping_status] == 'Success' ? '#d4edda' : '#f8d7da' %>; color: <%= site[:ping_status] == 'Success' ? '#155724' : '#721c24' %>;">
+            <strong><%= site[:ping_status] %></strong>
+          </td>
+          <td style="padding: 8px; border: 1px solid #000; font-size: 11px; text-align: left; background-color: <%= site[:is_gt_24hr] ? '#f8d7da' : '#d4edda' %>; color: <%= site[:is_gt_24hr] ? '#721c24' : '#155724' %>;">
+            <%= site[:last_sync] %>
+          </td>
         </tr>
       <% end %>
     </tbody>
@@ -36,8 +57,10 @@
     let hasResults = false;
 
     for (const row of rows) {
-      const sendingFacility = row.cells[1].innerText.toLowerCase();
-      if (sendingFacility.includes(input)) {
+      const sendingFacility = row.cells[1].innerText.toLowerCase(); // Sending Facility is still column 1
+      const district = row.cells[2].innerText.toLowerCase(); // District is column 2
+
+      if (sendingFacility.includes(input) || district.includes(input)) {
         row.style.display = '';
         hasResults = true;
       } else {
@@ -45,7 +68,7 @@
       }
     }
 
-    // Show/hide "No orders found" message
+    // Show/hide "No results found" message
     document.getElementById('no-results-message').style.display = hasResults ? 'none' : 'block';
   }
 </script>
