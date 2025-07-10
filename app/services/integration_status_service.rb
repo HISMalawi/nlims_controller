@@ -39,7 +39,7 @@ class IntegrationStatusService
   end
 
   def last_sync_date_gt_24hr?(last_sync_date)
-    last_sync_date.present? ? last_sync_date < 24.hours.ago : true
+    last_sync_date.present? ? last_sync_date < 48.hours.ago : true
   end
 
   # rubocop:disable Metrics/MethodLength
