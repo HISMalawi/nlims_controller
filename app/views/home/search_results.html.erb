@@ -1,36 +1,59 @@
-<h1 style="text-align: center;">Search Results</h1>
+<h1 style="text-align: center; color: #2c3e50; margin-bottom: 30px;">Search Results</h1>
 
-<div style="display: flex; justify-content: center; margin-bottom: 20px;">
-  <form action="<%= search_results_path %>" method="get">
-    <label for="tracking_number">Tracking Number:</label>
-    <input type="text" name="tracking_number" id="tracking_number" value="<%= params[:tracking_number] %>">
-    <button type="submit">Search</button>
-  </form>
+<div style="display: flex; justify-content: center; margin-bottom: 30px;">
+  <div style="background: white; padding: 25px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border: 1px solid #dee2e6; min-width: 400px;">
+    <form action="<%= search_results_path %>" method="get" style="display: flex; flex-direction: column; gap: 15px;">
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <label for="tracking_number" style="font-weight: 500; color: #495057; font-size: 14px;">Tracking Number:</label>
+        <input type="text" name="tracking_number" id="tracking_number" value="<%= params[:tracking_number] %>"
+               style="padding: 10px 12px; border: 1px solid #ced4da; border-radius: 4px; font-size: 14px; width: 100%; box-sizing: border-box;"
+               placeholder="Enter tracking number to search results">
+      </div>
+      <button type="submit" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 12px 20px; border-radius: 4px; font-size: 14px; font-weight: 500; cursor: pointer; transition: opacity 0.2s;"
+              onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
+        Search Results
+      </button>
+    </form>
+  </div>
 </div>
 
 <% if params[:tracking_number].present? %>
   <% if @results.any? %>
     <div style="display: flex; justify-content: center;">
-      <table style="border: 1px solid #000; width: 80%; text-align: center; border-collapse: collapse;">
-        <tr style="background-color: #f2f2f2;">
-          <th style="padding: 12px; border: 1px solid #000;">Sending Facility</th>
-          <th style="padding: 12px; border: 1px solid #000;">Tracking Number</th>
-          <th style="padding: 12px; border: 1px solid #000;">Result Date (EID/VL)</th>
-          <th style="padding: 12px; border: 1px solid #000;">Result Date (NLIMS)</th>
-          <th style="padding: 12px; border: 1px solid #000;">Acknowledgement</th>
-        </tr>
-        <% @results.each do |result| %>
-          <tr>
-            <td style="padding: 12px; border: 1px solid #000;"><%= result[:sending_facility] %></td>
-            <td style="padding: 12px; border: 1px solid #000;"><%= result[:tracking_number] %></td>
-            <td style="padding: 12px; border: 1px solid #000;"><%= result[:max_results_date_eid_vl] %></td>
-            <td style="padding: 12px; border: 1px solid #000;"><%= result[:max_result_date_nlims] %></td>
-            <td style="padding: 12px; border: 1px solid #000;"><%= result[:ack_type] %></td>
+      <table style="border: 1px solid #dee2e6; width: 95%; border-collapse: collapse; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border-radius: 8px; overflow: hidden;">
+        <thead>
+          <tr style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+            <th style="padding: 12px; border: 1px solid #dee2e6; font-size: 13px; font-weight: 600; text-align: left;">Sending Facility</th>
+            <th style="padding: 12px; border: 1px solid #dee2e6; font-size: 13px; font-weight: 600; text-align: left;">Tracking Number</th>
+            <th style="padding: 12px; border: 1px solid #dee2e6; font-size: 13px; font-weight: 600; text-align: left;">Result Date (EID/VL)</th>
+            <th style="padding: 12px; border: 1px solid #dee2e6; font-size: 13px; font-weight: 600; text-align: left;">Result Date (NLIMS)</th>
+            <th style="padding: 12px; border: 1px solid #dee2e6; font-size: 13px; font-weight: 600; text-align: center;">Acknowledgement</th>
           </tr>
-        <% end %>
+        </thead>
+        <tbody>
+          <% @results.each_with_index do |result, index| %>
+            <tr style="background-color: <%= index.even? ? '#f8f9fa' : 'white' %>; transition: background-color 0.2s;"
+                onmouseover="this.style.backgroundColor='#e3f2fd'"
+                onmouseout="this.style.backgroundColor='<%= index.even? ? '#f8f9fa' : 'white' %>'">
+              <td style="padding: 10px 12px; border: 1px solid #dee2e6; font-size: 12px; text-align: left; font-weight: 500; color: #495057;"><%= result[:sending_facility] %></td>
+              <td style="padding: 10px 12px; border: 1px solid #dee2e6; font-size: 12px; text-align: left; font-family: monospace; color: #007bff; font-weight: 600;"><%= result[:tracking_number] %></td>
+              <td style="padding: 10px 12px; border: 1px solid #dee2e6; font-size: 12px; text-align: left; color: #495057;"><%= result[:max_results_date_eid_vl] %></td>
+              <td style="padding: 10px 12px; border: 1px solid #dee2e6; font-size: 12px; text-align: left; color: #495057;"><%= result[:max_result_date_nlims] %></td>
+              <td style="padding: 10px 12px; border: 1px solid #dee2e6; font-size: 12px; text-align: center;
+                         background-color: <%= result[:ack_type] == 'Acknowledged' ? '#d4edda' : '#f8d7da' %>;
+                         color: <%= result[:ack_type] == 'Acknowledged' ? '#155724' : '#721c24' %>;">
+                <strong><%= result[:ack_type] %></strong>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
       </table>
     </div>
   <% else %>
-    <p style="text-align: center;">No results found.</p>
+    <div style="text-align: center; margin-top: 30px;">
+      <div style="background: #fff3cd; border: 1px solid #ffeaa7; color: #856404; padding: 15px; border-radius: 8px; display: inline-block;">
+        <strong>No results found</strong> for tracking number "<%= params[:tracking_number] %>"
+      </div>
+    </div>
   <% end %>
 <% end %>

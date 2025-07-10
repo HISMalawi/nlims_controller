@@ -1,56 +1,84 @@
-<h1 style="text-align: center;">Orders Per Sending Facility</h1>
+<h1 style="text-align: center; color: #2c3e50; margin-bottom: 30px;">Orders Per Sending Facility</h1>
 
-<div style="display: flex; justify-content: center; margin-bottom: 20px;">
-  <form action="<%= sites_by_orders_path %>" method="get">
-    <label for="from_date">From Date:</label>
-    <input type="date" name="from_date" id="from_date" value="<%= params[:from_date] || Date.today %>">
+<div style="display: flex; justify-content: center; margin-bottom: 30px;">
+  <div style="background: white; padding: 25px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border: 1px solid #dee2e6; min-width: 600px;">
+    <form action="<%= sites_by_orders_path %>" method="get" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: end;">
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <label for="from_date" style="font-weight: 500; color: #495057; font-size: 14px;">From Date:</label>
+        <input type="date" name="from_date" id="from_date" value="<%= params[:from_date] || Date.today %>"
+               style="padding: 10px 12px; border: 1px solid #ced4da; border-radius: 4px; font-size: 14px;">
+      </div>
 
-    <label for="to_date" style="margin-left: 10px;">To Date:</label>
-    <input type="date" name="to_date" id="to_date" value="<%= params[:to_date] || Date.today %>">
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <label for="to_date" style="font-weight: 500; color: #495057; font-size: 14px;">To Date:</label>
+        <input type="date" name="to_date" id="to_date" value="<%= params[:to_date] || Date.today %>"
+               style="padding: 10px 12px; border: 1px solid #ced4da; border-radius: 4px; font-size: 14px;">
+      </div>
 
-    <label for="sending_facility" style="margin-left: 10px;">Sending Facility:</label>
-    <select name="sending_facility" id="sending_facility">
-      <option value="">-- Select a Facility --</option>
-      <% @sites.each do |site| %>
-        <option value="<%= site %>" <%= 'selected' if site == params[:sending_facility] %>><%= site %></option>
-      <% end %>
-    </select>
+      <div style="display: flex; flex-direction: column; gap: 8px; grid-column: 1 / -1;">
+        <label for="sending_facility" style="font-weight: 500; color: #495057; font-size: 14px;">Sending Facility:</label>
+        <select name="sending_facility" id="sending_facility"
+                style="padding: 10px 12px; border: 1px solid #ced4da; border-radius: 4px; font-size: 14px; background: white;">
+          <option value="">-- Select a Facility --</option>
+          <% @sites.each do |site| %>
+            <option value="<%= site %>" <%= 'selected' if site == params[:sending_facility] %>><%= site %></option>
+          <% end %>
+        </select>
+      </div>
 
-    <button type="submit" style="margin-left: 10px;">Search</button>
-  </form>
+      <div style="grid-column: 1 / -1; margin-top: 10px;">
+        <button type="submit" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 12px 30px; border-radius: 4px; font-size: 14px; font-weight: 500; cursor: pointer; transition: opacity 0.2s; width: 100%;"
+                onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
+          Search Orders
+        </button>
+      </div>
+    </form>
+  </div>
 </div>
 
 <% if @orders_data[:data].any? %>
-<div style="display: flex; justify-content: center; margin-bottom: 20px;">
-  <label for="search-input">Search by Tracking Number:</label>
-  <input type="text" id="search-input" placeholder="Enter tracking number" onkeyup="filterTable()">
-</div>
+  <div style="display: flex; justify-content: center; margin-bottom: 25px;">
+    <div style="background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border: 1px solid #dee2e6;">
+      <label for="search-input" style="margin-right: 10px; font-weight: 500; color: #495057;">Search by Tracking Number:</label>
+      <input type="text" id="search-input" placeholder="Enter tracking number" onkeyup="filterTable()"
+             style="padding: 8px 12px; border: 1px solid #ced4da; border-radius: 4px; font-size: 14px; width: 250px;">
+    </div>
+  </div>
+
   <div style="display: flex; justify-content: center;">
-    <table id="orders-table" style="border: 1px solid #000; width: 80%; text-align: center; border-collapse: collapse;">
+    <table id="orders-table" style="border: 1px solid #dee2e6; width: 95%; border-collapse: collapse; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border-radius: 8px; overflow: hidden;">
       <thead>
-      <tr style="background-color: #f2f2f2;">
-        <th style="padding: 12px; border: 1px solid #000;">#</th>
-        <th style="padding: 12px; border: 1px solid #000;">Tracking Number</th>
-        <th style="padding: 12px; border: 1px solid #000;">Sending Facility</th>
-        <th style="padding: 12px; border: 1px solid #000;">Date Created in EMR</th>
-        <th style="padding: 12px; border: 1px solid #000;">Date Created in NLIMS</th>
-      </tr>
+        <tr style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+          <th style="padding: 12px; border: 1px solid #dee2e6; font-size: 13px; font-weight: 600; text-align: center;">#</th>
+          <th style="padding: 12px; border: 1px solid #dee2e6; font-size: 13px; font-weight: 600; text-align: left;">Tracking Number</th>
+          <th style="padding: 12px; border: 1px solid #dee2e6; font-size: 13px; font-weight: 600; text-align: left;">Sending Facility</th>
+          <th style="padding: 12px; border: 1px solid #dee2e6; font-size: 13px; font-weight: 600; text-align: left;">Date Created in EMR</th>
+          <th style="padding: 12px; border: 1px solid #dee2e6; font-size: 13px; font-weight: 600; text-align: left;">Date Created in NLIMS</th>
+        </tr>
       </thead>
       <tbody>
-      <% @orders_data[:data].each_with_index do |order, index| %>
-        <tr>
-          <td style="padding: 12px; border: 1px solid #000;"><%= index + 1 %></td>
-          <td style="padding: 12px; border: 1px solid #000;"><%= order.tracking_number %></td>
-          <td style="padding: 12px; border: 1px solid #000;"><%= order.sending_facility %></td>
-          <td style="padding: 12px; border: 1px solid #000;"><%= order.date_created %></td>
-          <td style="padding: 12px; border: 1px solid #000;"><%= order.created_at %></td>
-        </tr>
-      <% end %>
+        <% @orders_data[:data].each_with_index do |order, index| %>
+          <tr style="background-color: <%= index.even? ? '#f8f9fa' : 'white' %>; transition: background-color 0.2s;"
+              onmouseover="this.style.backgroundColor='#e3f2fd'"
+              onmouseout="this.style.backgroundColor='<%= index.even? ? '#f8f9fa' : 'white' %>'">
+            <td style="padding: 10px 12px; border: 1px solid #dee2e6; font-size: 12px; text-align: center; color: #6c757d;"><%= index + 1 %></td>
+            <td style="padding: 10px 12px; border: 1px solid #dee2e6; font-size: 12px; text-align: left; font-family: monospace; color: #007bff; font-weight: 600;"><%= order.tracking_number %></td>
+            <td style="padding: 10px 12px; border: 1px solid #dee2e6; font-size: 12px; text-align: left; font-weight: 500; color: #495057;"><%= order.sending_facility %></td>
+            <td style="padding: 10px 12px; border: 1px solid #dee2e6; font-size: 12px; text-align: left; color: #495057;"><%= order.date_created %></td>
+            <td style="padding: 10px 12px; border: 1px solid #dee2e6; font-size: 12px; text-align: left; color: #495057;"><%= order.created_at %></td>
+          </tr>
+        <% end %>
       </tbody>
     </table>
   </div>
+
+  <p id="no-results-message" style="text-align: center; display: none; color: #6c757d; font-style: italic; margin-top: 20px;">No results found.</p>
 <% else %>
-  <p style="text-align: center;">No data available for the selected date range and facility.</p>
+  <div style="text-align: center; margin-top: 30px;">
+    <div style="background: #fff3cd; border: 1px solid #ffeaa7; color: #856404; padding: 20px; border-radius: 8px; display: inline-block;">
+      <strong>No data available</strong> for the selected date range and facility.
+    </div>
+  </div>
 <% end %>
 
 <script>
