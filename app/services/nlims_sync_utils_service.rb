@@ -122,8 +122,10 @@ class NlimsSyncUtilsService
       results_object[Measure.find_by(id: result.measure_id)&.name] = result&.result
     end
     test_status = StatusSyncTracker.find_by(tracking_number:, test_id: test_record&.id, sync_status: false)&.status
+    test_status ||= StatusSyncTracker.where(tracking_number:, test_id: test_record&.id).last&.status
     test_status_id = TestStatus.find_by(name: test_status)&.id
     test_status_trail = TestStatusTrail.where(test_id: test_record&.id, test_status_id:).order(created_at: :desc).first
+
     payload = {
       tracking_number:,
       test_status: test_status,
