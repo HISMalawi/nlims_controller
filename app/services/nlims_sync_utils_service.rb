@@ -133,6 +133,7 @@ class NlimsSyncUtilsService
     }
     return payload if results.empty?
 
+    payload[:test_status] = 'verified' unless test_status.present?
     payload[:result_date] = results.first&.time_entered
     payload[:platform] = results.first&.device_name
     payload[:results] = results_object

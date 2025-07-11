@@ -143,7 +143,8 @@ def push_acknwoledgement_to_master_nlims
                         INNER JOIN test_types ON test_types.id = tests.test_type_id
                         WHERE tests.id='#{order['test_id']}'
                       ")
-    level = TestResultRecepientType.find_by(id: order['acknwoledment_level'])
+    level = TestResultRecepientType.find_by(id: order['acknowledgment_level'])
+    level ||= TestResultRecepientType.find_by(id: order['acknwoledment_level'])
     level = level['name'] unless level.blank?
     data = {
       'tracking_number': order['tracking_number'],
