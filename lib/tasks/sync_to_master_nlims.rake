@@ -100,7 +100,7 @@ namespace :master_nlims do
         end
       end
     end
-    # push_acknwoledgement_to_master_nlims
+    push_acknwoledgement_to_master_nlims
   end
   task test_syncing: :environment do
     # Use services to get authentication status
