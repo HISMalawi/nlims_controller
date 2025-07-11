@@ -8,24 +8,33 @@ module StatsService
       orders = Speciman.find_by_sql(
         "SELECT
             sending_facility,
+            tracking_number,
             DATE(MAX(date_created)) date_order_created_emr,
             MAX(created_at) date_order_created_in_nlims
         FROM
             specimen
         WHERE date_created >= '#{DATE_CREATED}'
-        GROUP BY sending_facility
+        GROUP BY sending_facility, tracking_number
         ORDER BY date_order_created_in_nlims DESC"
       )
-      orders.map do |order|
-        {
+
+      # Group by facility and get the most recent order per facility
+      facility_orders = {}
+      orders.each do |order|
+        facility = order.sending_facility
+        unless !facility_orders[facility] || order.date_order_created_in_nlims > facility_orders[facility][:date_order_created_in_nlims]
+          next
+        end
+
+        facility_orders[facility] = {
           sending_facility: order.sending_facility,
-          tracking_number: Speciman.where(
-            sending_facility: order.sending_facility
-          ).where("DATE(date_created) = DATE('#{order.date_order_created_emr}')").last&.tracking_number,
+          tracking_number: order.tracking_number,
           date_order_created_emr: order.date_order_created_emr,
           date_order_created_in_nlims: order.date_order_created_in_nlims
         }
       end
+
+      facility_orders.values.sort_by { |o| o[:date_order_created_in_nlims] }.reverse
     end
 
     def integrated_sites
@@ -80,23 +89,36 @@ module StatsService
       results = Speciman.find_by_sql(
         "SELECT
             s.sending_facility,
+            s.tracking_number,
+            t.test_result_receipent_types,
             MAX(tr.time_entered) max_results_date_eid_vl,
             MAX(tr.created_at) max_result_date_nlims
           FROM
             specimen s INNER JOIN tests t ON t.specimen_id = s.id
             INNER JOIN test_results tr ON tr.test_id = t.id AND tr.measure_id = 294
           WHERE s.date_created >= '#{DATE_CREATED}'
-          GROUP BY s.sending_facility
+          GROUP BY s.sending_facility, s.tracking_number, t.test_result_receipent_types
           ORDER BY max_result_date_nlims DESC"
       )
-      results.map do |result|
-        {
+
+      # Group by facility and get the most recent result per facility
+      facility_results = {}
+      results.each do |result|
+        facility = result.sending_facility
+        unless !facility_results[facility] || result.max_result_date_nlims > facility_results[facility][:max_result_date_nlims]
+          next
+        end
+
+        facility_results[facility] = {
           sending_facility: result.sending_facility,
-          tracking_number: Speciman.find_by(id: Test.find_by(id: TestResult.where(created_at: result.max_result_date_nlims).last&.test_id)&.specimen_id)&.tracking_number,
+          tracking_number: result.tracking_number,
           max_results_date_eid_vl: result.max_results_date_eid_vl,
-          max_result_date_nlims: result.max_result_date_nlims
+          max_result_date_nlims: result.max_result_date_nlims,
+          test_result_receipent_types: TestResultRecepientType.find_by(id: result.test_result_receipent_types)&.name
         }
       end
+
+      facility_results.values.sort_by { |r| r[:max_result_date_nlims] }.reverse
     end
 
     def search_results(tracking_number)
