@@ -136,6 +136,7 @@ fi
 echo "Restarting $NLIMS_SERVICE_FILE"
 SERVICE_NAME=$(basename "$NLIMS_SERVICE_FILE" .service)
 sudo systemctl restart "$SERVICE_NAME.service"
+sudo systemctl enable "$SERVICE_NAME.service"
 # Check if service is active and display status
 if systemctl is-active --quiet "$SERVICE_NAME.service"; then
   echo "✅ $SERVICE_NAME service is running successfully"
