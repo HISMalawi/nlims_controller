@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # SETTINGS : Set variables 
-NLIMS_VERSION="v2.3.0" # Replace with the actual version
+NLIMS_VERSION="v2.3.1" # Replace with the actual version
 NLIMS_CONTROLLER_DIR="/var/www/nlims_controller" 
 EMR_API_DIR="/var/www/EMR-API" 
 MLAB_API_DIR="/var/www/mlab_api" 
