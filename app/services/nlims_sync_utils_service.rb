@@ -275,6 +275,7 @@ class NlimsSyncUtilsService
   def buid_acknowledment_to_master_data(acknowledgement)
     test_to_ack = TestType.find(Test.find(acknowledgement&.test_id)&.test_type_id)&.name
     level = TestResultRecepientType.find_by(id: acknowledgement&.acknwoledment_level)
+    level ||= TestResultRecepientType.find_by(id: acknowledgement&.acknowledgment_level)
     {
       'tracking_number': acknowledgement&.tracking_number,
       'test': test_to_ack,
