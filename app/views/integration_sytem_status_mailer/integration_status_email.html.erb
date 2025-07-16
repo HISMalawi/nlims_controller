@@ -1,9 +1,22 @@
-<h2 style="font-family: system-ui, sans-serif; margin-bottom: 0.5em;">
-  Integration System Status – <%= Time.current.strftime('%B %e, %Y %H:%M') %>
-</h2>
+<h4>
+  Integrated Sites Sync Status – <%= Time.current.strftime('%B %e, %Y %H:%M %Z') %>
+</h4>
 
-<p>This email serves as a notification for sites experiencing issues syncing with CHSU.
-It provides the current network status to the server, as well as the status of the local NLIMS instance for the respective site.</p>
+<p>
+  Dear HIS Officers,
+</p>
+
+<p>
+  This is to inform you of sites currently experiencing challenges syncing with CHSU. Kindly review the affected sites under your supervision and take the necessary action.
+</p>
+
+<p>
+  The report includes the last successful sync time with CHSU, the current network connectivity status to the server, and the operational status of the local NLIMS instance for each site.
+</p>
+
+<p>
+  A CSV file containing these details is attached to this email for your reference.
+</p>
 
 <table width="100%" cellpadding="6" cellspacing="0"
        style="border-collapse: collapse; font-family: system-ui, sans-serif;
@@ -14,9 +27,9 @@ It provides the current network status to the server, as well as the status of t
       <th style="border:1px solid #e5e7eb;">Site</th>
       <th style="border:1px solid #e5e7eb;">IP</th>
       <th style="border:1px solid #e5e7eb;">NLIMS Application Port</th>
+      <th style="border:1px solid #e5e7eb;">Last Synced Order Timestamp (CHSU)</th>
       <th style="border:1px solid #e5e7eb;">App&nbsp;Status</th>
       <th style="border:1px solid #e5e7eb;">Ping&nbsp;Status</th>
-      <th style="border:1px solid #e5e7eb;">Last&nbsp;Sync</th>
     </tr>
   </thead>
 
@@ -27,13 +40,13 @@ It provides the current network status to the server, as well as the status of t
       <td style="border:1px solid #e5e7eb;"><%= r['name'] %></td>
       <td style="border:1px solid #e5e7eb;"><%= r['ip_address'] %></td>
       <td style="border:1px solid #e5e7eb;"><%= r['app_port'] %></td>
+      <td style="border:1px solid #e5e7eb;"><%= r['last_sync_date'] %></td>
       <td style="border:1px solid #e5e7eb; color:<%= r['app_status'].present? ? '#16a34a' : '#dc2626' %>;">
         <%= r['app_status'].present? ? 'Running' : 'Down' %>
       </td>
       <td style="border:1px solid #e5e7eb; color:<%= r['ping_status'].present? ? '#16a34a' : '#dc2626' %>;">
         <%= r['ping_status'].present? ? 'Successful' : 'Failed' %>
       </td>
-      <td style="border:1px solid #e5e7eb;"><%= r['last_sync_date'] %></td>
     </tr>
   <% end %>
   </tbody>
