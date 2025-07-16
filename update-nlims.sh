@@ -61,7 +61,7 @@ ping -c 3 $CHSU_IP >/dev/null 2>&1 || { echo "❌ Error: Could not ping CHSU ($C
 # STEP 2 : NLIMS Installation
 cd "$NLIMS_CONTROLLER_DIR"
 
-git fetch --tags
+# git fetch --tags
 git checkout "$NLIMS_VERSION" -f
 rm Gemfile.lock
 
