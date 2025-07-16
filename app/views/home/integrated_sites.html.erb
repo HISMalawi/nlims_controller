@@ -5,6 +5,43 @@
   <strong>App Status & Ping Status Last Updated:</strong> <%= @sites[:integration_status_last_update] %>
 </div>
 
+<!-- Summary Section -->
+<div id="summary-section" style="margin-bottom: 20px; padding: 15px; background-color: #fff3cd; border: 1px solid #ffeaa7; border-radius: 5px;">
+  <h3 style="margin: 0 0 15px 0; text-align: center; color: #856404;">Site Status Summary</h3>
+  <div style="display: flex; justify-content: center; flex-wrap: wrap; gap: 20px;">
+    <div style="text-align: center; min-width: 120px;">
+      <div style="background-color: #d1ecf1; color: #0c5460; padding: 10px; border-radius: 5px; border: 1px solid #bee5eb;">
+        <div style="font-size: 24px; font-weight: bold;" id="total-count">0</div>
+        <div style="font-size: 12px;">Total<br>Sites</div>
+      </div>
+    </div>
+    <div style="text-align: center; min-width: 120px;">
+      <div style="background-color: #d4edda; color: #155724; padding: 10px; border-radius: 5px; border: 1px solid #c3e6cb;">
+        <div style="font-size: 24px; font-weight: bold;" id="healthy-count">0</div>
+        <div style="font-size: 12px;">Healthy<br>Sites</div>
+      </div>
+    </div>
+    <div style="text-align: center; min-width: 120px;">
+      <div style="background-color: #f8d7da; color: #721c24; padding: 10px; border-radius: 5px; border: 1px solid #f5c6cb;">
+        <div style="font-size: 24px; font-weight: bold;" id="sync-issues-count">0</div>
+        <div style="font-size: 12px;">Not Synced<br>(> 48hrs)</div>
+      </div>
+    </div>
+    <div style="text-align: center; min-width: 120px;">
+      <div style="background-color: #f8d7da; color: #721c24; padding: 10px; border-radius: 5px; border: 1px solid #f5c6cb;">
+        <div style="font-size: 24px; font-weight: bold;" id="app-down-count">0</div>
+        <div style="font-size: 12px;">App Status<br>Down</div>
+      </div>
+    </div>
+    <div style="text-align: center; min-width: 120px;">
+      <div style="background-color: #f8d7da; color: #721c24; padding: 10px; border-radius: 5px; border: 1px solid #f5c6cb;">
+        <div style="font-size: 24px; font-weight: bold;" id="ping-failed-count">0</div>
+        <div style="font-size: 12px;">Ping Status<br>Failed</div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Filter Controls -->
 <div style="display: flex; justify-content: center; flex-wrap: wrap; gap: 15px; margin-bottom: 20px; padding: 15px; background-color: #f8f9fa; border-radius: 5px;">
   <div style="display: flex; flex-direction: column; align-items: center;">
@@ -16,8 +53,8 @@
     <label for="sync-filter" style="margin-bottom: 5px; font-weight: bold;">Last Sync:</label>
     <select id="sync-filter" onchange="filterTable()" style="padding: 5px; border: 1px solid #ccc; border-radius: 3px; width: 150px;">
       <option value="">All</option>
-      <option value="recent">Recent (< 48hrs)</option>
-      <option value="old">Old (> 48hrs)</option>
+      <option value="recent">Recent (< 24hrs)</option>
+      <option value="old">Old (> 24hrs)</option>
     </select>
   </div>
   
@@ -26,7 +63,7 @@
     <select id="app-status-filter" onchange="filterTable()" style="padding: 5px; border: 1px solid #ccc; border-radius: 3px; width: 120px;">
       <option value="">All</option>
       <option value="Running">Running</option>
-      <option value="Down">Down</option>
+      <option value="Stopped">Stopped</option>
     </select>
   </div>
   
@@ -84,6 +121,50 @@
 <p id="no-results-message" style="text-align: center; display: none; color: #721c24; font-weight: bold; margin-top: 20px;">No matching records found.</p>
 
 <script>
+  // Initialize summary counts on page load
+  document.addEventListener('DOMContentLoaded', function() {
+    updateSummary();
+  });
+
+  function updateSummary() {
+    const table = document.getElementById('orders-table');
+    const rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+    
+    let syncIssues = 0;
+    let appDown = 0;
+    let pingFailed = 0;
+    let healthy = 0;
+    let total = 0;
+
+    for (const row of rows) {
+      // Only count visible rows
+      if (row.style.display !== 'none') {
+        total++;
+        
+        const syncStatus = row.cells[5].getAttribute('data-sync-status');
+        const appStatus = row.cells[6].innerText.trim();
+        const pingStatus = row.cells[7].innerText.trim();
+
+        // Count issues
+        if (syncStatus === 'old') syncIssues++;
+        if (appStatus === 'Down') appDown++;
+        if (pingStatus === 'Failed') pingFailed++;
+        
+        // Count healthy sites (recent sync, running app, successful ping)
+        if (syncStatus === 'recent' && appStatus === 'Running' && pingStatus === 'Success') {
+          healthy++;
+        }
+      }
+    }
+
+    // Update the summary display
+    document.getElementById('sync-issues-count').textContent = syncIssues;
+    document.getElementById('app-down-count').textContent = appDown;
+    document.getElementById('ping-failed-count').textContent = pingFailed;
+    document.getElementById('healthy-count').textContent = healthy;
+    document.getElementById('total-count').textContent = total;
+  }
+
   function filterTable() {
     const searchInput = document.getElementById('search-input').value.toLowerCase();
     const syncFilter = document.getElementById('sync-filter').value;
@@ -123,6 +204,9 @@
 
     // Show/hide "No results found" message
     document.getElementById('no-results-message').style.display = hasResults ? 'none' : 'block';
+    
+    // Update summary counts based on filtered results
+    updateSummary();
   }
 
   function clearFilters() {
