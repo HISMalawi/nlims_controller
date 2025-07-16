@@ -5,9 +5,43 @@
   <strong>App Status & Ping Status Last Updated:</strong> <%= @sites[:integration_status_last_update] %>
 </div>
 
-<div style="display: flex; justify-content: center; margin-bottom: 20px;">
-  <label for="search-input">Search by Sending Facility:</label>
-  <input type="text" id="search-input" placeholder="Enter sending facility" onkeyup="filterTable()">
+<!-- Filter Controls -->
+<div style="display: flex; justify-content: center; flex-wrap: wrap; gap: 15px; margin-bottom: 20px; padding: 15px; background-color: #f8f9fa; border-radius: 5px;">
+  <div style="display: flex; flex-direction: column; align-items: center;">
+    <label for="search-input" style="margin-bottom: 5px; font-weight: bold;">Search Facility/District:</label>
+    <input type="text" id="search-input" placeholder="Enter sending facility or district" onkeyup="filterTable()" style="padding: 5px; border: 1px solid #ccc; border-radius: 3px; width: 200px;">
+  </div>
+  
+  <div style="display: flex; flex-direction: column; align-items: center;">
+    <label for="sync-filter" style="margin-bottom: 5px; font-weight: bold;">Last Sync:</label>
+    <select id="sync-filter" onchange="filterTable()" style="padding: 5px; border: 1px solid #ccc; border-radius: 3px; width: 150px;">
+      <option value="">All</option>
+      <option value="recent">Recent (< 48hrs)</option>
+      <option value="old">Old (> 48hrs)</option>
+    </select>
+  </div>
+  
+  <div style="display: flex; flex-direction: column; align-items: center;">
+    <label for="app-status-filter" style="margin-bottom: 5px; font-weight: bold;">App Status:</label>
+    <select id="app-status-filter" onchange="filterTable()" style="padding: 5px; border: 1px solid #ccc; border-radius: 3px; width: 120px;">
+      <option value="">All</option>
+      <option value="Running">Running</option>
+      <option value="Down">Down</option>
+    </select>
+  </div>
+  
+  <div style="display: flex; flex-direction: column; align-items: center;">
+    <label for="ping-status-filter" style="margin-bottom: 5px; font-weight: bold;">Ping Status:</label>
+    <select id="ping-status-filter" onchange="filterTable()" style="padding: 5px; border: 1px solid #ccc; border-radius: 3px; width: 120px;">
+      <option value="">All</option>
+      <option value="Success">Success</option>
+      <option value="Failed">Failed</option>
+    </select>
+  </div>
+  
+  <div style="display: flex; flex-direction: column; align-items: center; justify-content: flex-end;">
+    <button onclick="clearFilters()" style="padding: 8px 15px; background-color: #6c757d; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 12px;">Clear Filters</button>
+  </div>
 </div>
 
 <div style="display: flex; justify-content: center;">
@@ -32,7 +66,7 @@
           <td style="padding: 8px; border: 1px solid #000; font-size: 11px; text-align: left;"><%= site[:district] || 'N/A' %></td>
           <td style="padding: 8px; border: 1px solid #000; font-size: 11px; text-align: left;"><%= site[:ip_address] || 'N/A' %></td>
           <td style="padding: 8px; border: 1px solid #000; font-size: 11px; text-align: center;"><%= site[:port] || 'N/A' %></td>
-          <td style="padding: 8px; border: 1px solid #000; font-size: 11px; text-align: left; background-color: <%= site[:is_gt_24hr] ? '#f8d7da' : '#d4edda' %>; color: <%= site[:is_gt_24hr] ? '#721c24' : '#155724' %>;">
+          <td style="padding: 8px; border: 1px solid #000; font-size: 11px; text-align: left; background-color: <%= site[:is_gt_24hr] ? '#f8d7da' : '#d4edda' %>; color: <%= site[:is_gt_24hr] ? '#721c24' : '#155724' %>;" data-sync-status="<%= site[:is_gt_24hr] ? 'old' : 'recent' %>">
             <%= site[:last_sync] %>
           </td>
           <td style="padding: 8px; border: 1px solid #000; font-size: 11px; text-align: center; background-color: <%= site[:app_status] == 'Running' ? '#d4edda' : '#f8d7da' %>; color: <%= site[:app_status] == 'Running' ? '#155724' : '#721c24' %>;">
@@ -47,20 +81,39 @@
   </table>
 </div>
 
-<p id="no-results-message" style="text-align: center; display: none;">No orders found.</p>
+<p id="no-results-message" style="text-align: center; display: none; color: #721c24; font-weight: bold; margin-top: 20px;">No matching records found.</p>
 
 <script>
   function filterTable() {
-    const input = document.getElementById('search-input').value.toLowerCase();
+    const searchInput = document.getElementById('search-input').value.toLowerCase();
+    const syncFilter = document.getElementById('sync-filter').value;
+    const appStatusFilter = document.getElementById('app-status-filter').value;
+    const pingStatusFilter = document.getElementById('ping-status-filter').value;
+    
     const table = document.getElementById('orders-table');
     const rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
     let hasResults = false;
 
     for (const row of rows) {
-      const sendingFacility = row.cells[1].innerText.toLowerCase(); // Sending Facility is still column 1
-      const district = row.cells[2].innerText.toLowerCase(); // District is column 2
+      const sendingFacility = row.cells[1].innerText.toLowerCase();
+      const district = row.cells[2].innerText.toLowerCase();
+      const syncStatus = row.cells[5].getAttribute('data-sync-status');
+      const appStatus = row.cells[6].innerText.trim();
+      const pingStatus = row.cells[7].innerText.trim();
 
-      if (sendingFacility.includes(input) || district.includes(input)) {
+      // Check all filter conditions
+      const matchesSearch = searchInput === '' || 
+                           sendingFacility.includes(searchInput) || 
+                           district.includes(searchInput);
+      
+      const matchesSync = syncFilter === '' || syncStatus === syncFilter;
+      
+      const matchesAppStatus = appStatusFilter === '' || appStatus === appStatusFilter;
+      
+      const matchesPingStatus = pingStatusFilter === '' || pingStatus === pingStatusFilter;
+
+      // Show row only if all conditions are met
+      if (matchesSearch && matchesSync && matchesAppStatus && matchesPingStatus) {
         row.style.display = '';
         hasResults = true;
       } else {
@@ -70,5 +123,13 @@
 
     // Show/hide "No results found" message
     document.getElementById('no-results-message').style.display = hasResults ? 'none' : 'block';
+  }
+
+  function clearFilters() {
+    document.getElementById('search-input').value = '';
+    document.getElementById('sync-filter').value = '';
+    document.getElementById('app-status-filter').value = '';
+    document.getElementById('ping-status-filter').value = '';
+    filterTable();
   }
 </script>
