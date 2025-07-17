@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # SETTINGS : Set variables 
-NLIMS_VERSION="v2.3.0" # Replace with the actual version
+NLIMS_VERSION="v2.3.1" # Replace with the actual version
 NLIMS_CONTROLLER_DIR="/var/www/nlims_controller" 
 EMR_API_DIR="/var/www/EMR-API" 
 MLAB_API_DIR="/var/www/mlab_api" 
@@ -61,7 +61,7 @@ ping -c 3 $CHSU_IP >/dev/null 2>&1 || { echo "❌ Error: Could not ping CHSU ($C
 # STEP 2 : NLIMS Installation
 cd "$NLIMS_CONTROLLER_DIR"
 
-git fetch --tags
+# git fetch --tags
 git checkout "$NLIMS_VERSION" -f
 rm Gemfile.lock
 
@@ -136,6 +136,7 @@ fi
 echo "Restarting $NLIMS_SERVICE_FILE"
 SERVICE_NAME=$(basename "$NLIMS_SERVICE_FILE" .service)
 sudo systemctl restart "$SERVICE_NAME.service"
+sudo systemctl enable "$SERVICE_NAME.service"
 # Check if service is active and display status
 if systemctl is-active --quiet "$SERVICE_NAME.service"; then
   echo "✅ $SERVICE_NAME service is running successfully"

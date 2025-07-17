@@ -111,7 +111,7 @@ class IntegrationStatusService
 
     csv_data = CSV.generate do |csv|
       # Add headers
-      csv << ['Site', 'IP Address', 'Application Port', 'Application Status', 'Ping Status', 'Last Sync Date']
+      csv << ['Site', 'IP Address', 'NLIMS Application Port', 'Last Synced Order Timestamp (CHSU)', 'Application Status', 'Ping Status']
 
       # Add data rows
       site_reports.each do |report|
@@ -119,9 +119,9 @@ class IntegrationStatusService
           report['name'],
           report['ip_address'],
           report['app_port'],
+          report['last_sync_date'],
           report['app_status'] ? 'Running' : 'Down',
-          report['ping_status'] ? 'Successful' : 'Failed',
-          report['last_sync_date']
+          report['ping_status'] ? 'Successful' : 'Failed'
         ]
       end
     end

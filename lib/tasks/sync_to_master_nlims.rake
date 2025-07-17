@@ -5,7 +5,7 @@ namespace :master_nlims do
     exit if !Config.local_nlims?
 
     nlims_service = NlimsSyncUtilsService.new(nil)
-    last_date = (Date.today - 4.months).to_s
+    last_date = (Date.today - 6.months).to_s
     res = Test.find_by_sql("SELECT specimen.tracking_number as tracking_number, specimen.id as specimen_id,
                       tests.id as test_id,test_type_id as test_type_id, test_types.name as test_name, specimen.couch_id as couch_id
                       FROM tests INNER JOIN specimen ON specimen.id = tests.specimen_id
@@ -25,8 +25,9 @@ namespace :master_nlims do
         tracking_number = sample['tracking_number']
         test_name = sample['test_name']
         test_id = sample['test_id']
+        couch_id = sample['couch_id']
         begin
-          url = "#{nlims_service.address}/api/v2/query_order_by_tracking_number/#{tracking_number}?test_name=#{test_name}&couch_id=#{sample['couch_id']}"
+          url = "#{nlims_service.address}/api/v2/query_order_by_tracking_number/#{tracking_number}?test_name=#{test_name}&couch_id="
           order = JSON.parse(RestClient.get(url, headers))
           next unless order['error'] == false
 
@@ -99,7 +100,7 @@ namespace :master_nlims do
         end
       end
     end
-    # push_acknwoledgement_to_master_nlims
+    push_acknwoledgement_to_master_nlims
   end
   task test_syncing: :environment do
     # Use services to get authentication status
@@ -143,7 +144,8 @@ def push_acknwoledgement_to_master_nlims
                         INNER JOIN test_types ON test_types.id = tests.test_type_id
                         WHERE tests.id='#{order['test_id']}'
                       ")
-    level = TestResultRecepientType.find_by(id: order['acknwoledment_level'])
+    level = TestResultRecepientType.find_by(id: order['acknowledgment_level'])
+    level ||= TestResultRecepientType.find_by(id: order['acknwoledment_level'])
     level = level['name'] unless level.blank?
     data = {
       'tracking_number': order['tracking_number'],

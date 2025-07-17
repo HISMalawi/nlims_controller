@@ -122,8 +122,10 @@ class NlimsSyncUtilsService
       results_object[Measure.find_by(id: result.measure_id)&.name] = result&.result
     end
     test_status = StatusSyncTracker.find_by(tracking_number:, test_id: test_record&.id, sync_status: false)&.status
+    test_status ||= StatusSyncTracker.where(tracking_number:, test_id: test_record&.id).last&.status
     test_status_id = TestStatus.find_by(name: test_status)&.id
     test_status_trail = TestStatusTrail.where(test_id: test_record&.id, test_status_id:).order(created_at: :desc).first
+
     payload = {
       tracking_number:,
       test_status: test_status,
@@ -133,6 +135,7 @@ class NlimsSyncUtilsService
     }
     return payload if results.empty?
 
+    payload[:test_status] = 'verified' unless test_status.present?
     payload[:result_date] = results.first&.time_entered
     payload[:platform] = results.first&.device_name
     payload[:results] = results_object
@@ -272,6 +275,7 @@ class NlimsSyncUtilsService
   def buid_acknowledment_to_master_data(acknowledgement)
     test_to_ack = TestType.find(Test.find(acknowledgement&.test_id)&.test_type_id)&.name
     level = TestResultRecepientType.find_by(id: acknowledgement&.acknwoledment_level)
+    level ||= TestResultRecepientType.find_by(id: acknowledgement&.acknowledgment_level)
     {
       'tracking_number': acknowledgement&.tracking_number,
       'test': test_to_ack,

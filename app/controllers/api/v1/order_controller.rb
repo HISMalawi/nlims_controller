@@ -590,7 +590,7 @@ class API::V1::OrderController < ApplicationController
             result_date: result['result_date'],
             acknwoledged_by: 'emr_at_facility',
             acknwoledged_to_nlims: false,
-            acknwoledment_level: 2
+            acknowledgment_level: 2
           )
         end
       end
