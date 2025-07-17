@@ -5,7 +5,7 @@ namespace :master_nlims do
     exit if !Config.local_nlims?
 
     nlims_service = NlimsSyncUtilsService.new(nil)
-    last_date = (Date.today - 4.months).to_s
+    last_date = (Date.today - 6.months).to_s
     res = Test.find_by_sql("SELECT specimen.tracking_number as tracking_number, specimen.id as specimen_id,
                       tests.id as test_id,test_type_id as test_type_id, test_types.name as test_name, specimen.couch_id as couch_id
                       FROM tests INNER JOIN specimen ON specimen.id = tests.specimen_id
