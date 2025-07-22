@@ -16,11 +16,7 @@ EMR_PASSWORD=$(openssl rand -base64 30 | tr -dc 'a-zA-Z0-9' | head -c 20)
 # Default credentials for NLIMS
 LOCAL_PASSWORD="lab@daemon"  # Replace with the actual local password
 DEFAULT_MASTER_NLIMS_PASSWORD="knock_knock" # Replace with the actual default master NLIMS password
-
-echo "🔐 Generated IBLIS password: $IBLIS_PASSWORD"
-echo "🔐 Generated EMR password: $EMR_PASSWORD"
 NLIMS_SIDEKIQ_SERVICE_FILE="$NLIMS_CONTROLLER_DIR/nlims-sidekiq.service" # sidekiq service 
-
  
 # STEP1 : Perform checks
 # Get MySQL port and database name from database.yml
@@ -31,19 +27,20 @@ if [ -f "$NLIMS_CONTROLLER_DIR/config/database.yml" ]; then
   MYSQL_PORT=$(ruby -ryaml -e "puts YAML::load_file('$NLIMS_CONTROLLER_DIR/config/database.yml',aliases: true)['development']['port']")
   DB_NAME=$(ruby -ryaml -e "puts YAML::load_file('$NLIMS_CONTROLLER_DIR/config/database.yml',aliases: true)['development']['database']")
 else
-  echo "Warning: database.yml not found, using default MySQL credentials"
+ echo "⚠️  Warning: database.yml not found in $NLIMS_CONTROLLER_DIR/config, using default MySQL credentials"
   MYSQL_USERNAME="root"
   MYSQL_PASSWORD="password"
   MYSQL_PORT="3306"
   DB_NAME="lims_db"
 fi
 mysql -u "$MYSQL_USERNAME" -p"$MYSQL_PASSWORD" -P"$MYSQL_PORT" -h "127.0.0.1" -e "SELECT version();" 2>/dev/null | grep -q "8.0" || { 
-  echo "⚠️  Warning: MySQL 8 on port 3306 is required. You appear to be using a different version or port."
+  echo "⚠️  Warning: MySQL 8 on port 3306 is required. You appear to be using a different version or port or credentials are incorrect."
   echo ""
   echo "🔄 Migration Steps:"
   echo "  1️⃣  Dump your data: mysqldump -u root -p -h 127.0.0.1 -P $MYSQL_PORT $DB_NAME > ${DB_NAME}_dump.sql"
   echo "  2️⃣  Import to MySQL 8: mysql -u root -p -h 127.0.0.1 -P 3306 $DB_NAME < ${DB_NAME}_dump.sql"
-  echo "  3️⃣  Update $NLIMS_CONTROLLER_DIR/config/database.yml to use port: 3306"
+  echo "  3️⃣  Update $NLIMS_CONTROLLER_DIR/config/database.yml to use port: 3306 using vim or nano"
+  echo "  4️⃣  Rerun this script."
   echo ""
   exit 1;
 }
@@ -57,6 +54,10 @@ redis-cli ping >/dev/null 2>&1 || {
 
 echo "🔍 Checking network connectivity to CHSU... Pinging $CHSU_IP"
 ping -c 3 $CHSU_IP >/dev/null 2>&1 || { echo "❌ Error: Could not ping CHSU ($CHSU_IP). Please check network connectivity."; exit 1; }
+
+# print generated passwords
+echo "🔐 Generated IBLIS password: $IBLIS_PASSWORD"
+echo "🔐 Generated EMR password: $EMR_PASSWORD"
 
 # STEP 2 : NLIMS Installation
 cd "$NLIMS_CONTROLLER_DIR"
@@ -117,8 +118,8 @@ else
 fi
 
 # Step 6 : NLIMS Service Update
-NLIMS_SERVICE_FILE="/etc/systemd/system/nlims.service"
-ALT_NLIMS_SERVICE_FILE="/etc/systemd/system/nlims-api.service"
+NLIMS_SERVICE_FILE="/etc/systemd/system/nlims-api.service"
+ALT_NLIMS_SERVICE_FILE="/etc/systemd/system/nlims.service"
 
 if [[ ! -f "$NLIMS_SERVICE_FILE" && -f "$ALT_NLIMS_SERVICE_FILE" ]]; then
   NLIMS_SERVICE_FILE="$ALT_NLIMS_SERVICE_FILE"
