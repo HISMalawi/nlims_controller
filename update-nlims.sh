@@ -1,7 +1,6 @@
 #!/bin/bash
 
-# SETTINGS : Set variables 
-NLIMS_VERSION="v2.3.1" # Replace with the actual version
+# SETTINGS : Set variables
 NLIMS_CONTROLLER_DIR="/var/www/nlims_controller" 
 EMR_API_DIR="/var/www/EMR-API" 
 MLAB_API_DIR="/var/www/mlab_api" 
@@ -63,9 +62,36 @@ echo "🔐 Generated EMR password: $EMR_PASSWORD"
 cd "$NLIMS_CONTROLLER_DIR"
 
 # git fetch --tags
-git checkout "$NLIMS_VERSION" -f
-rm Gemfile.lock
 
+# Minimum required version
+REQUIRED_VERSION="v2.3.2"
+
+# Get current tag (if checked out on a tag)
+CURRENT_TAG=$(git describe --tags --exact-match 2>/dev/null)
+# Get latest tag (semver-sorted)
+LATEST_TAG=$(git tag --sort=-v:refname | head -n 1)
+# Determine actual version to use
+if [ -z "$CURRENT_TAG" ]; then
+  echo "Not on a tag — using latest tag: $LATEST_TAG"
+  CURRENT_TAG="$LATEST_TAG"
+else
+  echo "Currently on tag: $CURRENT_TAG"
+  # Compare CURRENT_TAG with REQUIRED_VERSION
+  if [ "$(printf '%s\n' "$REQUIRED_VERSION" "$CURRENT_TAG" | sort -V | head -n1)" != "$REQUIRED_VERSION" ]; then
+    echo "Current tag ($CURRENT_TAG) is newer than or equal to $REQUIRED_VERSION"
+  else
+    echo "Current tag ($CURRENT_TAG) is older than $REQUIRED_VERSION — using latest tag: $LATEST_TAG"
+    CURRENT_TAG="$LATEST_TAG"
+  fi
+fi
+
+# Set NLIMS_VERSION to the resolved tag
+NLIMS_VERSION="$CURRENT_TAG"
+echo "NLIMS_VERSION set to: $NLIMS_VERSION"
+echo "Checking out $NLIMS_VERSION"
+git checkout "$NLIMS_VERSION" -f
+
+rm Gemfile.lock
 bundle install --local
 
 # STEP 3: Update metadata
@@ -169,6 +195,9 @@ cd "$NLIMS_CONTROLLER_DIR"
 nohup bundle exec rake master_nlims:register_order_source > log/register_order_source.log 2>&1 &
 cd "$NLIMS_CONTROLLER_DIR"
 nohup bundle exec rake tracking_number_loggers:load_data > log/tracking_number_loggers.log 2>&1 &
+
+cd "$NLIMS_CONTROLLER_DIR"
+./bin/add_cronjob.sh
 
 # DONE WITH THE SCRIPT
 echo "✅ NLIMS  completed successfully"
