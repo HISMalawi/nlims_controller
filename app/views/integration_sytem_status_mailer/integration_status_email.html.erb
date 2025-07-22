@@ -30,6 +30,7 @@
       <th style="border:1px solid #e5e7eb;">Last Synced Order Timestamp (CHSU)</th>
       <th style="border:1px solid #e5e7eb;">App&nbsp;Status</th>
       <th style="border:1px solid #e5e7eb;">Ping&nbsp;Status</th>
+      <th style="border:1px solid #e5e7eb;">App-Ping Status Last Updated At</th>
     </tr>
   </thead>
 
@@ -47,6 +48,7 @@
       <td style="border:1px solid #e5e7eb; color:<%= r['ping_status'].present? ? '#16a34a' : '#dc2626' %>;">
         <%= r['ping_status'].present? ? 'Successful' : 'Failed' %>
       </td>
+      <td style="border:1px solid #e5e7eb;"><%= r['status_last_updated'] %></td>
     </tr>
   <% end %>
   </tbody>

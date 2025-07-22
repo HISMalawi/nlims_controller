@@ -1,11 +1,11 @@
 Integration System Status — <%= Time.current.strftime('%B %e, %Y %H:%M') %>
 
 <%= sprintf "%-20s %-15s %-5s %-10s %-14s %s",
-            "Site", "IP", "Port", "App", "Ping", "Last Sync" %>
+            "Site", "IP", "Port", "App", "Ping", "App-ping Last Updated At", "Last Sync" %>
 <%= "-"*80 %>
 <% @site_reports.each do |r| %>
-<%= sprintf "%-20s %-15s %-5s %-10s %-14s %s",
-            r['name'], r['ip_address'], r['app_port'], r['app_status'], r['ping_status'],
+<%= sprintf "%-20s %-15s %-5s %-10s %-14s %-15s %s",
+            r['name'], r['ip_address'], r['app_port'], r['app_status'], r['ping_status'], r['status_last_updated'],
             r['last_sync_date'] %>
 <% end %>
 
