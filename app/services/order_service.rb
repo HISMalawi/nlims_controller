@@ -46,7 +46,7 @@ module OrderService
         tracking_number:,
         specimen_type_id: sample_type_id,
         specimen_status_id: sample_status_id,
-        couch_id: SecureRandom.uuid,
+        couch_id: params[:couch_id] || SecureRandom.uuid,
         ward_id: order_ward,
         priority: params[:sample_priority],
         drawn_by_id: params[:who_order_test_id],
