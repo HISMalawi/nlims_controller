@@ -29,6 +29,18 @@ class IntegrationStatusService
   rescue RestClient::Exceptions::OpenTimeout, RestClient::Exceptions::ReadTimeout => e
     puts "Timeout error: #{e.message}"
     false
+  rescue RestClient::ExceptionWithResponse => e
+    if e.http_code == 404
+      url = "http://#{ip_address}:#{port}/api/v1/re_authenticate/aexede/aexede"
+      response = RestClient::Request.execute(
+        method: :get,
+        url: url,
+        headers: { content_type: 'application/json' },
+        timeout: 10,
+        open_timeout: 10
+      )
+      JSON.parse(response)['error']
+    end
   rescue StandardError => e
     puts "Error: #{e.message}"
     false
