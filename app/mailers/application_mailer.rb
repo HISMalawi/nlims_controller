@@ -2,6 +2,6 @@
 
 # ApplicationMailer
 class ApplicationMailer < ActionMailer::Base
-  default from: 'umbnetworkmonitor@pedaids.org'
+  default from: ENV['NLIMS_EMAIL_ADDRESS']
   layout 'mailer'
 end
