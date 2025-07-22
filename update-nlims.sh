@@ -197,7 +197,6 @@ cd "$NLIMS_CONTROLLER_DIR"
 nohup bundle exec rake tracking_number_loggers:load_data > log/tracking_number_loggers.log 2>&1 &
 
 cd "$NLIMS_CONTROLLER_DIR"
-./bin/add_cronjob.sh
 
 # DONE WITH THE SCRIPT
 echo "✅ NLIMS  completed successfully"
