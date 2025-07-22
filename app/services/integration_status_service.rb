@@ -91,6 +91,7 @@ class IntegrationStatusService
         app_port: application_port,
         ping_status: ping_status,
         app_status: app_status,
+        status_last_updated: Time.now.strftime('%d/%b/%Y %H:%M'),
         last_sync_date_gt_24hr: last_sync_date_gt_24hr?(last_sync_date),
         last_sync_date: last_sync_date.present? ? last_sync_date.strftime('%d/%b/%Y %H:%M') : 'Has Never Synced with NLIMS'
       }

@@ -54,4 +54,47 @@ class HomeController < ApplicationController
   def integrated_sites
     @sites = StatsService.integrated_sites
   end
+
+  def refresh_app_ping_status
+    integration_service = IntegrationStatusService.new
+    site = Site.find_by(name: params[:site_name])
+    app_status = integration_service.application_status(site&.host_address, site&.application_port)
+    ping_status = integration_service.ping_server(site&.host_address)
+    timestamp = Time.now.strftime('%d/%b/%Y %H:%M')
+    last_sync_date = integration_service.last_sync_date(site&.name)
+
+    data = {
+      "app_status": app_status ? 'Running' : 'Down',
+      "ping_status": ping_status ? 'Success' : 'Failed',
+      "status_last_updated": timestamp
+    }
+    report = Report.find_or_create_by(name: 'integration_status') do |r|
+      r.data = []
+    end
+
+    # Find the site in the existing data array or add it
+    site_index = report.data.find_index { |s| s['name'] == params[:site_name] }
+
+    updated_site_data = {
+      name: site.name,
+      ip_address: site.host_address,
+      app_port: site.application_port,
+      ping_status: ping_status,
+      app_status: app_status,
+      status_last_updated: timestamp,
+      last_sync_date_gt_24hr: integration_service.last_sync_date_gt_24hr?(last_sync_date),
+      last_sync_date: last_sync_date.present? ? last_sync_date.strftime('%d/%b/%Y %H:%M') : 'Has Never Synced with NLIMS'
+    }.stringify_keys
+
+    if site_index
+      # Update existing site data
+      report.data[site_index] = updated_site_data
+    else
+      # Add new site data
+      report.data << updated_site_data
+    end
+
+    report.save!
+    render json: data
+  end
 end
