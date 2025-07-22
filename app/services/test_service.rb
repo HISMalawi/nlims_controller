@@ -41,6 +41,7 @@ module TestService
           next if result_value.blank?
           next if result_already_available?(test_id, measure_id, result_value)
 
+          result_value = result_value.gsub(',', '') if Measure.find_by(name: 'Viral Load')&.id == measure_id
           if TestResult.exists?(test_id:, measure_id:)
             test_result = TestResult.find_by(test_id:, measure_id: measure_id)
             TestResultTrail.create!(
