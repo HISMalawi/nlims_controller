@@ -1,35 +1,46 @@
-<h4>
+<h4 style="color: #1f2937; margin-bottom: 20px; font-family: system-ui, -apple-system, sans-serif;">
   Integrated Sites Sync Status – <%= Time.current.strftime('%B %e, %Y %H:%M %Z') %>
 </h4>
 
-<p>
+<p style="margin-bottom: 15px; font-family: system-ui, -apple-system, sans-serif; line-height: 1.5; color: #374151;">
   Dear HIS Officers,
 </p>
 
-<p>
-  This is to inform you of sites currently experiencing challenges syncing with CHSU. Kindly review the affected sites under your supervision and take the necessary action.
+<p style="margin-bottom: 15px; font-family: system-ui, -apple-system, sans-serif; line-height: 1.5; color: #374151;">
+  This is to inform you of sites currently experiencing challenges syncing with CHSU. Kindly review the affected sites under your supervision and take the necessary action to resolve the issues.
 </p>
 
-<p>
-  The report includes the last successful sync time with CHSU, the current network connectivity status to the server, and the operational status of the local NLIMS instance for each site.
+<p style="margin-bottom: 15px; font-family: system-ui, -apple-system, sans-serif; line-height: 1.5; color: #374151;">
+  The report includes the last successful sync time with CHSU, the current network connectivity status to the server, the operational status of the local NLIMS instance for each site and the timestamp of the last update of the app/ping status.
+  These should give you an idea of the root cause of the issue otherwise check the action points below for further troubleshooting. 
 </p>
 
-<p>
+<p style="margin-bottom: 15px; font-family: system-ui, -apple-system, sans-serif; line-height: 1.5; color: #374151;">
+  Go to <a href="http://10.44.0.46:3010/integrated_sites" style="color: #2563eb; text-decoration: none; border-bottom: 1px solid #cbd5e1;">http://10.44.0.46:3010/integrated_sites</a> (VPN required) to view the latest status of all integrated sites. Click refresh button to refresh the status of a specific site.
+</p>
+
+<div style="background: #f8fafc; border-left: 4px solid #0ea5e9; padding: 15px 20px; margin: 20px 0; border-radius: 0 4px 4px 0;">
+  <p style="font-weight: 600; margin: 8px 0 10px 0; font-size: 14px; font-family: system-ui, -apple-system, sans-serif; color: #374151;">🔧 Action Points for Sites with Outdated or Missing Sync:</p>
+  <p style="margin: 5px 0; font-size: 14px; font-family: system-ui, -apple-system, sans-serif; color: #374151;">✅ Check if CouchDB replication is properly configured and running.</p>
+  <p style="margin: 5px 0; font-size: 14px; font-family: system-ui, -apple-system, sans-serif; color: #374151;">✅ Ensure the EMR cron job responsible for syncing is running as expected.</p>
+  <p style="margin: 5px 0; font-size: 14px; font-family: system-ui, -apple-system, sans-serif; color: #374151;">✅ Confirm you can ping the CHSU server at 10.44.0.46.</p>
+</div>
+
+<p style="margin-bottom: 15px; font-family: system-ui, -apple-system, sans-serif; line-height: 1.5; color: #374151;">
   A CSV file containing these details is attached to this email for your reference.
 </p>
 
-<table width="100%" cellpadding="6" cellspacing="0"
-       style="border-collapse: collapse; font-family: system-ui, sans-serif;
-              font-size: 14px; text-align: left;">
+<table width="100%" cellpadding="8" cellspacing="0" style="border-collapse: collapse; font-family: system-ui, -apple-system, sans-serif; font-size: 14px; text-align: left; margin: 20px 0;">
   <thead>
     <tr style="background:#f3f4f6;">
-      <th style="border:1px solid #e5e7eb;">#</th>
-      <th style="border:1px solid #e5e7eb;">Site</th>
-      <th style="border:1px solid #e5e7eb;">IP</th>
-      <th style="border:1px solid #e5e7eb;">NLIMS Application Port</th>
-      <th style="border:1px solid #e5e7eb;">Last Synced Order Timestamp (CHSU)</th>
-      <th style="border:1px solid #e5e7eb;">App&nbsp;Status</th>
-      <th style="border:1px solid #e5e7eb;">Ping&nbsp;Status</th>
+      <th style="border:1px solid #e5e7eb; font-weight: 600;">#</th>
+      <th style="border:1px solid #e5e7eb; font-weight: 600;">Site</th>
+      <th style="border:1px solid #e5e7eb; font-weight: 600;">IP</th>
+      <th style="border:1px solid #e5e7eb; font-weight: 600;">NLIMS Application Port</th>
+      <th style="border:1px solid #e5e7eb; font-weight: 600;">Last Synced Order Timestamp (CHSU)</th>
+      <th style="border:1px solid #e5e7eb; font-weight: 600;">App&nbsp;Status</th>
+      <th style="border:1px solid #e5e7eb; font-weight: 600;">Ping&nbsp;Status</th>
+      <th style="border:1px solid #e5e7eb; font-weight: 600;">App-Ping Status Last Updated At</th>
     </tr>
   </thead>
 
@@ -47,11 +58,12 @@
       <td style="border:1px solid #e5e7eb; color:<%= r['ping_status'].present? ? '#16a34a' : '#dc2626' %>;">
         <%= r['ping_status'].present? ? 'Successful' : 'Failed' %>
       </td>
+      <td style="border:1px solid #e5e7eb;"><%= r['status_last_updated'] %></td>
     </tr>
   <% end %>
   </tbody>
 </table>
 
-<p style="font-family: system-ui, sans-serif; font-size: 12px; color:#6b7280;">
+<div style="font-family: system-ui, -apple-system, sans-serif; font-size: 12px; color:#6b7280; margin-top: 30px; border-top: 1px solid #e5e7eb; padding-top: 15px;">
   Generated automatically by <strong>NLIMS CHSU</strong>. Please do not reply.
-</p>
+</div>

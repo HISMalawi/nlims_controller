@@ -27,7 +27,7 @@ namespace :master_nlims do
         test_id = sample['test_id']
         couch_id = sample['couch_id']
         begin
-          url = "#{nlims_service.address}/api/v2/query_order_by_tracking_number/#{tracking_number}?test_name=#{test_name}&couch_id="
+          url = "#{nlims_service.address}/api/v2/query_order_by_tracking_number/#{tracking_number}?test_name=#{test_name}&couch_id=#{couch_id}"
           order = JSON.parse(RestClient.get(url, headers))
           next unless order['error'] == false
 

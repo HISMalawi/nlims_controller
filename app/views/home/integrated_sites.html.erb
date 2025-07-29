@@ -1,10 +1,5 @@
 <h1 style="text-align: center;">Integrated Sites</h1>
 
-<!-- Integration Status Last Update Info -->
-<div style="text-align: center; margin-bottom: 20px; padding: 10px; background-color: #e8f4fd; border: 1px solid #bee5eb; border-radius: 5px;">
-  <strong>App Status & Ping Status Last Updated:</strong> <%= @sites[:integration_status_last_update] %>
-</div>
-
 <!-- Summary Section -->
 <div id="summary-section" style="margin-bottom: 20px; padding: 15px; background-color: #fff3cd; border: 1px solid #ffeaa7; border-radius: 5px;">
   <h3 style="margin: 0 0 15px 0; text-align: center; color: #856404;">Site Status Summary</h3>
@@ -53,8 +48,8 @@
     <label for="sync-filter" style="margin-bottom: 5px; font-weight: bold;">Last Sync:</label>
     <select id="sync-filter" onchange="filterTable()" style="padding: 5px; border: 1px solid #ccc; border-radius: 3px; width: 150px;">
       <option value="">All</option>
-      <option value="recent">Recent (< 24hrs)</option>
-      <option value="old">Old (> 24hrs)</option>
+      <option value="recent">Recent (< 48hrs)</option>
+      <option value="old">Old (> 48hrs)</option>
     </select>
   </div>
   
@@ -63,7 +58,7 @@
     <select id="app-status-filter" onchange="filterTable()" style="padding: 5px; border: 1px solid #ccc; border-radius: 3px; width: 120px;">
       <option value="">All</option>
       <option value="Running">Running</option>
-      <option value="Stopped">Stopped</option>
+      <option value="Down">Down</option>
     </select>
   </div>
   
@@ -93,6 +88,8 @@
         <th style="padding: 8px; border: 1px solid #000; font-size: 12px; text-align: left;">Last Synced Order Timestamp (CHSU)</th>
         <th style="padding: 8px; border: 1px solid #000; font-size: 12px; text-align: center;">App Status</th>
         <th style="padding: 8px; border: 1px solid #000; font-size: 12px; text-align: center;">Ping Status</th>
+        <th style="padding: 8px; border: 1px solid #000; font-size: 12px; text-align: center;">App-Ping Status Last Updated At</th>
+        <th style="padding: 8px; border: 1px solid #000; font-size: 12px; text-align: center;">Actions</th>
       </tr>
     </thead>
     <tbody>
@@ -111,6 +108,16 @@
           </td>
           <td style="padding: 8px; border: 1px solid #000; font-size: 11px; text-align: center; background-color: <%= site[:ping_status] == 'Success' ? '#d4edda' : '#f8d7da' %>; color: <%= site[:ping_status] == 'Success' ? '#155724' : '#721c24' %>;">
             <strong><%= site[:ping_status] %></strong>
+          </td>
+          <td style="padding: 8px; border: 1px solid #000; font-size: 10px; text-align: center;" id="status-updated-<%= index %>">
+            <%= site[:status_last_updated] %>
+          </td>
+          <td style="padding: 8px; border: 1px solid #000; font-size: 11px; text-align: center;">
+            <button onclick="refreshSiteStatus('<%= site[:sending_facility] %>', <%= index %>)" 
+                    id="refresh-btn-<%= index %>"
+                    style="padding: 4px 8px; background-color: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 10px;">
+              Refresh
+            </button>
           </td>
         </tr>
       <% end %>
@@ -215,5 +222,74 @@
     document.getElementById('app-status-filter').value = '';
     document.getElementById('ping-status-filter').value = '';
     filterTable();
+  }
+
+  async function refreshSiteStatus(siteName, rowIndex) {
+    const refreshBtn = document.getElementById(`refresh-btn-${rowIndex}`);
+    const statusCell = document.getElementById(`status-updated-${rowIndex}`);
+    const table = document.getElementById('orders-table');
+    const row = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr')[rowIndex];
+    
+    // Disable button and show loading state
+    refreshBtn.disabled = true;
+    refreshBtn.textContent = 'Loading...';
+    refreshBtn.style.backgroundColor = '#6c757d';
+    
+    try {
+      const response = await fetch(`/refresh_app_ping_status?site_name=${encodeURIComponent(siteName)}`);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      // Update the row with new data
+      if (data.app_status) {
+        const appStatusCell = row.cells[6];
+        appStatusCell.innerHTML = `<strong>${data.app_status}</strong>`;
+        appStatusCell.style.backgroundColor = data.app_status === 'Running' ? '#d4edda' : '#f8d7da';
+        appStatusCell.style.color = data.app_status === 'Running' ? '#155724' : '#721c24';
+      }
+      
+      if (data.ping_status) {
+        const pingStatusCell = row.cells[7];
+        pingStatusCell.innerHTML = `<strong>${data.ping_status}</strong>`;
+        pingStatusCell.style.backgroundColor = data.ping_status === 'Success' ? '#d4edda' : '#f8d7da';
+        pingStatusCell.style.color = data.ping_status === 'Success' ? '#155724' : '#721c24';
+      }
+      
+      if (data.status_last_updated) {
+        statusCell.textContent = data.status_last_updated;
+      }
+      
+      // Update summary counts after refresh
+      updateSummary();
+      
+      // Show success feedback
+      refreshBtn.style.backgroundColor = '#28a745';
+      refreshBtn.textContent = 'Updated';
+      
+      setTimeout(() => {
+        refreshBtn.style.backgroundColor = '#007bff';
+        refreshBtn.textContent = 'Refresh';
+        refreshBtn.disabled = false;
+      }, 2000);
+      
+    } catch (error) {
+      console.error('Error refreshing site status:', error);
+      
+      // Show error feedback
+      refreshBtn.style.backgroundColor = '#dc3545';
+      refreshBtn.textContent = 'Error';
+      
+      setTimeout(() => {
+        refreshBtn.style.backgroundColor = '#007bff';
+        refreshBtn.textContent = 'Refresh';
+        refreshBtn.disabled = false;
+      }, 3000);
+      
+      alert(`Failed to refresh status for ${siteName}. Please try again.`);
+    }
   }
 </script>

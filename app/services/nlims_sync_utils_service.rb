@@ -173,6 +173,7 @@ class NlimsSyncUtilsService
       health_facility_name: order.sending_facility,
       district: order.district,
       target_lab: order.target_lab,
+      couch_id: order.couch_id,
       requesting_clinician: order.requested_by,
       return_json: 'true',
       sample_type: SpecimenType.find_by(id: order.specimen_type_id)&.name,

@@ -1,7 +1,6 @@
 #!/bin/bash
 
-# SETTINGS : Set variables 
-NLIMS_VERSION="v2.3.1" # Replace with the actual version
+# SETTINGS : Set variables
 NLIMS_CONTROLLER_DIR="/var/www/nlims_controller" 
 EMR_API_DIR="/var/www/EMR-API" 
 MLAB_API_DIR="/var/www/mlab_api" 
@@ -16,11 +15,7 @@ EMR_PASSWORD=$(openssl rand -base64 30 | tr -dc 'a-zA-Z0-9' | head -c 20)
 # Default credentials for NLIMS
 LOCAL_PASSWORD="lab@daemon"  # Replace with the actual local password
 DEFAULT_MASTER_NLIMS_PASSWORD="knock_knock" # Replace with the actual default master NLIMS password
-
-echo "🔐 Generated IBLIS password: $IBLIS_PASSWORD"
-echo "🔐 Generated EMR password: $EMR_PASSWORD"
 NLIMS_SIDEKIQ_SERVICE_FILE="$NLIMS_CONTROLLER_DIR/nlims-sidekiq.service" # sidekiq service 
-
  
 # STEP1 : Perform checks
 # Get MySQL port and database name from database.yml
@@ -31,19 +26,20 @@ if [ -f "$NLIMS_CONTROLLER_DIR/config/database.yml" ]; then
   MYSQL_PORT=$(ruby -ryaml -e "puts YAML::load_file('$NLIMS_CONTROLLER_DIR/config/database.yml',aliases: true)['development']['port']")
   DB_NAME=$(ruby -ryaml -e "puts YAML::load_file('$NLIMS_CONTROLLER_DIR/config/database.yml',aliases: true)['development']['database']")
 else
-  echo "Warning: database.yml not found, using default MySQL credentials"
+ echo "⚠️  Warning: database.yml not found in $NLIMS_CONTROLLER_DIR/config, using default MySQL credentials"
   MYSQL_USERNAME="root"
   MYSQL_PASSWORD="password"
   MYSQL_PORT="3306"
   DB_NAME="lims_db"
 fi
 mysql -u "$MYSQL_USERNAME" -p"$MYSQL_PASSWORD" -P"$MYSQL_PORT" -h "127.0.0.1" -e "SELECT version();" 2>/dev/null | grep -q "8.0" || { 
-  echo "⚠️  Warning: MySQL 8 on port 3306 is required. You appear to be using a different version or port."
+  echo "⚠️  Warning: MySQL 8 on port 3306 is required. You appear to be using a different version or port or credentials are incorrect."
   echo ""
   echo "🔄 Migration Steps:"
   echo "  1️⃣  Dump your data: mysqldump -u root -p -h 127.0.0.1 -P $MYSQL_PORT $DB_NAME > ${DB_NAME}_dump.sql"
   echo "  2️⃣  Import to MySQL 8: mysql -u root -p -h 127.0.0.1 -P 3306 $DB_NAME < ${DB_NAME}_dump.sql"
-  echo "  3️⃣  Update $NLIMS_CONTROLLER_DIR/config/database.yml to use port: 3306"
+  echo "  3️⃣  Update $NLIMS_CONTROLLER_DIR/config/database.yml to use port: 3306 using vim or nano"
+  echo "  4️⃣  Rerun this script."
   echo ""
   exit 1;
 }
@@ -58,13 +54,44 @@ redis-cli ping >/dev/null 2>&1 || {
 echo "🔍 Checking network connectivity to CHSU... Pinging $CHSU_IP"
 ping -c 3 $CHSU_IP >/dev/null 2>&1 || { echo "❌ Error: Could not ping CHSU ($CHSU_IP). Please check network connectivity."; exit 1; }
 
+# print generated passwords
+echo "🔐 Generated IBLIS password: $IBLIS_PASSWORD"
+echo "🔐 Generated EMR password: $EMR_PASSWORD"
+
 # STEP 2 : NLIMS Installation
 cd "$NLIMS_CONTROLLER_DIR"
 
 # git fetch --tags
-git checkout "$NLIMS_VERSION" -f
-rm Gemfile.lock
 
+# Minimum required version
+REQUIRED_VERSION="v2.3.2"
+
+# Get current tag (if checked out on a tag)
+CURRENT_TAG=$(git describe --tags --exact-match 2>/dev/null)
+# Get latest tag (semver-sorted)
+LATEST_TAG=$(git tag --sort=-v:refname | head -n 1)
+# Determine actual version to use
+if [ -z "$CURRENT_TAG" ]; then
+  echo "Not on a tag — using latest tag: $LATEST_TAG"
+  CURRENT_TAG="$LATEST_TAG"
+else
+  echo "Currently on tag: $CURRENT_TAG"
+  # Compare CURRENT_TAG with REQUIRED_VERSION
+  if [ "$(printf '%s\n' "$REQUIRED_VERSION" "$CURRENT_TAG" | sort -V | head -n1)" != "$REQUIRED_VERSION" ]; then
+    echo "Current tag ($CURRENT_TAG) is newer than or equal to $REQUIRED_VERSION"
+  else
+    echo "Current tag ($CURRENT_TAG) is older than $REQUIRED_VERSION — using latest tag: $LATEST_TAG"
+    CURRENT_TAG="$LATEST_TAG"
+  fi
+fi
+
+# Set NLIMS_VERSION to the resolved tag
+NLIMS_VERSION="$CURRENT_TAG"
+echo "NLIMS_VERSION set to: $NLIMS_VERSION"
+echo "Checking out $NLIMS_VERSION"
+git checkout "$NLIMS_VERSION" -f
+
+rm Gemfile.lock
 bundle install --local
 
 # STEP 3: Update metadata
@@ -117,8 +144,8 @@ else
 fi
 
 # Step 6 : NLIMS Service Update
-NLIMS_SERVICE_FILE="/etc/systemd/system/nlims.service"
-ALT_NLIMS_SERVICE_FILE="/etc/systemd/system/nlims-api.service"
+NLIMS_SERVICE_FILE="/etc/systemd/system/nlims-api.service"
+ALT_NLIMS_SERVICE_FILE="/etc/systemd/system/nlims.service"
 
 if [[ ! -f "$NLIMS_SERVICE_FILE" && -f "$ALT_NLIMS_SERVICE_FILE" ]]; then
   NLIMS_SERVICE_FILE="$ALT_NLIMS_SERVICE_FILE"
@@ -168,6 +195,8 @@ cd "$NLIMS_CONTROLLER_DIR"
 nohup bundle exec rake master_nlims:register_order_source > log/register_order_source.log 2>&1 &
 cd "$NLIMS_CONTROLLER_DIR"
 nohup bundle exec rake tracking_number_loggers:load_data > log/tracking_number_loggers.log 2>&1 &
+
+cd "$NLIMS_CONTROLLER_DIR"
 
 # DONE WITH THE SCRIPT
 echo "✅ NLIMS  completed successfully"

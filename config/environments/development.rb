@@ -27,22 +27,22 @@ Rails.application.configure do
   end
 
   config.action_mailer.delivery_method = :smtp
-  # host = 'smtp.office365.com'
-  # config.action_mailer.default_url_options = {host: host}
+  host = 'smtp.office365.com'
+  config.action_mailer.default_url_options = {host: host}
 
   # SMTP Settings
   config.action_mailer.smtp_settings = {
     address: 'smtp.office365.com',
     port: 587,
-    user_name: ENV['EMAIL_ADDRESS'],
-    password: ENV['EMAIL_PASSWORD'],
+    user_name: ENV['NLIMS_EMAIL_ADDRESS'],
+    password: ENV['NLIMS_EMAIL_PASSWORD'],
     authentication: :login,
     enable_starttls_auto: true,
     domain: 'pedaids.org'
   }
 
   # Don't care if the mailer can't send.
-  config.action_mailer.raise_delivery_errors = false
+  config.action_mailer.raise_delivery_errors = true
 
   config.action_mailer.perform_caching = false
 

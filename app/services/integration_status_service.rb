@@ -29,6 +29,18 @@ class IntegrationStatusService
   rescue RestClient::Exceptions::OpenTimeout, RestClient::Exceptions::ReadTimeout => e
     puts "Timeout error: #{e.message}"
     false
+  rescue RestClient::ExceptionWithResponse => e
+    if e.http_code == 404
+      url = "http://#{ip_address}:#{port}/api/v1/re_authenticate/aexede/aexede"
+      response = RestClient::Request.execute(
+        method: :get,
+        url: url,
+        headers: { content_type: 'application/json' },
+        timeout: 10,
+        open_timeout: 10
+      )
+      JSON.parse(response)['error']
+    end
   rescue StandardError => e
     puts "Error: #{e.message}"
     false
@@ -79,6 +91,7 @@ class IntegrationStatusService
         app_port: application_port,
         ping_status: ping_status,
         app_status: app_status,
+        status_last_updated: Time.now.strftime('%d/%b/%Y %H:%M'),
         last_sync_date_gt_24hr: last_sync_date_gt_24hr?(last_sync_date),
         last_sync_date: last_sync_date.present? ? last_sync_date.strftime('%d/%b/%Y %H:%M') : 'Has Never Synced with NLIMS'
       }
@@ -111,7 +124,7 @@ class IntegrationStatusService
 
     csv_data = CSV.generate do |csv|
       # Add headers
-      csv << ['Site', 'IP Address', 'NLIMS Application Port', 'Last Synced Order Timestamp (CHSU)', 'Application Status', 'Ping Status']
+      csv << ['Site', 'IP Address', 'NLIMS Application Port', 'Last Synced Order Timestamp (CHSU)', 'Application Status', 'Ping Status', 'App-Ping Status Last Updated At']
 
       # Add data rows
       site_reports.each do |report|
@@ -121,7 +134,8 @@ class IntegrationStatusService
           report['app_port'],
           report['last_sync_date'],
           report['app_status'] ? 'Running' : 'Down',
-          report['ping_status'] ? 'Successful' : 'Failed'
+          report['ping_status'] ? 'Successful' : 'Failed',
+          report['status_last_updated']
         ]
       end
     end
