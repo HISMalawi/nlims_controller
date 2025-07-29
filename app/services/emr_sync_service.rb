@@ -56,6 +56,40 @@ class EmrSyncService
     SyncErrorLog.create(error_message: e.message, error_details: { message: 'ERROR Account creation in EMR' })
   end
 
+  def nlims_local_orders(start_date, end_date, concept)
+    test_type = TestType.find_by(name: concept[:name])
+    sp = Speciman.where(
+      'date_created >= ? AND date_created <= ?',
+      start_date.to_date.beginning_of_day,
+      end_date.to_date.end_of_day
+    )
+    return sp if test_type.blank?
+
+    tests = Test.where(specimen_id: sp.pluck(:id), test_type_id: test_type&.id)
+    Speciman.where(id: tests.pluck(:specimen_id))
+  end
+
+  def emr_order_summary(start_date, end_date, concept, include_data: false)
+    url = "#{@address}/api/v1/lab/orders/summary?start_date=#{start_date}&end_date=#{end_date}&concept_id=#{concept[:id]}"
+    response = RestClient.get(
+      url,
+      content_type: 'application/json',
+      Authorization: "Bearer #{@token}"
+    )
+    response = JSON.parse(response)
+    nlims_local = nlims_local_orders(start_date, end_date, concept)
+    {
+      emr: response,
+      nlims_local: {
+        count: nlims_local.count,
+        lab_orders: include_data ? nlims_local.pluck(:tracking_number).uniq : []
+      }
+    }
+  rescue StandardError => e
+    puts "Error: #{e.message}"
+    {}
+  end
+
   private
 
   # Authenticate with EMR
