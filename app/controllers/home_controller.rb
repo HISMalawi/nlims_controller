@@ -97,4 +97,15 @@ class HomeController < ApplicationController
     report.save!
     render json: data
   end
+
+  def orders_summary
+    emr = EmrSyncService.new(nil)
+    summary = emr.emr_order_summary(
+      params[:start_date],
+      params[:end_date],
+      params[:concept],
+      include_data: params(:include_data)
+    )
+    render json: summary
+  end
 end

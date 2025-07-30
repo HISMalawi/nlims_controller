@@ -57,12 +57,10 @@ class EmrSyncService
   end
 
   def nlims_local_orders(start_date, end_date, concept)
+    start_date = start_date.present? ? start_date.to_date.beginning_of_day : Date.today.beginning_of_day
+    end_date = end_date.present? ? end_date.to_date.end_of_day : Date.today.end_of_day
     test_type = TestType.find_by(name: concept[:name])
-    sp = Speciman.where(
-      'date_created >= ? AND date_created <= ?',
-      start_date.to_date.beginning_of_day,
-      end_date.to_date.end_of_day
-    )
+    sp = Speciman.where('date_created >= ? AND date_created <= ?', start_date, end_date)
     return sp if test_type.blank?
 
     tests = Test.where(specimen_id: sp.pluck(:id), test_type_id: test_type&.id)
@@ -70,7 +68,7 @@ class EmrSyncService
   end
 
   def emr_order_summary(start_date, end_date, concept, include_data: false)
-    url = "#{@address}/api/v1/lab/orders/summary?start_date=#{start_date}&end_date=#{end_date}&concept_id=#{concept[:id]}"
+    url = "#{@address}/api/v1/lab/orders/summary?start_date=#{start_date}&end_date=#{end_date}&concept_id=#{concept[:id]}&include_data=#{include_data}"
     response = RestClient.get(
       url,
       content_type: 'application/json',
@@ -79,7 +77,10 @@ class EmrSyncService
     response = JSON.parse(response)
     nlims_local = nlims_local_orders(start_date, end_date, concept)
     {
-      emr: response,
+      emr: {
+        count: response['count'],
+        lab_orders: response['lab_orders'].pluck('accession_number')
+      },
       nlims_local: {
         count: nlims_local.count,
         lab_orders: include_data ? nlims_local.pluck(:tracking_number).uniq : []
