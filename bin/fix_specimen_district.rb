@@ -350,4 +350,13 @@ Parallel.each(facilities, in_processes: 4) do |facility|
     created_at: starting_from..
     ).update_all(district: facility[:district])
 end
+
+Site.where(enabled: true).each do |site|
+  puts "Updating district for ==> #{site.name}"
+  Speciman.where(
+    sending_facility: site.name,
+    created_at: starting_from..,
+    district: nil
+  ).update_all(district: site.district)
+end
 puts 'Updating districts done'
