@@ -22,17 +22,7 @@ class HomeController < ApplicationController
     @emr_orders = emr.emr_order_summary(start_date, end_date, concept, include_data: false)[:emr]
     nlims_local = OrderService.nlims_local_orders(start_date, end_date, concept)
     @nlims_orders = { count: nlims_local.count, lab_orders: [] }
-    if @emr_orders[:count].zero? && @nlims_orders[:count].zero?
-      @overall_remark =  'No orders drawn in EMR and no orders synched to NLIMS'
-    elsif @emr_orders[:count] == @nlims_orders[:count]
-      @overall_remark =  'All orders drawn in EMR are synched to NLIMS'
-    elsif @emr_orders[:count] > @nlims_orders[:count]
-      @overall_remark =  'Some orders drawn in EMR are not synched to NLIMS'
-    elsif @emr_orders[:count] < @nlims_orders[:count]
-      @overall_remark =  'Some orders synched to NLIMS were not drawn in EMR or were voided in EMR'
-    else
-      @overall_remark =  'Unknown'
-    end
+    @overall_remark = OrderService.order_summary_remark(@emr_orders, @nlims_orders)
   end
 
   def git_tag
@@ -116,11 +106,8 @@ class HomeController < ApplicationController
   end
 
   def orders_summary
-    emr = EmrSyncService.new(nil)
-    include_data = params[:include_data]
-    summary = emr.emr_order_summary(params[:start_date], params[:end_date], params[:concept], include_data: include_data)
-    nlims_local = OrderService.nlims_local_orders(params[:start_date], params[:end_date], params[:concept])
-    summary[:nlims_local] = { count: nlims_local.count, lab_orders: include_data ? nlims_local.pluck(:tracking_number).uniq : [] }
+    integration_service = IntegrationStatusService.new
+    summary = integration_service.orders_summary(params)
     render json: summary
   end
 end

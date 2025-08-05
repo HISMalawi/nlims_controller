@@ -46,6 +46,35 @@ class IntegrationStatusService
     false
   end
 
+  def fetch_order_summary
+    url = "http://#{ip_address}:#{port}/api/v1/orders_summary"
+    payload = {
+      "start_date": Date.today - 1.day,
+      "end_date": Date.today,
+      "concept": {"name": "Viral Load", "id": 856},
+      "include_data": false
+    }
+    response = RestClient::Request.execute(
+      method: :get,
+      url: url,
+      payload: payload.to_json,
+      headers: { content_type: 'application/json' },
+      timeout: 10,
+      open_timeout: 10
+    )
+    JSON.parse(response)
+  rescue StandardError => e
+    puts "Error: #{e.message}"
+    {
+      emr: {
+        count: 0,
+        lab_orders: [],
+        remark: 'NLIMS Not Reachable'
+      }
+    }
+  end
+  
+
   def last_sync_date(sending_facility)
     Speciman.where(sending_facility: sending_facility).order('created_at DESC').first&.created_at
   end
@@ -108,6 +137,16 @@ class IntegrationStatusService
   def generate_status_report
     data = check_integration_status.sort_by { |site| site[:name].to_s.downcase }
     Report.find_or_create_by(name: 'integration_status').update(data:)
+  end
+
+  def orders_summary(params)
+    emr = EmrSyncService.new(nil)
+    include_data = params[:include_data]
+    summary = emr.emr_order_summary(params[:start_date], params[:end_date], params[:concept], include_data: include_data)
+    nlims_local = OrderService.nlims_local_orders(params[:start_date], params[:end_date], params[:concept])
+    summary[:nlims_local] = { count: nlims_local.count, lab_orders: include_data ? nlims_local.pluck(:tracking_number).uniq : [] }
+    summary[:overall_remary] = OrderService.order_summary_remark(summary[:emr], summary[:nlims_local])
+    summary
   end
 
   def collect_outdated_sync_sites

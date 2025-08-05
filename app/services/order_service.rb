@@ -896,4 +896,17 @@ module OrderService
     tests = Test.where(specimen_id: sp.pluck(:id), test_type_id: test_type&.ids)
     Speciman.where(id: tests.pluck(:specimen_id))
   end
+
+  def self.order_summary_remark(emr_orders, nlims_orders)
+    if emr_orders[:count].zero? && nlims_orders[:count].zero?
+      'No orders drawn in EMR and no orders synched to NLIMS'
+    elsif emr_orders[:count] == nlims_orders[:count]
+      'All orders drawn in EMR are synched to NLIMS'
+    elsif emr_orders[:count] > nlims_orders[:count]
+      'Some orders drawn in EMR are not synched to NLIMS'
+    else
+      'Some orders synched to NLIMS were not drawn in EMR or were voided in EMR'
+    end
+  end
+
 end
