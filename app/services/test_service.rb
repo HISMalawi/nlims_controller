@@ -20,11 +20,14 @@ module TestService
     return [false, 'order with such test not available'] if test_id.blank?
     return [false, 'order already updated with such state'] if check_if_test_updated?(test_id, test_status.id)
 
+    time_updated = params[:time_updated].blank? ? Time.now.strftime('%Y%m%d%H%M%S') : params[:time_updated]
+    return [false, 'time updated provided is in the past'] if time_updated.to_date < sql_order.date_created.to_date
+
     ActiveRecord::Base.transaction do
       unless TestStatusTrail.exists?(test_id: test_id, test_status_id: test_status.id)
         TestStatusTrail.create!(
           test_id: test_id,
-          time_updated: params[:time_updated].blank? ? Time.now.strftime('%Y%m%d%H%M%S') : params[:time_updated],
+          time_updated: time_updated,
           test_status_id: test_status.id,
           who_updated_id: params[:who_updated]['id_number'].to_s,
           who_updated_name: "#{params[:who_updated]['first_name']} #{params[:who_updated]['last_name']}",
