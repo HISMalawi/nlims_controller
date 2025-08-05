@@ -68,7 +68,7 @@ class EmrSyncService
       emr: {
         count: response['count'],
         lab_orders: include_data ? response['lab_orders'].pluck('accession_number') : [],
-        remark: response['count'].zero? ? 'No orders in EMR' : 'Orders drawn in EMR'
+        remark: response['count'].zero? ? 'No orders drawn in EMR' : 'Orders drawn in EMR'
       }
     }
   rescue Errno::ECONNREFUSED => e

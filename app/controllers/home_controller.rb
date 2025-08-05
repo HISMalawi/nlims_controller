@@ -3,6 +3,9 @@ class HomeController < ApplicationController
 
   def index
     @info = 'NLIMS SERVICE'
+    start_date = Date.today - 1.day
+    end_date = Date.today
+    concept = { name: 'Viral Load', id: 856 }
     @git_tag = git_tag
     @local_nlims = Config.local_nlims? ? 'Local' : 'Master'
     return unless @local_nlims == 'Local'
@@ -16,6 +19,21 @@ class HomeController < ApplicationController
     @emr_auth = emr.token.blank? ? 'Failed' : 'Successful'
     @emr_address = emr.address
     @sidekiq_service_status = SystemctlService.sidekiq_service_status
+    @emr_orders = emr.emr_order_summary(start_date, end_date, concept, include_data: false)[:emr]
+    nlims_local = OrderService.nlims_local_orders(start_date, end_date, concept)
+    @nlims_orders = { count: nlims_local.count, lab_orders: [] }
+    if @emr_orders[:count].zero? && @nlims_orders[:count].zero?
+      @overall_remark =  'No orders drawn in EMR and no orders synched to NLIMS'
+    elsif @emr_orders[:count] == @nlims_orders[:count]
+      @overall_remark =  'All orders drawn in EMR are synched to NLIMS'
+    elsif @emr_orders[:count] > @nlims_orders[:count]
+      @overall_remark =  'Some orders drawn in EMR are not synched to NLIMS'
+    elsif @emr_orders[:count] < @nlims_orders[:count]
+      @overall_remark =  'Some orders synched to NLIMS were not drawn in EMR or were voided in EMR'
+    else
+      @overall_remark =  'Unknown'
+    end
+
   end
 
   def git_tag

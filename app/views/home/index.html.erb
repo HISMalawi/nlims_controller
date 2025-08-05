@@ -62,6 +62,30 @@
             <strong><%= @sidekiq_service_status %></strong>
           </td>
         </tr>
+        <tr style="background-color: white;">
+          <td style="padding: 12px 15px; border: 1px solid #dee2e6; font-size: 13px; text-align: left; font-weight: 500;">Orders Drawn In EMR Past 24hrs</td>
+          <td style="padding: 12px 15px; border: 1px solid #dee2e6; font-size: 13px; text-align: left;">
+            <strong><%= @emr_orders[:count] %></strong>
+          </td>
+        </tr>
+        <tr style="background-color: white;">
+          <td style="padding: 12px 15px; border: 1px solid #dee2e6; font-size: 13px; text-align: left; font-weight: 500;">Orders Synched To NLIMS Past 24hrs</td>
+          <td style="padding: 12px 15px; border: 1px solid #dee2e6; font-size: 13px; text-align: left;">
+            <strong><%= @nlims_orders[:count] %></strong>
+          </td>
+        </tr>
+        <tr style="background-color: white;">
+          <td style="padding: 12px 15px; border: 1px solid #dee2e6; font-size: 13px; text-align: left; font-weight: 500;">Orders Summary Remark For EMR For Past 24hrs</td>
+          <td style="padding: 12px 15px; border: 1px solid #dee2e6; font-size: 13px; text-align: left;">
+            <strong><%= @emr_orders[:remark] %></strong>
+          </td>
+        </tr>
+        <tr style="background-color: white;">
+          <td style="padding: 12px 15px; border: 1px solid #dee2e6; font-size: 13px; text-align: left; font-weight: 500;">Overall Orders Summary Remark For Past 24hrs</td>
+          <td style="padding: 12px 15px; border: 1px solid #dee2e6; font-size: 13px; text-align: left;">
+            <strong><%= @overall_remark %></strong>
+          </td>
+        </tr>
       <%end%>
     </tbody>
   </table>
