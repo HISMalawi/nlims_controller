@@ -38,6 +38,7 @@ gem 'sidekiq-cron'
 gem 'passenger'
 gem 'rest-client', '~> 2.1'
 gem 'sucker_punch'
+gem 'roo', '~> 2.10.0'
 group :development, :test do
   # Call 'byebug' anywhere in the code to stop execution and get a debugger console
   gem 'byebug', platforms: %i[mri mingw x64_mingw]

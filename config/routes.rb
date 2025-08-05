@@ -55,6 +55,7 @@ Rails.application.routes.draw do
         collection do
           get '/measures' => 'test_types#measures'
           get '/measure_types' => 'test_types#measure_types'
+          post '/import' => 'test_types#import'
         end
       end
 
