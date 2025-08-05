@@ -18,14 +18,52 @@ module API
       end
 
       def index
-        @test_types = if params[:search].present?
-                        TestType.where('name LIKE ?', "%#{params[:search]}%").orWhere('short_name LIKE ?', "%#{params[:search]}%").orWhere(
-                          'preferred_name LIKE ?', "%#{params[:search]}%"
-                        )
-                      else
-                        TestType.all
-                      end
-        render json: @test_types.order(:name)
+        @test_types = TestType.all
+
+        if params[:search].present?
+          search_term = "%#{params[:search]}%"
+          @test_types = @test_types.where(
+            'name LIKE ? OR short_name LIKE ? OR preferred_name LIKE ? OR scientific_name LIKE ?',
+            search_term, search_term, search_term, search_term
+          )
+        end
+
+        @test_types = @test_types.where(test_category_id: params[:test_category_id]) if params[:test_category_id].present?
+        @test_types = @test_types.where(can_be_done_on_sex: params[:sex]) if params[:sex].present?
+        @test_types = @test_types.where('targetTAT LIKE ?', "%#{params[:target_tat]}%") if params[:target_tat].present?
+        @test_types = @test_types.where('moh_code LIKE ?', "%#{params[:moh_code]}%") if params[:moh_code].present?
+        @test_types = @test_types.where('nlims_code LIKE ?', "%#{params[:nlims_code]}%") if params[:nlims_code].present?
+        @test_types = @test_types.where('loinc_code LIKE ?', "%#{params[:loinc_code]}%") if params[:loinc_code].present?
+        @test_types = @test_types.where('assay_format LIKE ?', "%#{params[:assay_format]}%") if params[:assay_format].present?
+        @test_types = @test_types.where('hr_cadre_required LIKE ?', "%#{params[:hr_cadre_required]}%") if params[:hr_cadre_required].present?
+
+        if params[:specimen_type_id].present?
+          @test_types = @test_types.joins(:testtype_specimentypes)
+                                   .where(testtype_specimentypes: { specimen_type_id: params[:specimen_type_id] })
+        end
+
+        @test_types = @test_types.order(:name)
+
+        if params[:no_paginate].present? && params[:no_paginate].to_s.downcase == 'true'
+          render json: @test_types
+        else
+          page = params[:page]&.to_i || 1
+          per_page = params[:per_page]&.to_i || 25
+          per_page = [per_page, 100].min
+
+          total_count = @test_types.count
+          @test_types = @test_types.offset((page - 1) * per_page).limit(per_page)
+
+          render json: {
+            data: @test_types,
+            pagination: {
+              current_page: page,
+              per_page: per_page,
+              total_count: total_count,
+              total_pages: (total_count.to_f / per_page).ceil
+            }
+          }
+        end
       end
 
       def show
@@ -44,22 +82,9 @@ module API
         end
 
         begin
-          # Get the file from the request
           uploaded_file = params[:file]
-
-          # Write to a temp file with a sanitized name to avoid encoding issues
           safe_filename = uploaded_file.original_filename.encode('UTF-8', invalid: :replace, undef: :replace, replace: '_')
           file_ext = File.extname(safe_filename).downcase
-
-          # Broader acceptance of MIME types for CSV/Excel files
-          csv_mime_types = [
-            'text/csv',
-            'application/csv',
-            'application/x-csv',
-            'text/comma-separated-values',
-            'text/x-csv',
-            'text/plain' # Sometimes CSV files are uploaded as text/plain
-          ]
 
           excel_mime_types = [
             'application/vnd.ms-excel',
@@ -70,16 +95,10 @@ module API
             'application/vnd.ms-excel.sheet.binary.macroEnabled.12'
           ]
 
-          acceptable_types = csv_mime_types + excel_mime_types
+          is_acceptable_extension = %w[.xls .xlsx].include?(file_ext)
 
-          # Check if this is an acceptable file type
-          is_acceptable_extension = %w[.csv .xls .xlsx].include?(file_ext)
-
-          # Try to get content type safely, defaulting to a fallback if needed
           content_type = uploaded_file.content_type rescue nil
           content_type ||= case file_ext
-                         when '.csv'
-                           'text/csv'
                          when '.xls'
                            'application/vnd.ms-excel'
                          when '.xlsx'
@@ -88,10 +107,10 @@ module API
                            'application/octet-stream'
                          end
 
-          unless acceptable_types.include?(content_type) || is_acceptable_extension
+          unless excel_mime_types.include?(content_type) || is_acceptable_extension
             render json: {
               success: false,
-              error: 'Invalid file format. Please upload a CSV or Excel file',
+              error: 'Invalid file format. Please upload an Excel file',
               details: {
                 content_type: content_type,
                 extension: file_ext
@@ -100,43 +119,33 @@ module API
             return
           end
 
-          # Create a temp file with a known encoding
           temp_file = Tempfile.new(['import', file_ext])
           begin
-            # Read the file in binary mode to avoid encoding issues during read
             uploaded_io = uploaded_file.respond_to?(:tempfile) ? uploaded_file.tempfile : uploaded_file
             file_content = nil
 
-            # Try to read the file safely
             begin
               file_content = File.binread(uploaded_io.path)
             rescue => e
-              # If reading from path fails, try direct read method
               uploaded_io.rewind rescue nil
               file_content = uploaded_io.read rescue nil
 
-              # If still failing, report error
               unless file_content
                 raise "Could not read file content: #{e.message}"
               end
             end
 
-            # Write content to temp file
             temp_file.binmode
             temp_file.write(file_content)
             temp_file.rewind
 
-            # Create a custom class that extends Tempfile to handle file type detection
             temp_file.instance_eval do
               def original_filename
-                # Return a sanitized filename with the right extension
                 "import#{File.extname(path)}"
               end
 
               def content_type
                 case File.extname(path).downcase
-                when '.csv'
-                  'text/csv'
                 when '.xls'
                   'application/vnd.ms-excel'
                 when '.xlsx'
@@ -145,7 +154,8 @@ module API
                   'application/octet-stream'
                 end
               end
-            end            # Process the temp file
+            end
+
             result = TestCatalogService.import(temp_file)
 
             if result[:success]
@@ -154,7 +164,6 @@ module API
               render json: result, status: :unprocessable_entity
             end
           ensure
-            # Always close and delete the temp file
             begin
               temp_file.close
               temp_file.unlink
@@ -163,18 +172,15 @@ module API
             end
           end
         rescue ActionController::BadRequest => e
-          # This is handled by the rescue_from at the class level
           raise e
         rescue => e
-          # Log the full error with backtrace
           Rails.logger.error("Import error: #{e.message}\n#{e.backtrace.join("\n")}")
 
-          # Return a user-friendly error message
           error_message = case e.message
                          when /invalid byte sequence/
                            "The file contains invalid characters. Please save it as UTF-8 encoded and try again."
                          when /premature end of data/
-                           "The CSV file appears to be corrupt or improperly formatted. Please check the file format."
+                           "The Excel file appears to be corrupt or improperly formatted. Please check the file format."
                          when /unknown encoding name/
                            "Could not determine the file encoding. Please save the file as UTF-8 and try again."
                          else
