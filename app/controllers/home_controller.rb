@@ -33,7 +33,6 @@ class HomeController < ApplicationController
     else
       @overall_remark =  'Unknown'
     end
-
   end
 
   def git_tag
