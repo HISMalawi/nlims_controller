@@ -223,12 +223,15 @@ module TestCatalogService
   end
 
   def self.new_version_available?(previous_version)
-    latest_version = TestCatalogVersion.order(version: :desc).pick(:version)
+    catalog_version = TestCatalogVersion.order(version: :desc)
+    latest_version = catalog_version.pick(:version)
+    version_details = catalog_version.pick(:version_details)
     return { is_new_version_available: false, version: latest_version } unless latest_version.present?
 
     {
       is_new_version_available: latest_version > previous_version,
-      version: latest_version
+      version: latest_version,
+      version_details: version_details
     }
   end
 
