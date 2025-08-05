@@ -885,4 +885,15 @@ module OrderService
       false
     end
   end
+
+  def nlims_local_orders(start_date, end_date, concept)
+    start_date = start_date.present? ? start_date.to_date.beginning_of_day : Date.today.beginning_of_day
+    end_date = end_date.present? ? end_date.to_date.end_of_day : Date.today.end_of_day
+    test_type = TestType.find_by(name: concept[:name])
+    sp = Speciman.where('date_created >= ? AND date_created <= ?', start_date, end_date)
+    return sp if test_type.blank?
+
+    tests = Test.where(specimen_id: sp.pluck(:id), test_type_id: test_type&.id)
+    Speciman.where(id: tests.pluck(:specimen_id))
+  end
 end

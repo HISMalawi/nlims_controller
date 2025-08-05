@@ -100,12 +100,10 @@ class HomeController < ApplicationController
 
   def orders_summary
     emr = EmrSyncService.new(nil)
-    summary = emr.emr_order_summary(
-      params[:start_date],
-      params[:end_date],
-      params[:concept],
-      include_data: params(:include_data)
-    )
+    debugger
+    summary = emr.emr_order_summary(params[:start_date], params[:end_date], params[:concept], include_data: params(:include_data))
+    nlims_local = OrderService.nlims_local_orders(params[:start_date], params[:end_date], params[:concept])
+    summary[:nlims_local] = { count: nlims_local.count, lab_orders: include_data ? nlims_local.pluck(:tracking_number).uniq : [] }
     render json: summary
   end
 end

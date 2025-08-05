@@ -56,17 +56,6 @@ class EmrSyncService
     SyncErrorLog.create(error_message: e.message, error_details: { message: 'ERROR Account creation in EMR' })
   end
 
-  def nlims_local_orders(start_date, end_date, concept)
-    start_date = start_date.present? ? start_date.to_date.beginning_of_day : Date.today.beginning_of_day
-    end_date = end_date.present? ? end_date.to_date.end_of_day : Date.today.end_of_day
-    test_type = TestType.find_by(name: concept[:name])
-    sp = Speciman.where('date_created >= ? AND date_created <= ?', start_date, end_date)
-    return sp if test_type.blank?
-
-    tests = Test.where(specimen_id: sp.pluck(:id), test_type_id: test_type&.id)
-    Speciman.where(id: tests.pluck(:specimen_id))
-  end
-
   def emr_order_summary(start_date, end_date, concept, include_data: false)
     url = "#{@address}/api/v1/lab/orders/summary?start_date=#{start_date}&end_date=#{end_date}&concept_id=#{concept[:id]}&include_data=#{include_data}"
     response = RestClient.get(
@@ -75,20 +64,41 @@ class EmrSyncService
       Authorization: "Bearer #{@token}"
     )
     response = JSON.parse(response)
-    nlims_local = nlims_local_orders(start_date, end_date, concept)
     {
       emr: {
         count: response['count'],
-        lab_orders: response['lab_orders'].pluck('accession_number')
-      },
-      nlims_local: {
-        count: nlims_local.count,
-        lab_orders: include_data ? nlims_local.pluck(:tracking_number).uniq : []
+        lab_orders: response['lab_orders'].pluck('accession_number'),
+        remark: response['count'].zero? ? 'No orders in EMR' : 'Orders drawn in EMR'
       }
     }
+  rescue Errno::ECONNREFUSED => e
+    puts "Connection refused error: #{e.message}"
+    {
+      emr: {
+        count: 0,
+        lab_orders: [],
+        remark: 'Connection to EMR refused'
+      }
+    }
+  rescue RestClient::ExceptionWithResponse => e
+    if e.http_code == 404
+      {
+        emr: {
+          count: 0,
+          lab_orders: [],
+          remark: 'URL for Order Summary in EMR not available'
+        }
+      }
+    end
   rescue StandardError => e
     puts "Error: #{e.message}"
-    {}
+    {
+      emr: {
+        count: 0,
+        lab_orders: [],
+        remark: e.message
+      }
+    }
   end
 
   private
