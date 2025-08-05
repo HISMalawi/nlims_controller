@@ -67,7 +67,7 @@ class EmrSyncService
     {
       emr: {
         count: response['count'],
-        lab_orders: response['lab_orders'].pluck('accession_number'),
+        lab_orders: include_data ? response['lab_orders'].pluck('accession_number') : [],
         remark: response['count'].zero? ? 'No orders in EMR' : 'Orders drawn in EMR'
       }
     }
@@ -77,7 +77,7 @@ class EmrSyncService
       emr: {
         count: 0,
         lab_orders: [],
-        remark: 'Connection to EMR refused'
+        remark: 'Connection to EMR refused - EMR down'
       }
     }
   rescue RestClient::ExceptionWithResponse => e
@@ -86,7 +86,7 @@ class EmrSyncService
         emr: {
           count: 0,
           lab_orders: [],
-          remark: 'URL for Order Summary in EMR not available'
+          remark: 'URL for Order Summary not available in EMR'
         }
       }
     end
