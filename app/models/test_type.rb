@@ -13,7 +13,8 @@ class TestType < ApplicationRecord
     has_many :organisms, through: :testtype_organisms
     has_many :test_type_lab_test_sites, class_name: 'TestTypeLabTestSite'
     has_many :lab_test_sites, through: :test_type_lab_test_sites, dependent: :destroy
-    has_many :panels, dependent: :restrict_with_error
+    # has_many :panels, dependent: :restrict_with_error
+    has_many :panels, dependent: :destroy
     has_many :panel_types, through: :panels
     has_and_belongs_to_many :equipment, join_table: :equipment_test_types
 
