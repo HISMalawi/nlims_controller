@@ -61,3 +61,13 @@ else
     echo -e "$current_cron_jobs\n$nlims_cron_job" | crontab -
     echo "Cron job added successfully!"
 fi
+
+current_cron_jobs=$(crontab -l 2>/dev/null)
+nlims_cron_job="*/30 * * * * /bin/bash -l -c 'export PATH=\"\$HOME/.rbenv/bin:\$PATH\" && eval \"\$(rbenv init -)\" && cd /var/www/nlims_controller && rbenv local 3.2.0 && RAILS_ENV=development bundle exec rake master_nlims:sync_local_nlims_acknowledge_results --silent >> log/pull_from_master_nlims.log 2>&1'"
+if echo "$current_cron_jobs" | grep -F "$nlims_cron_job" >/dev/null; then
+    echo "Cron job already exists."
+else
+    # Append the new cron job if it doesn't exist
+    echo -e "$current_cron_jobs\n$nlims_cron_job" | crontab -
+    echo "Cron job added successfully!"
+fi
