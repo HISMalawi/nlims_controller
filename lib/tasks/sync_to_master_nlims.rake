@@ -220,6 +220,12 @@ end
 
 def acknwoledge_result_at_emr_level(tracking_number, test_id, result_date)
   check = ResultsAcknwoledge.find_by(tracking_number: tracking_number, acknwoledged_by: 'emr_at_facility')
+  if check.present?
+    test_ = Test.find_by(id: test_id)
+    test_.date_result_given = check.acknwoledged_at
+    test_.test_result_receipent_types = 2
+    test_.save
+  end
   return unless check.nil?
 
   ResultsAcknwoledge.create(
@@ -231,6 +237,11 @@ def acknwoledge_result_at_emr_level(tracking_number, test_id, result_date)
     acknwoledged_to_nlims: false,
     acknowledgment_level: 2
   )
+  test_ = Test.find_by(id: test_id)
+  test_.result_given = 0
+  test_.date_result_given = Time.new.strftime('%Y%m%d%H%M%S')
+  test_.test_result_receipent_types = 3
+  test_.save
 end
 
 def authenticate_with_emr
