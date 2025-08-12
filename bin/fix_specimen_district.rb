@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 puts 'Initiating update...'
-starting_from = '2018-01-01'
+starting_from = '2025-03-01'
 fix_site_names = [
   { sending_facility: 'Chileka Health Centre', district: 'Lilongwe', new_name: 'Chileka Health Centre (Lilongwe)' },
   { sending_facility: 'Chileka (Lilongwe) Health Center', district: 'Lilongwe',
