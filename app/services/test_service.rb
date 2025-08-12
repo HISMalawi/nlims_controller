@@ -20,8 +20,12 @@ module TestService
     return [false, 'order with such test not available'] if test_id.blank?
     return [false, 'order already updated with such state'] if check_if_test_updated?(test_id, test_status.id)
 
-    result, error_message = validate_time_updated(params, sql_order)
-    return [false, error_message] unless result
+    state, error_message = validate_time_updated(params, sql_order)
+    unless state
+      failed_test_update = FailedTestUpdate.find_or_create_by(tracking_number: params[:tracking_number], test_name: test_name, failed_step_status: test_status)
+      failed_test_update.update(error_message: error_message, time_from_source: params[:time_updated])
+      return [false, error_message]
+    end
 
     ActiveRecord::Base.transaction do
       unless TestStatusTrail.exists?(test_id: test_id, test_status_id: test_status.id)
@@ -86,6 +90,7 @@ module TestService
         return [false, 'time updated provided is in the past'] if time_updated_date < created_date
       rescue StandardError => e
         # Any error (invalid date format, type mismatch, etc.) - just proceed
+        [true, nil]
       end
     end
     # Proceed - return success or continue with rest of logic
