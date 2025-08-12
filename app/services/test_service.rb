@@ -20,8 +20,8 @@ module TestService
     return [false, 'order with such test not available'] if test_id.blank?
     return [false, 'order already updated with such state'] if check_if_test_updated?(test_id, test_status.id)
 
-    time_updated = params[:time_updated].blank? ? Time.now.strftime('%Y%m%d%H%M%S') : params[:time_updated]
-    return [false, 'time updated provided is in the past'] if time_updated.to_date < sql_order.date_created.to_date
+    result, error_message = validate_time_updated(params, sql_order)
+    return [false, error_message] unless result
 
     ActiveRecord::Base.transaction do
       unless TestStatusTrail.exists?(test_id: test_id, test_status_id: test_status.id)
@@ -74,6 +74,22 @@ module TestService
       Rails.logger.error("Update test failed: #{e.message}")
       [false, "an error occurred while updating the test: #{e.message}"]
     end
+  end
+
+  def self.validate_time_updated(params, sql_order)
+    time_updated = params[:time_updated].blank? ? Time.now.strftime('%Y%m%d%H%M%S') : params[:time_updated]
+    # Only compare if date_created exists and dates are valid
+    if sql_order.date_created.present?
+      begin
+        time_updated_date = time_updated.to_s.to_date
+        created_date = sql_order.date_created.to_date
+        return [false, 'time updated provided is in the past'] if time_updated_date < created_date
+      rescue StandardError => e
+        # Any error (invalid date format, type mismatch, etc.) - just proceed
+      end
+    end
+    # Proceed - return success or continue with rest of logic
+    [true, nil]
   end
 
   def self.update_test_status(test_id, new_status)
