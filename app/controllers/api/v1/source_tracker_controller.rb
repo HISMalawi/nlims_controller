@@ -12,8 +12,12 @@ class API::V1::SourceTrackerController < ApplicationController
   end
 
   def update_order_source_couch_id
-    order = Order.find_by(tracking_number: params[:tracking_number], sending_facility: params[:sending_facility])
+    order = Speciman.find_by(tracking_number: params[:tracking_number], sending_facility: params[:sending_facility])
+    if order.nil?
+      render json: { error: 'Order not found' }, status: :not_found
+      return
+    end
     order&.update(couch_id: params[:couch_id])
-    render json: order, status: :ok
+    render json: { message: 'Update successful' }, status: :ok
   end
 end
