@@ -16,10 +16,12 @@ namespace :master_nlims do
   end
 
   task update_order_source_couch_id: :environment do
-    vl_without_results.each do |test|
-      puts "Updating order source couch ID for #{test['tracking_number']}"
-      mns = NlimsSyncUtilsService.new(nil)
-      mns.update_order_source_couch_id(test['tracking_number'], test['sending_facility'], test['couch_id'])
+    if Config.local_nlims?
+      vl_without_results.each do |test|
+        puts "Updating order source couch ID for #{test['tracking_number']}"
+        mns = NlimsSyncUtilsService.new(nil)
+        mns.update_order_source_couch_id(test['tracking_number'], test['sending_facility'], test['couch_id'])
+      end
     end
   end
 end
