@@ -10,4 +10,10 @@ class API::V1::SourceTrackerController < ApplicationController
     )
     render json: tracker, status: :ok
   end
+
+  def update_order_source_couch_id
+    order = Order.find_by(tracking_number: params[:tracking_number], sending_facility: params[:sending_facility])
+    order&.update(couch_id: params[:couch_id])
+    render json: order, status: :ok
+  end
 end

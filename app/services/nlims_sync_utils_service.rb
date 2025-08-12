@@ -311,6 +311,21 @@ class NlimsSyncUtilsService
     puts "Error: #{e.message} ==> NLIMS Register Source to Master NLIMS"
   end
 
+  def update_order_source_couch_id(tracking_number, sending_facility, couch_id)
+    url = "#{@address}/api/v1/update_order_source_couch_id"
+    response = JSON.parse(RestClient::Request.execute(
+                 method: :post,
+                 url:,
+                 timeout: 10,
+                 payload: { tracking_number:, sending_facility:, couch_id: },
+                 content_type: :json,
+                 headers: { content_type: :json, accept: :json, token: @token }
+               ))
+    puts response
+  rescue StandardError => e
+    puts "Error: #{e.message} ==> NLIMS Update Order Source Couch ID to Master NLIMS"
+  end
+
   def authenticate_with_nlims
     auth = RestClient::Request.execute(
       method: :get,
