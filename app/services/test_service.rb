@@ -22,7 +22,7 @@ module TestService
 
     state, error_message = validate_time_updated(params, sql_order)
     unless state
-      failed_test_update = FailedTestUpdate.find_or_create_by(tracking_number: params[:tracking_number], test_name: test_name, failed_step_status: test_status)
+      failed_test_update = FailedTestUpdate.find_or_create_by(tracking_number: params[:tracking_number], test_name: test_name, failed_step_status: test_status&.name)
       failed_test_update.update(error_message: error_message, time_from_source: params[:time_updated])
       return [false, error_message]
     end
