@@ -885,4 +885,28 @@ module OrderService
       false
     end
   end
+
+  def self.nlims_local_orders(start_date, end_date, concept)
+    start_date = start_date.present? ? start_date.to_date.beginning_of_day : Date.today.beginning_of_day
+    end_date = end_date.present? ? end_date.to_date.end_of_day : Date.today.end_of_day
+    test_type = TestType.where("name LIKE '%#{concept[:name]}%'")
+    sp = Speciman.where('date_created >= ? AND date_created <= ?', start_date, end_date)
+    return sp if test_type.blank?
+
+    tests = Test.where(specimen_id: sp.pluck(:id), test_type_id: test_type&.ids)
+    Speciman.where(id: tests.pluck(:specimen_id))
+  end
+
+  def self.order_summary_remark(emr_orders, nlims_orders)
+    if emr_orders[:count].zero? && nlims_orders[:count].zero?
+      'No orders drawn in EMR and no orders synched to NLIMS'
+    elsif emr_orders[:count] == nlims_orders[:count]
+      'All orders drawn in EMR are synched to NLIMS'
+    elsif emr_orders[:count] > nlims_orders[:count]
+      'Some orders drawn in EMR are not synched to NLIMS'
+    else
+      'Some orders synched to NLIMS were not drawn in EMR or were voided in EMR'
+    end
+  end
+
 end
