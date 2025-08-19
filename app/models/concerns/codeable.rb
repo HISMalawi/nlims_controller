@@ -5,14 +5,12 @@ module Codeable
   extend ActiveSupport::Concern
 
   included do
-     # if column_names.include?('unit')
+    # if column_names.include?('unit')
     #   validates :name, uniqueness: { scope: :unit, case_sensitive: false }, allow_nil: true
     # else
     #   validates :name, uniqueness: { case_sensitive: false }, allow_nil: false
     # end
-    unless name == "Measure"
-      validates :nlims_code, uniqueness: { case_sensitive: false }, allow_nil: true
-    end
+    validates :nlims_code, uniqueness: { case_sensitive: false }, allow_nil: true unless name == 'Measure'
 
     after_create :set_nlims_code
   end
