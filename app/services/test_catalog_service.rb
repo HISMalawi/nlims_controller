@@ -200,7 +200,8 @@ module TestCatalogService
       drugs: Drug.all.as_json,
       organisms: Organism.all.as_json({ context: :single_item }),
       test_types: TestType.all.as_json({ context: :single_item }),
-      test_panels: PanelType.all.as_json
+      test_panels: PanelType.all.as_json,
+      departments: TestCategory.all.as_json
     }
   end
 
