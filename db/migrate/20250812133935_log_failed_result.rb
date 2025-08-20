@@ -1,5 +1,7 @@
 class LogFailedResult < ActiveRecord::Migration[7.1]
   def change
+    return if table_exists?(:failed_test_updates)
+
     create_table :failed_test_updates do |t| 
       t.string :tracking_number
       t.string :test_name
