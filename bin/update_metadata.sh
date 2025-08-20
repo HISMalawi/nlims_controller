@@ -1,5 +1,5 @@
 #!/bin/bash
-rm Gemfile.lock && bundle install --local && bundle exec rails db:migrate && (
+rm Gemfile.lock && bundle config set --local path 'vendor/bundle' && bundle install --local && bundle exec rails db:migrate && (
   bundle exec rake db:seed:specific\[seed_dispatcher_types.rb\] &&
   bundle exec rake db:seed:specific\[seed_test_results_recepient_types.rb\] &&
   bundle exec rake db:seed:specific\[seed_name_mappings.rb\] &&
