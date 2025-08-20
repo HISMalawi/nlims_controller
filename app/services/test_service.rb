@@ -27,6 +27,7 @@ module TestService
       return [false, error_message]
     end
 
+    time_updated = params[:time_updated].blank? ? Time.now.strftime('%Y%m%d%H%M%S') : params[:time_updated]
     ActiveRecord::Base.transaction do
       unless TestStatusTrail.exists?(test_id: test_id, test_status_id: test_status.id)
         TestStatusTrail.create!(
@@ -49,6 +50,7 @@ module TestService
           next if result_already_available?(test_id, measure_id, result_value)
 
           result_value = result_value.gsub(',', '') if Measure.find_by(name: 'Viral Load')&.id == measure_id
+          device_name = params[:platform].blank? ? '' : params[:platform]
           if TestResult.exists?(test_id:, measure_id:)
             test_result = TestResult.find_by(test_id:, measure_id: measure_id)
             TestResultTrail.create!(
@@ -66,7 +68,6 @@ module TestService
             test_status_trail.update!(time_updated: result_date) unless test_status_trail.blank?
             result_sync_tracker(params[:tracking_number], test_id)
           else
-            device_name = params[:platform].blank? ? '' : params[:platform]
             test_result = TestResult.create!(measure_id: measure_id, test_id: test_id, result: result_value, device_name: device_name,
                                              time_entered: result_date)
             result_sync_tracker(params[:tracking_number], test_id) if test_result&.persisted?
