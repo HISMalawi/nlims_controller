@@ -20,14 +20,13 @@ module TestService
     return [false, 'order with such test not available'] if test_id.blank?
     return [false, 'order already updated with such state'] if check_if_test_updated?(test_id, test_status.id)
 
-    state, error_message = validate_time_updated(params, sql_order)
+    time_updated = params[:time_updated].blank? ? Time.now.strftime('%Y%m%d%H%M%S') : params[:time_updated]
+    state, error_message = validate_time_updated(time_updated, sql_order)
     unless state
       failed_test_update = FailedTestUpdate.find_or_create_by(tracking_number: params[:tracking_number], test_name: test_name, failed_step_status: test_status&.name)
-      failed_test_update.update(error_message: error_message, time_from_source: params[:time_updated])
+      failed_test_update.update(error_message: error_message, time_from_source: time_updated)
       return [false, error_message]
     end
-
-    time_updated = params[:time_updated].blank? ? Time.now.strftime('%Y%m%d%H%M%S') : params[:time_updated]
     ActiveRecord::Base.transaction do
       unless TestStatusTrail.exists?(test_id: test_id, test_status_id: test_status.id)
         TestStatusTrail.create!(
@@ -42,6 +41,12 @@ module TestService
       update_test_status(test_id, test_status)
       if test_status.id == 5 && params[:results]
         result_date = params[:result_date].blank? ? Time.now.strftime('%Y%m%d%H%M%S') : params[:result_date]
+        state, error_message = validate_time_updated(result_date, sql_order)
+        unless state
+          failed_test_update = FailedTestUpdate.find_or_create_by(tracking_number: params[:tracking_number], test_name: test_name, failed_step_status: test_status&.name)
+          failed_test_update.update(error_message: error_message, time_from_source: result_date)
+          return [false, error_message]
+        end
         params[:results].each do |measure_name, result_value|
           measure_id = Measure.where(name: measure_name).first&.id
           next if measure_id.blank?
@@ -81,14 +86,13 @@ module TestService
     end
   end
 
-  def self.validate_time_updated(params, sql_order)
-    time_updated = params[:time_updated].blank? ? Time.now.strftime('%Y%m%d%H%M%S') : params[:time_updated]
+  def self.validate_time_updated(time_updated, sql_order)
     # Only compare if date_created exists and dates are valid
     if sql_order.date_created.present?
       begin
         time_updated_date = time_updated.to_s.to_date
         created_date = sql_order.date_created.to_date
-        return [false, 'time updated provided is in the past'] if time_updated_date < created_date
+        return [false, 'time updated or result date provided is in the past'] if time_updated_date < created_date
       rescue StandardError => e
         # Any error (invalid date format, type mismatch, etc.) - just proceed
         [true, nil]
