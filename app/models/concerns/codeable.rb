@@ -22,7 +22,7 @@ module Codeable
 
     if is_a?(Measure)
       # Try reusing existing nlims_code from another Measure with same name
-      existing = Measure.find_by(name: name, retired: false)
+      existing = Measure.find_by(name: name)
       if existing&.nlims_code.present?
         update_column(:nlims_code, existing.nlims_code)
         return
