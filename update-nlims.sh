@@ -92,7 +92,6 @@ echo "Checking out $NLIMS_VERSION"
 git checkout "$NLIMS_VERSION" -f
 
 rm Gemfile.lock
-bundle install --local
 
 # STEP 3: Update metadata
 
