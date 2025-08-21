@@ -713,7 +713,7 @@ class API::V1::OrderController < ApplicationController
 
   def verify_order_tracking_number_exist
     exist = TrackingNumberLogger.where(tracking_number: params[:tracking_number]).exists? || Speciman.where(tracking_number: params[:tracking_number]).exists?
-    render json: exist
+    render json: { data: exist, message: exist ? 'Tracking number exists' : 'Tracking number does not exist', status: 200 }
   end
 
   private
