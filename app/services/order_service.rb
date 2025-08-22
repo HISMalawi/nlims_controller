@@ -897,15 +897,35 @@ module OrderService
     Speciman.where(id: tests.pluck(:specimen_id))
   end
 
-  def self.order_summary_remark(emr_orders, nlims_orders)
-    if emr_orders[:count].zero? && nlims_orders[:count].zero?
-      'No orders drawn in EMR and no orders synched to NLIMS'
-    elsif emr_orders[:count] == nlims_orders[:count]
-      'All orders drawn in EMR are synched to NLIMS'
-    elsif emr_orders[:count] > nlims_orders[:count]
-      'Some orders drawn in EMR are not synched to NLIMS'
+  def self.order_summary_remark(emr_orders, nlims_orders, nlims_chsu: nil)
+    if nlims_chsu.present?
+      if emr_orders[:remark] == 'URL for Order Summary not available in EMR'
+        'URL for Order Summary not available in EMR - Update EMR-API to version >=5.6.1'
+      elsif emr_orders[:remark] == 'Connection to EMR refused - EMR down'
+        'Connection to EMR refused - EMR down - Check EMR API'
+      elsif emr_orders[:count].zero? && nlims_orders[:count].zero? && nlims_chsu[:count].zero?
+        'No orders drawn in EMR and no orders synched to NLIMS'
+      elsif emr_orders[:count] == nlims_orders[:count] && emr_orders[:count] == nlims_chsu[:count]
+        'All orders drawn in EMR are synched to NLIMS'
+      elsif (emr_orders[:count] > nlims_chsu[:count]) && (emr_orders[:count] > nlims_orders[:count])
+        'Some orders drawn in EMR are not synched to NLIMS'
+      elsif (nlims_orders[:count] > emr_orders[:count]) && nlims_orders[:count] == nlims_chsu[:count]
+        'Some orders synched to NLIMS were not drawn in EMR or were voided in EMR'
+      elsif (nlims_chsu[:count] < nlims_orders[:count])
+        'Some orders synched to NLIMS Local were not synched to NLIMS CHSU'
+      else
+        'Some orders synched to NLIMS were not drawn in EMR or were voided in EMR'
+      end
     else
-      'Some orders synched to NLIMS were not drawn in EMR or were voided in EMR'
+      if emr_orders[:count].zero? && nlims_orders[:count].zero?
+        'No orders drawn in EMR and no orders synched to NLIMS'
+      elsif emr_orders[:count] == nlims_orders[:count]
+        'All orders drawn in EMR are synched to NLIMS'
+      elsif emr_orders[:count] > nlims_orders[:count]
+        'Some orders drawn in EMR are not synched to NLIMS'
+      else
+        'Some orders synched to NLIMS were not drawn in EMR or were voided in EMR'
+      end
     end
   end
 

@@ -65,14 +65,19 @@ class HomeController < ApplicationController
   def refresh_app_ping_status
     integration_service = IntegrationStatusService.new
     site = Site.find_by(name: params[:site_name])
-    app_status = integration_service.application_status(site&.host_address, site&.application_port)
+    status = integration_service.application_status(site&.host_address, site&.application_port)
     ping_status = integration_service.ping_server(site&.host_address)
     timestamp = Time.now.strftime('%d/%b/%Y %H:%M')
     last_sync_date = integration_service.last_sync_date(site&.name)
-
+    last_sync_date = last_sync_date.present? ? last_sync_date.strftime('%d/%b/%Y %H:%M') : 'Has Never Synced with NLIMS'
+    order_summary = integration_service.fetch_order_summary(site&.host_address, site&.application_port)
     data = {
-      "app_status": app_status ? 'Running' : 'Down',
+      "app_status": status[:ping] ? 'Running' : 'Down',
       "ping_status": ping_status ? 'Success' : 'Failed',
+      "app_version": status[:version],
+      "last_sync_date": last_sync_date,
+      "is_gt_24hr": integration_service.last_sync_date_gt_24hr?(last_sync_date),
+      "order_summary": order_summary,
       "status_last_updated": timestamp
     }
     report = Report.find_or_create_by(name: 'integration_status') do |r|
@@ -87,10 +92,12 @@ class HomeController < ApplicationController
       ip_address: site.host_address,
       app_port: site.application_port,
       ping_status: ping_status,
-      app_status: app_status,
+      app_status: status[:ping],
+      app_version: status[:version],
       status_last_updated: timestamp,
       last_sync_date_gt_24hr: integration_service.last_sync_date_gt_24hr?(last_sync_date),
-      last_sync_date: last_sync_date.present? ? last_sync_date.strftime('%d/%b/%Y %H:%M') : 'Has Never Synced with NLIMS'
+      last_sync_date: last_sync_date,
+      order_summary: order_summary
     }.stringify_keys
 
     if site_index

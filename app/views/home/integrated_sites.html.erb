@@ -88,6 +88,11 @@
         <th style="padding: 8px; border: 1px solid #000; font-size: 12px; text-align: left;">Last Synced Order Timestamp (CHSU)</th>
         <th style="padding: 8px; border: 1px solid #000; font-size: 12px; text-align: center;">App Status</th>
         <th style="padding: 8px; border: 1px solid #000; font-size: 12px; text-align: center;">Ping Status</th>
+        <th style="padding: 8px; border: 1px solid #000; font-size: 12px; text-align: center;">App Version</th>
+        <th style="padding: 8px; border: 1px solid #000; font-size: 12px; text-align: center;">EMR Orders Past 24hrs</th>
+        <th style="padding: 8px; border: 1px solid #000; font-size: 12px; text-align: center;">NLIMS Local Orders Past 24hrs</th>
+        <th style="padding: 8px; border: 1px solid #000; font-size: 12px; text-align: center;">NLIMS CHSU Orders Past 24hrs</th>
+        <th style="padding: 8px; border: 1px solid #000; font-size: 12px; text-align: center;">Orders Summary Remark</th>
         <th style="padding: 8px; border: 1px solid #000; font-size: 12px; text-align: center;">App-Ping Status Last Updated At</th>
         <th style="padding: 8px; border: 1px solid #000; font-size: 12px; text-align: center;">Actions</th>
       </tr>
@@ -101,13 +106,28 @@
           <td style="padding: 8px; border: 1px solid #000; font-size: 11px; text-align: left;"><%= site[:ip_address] || 'N/A' %></td>
           <td style="padding: 8px; border: 1px solid #000; font-size: 11px; text-align: center;"><%= site[:port] || 'N/A' %></td>
           <td style="padding: 8px; border: 1px solid #000; font-size: 11px; text-align: left; background-color: <%= site[:is_gt_24hr] ? '#f8d7da' : '#d4edda' %>; color: <%= site[:is_gt_24hr] ? '#721c24' : '#155724' %>;" data-sync-status="<%= site[:is_gt_24hr] ? 'old' : 'recent' %>">
-            <%= site[:last_sync] %>
+            <%= site[:last_sync_date] %>
           </td>
           <td style="padding: 8px; border: 1px solid #000; font-size: 11px; text-align: center; background-color: <%= site[:app_status] == 'Running' ? '#d4edda' : '#f8d7da' %>; color: <%= site[:app_status] == 'Running' ? '#155724' : '#721c24' %>;">
             <strong><%= site[:app_status] %></strong>
           </td>
           <td style="padding: 8px; border: 1px solid #000; font-size: 11px; text-align: center; background-color: <%= site[:ping_status] == 'Success' ? '#d4edda' : '#f8d7da' %>; color: <%= site[:ping_status] == 'Success' ? '#155724' : '#721c24' %>;">
             <strong><%= site[:ping_status] %></strong>
+          </td>
+           <td style="padding: 8px; border: 1px solid #000; font-size: 11px; text-align: center;">
+            <strong><%= site[:app_version] %></strong>
+          </td>
+          <td style="padding: 8px; border: 1px solid #000; font-size: 11px; text-align: center;">
+            <%= site[:order_summary]['emr'] ? site[:order_summary]['emr']['count'] : 0 %>
+          </td>
+          <td style="padding: 8px; border: 1px solid #000; font-size: 11px; text-align: center;">
+            <%= site[:order_summary]['nlims_local'] ? site[:order_summary]['nlims_local']['count'] : 0 %>
+          </td>
+          <td style="padding: 8px; border: 1px solid #000; font-size: 11px; text-align: center;">
+            <%= site[:order_summary]['nlims_chsu'] ? site[:order_summary]['nlims_chsu']['count'] : 0 %>
+          </td>
+          <td style="padding: 8px; border: 1px solid #000; font-size: 10px; text-align: center;">
+            <%= site[:order_summary]['overall_remark'] || 'N/A' %>
           </td>
           <td style="padding: 8px; border: 1px solid #000; font-size: 10px; text-align: center;" id="status-updated-<%= index %>">
             <%= site[:status_last_updated] %>
@@ -261,6 +281,27 @@
       
       if (data.status_last_updated) {
         statusCell.textContent = data.status_last_updated;
+      }
+      if (data.last_sync_date){
+        const syncStatusCell = row.cells[5];
+        syncStatusCell.textContent = data.last_sync_date;
+        syncStatusCell.setAttribute('data-sync-status', data.is_gt_24hr ? 'old' : 'recent');
+        syncStatusCell.style.backgroundColor = data.is_gt_24hr ? '#f8d7da' : '#d4edda';
+        syncStatusCell.style.color = data.is_gt_24hr ? '#721c24' : '#155724';
+      }
+      if (data.app_version){
+        const appVersionCell = row.cells[8];
+        appVersionCell.textContent = data.app_version;
+      }
+      if (data.order_summary){
+        const emrOrdersCell = row.cells[9];
+        const nlimsLocalOrdersCell = row.cells[10];
+        const nlimsChsuOrdersCell = row.cells[11];
+        const overallRemarkCell = row.cells[12];
+        emrOrdersCell.textContent = data.order_summary['emr'] ? data.order_summary['emr']['count'] : 0;
+        nlimsLocalOrdersCell.textContent = data.order_summary['nlims_local'] ? data.order_summary['nlims_local']['count'] : 0;
+        nlimsChsuOrdersCell.textContent = data.order_summary['nlims_chsu'] ? data.order_summary['nlims_chsu']['count'] : 0;
+        overallRemarkCell.textContent = data.order_summary['overall_remark'] || 'N/A';
       }
       
       // Update summary counts after refresh
