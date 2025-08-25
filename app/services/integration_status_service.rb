@@ -88,7 +88,7 @@ class IntegrationStatusService
 
       puts "checking application status #{sending_facility} : #{ip_address}"
       status = application_status(ip_address, application_port)
-      order_summary = fetch_order_summary(ip_address, application_port)
+      order_summary = fetch_order_summary(ip_address, application_port, sending_facility)
 
       results << {
         name: sending_facility,
@@ -117,7 +117,7 @@ class IntegrationStatusService
     Report.find_or_create_by(name: 'integration_status').update(data:)
   end
 
-  def fetch_order_summary(ip_address, port)
+  def fetch_order_summary(ip_address, port, sending_facility)
     url = "http://#{ip_address}:#{port}/orders_summary"
     include_data = false
     payload = {
@@ -135,7 +135,7 @@ class IntegrationStatusService
       open_timeout: 10
     )
     data = JSON.parse(response).deep_symbolize_keys
-    nlims_chsu = OrderService.nlims_local_orders(payload[:start_date], payload[:end_date], payload[:concept])
+    nlims_chsu = OrderService.nlims_local_orders(payload[:start_date], payload[:end_date], payload[:concept], sending_facility: sending_facility)
     data[:nlims_chsu] = {
       count: nlims_chsu.count,
       lab_orders: include_data ? nlims_chsu.pluck(:tracking_number).uniq : []

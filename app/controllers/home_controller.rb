@@ -70,7 +70,7 @@ class HomeController < ApplicationController
     timestamp = Time.now.strftime('%d/%b/%Y %H:%M')
     last_sync_date = integration_service.last_sync_date(site&.name)
     last_sync_date = last_sync_date.present? ? last_sync_date.strftime('%d/%b/%Y %H:%M') : 'Has Never Synced with NLIMS'
-    order_summary = integration_service.fetch_order_summary(site&.host_address, site&.application_port)
+    order_summary = integration_service.fetch_order_summary(site&.host_address, site&.application_port, site&.name)
     data = {
       "app_status": status[:ping] ? 'Running' : 'Down',
       "ping_status": ping_status ? 'Success' : 'Failed',

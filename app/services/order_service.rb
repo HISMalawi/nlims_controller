@@ -886,14 +886,20 @@ module OrderService
     end
   end
 
-  def self.nlims_local_orders(start_date, end_date, concept)
+  def self.nlims_local_orders(start_date, end_date, concept, sending_facility: nil)
     start_date = start_date.present? ? start_date.to_date.beginning_of_day : Date.today.beginning_of_day
     end_date = end_date.present? ? end_date.to_date.end_of_day : Date.today.end_of_day
     test_type = TestType.where("name LIKE '%#{concept[:name]}%'")
-    sp = Speciman.where('date_created >= ? AND date_created <= ?', start_date, end_date)
+    if sending_facility.present?
+      sp = Speciman.where('date_created >= ? AND date_created <= ? AND sending_facility = ?', start_date, end_date, sending_facility)
+    else
+      sp = Speciman.where('date_created >= ? AND date_created <= ?', start_date, end_date)
+    end
     return sp if test_type.blank?
 
     tests = Test.where(specimen_id: sp.pluck(:id), test_type_id: test_type&.ids)
+    return Speciman.where(id: tests.pluck(:specimen_id)) if sending_facility.present?
+
     Speciman.where(id: tests.pluck(:specimen_id))
   end
 
