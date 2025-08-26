@@ -64,7 +64,7 @@ cd "$NLIMS_CONTROLLER_DIR"
 # git fetch --tags
 
 # Minimum required version
-REQUIRED_VERSION="v2.3.2"
+REQUIRED_VERSION="v2.4.4"
 
 # Get current tag (if checked out on a tag)
 CURRENT_TAG=$(git describe --tags --exact-match 2>/dev/null)
@@ -86,7 +86,8 @@ else
 fi
 
 # Set NLIMS_VERSION to the resolved tag
-NLIMS_VERSION="$CURRENT_TAG"
+# NLIMS_VERSION="$CURRENT_TAG"
+NLIMS_VERSION="$REQUIRED_VERSION"
 echo "NLIMS_VERSION set to: $NLIMS_VERSION"
 echo "Checking out $NLIMS_VERSION"
 git checkout "$NLIMS_VERSION" -f
