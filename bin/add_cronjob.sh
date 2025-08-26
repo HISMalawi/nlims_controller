@@ -71,3 +71,12 @@ else
     echo -e "$current_cron_jobs\n$nlims_cron_job" | crontab -
     echo "Cron job added successfully!"
 fi
+
+current_cron_jobs=$(crontab -l 2>/dev/null)
+nlims_job="0 */3 * * * /bin/bash -l -c 'export PATH=\"\$HOME/.rbenv/bin:\$PATH\" && eval \"\$(rbenv init -)\" && cd /var/www/nlims_controller && rbenv local 3.2.0 && RAILS_ENV=development bundle exec rake master_nlims:update_order_source_couch_id --silent >> log/update_order_source_couch_id.log 2>&1'"
+if echo "$current_cron_jobs" | grep -F "$nlims_job" >/dev/null; then
+    echo "Cron job already exists."
+else
+    echo -e "$current_cron_jobs\n$nlims_job" | crontab -
+    echo "Cron job added successfully!"
+fi
