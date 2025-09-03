@@ -127,6 +127,11 @@ class API::V2::OrderController < ApplicationController
     render plain: response.to_json and return
   end
 
+  def create_order
+    message = required_params
+    render json: { error: message }, status: :bad_request if message
+  end
+
   private
 
   def remote_host
@@ -137,5 +142,28 @@ class API::V2::OrderController < ApplicationController
       source_host: request.remote_ip,
       source_app_uuid: User.find_by(token: request.headers['token'])&.app_uuid
     )
+  end
+
+  def required_params
+    required_params = {
+      'district' => 'district not provided',
+      'health_facility_name' => 'health facility name not provided',
+      'requesting_clinician' => 'requesting clinician not provided',
+      'first_name' => 'patient first name not provided',
+      'last_name' => 'patient last name not provided',
+      'phone_number' => 'patient phone number not provided',
+      'gender' => 'patient gender not provided',
+      'national_patient_id' => 'patient ID not provided',
+      'sample_type' => 'sample type not provided',
+      'tests' => 'tests not provided',
+      'date_sample_drawn' => 'date for sample drawn not provided',
+      'sample_status' => 'sample status not provided',
+      'sample_priority' => 'sample priority level not provided',
+      'target_lab' => 'target lab for sample not provided',
+      'order_location' => 'sample order location not provided',
+      'who_order_test_first_name' => 'first name for person ordering not provided',
+      'who_order_test_last_name' => 'last name for person ordering not provided'
+    }
+    required_params.detect { |key, _| !params[key] }&.last
   end
 end

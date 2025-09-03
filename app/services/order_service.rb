@@ -273,8 +273,8 @@ module OrderService
   end
 
   def self.check_test_name(test_name)
-    tst = TestType.find_by_sql("SELECT name AS tst_name FROM test_types WHERE name ='#{test_name}' LIMIT 1")
-    return tst[0].tst_name unless tst.empty?
+    test_type = TestType.find_by(name: test_name)
+    return test_type.name if test_type.present?
 
     FailedTestType.find_or_create_by(test_type: test_name, reason: 'Test Type not avail in NLIMS')
     false
@@ -878,5 +878,135 @@ module OrderService
     else
       false
     end
+  end
+
+  def self.create_specimen(params)
+    params[:sample_status] = 'specimen_accepted' if params[:sample_status] == 'specimen-accepted'
+    params[:sample_status] = 'specimen_accepted' if params[:status] == 'specimen-accepted'
+    sample_status_id = SpecimenStatus.get_specimen_status_id(params[:sample_status])
+    order_ward = Ward.get_ward_id(NameMapping.actual_name_of(params[:order_location]))
+    Speciman.create!(
+      tracking_number: params[:tracking_number],
+      specimen_type_id: SpecimenType.get_specimen_type_id(params[:sample_type]),
+      specimen_status_id: sample_status_id,
+      couch_id: params[:couch_id] || SecureRandom.uuid,
+      ward_id: order_ward,
+      priority: params[:sample_priority],
+      drawn_by_id: params[:who_order_test_id],
+      drawn_by_name: "#{params[:who_order_test_first_name]} #{params[:who_order_test_last_name]}",
+      drawn_by_phone_number: params[:who_order_test_phone_number],
+      target_lab: params[:target_lab],
+      art_start_date: params[:art_start_date],
+      sending_facility: params[:health_facility_name],
+      requested_by: params[:requesting_clinician],
+      district: params[:district],
+      date_created: params[:date_sample_drawn] || Date.today,
+      arv_number: params[:arv_number] || 'N/A',
+      art_regimen: params[:art_regimen] || 'N/A'
+    )
+  end
+
+  def self.create_test(patient, specimen, testype_id, time_created, test_status_id, created_by, panel_id = nil)
+    Test.create!(
+      specimen_id: specimen.id,
+      test_type_id: testype_id,
+      patient_id: patient.id,
+      created_by: created_by,
+      panel_id: panel_id,
+      time_created: time_created,
+      test_status_id: test_status_id
+    )
+    Test.create(
+            specimen_id: sp_obj.id,
+            test_type_id: rst,
+            patient_id: patient_obj.id,
+            created_by: "#{params[:who_order_test_first_name]} #{params[:who_order_test_last_name]}",
+            panel_id: '',
+            time_created: time,
+            test_status_id: rst2
+          )
+  end
+
+  def self.create_patient(params)
+    npid = params[:national_patient_id]
+    patient_obj = Patient.where(patient_number: npid)
+    patient_obj = patient_obj.first unless patient_obj.blank?
+    if patient_obj.blank?
+      patient_obj = patient_obj.create!(
+        patient_number: npid,
+        name: "#{params[:first_name]} #{params[:last_name]}",
+        email: '',
+        dob: params[:date_of_birth],
+        gender: params[:gender],
+        phone_number: params[:phone_number],
+        address: '',
+        external_patient_number: ''
+      )
+    else
+      patient_obj.dob = params[:date_of_birth]
+      patient_obj.update(name: "#{params[:first_name]} #{params[:last_name]}")
+      patient_obj.save
+    end
+    patient_obj
+  end
+
+  def self.create_order_v2(params)
+    ActiveRecord::Base.transaction do
+      params[:tests].each do |tst|
+        tst =  check_test_name(tst)
+        return [false, 'test name not available in nlims'] if tst == false
+      end
+      params[:sample_type] = NameMapping.actual_name_of(params[:sample_type])
+      spc = SpecimenType.find_by(name: params[:sample_type])
+      return [false, 'specimen type not available in nlims'] if spc.blank?
+
+      spc = SpecimenStatus.find_by(name: params[:sample_status])
+      return [false, 'specimen status not available in nlims'] if spc.blank?
+
+      patient = create_patient(params)
+      specimen = create_specimen(params)
+      Visit.create(
+        patient_id: patient.id,
+        visit_type_id: '',
+        ward_id: Ward.get_ward_id(NameMapping.actual_name_of(params[:order_location]))
+      )
+      params[:tests].each do |lab_test|
+        time_created = params[:date_sample_drawn] || Date.today
+        test_status_id = TestStatus.get_test_status_id('drawn')
+        created_by = "#{params[:who_order_test_first_name]} #{params[:who_order_test_last_name]}"
+        if check_test(lab_test)
+          create_test(
+            patient,
+            specimen,
+            TestType.get_test_type_id(lab_test),
+            time_created,
+            test_status_id,
+            created_by,
+            panel_id = nil
+          )
+        else
+          panel = PanelType.find_by(name: lab_test)
+          test_types = panel&.test_types || []
+          test_types.each do |test_type|
+            create_test(
+              patient,
+              specimen,
+              test_type.id,
+              time_created,
+              test_status_id,
+              created_by,
+              panel_id = panel.id
+            )
+          end
+        end
+      end
+    end
+    [true, params[:tracking_number]]
+  rescue StandardError => e
+    [false, e.message]
+  end
+
+  def self.update_test(params)
+    
   end
 end
