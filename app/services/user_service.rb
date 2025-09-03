@@ -48,7 +48,7 @@ module UserService
   def self.compute_expiry_time
     token = create_token
     time = Time.now
-    time += 14_400
+    time += 24.hours
     { token:, expiry_time: time.strftime('%Y%m%d%H%M%S') }
   end
 
