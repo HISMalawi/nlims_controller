@@ -130,6 +130,13 @@ class API::V2::OrderController < ApplicationController
   def create_order
     message = required_params
     render json: { error: message }, status: :bad_request if message
+
+    order = OrderService.create_order(params)
+    if order[:status] == 'success'
+      render json: { tracking_number: order[:tracking_number], message: 'Order created successfully' }, status: :created
+    else
+      render json: { error: order[:message] }, status: :unprocessable_entity
+    end
   end
 
   private
