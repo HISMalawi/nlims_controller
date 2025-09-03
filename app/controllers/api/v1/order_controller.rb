@@ -331,7 +331,7 @@ class API::V1::OrderController < ApplicationController
       }
       render(plain: response.to_json) && return
     end
-    if msg
+    if msg.present?
       response = {
         status: 401,
         error: true,
