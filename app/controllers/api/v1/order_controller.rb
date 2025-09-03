@@ -263,7 +263,7 @@ class API::V1::OrderController < ApplicationController
             date_dispatched ||= Time.current.strftime('%Y-%m-%d %H:%M:%S')
             delivery_type = params[:properties]['delivery_type']
             delivery_location = params[:properties]['delivery_location']
-            dispatcher = 'rh4'
+            dispatcher = params[:properties]['dispatcher'] || 'rh4'
             if tracking_numbers && date_dispatched && delivery_type
               dispatcher_type = SpecimenDispatchType.find_by(name: delivery_type)
               msg = ''
