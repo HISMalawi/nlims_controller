@@ -1014,9 +1014,37 @@ module OrderService
   end
 
   def self.update_test(params)
+    order, lab_test, test_status = validate_test_update_params(params)
+    return [false, lab_test] if order == false
+
+    ActiveRecord::Base.transaction do
+      params[:status_trail].each do |trail|
+        next if TestStatusTrail.exists?(test_id: lab_test.id, test_status_id: test_status.id)
+
+        TestStatusTrail.create!(
+          test_id: lab_test.id,
+          time_updated: trail[:timestamp],
+          test_status_id: trail[:test_status_id],
+          who_updated_id: trail[:updated_by]['id_number'].to_s,
+          who_updated_name: "#{trail[:updated_by]['first_name']} #{trail[:updated_by]['last_name']}",
+          who_updated_phone_number: trail[:updated_by]['phone_number'].to_s
+        )
+      end
+      TestService.update_test_status(lab_test.id, test_status.id)
+      if params[:test_results].present? && test_status&.id == TestStatus.get_test_status_id('verified')
+        TestService.add_test_results(params, lab_test.id)
+      end
+    [true, '']
+    rescue StandardError => e
+      [false, e.message]
+    end
+  end
+
+  def self.validate_test_update_params(params)
     return [false, 'tracking number not provided'] if params[:tracking_number].blank?
     return [false, 'test status not provided'] if params[:test_status].blank?
     return [false, 'test type not provided'] if params.dig(:test_types, :nlims_code).blank?
+    return [false, 'time updated not provided'] if params[:time_updated].blank?
 
     order = OrderService.get_order_by_tracking_number_sql(params[:tracking_number])
     return [false, 'order not available'] unless order
@@ -1033,35 +1061,14 @@ module OrderService
     already_updated = TestService.check_if_test_updated?(lab_test.id, test_status.id)
     return [false, 'order already updated with such state'] if already_updated
 
-    ActiveRecord::Base.transaction do
-      lab_test.update(test_status_id: test_status.id)
-      TestStatusTrail.create(
-        test_id: lab_test.id,
-        test_status_id: test_status.id,
-        time_updated: params[:results]&.first&.dig(:result_date) || Time.new.strftime('%Y%m%d%H%M%S'),
-        who_updated_id: params.dig(:who_updated, :id),
-        who_updated_name: "#{params.dig(:who_updated, :first_name)} #{params.dig(:who_updated, :last_name)}",
-        who_updated_phone_number: params.dig(:who_updated, :phone_number)
-      )
-      if params[:results].present?
-        params[:results].each do |res|
-          measure = Measure.find_by(name: res[:name])
-          next unless measure
-
-          test_result = TestResult.find_or_initialize_by(test_id: lab_test.id, measure_id: measure.id)
-          test_result.result = res[:result]
-          test_result.unit = res[:unit]
-          test_result.time_entered = res[:result_date] || Time.new.strftime('%Y%m%d%H%M%S')
-          test_result.platform = res[:platform]
-          test_result.platformserial = res[:platformserial]
-          test_result.save!
-        end
-      end
+    state, error_message = TestService.validate_time_updated(params[:time_updated], order)
+    unless state
+      failed_test_update = FailedTestUpdate.find_or_create_by(tracking_number: params[:tracking_number], test_name: params.dig(:test_types, :name), failed_step_status: test_status&.name)
+      failed_test_update.update(error_message: error_message, time_from_source: params[:time_updated])
+      return [false, error_message]
     end
-    [true, '']
-  rescue StandardError => e
-    [false, e.message]
 
+    [order, lab_test, test_status]
   end
   def self.nlims_local_orders(start_date, end_date, concept, sending_facility: nil)
     start_date = start_date.present? ? start_date.to_date.beginning_of_day : Date.today.beginning_of_day
@@ -1111,5 +1118,4 @@ module OrderService
       end
     end
   end
-
 end

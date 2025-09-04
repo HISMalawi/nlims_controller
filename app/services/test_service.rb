@@ -111,19 +111,19 @@ module TestService
       12 => [4, 5],
       nil => [10, 11]
     }.freeze
-    test = Test.find_by(id: test_id)
+    lab_test = Test.find_by(id: test_id)
 
-    return false unless test && new_status
+    return false unless lab_test && new_status
 
-    current_status = test.test_status_id
+    current_status = lab_test.test_status_id
     new_status_id = new_status.id
 
     # Check if transition is allowed
     if allowed_transitions[current_status]&.include?(new_status_id) ||
        allowed_transitions[nil]&.include?(new_status_id)
-      test.update!(test_status_id: new_status_id)
+      lab_test.update!(test_status_id: new_status_id)
     elsif new_status_id == 12
-      test.update!(test_status_id: new_status_id)
+      lab_test.update!(test_status_id: new_status_id)
     else
       false
     end
@@ -294,6 +294,47 @@ module TestService
       end
     else
       false
+    end
+  end
+
+  def self.add_test_results(params, lab_test_id)
+    params[:test_results].each do |test_result|
+      measure = Measure.find_by(nlims_code: test_result[:nlims_code])
+      next if measure.blank?
+      next if test_result[:value] == 'Failed'
+      next unless test_result[:value].present?
+
+      # Handle special case for Viral Load to remove commas
+      result_value = measure.nlims_code == 'NLIMS_TI_0294_MWI' ? test_result[:value].gsub(',', '') : test_result[:value]
+      next if result_already_available?(lab_test_id, measure.id, result_value)
+
+      test_result = TestResult.find_by(test_id: lab_test_id, measure_id: measure.id)
+      device_name = "#{test_result[:platform]} #{test_result[:platformserial]}".strip
+      if test_result.present?
+        TestResultTrail.create!(
+          measure_id: measure.id,
+          test_id: lab_test_id,
+          old_result: test_result.result,
+          new_result: result_value,
+          old_device_name: test_result.device_name,
+          new_device_name: device_name,
+          old_time_entered: test_result.time_entered,
+          new_time_entered: test_result[:result_date]
+        )
+        test_result.update!(result: result_value, time_entered: test_result[:result_date])
+        test_status_trail = TestStatusTrail.where(test_id: lab_test_id, test_status_id: 5).first
+        test_status_trail.update!(time_updated: test_result[:result_date]) unless test_status_trail.blank?
+        result_sync_tracker(params[:tracking_number], lab_test_id)
+      else
+        TestResult.create!(
+          measure_id: measure.id,
+          test_id: lab_test_id,
+          result: result_value,
+          device_name: device_name,
+          time_entered: test_result[:result_date]
+        )
+        result_sync_tracker(params[:tracking_number], lab_test_id) if test_result&.persisted?
+      end
     end
   end
 
