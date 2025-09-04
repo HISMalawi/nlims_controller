@@ -108,6 +108,7 @@ module TestService
       2 => [3, 4, 5],
       3 => [4, 5],
       4 => [5],
+      12 => [4, 5],
       nil => [10, 11]
     }.freeze
     test = Test.find_by(id: test_id)
@@ -120,6 +121,8 @@ module TestService
     # Check if transition is allowed
     if allowed_transitions[current_status]&.include?(new_status_id) ||
        allowed_transitions[nil]&.include?(new_status_id)
+      test.update!(test_status_id: new_status_id)
+    elsif new_status_id == 12
       test.update!(test_status_id: new_status_id)
     else
       false
