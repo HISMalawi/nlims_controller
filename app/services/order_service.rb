@@ -1007,6 +1007,53 @@ module OrderService
   end
 
   def self.update_test(params)
-    
+    return [false, 'tracking number not provided'] if params[:tracking_number].blank?
+    return [false, 'test status not provided'] if params[:test_status].blank?
+    return [false, 'test type not provided'] if params.dig(:test_types, :nlims_code).blank?
+
+    order = OrderService.get_order_by_tracking_number_sql(params[:tracking_number])
+    return [false, 'order not available'] unless order
+
+    lab_test = Test.joins(:test_type)
+                   .where(specimen_id: order.id, test_types: { nlims_code: params.dig(:test_types, :nlims_code) }).first
+    return [false, 'order with such test not available'] unless lab_test
+
+    test_status = TestStatus.find_by(name: params[:test_status])
+    unless test_status
+      return [false, "test status provided, not within scope of tests statuses available:#{TestStatus.all.pluck(:name)}"]
+    end
+
+    already_updated = TestService.check_if_test_updated?(lab_test.id, test_status.id)
+    return [false, 'order already updated with such state'] if already_updated
+
+    ActiveRecord::Base.transaction do
+      lab_test.update(test_status_id: test_status.id)
+      TestStatusTrail.create(
+        test_id: lab_test.id,
+        test_status_id: test_status.id,
+        time_updated: params[:results]&.first&.dig(:result_date) || Time.new.strftime('%Y%m%d%H%M%S'),
+        who_updated_id: params.dig(:who_updated, :id),
+        who_updated_name: "#{params.dig(:who_updated, :first_name)} #{params.dig(:who_updated, :last_name)}",
+        who_updated_phone_number: params.dig(:who_updated, :phone_number)
+      )
+      if params[:results].present?
+        params[:results].each do |res|
+          measure = Measure.find_by(name: res[:name])
+          next unless measure
+
+          test_result = TestResult.find_or_initialize_by(test_id: lab_test.id, measure_id: measure.id)
+          test_result.result = res[:result]
+          test_result.unit = res[:unit]
+          test_result.time_entered = res[:result_date] || Time.new.strftime('%Y%m%d%H%M%S')
+          test_result.platform = res[:platform]
+          test_result.platformserial = res[:platformserial]
+          test_result.save!
+        end
+      end
+    end
+    [true, '']
+  rescue StandardError => e
+    [false, e.message]
+
   end
 end
