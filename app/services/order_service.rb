@@ -108,7 +108,8 @@ module OrderService
   end
 
   def self.check_order(tracking_number)
-    Speciman.where(tracking_number:).exists? || TrackingNumberLogger.where(tracking_number:).exists?
+    # Speciman.where(tracking_number:).exists? || TrackingNumberLogger.where(tracking_number:).exists?
+    Speciman.where(tracking_number:).exists?
   end
 
   def self.query_order_by_tracking_number_v2(tracking_number, test_name, couch_id)
@@ -885,4 +886,54 @@ module OrderService
       false
     end
   end
+
+  def self.nlims_local_orders(start_date, end_date, concept, sending_facility: nil)
+    start_date = start_date.present? ? start_date.to_date.beginning_of_day : Date.today.beginning_of_day
+    end_date = end_date.present? ? end_date.to_date.end_of_day : Date.today.end_of_day
+    test_type = TestType.where("name LIKE '%#{concept[:name]}%'")
+    if sending_facility.present?
+      sp = Speciman.where('date_created >= ? AND date_created <= ? AND sending_facility = ?', start_date, end_date, sending_facility)
+    else
+      sp = Speciman.where('date_created >= ? AND date_created <= ?', start_date, end_date)
+    end
+    return sp if test_type.blank?
+
+    tests = Test.where(specimen_id: sp.pluck(:id), test_type_id: test_type&.ids)
+    return Speciman.where(id: tests.pluck(:specimen_id)) if sending_facility.present?
+
+    Speciman.where(id: tests.pluck(:specimen_id))
+  end
+
+  def self.order_summary_remark(emr_orders, nlims_orders, nlims_chsu: nil)
+    if nlims_chsu.present?
+      if emr_orders[:remark] == 'URL for Order Summary not available in EMR'
+        'URL for Order Summary not available in EMR - Update EMR-API to version >=5.6.1'
+      elsif emr_orders[:remark] == 'Connection to EMR refused - EMR down'
+        'Connection to EMR refused - EMR down - Check EMR API'
+      elsif emr_orders[:count].zero? && nlims_orders[:count].zero? && nlims_chsu[:count].zero?
+        'No orders drawn in EMR and no orders synched to NLIMS'
+      elsif emr_orders[:count] == nlims_orders[:count] && emr_orders[:count] == nlims_chsu[:count]
+        'All orders drawn in EMR are synched to NLIMS'
+      elsif (emr_orders[:count] > nlims_chsu[:count]) && (emr_orders[:count] > nlims_orders[:count])
+        'Some orders drawn in EMR are not synched to NLIMS'
+      elsif (nlims_orders[:count] > emr_orders[:count]) && nlims_orders[:count] == nlims_chsu[:count]
+        'Some orders synched to NLIMS were not drawn in EMR or were voided in EMR'
+      elsif (nlims_chsu[:count] < nlims_orders[:count])
+        'Some orders synched to NLIMS Local were not synched to NLIMS CHSU'
+      else
+        'Some orders synched to NLIMS were not drawn in EMR or were voided in EMR'
+      end
+    else
+      if emr_orders[:count].zero? && nlims_orders[:count].zero?
+        'No orders drawn in EMR and no orders synched to NLIMS'
+      elsif emr_orders[:count] == nlims_orders[:count]
+        'All orders drawn in EMR are synched to NLIMS'
+      elsif emr_orders[:count] > nlims_orders[:count]
+        'Some orders drawn in EMR are not synched to NLIMS'
+      else
+        'Some orders synched to NLIMS were not drawn in EMR or were voided in EMR'
+      end
+    end
+  end
+
 end

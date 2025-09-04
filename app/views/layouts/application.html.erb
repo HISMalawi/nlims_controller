@@ -179,10 +179,12 @@
               <%= link_to 'Orders by Site', sites_by_orders_path,
                   class: "nav-link #{'active' if request.path == sites_by_orders_path}" %>
             </li>
-            <li class="nav-item">
-              <%= link_to 'Integrated Sites', integrated_sites_path,
-                  class: "nav-link #{'active' if request.path == integrated_sites_path}" %>
-            </li>
+            <% if Socket.ip_address_list.any? { |addr| addr.ip_address == '10.44.0.46' } %>
+              <li class="nav-item">
+                <%= link_to 'Integrated Sites', integrated_sites_path,
+                    class: "nav-link #{'active' if request.path == integrated_sites_path}" %>
+              </li>
+            <% end %>
           </ul>
         </nav>
       </div>

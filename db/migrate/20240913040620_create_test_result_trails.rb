@@ -3,6 +3,8 @@
 # This miggration creates the test_result_trails table
 class CreateTestResultTrails < ActiveRecord::Migration[7.1]
   def change
+    return if table_exists?(:test_result_trails)
+
     create_table :test_result_trails do |t|
       t.integer :measure_id
       t.integer :test_id

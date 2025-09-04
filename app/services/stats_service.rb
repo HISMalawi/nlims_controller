@@ -65,9 +65,11 @@ module StatsService
           port: site&.application_port,
           app_status: integration_status['app_status'] || false ? 'Running' : 'Down',
           ping_status: integration_status['ping_status'] || false ? 'Success' : 'Failed',
-          last_sync: last_sync ? last_sync.strftime('%d/%b/%Y %H:%M') : 'Has Never Synced with NLIMS',
+          last_sync_date: last_sync ? last_sync.strftime('%d/%b/%Y %H:%M') : 'Has Never Synced with NLIMS',
           status_last_updated: integration_status['status_last_updated'] || 'Never Updated',
-          is_gt_24hr: last_sync.nil? || last_sync < 48.hours.ago
+          is_gt_24hr: last_sync.nil? || last_sync < 48.hours.ago,
+          order_summary: integration_status['order_summary'] || {},
+          app_version: integration_status['app_version'] || 'N/A'
         }
       end
 

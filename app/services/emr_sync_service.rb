@@ -56,6 +56,51 @@ class EmrSyncService
     SyncErrorLog.create(error_message: e.message, error_details: { message: 'ERROR Account creation in EMR' })
   end
 
+  def emr_order_summary(start_date, end_date, concept, include_data: false)
+    url = "#{@address}/api/v1/lab/orders/summary?start_date=#{start_date}&end_date=#{end_date}&concept_id=#{concept[:id]}&include_data=#{include_data}"
+    response = RestClient.get(
+      url,
+      content_type: 'application/json',
+      Authorization: "Bearer #{@token}"
+    )
+    response = JSON.parse(response)
+    {
+      emr: {
+        count: response['count'],
+        lab_orders: include_data ? response['lab_orders'].pluck('accession_number') : [],
+        remark: response['count'].zero? ? 'No orders drawn in EMR' : 'Orders drawn in EMR'
+      }
+    }
+  rescue Errno::ECONNREFUSED => e
+    puts "Connection refused error: #{e.message}"
+    {
+      emr: {
+        count: 0,
+        lab_orders: [],
+        remark: 'Connection to EMR refused - EMR down'
+      }
+    }
+  rescue RestClient::ExceptionWithResponse => e
+    if e.http_code == 404
+      {
+        emr: {
+          count: 0,
+          lab_orders: [],
+          remark: 'URL for Order Summary not available in EMR'
+        }
+      }
+    end
+  rescue StandardError => e
+    puts "Error: #{e.message}"
+    {
+      emr: {
+        count: 0,
+        lab_orders: [],
+        remark: e.message
+      }
+    }
+  end
+
   private
 
   # Authenticate with EMR

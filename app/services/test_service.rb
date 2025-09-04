@@ -21,8 +21,12 @@ module TestService
     return [false, 'order already updated with such state'] if check_if_test_updated?(test_id, test_status.id)
 
     time_updated = params[:time_updated].blank? ? Time.now.strftime('%Y%m%d%H%M%S') : params[:time_updated]
-    return [false, 'time updated provided is in the past'] if time_updated.to_date < sql_order.date_created.to_date
-
+    state, error_message = validate_time_updated(time_updated, sql_order)
+    unless state
+      failed_test_update = FailedTestUpdate.find_or_create_by(tracking_number: params[:tracking_number], test_name: test_name, failed_step_status: test_status&.name)
+      failed_test_update.update(error_message: error_message, time_from_source: time_updated)
+      return [false, error_message]
+    end
     ActiveRecord::Base.transaction do
       unless TestStatusTrail.exists?(test_id: test_id, test_status_id: test_status.id)
         TestStatusTrail.create!(
@@ -37,6 +41,12 @@ module TestService
       update_test_status(test_id, test_status)
       if test_status.id == 5 && params[:results]
         result_date = params[:result_date].blank? ? Time.now.strftime('%Y%m%d%H%M%S') : params[:result_date]
+        state, error_message = validate_time_updated(result_date, sql_order)
+        unless state
+          failed_test_update = FailedTestUpdate.find_or_create_by(tracking_number: params[:tracking_number], test_name: test_name, failed_step_status: test_status&.name)
+          failed_test_update.update(error_message: error_message, time_from_source: result_date)
+          return [false, error_message]
+        end
         params[:results].each do |measure_name, result_value|
           measure_id = Measure.where(name: measure_name).first&.id
           next if measure_id.blank?
@@ -45,6 +55,7 @@ module TestService
           next if result_already_available?(test_id, measure_id, result_value)
 
           result_value = result_value.gsub(',', '') if Measure.find_by(name: 'Viral Load')&.id == measure_id
+          device_name = params[:platform].blank? ? '' : params[:platform]
           if TestResult.exists?(test_id:, measure_id:)
             test_result = TestResult.find_by(test_id:, measure_id: measure_id)
             TestResultTrail.create!(
@@ -62,7 +73,6 @@ module TestService
             test_status_trail.update!(time_updated: result_date) unless test_status_trail.blank?
             result_sync_tracker(params[:tracking_number], test_id)
           else
-            device_name = params[:platform].blank? ? '' : params[:platform]
             test_result = TestResult.create!(measure_id: measure_id, test_id: test_id, result: result_value, device_name: device_name,
                                              time_entered: result_date)
             result_sync_tracker(params[:tracking_number], test_id) if test_result&.persisted?
@@ -76,12 +86,29 @@ module TestService
     end
   end
 
+  def self.validate_time_updated(time_updated, sql_order)
+    # Only compare if date_created exists and dates are valid
+    if sql_order.date_created.present?
+      begin
+        time_updated_date = time_updated.to_s.to_date
+        created_date = sql_order.date_created.to_date
+        return [false, 'time updated or result date provided is in the past'] if time_updated_date < created_date
+      rescue StandardError => e
+        # Any error (invalid date format, type mismatch, etc.) - just proceed
+        [true, nil]
+      end
+    end
+    # Proceed - return success or continue with rest of logic
+    [true, nil]
+  end
+
   def self.update_test_status(test_id, new_status)
     allowed_transitions = {
       9 => [2, 3, 4, 5],
       2 => [3, 4, 5],
       3 => [4, 5],
       4 => [5],
+      12 => [4, 5],
       nil => [10, 11]
     }.freeze
     test = Test.find_by(id: test_id)
@@ -94,6 +121,8 @@ module TestService
     # Check if transition is allowed
     if allowed_transitions[current_status]&.include?(new_status_id) ||
        allowed_transitions[nil]&.include?(new_status_id)
+      test.update!(test_status_id: new_status_id)
+    elsif new_status_id == 12
       test.update!(test_status_id: new_status_id)
     else
       false

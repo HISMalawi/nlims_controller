@@ -3,6 +3,9 @@ class HomeController < ApplicationController
 
   def index
     @info = 'NLIMS SERVICE'
+    start_date = Date.today - 1.day
+    end_date = Date.today
+    concept = { name: 'Viral Load', id: 856 }
     @git_tag = git_tag
     @local_nlims = Config.local_nlims? ? 'Local' : 'Master'
     return unless @local_nlims == 'Local'
@@ -16,6 +19,10 @@ class HomeController < ApplicationController
     @emr_auth = emr.token.blank? ? 'Failed' : 'Successful'
     @emr_address = emr.address
     @sidekiq_service_status = SystemctlService.sidekiq_service_status
+    @emr_orders = emr.emr_order_summary(start_date, end_date, concept, include_data: false)[:emr]
+    nlims_local = OrderService.nlims_local_orders(start_date, end_date, concept)
+    @nlims_orders = { count: nlims_local.count, lab_orders: [] }
+    @overall_remark = OrderService.order_summary_remark(@emr_orders, @nlims_orders)
   end
 
   def git_tag
@@ -58,14 +65,19 @@ class HomeController < ApplicationController
   def refresh_app_ping_status
     integration_service = IntegrationStatusService.new
     site = Site.find_by(name: params[:site_name])
-    app_status = integration_service.application_status(site&.host_address, site&.application_port)
+    status = integration_service.application_status(site&.host_address, site&.application_port)
     ping_status = integration_service.ping_server(site&.host_address)
     timestamp = Time.now.strftime('%d/%b/%Y %H:%M')
     last_sync_date = integration_service.last_sync_date(site&.name)
-
+    last_sync_date = last_sync_date.present? ? last_sync_date.strftime('%d/%b/%Y %H:%M') : 'Has Never Synced with NLIMS'
+    order_summary = integration_service.fetch_order_summary(site&.host_address, site&.application_port, site&.name)
     data = {
-      "app_status": app_status ? 'Running' : 'Down',
+      "app_status": status[:ping] ? 'Running' : 'Down',
       "ping_status": ping_status ? 'Success' : 'Failed',
+      "app_version": status[:version],
+      "last_sync_date": last_sync_date,
+      "is_gt_24hr": integration_service.last_sync_date_gt_24hr?(last_sync_date),
+      "order_summary": order_summary,
       "status_last_updated": timestamp
     }
     report = Report.find_or_create_by(name: 'integration_status') do |r|
@@ -80,10 +92,12 @@ class HomeController < ApplicationController
       ip_address: site.host_address,
       app_port: site.application_port,
       ping_status: ping_status,
-      app_status: app_status,
+      app_status: status[:ping],
+      app_version: status[:version],
       status_last_updated: timestamp,
       last_sync_date_gt_24hr: integration_service.last_sync_date_gt_24hr?(last_sync_date),
-      last_sync_date: last_sync_date.present? ? last_sync_date.strftime('%d/%b/%Y %H:%M') : 'Has Never Synced with NLIMS'
+      last_sync_date: last_sync_date,
+      order_summary: order_summary
     }.stringify_keys
 
     if site_index
@@ -96,5 +110,11 @@ class HomeController < ApplicationController
 
     report.save!
     render json: data
+  end
+
+  def orders_summary
+    integration_service = IntegrationStatusService.new
+    summary = integration_service.orders_summary(params)
+    render json: summary
   end
 end

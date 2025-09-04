@@ -22,16 +22,20 @@ module UserService
   end
 
   def self.remove_tokens_for_account_creation
-    tokens = JSON.parse(File.read("#{Rails.root}/tmp/nlims_account_creating_token.json"))
+    file_path = "#{Rails.root}/tmp/nlims_account_creating_token.json"
+    begin
+      tokens = JSON.parse(File.read(file_path))
+    rescue StandardError => e
+      Rails.logger.error("Error reading tokens file: #{e.message}")
+      File.write(file_path, { 'tokens' => ['0'] }.to_json)
+      tokens = { 'tokens' => ['0'] }
+    end
     return unless tokens['tokens'].length > 10
 
     header = {}
-    File.unlink("#{Rails.root}/tmp/nlims_account_creating_token.json")
-    FileUtils.touch "#{Rails.root}/tmp/nlims_account_creating_token.json"
+    File.write(file_path, { 'tokens' => [] }.to_json)
     header['tokens'] = ['0']
-    File.open("#{Rails.root}/tmp/nlims_account_creating_token.json", 'w') do |f|
-      f.write(header.to_json)
-    end
+    File.write(file_path, header.to_json)
   end
 
   def self.create_token
@@ -44,7 +48,7 @@ module UserService
   def self.compute_expiry_time
     token = create_token
     time = Time.now
-    time += 14_400
+    time += 24.hours
     { token:, expiry_time: time.strftime('%Y%m%d%H%M%S') }
   end
 

@@ -263,7 +263,7 @@ class API::V1::OrderController < ApplicationController
             date_dispatched ||= Time.current.strftime('%Y-%m-%d %H:%M:%S')
             delivery_type = params[:properties]['delivery_type']
             delivery_location = params[:properties]['delivery_location']
-            dispatcher = 'rh4'
+            dispatcher = params[:properties]['dispatcher'] || 'rh4'
             if tracking_numbers && date_dispatched && delivery_type
               dispatcher_type = SpecimenDispatchType.find_by(name: delivery_type)
               msg = ''
@@ -331,7 +331,7 @@ class API::V1::OrderController < ApplicationController
       }
       render(plain: response.to_json) && return
     end
-    if msg
+    if msg.present?
       response = {
         status: 401,
         error: true,
@@ -713,7 +713,7 @@ class API::V1::OrderController < ApplicationController
 
   def verify_order_tracking_number_exist
     exist = TrackingNumberLogger.where(tracking_number: params[:tracking_number]).exists? || Speciman.where(tracking_number: params[:tracking_number]).exists?
-    render json: exist
+    render json: { data: exist, message: exist ? 'Tracking number exists' : 'Tracking number does not exist', status: 200 }
   end
 
   private

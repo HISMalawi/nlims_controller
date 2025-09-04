@@ -16,6 +16,7 @@ Rails.application.routes.draw do
   get 'sites_by_orders', to: 'home#sites_by_orders'
   get 'integrated_sites', to: 'home#integrated_sites'
   get '/refresh_app_ping_status' => 'home#refresh_app_ping_status'
+  get '/orders_summary' => 'home#orders_summary'
   namespace :api do
     namespace :v1 do
       # order routes
@@ -57,6 +58,7 @@ Rails.application.routes.draw do
       # status of the app
       get '/ping' => 'status#ping'
       post '/register_order_source' => 'source_tracker#register_order_source'
+      post '/update_order_source_couch_id' => 'source_tracker#update_order_source_couch_id'
     end
 
     namespace :v2 do
