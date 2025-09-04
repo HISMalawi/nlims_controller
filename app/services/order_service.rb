@@ -46,7 +46,7 @@ module OrderService
         tracking_number:,
         specimen_type_id: sample_type_id,
         specimen_status_id: sample_status_id,
-        couch_id: SecureRandom.uuid,
+        couch_id: params[:couch_id] || SecureRandom.uuid,
         ward_id: order_ward,
         priority: params[:sample_priority],
         drawn_by_id: params[:who_order_test_id],
@@ -108,16 +108,13 @@ module OrderService
   end
 
   def self.check_order(tracking_number)
-    order = Speciman.where(tracking_number:).first
-    if order
-      true
-    else
-      false
-    end
+    # Speciman.where(tracking_number:).exists? || TrackingNumberLogger.where(tracking_number:).exists?
+    Speciman.where(tracking_number:).exists?
   end
 
-  def self.query_order_by_tracking_number_v2(tracking_number, test_name)
+  def self.query_order_by_tracking_number_v2(tracking_number, test_name, couch_id)
     test_name = NameMapping.actual_name_of(test_name)
+    couch_id_condition = couch_id.blank? ? '' : "AND specimen.couch_id='#{couch_id}'"
     res = Speciman.find_by_sql("SELECT specimen_types.name AS sample_type, specimen_statuses.name AS specimen_status,
                         wards.name AS order_location, specimen.date_created AS date_created, specimen.priority AS priority,
                         specimen.drawn_by_id AS drawer_id, specimen.drawn_by_name AS drawer_name,
@@ -133,7 +130,7 @@ module OrderService
                         INNER JOIN tests ON tests.specimen_id = specimen.id
                         INNER JOIN patients ON patients.id = tests.patient_id
                         LEFT JOIN wards ON specimen.ward_id = wards.id
-                        WHERE specimen.tracking_number ='#{tracking_number}'")
+                        WHERE specimen.tracking_number ='#{tracking_number}' #{couch_id_condition}")
     tsts = {}
     result_status = false
     result_measures = {}
@@ -280,9 +277,14 @@ module OrderService
     false
   end
 
-  def self.get_order_by_tracking_number_sql(track_number)
-    details = Speciman.where(tracking_number: track_number).first
-    details || false
+  def self.get_order_by_tracking_number_sql(tracking_number, arv_number)
+    arv_number = arv_number&.to_s&.split('-')&.last
+    order = if arv_number.present?
+              Speciman.where(tracking_number:).where("arv_number LIKE '%#{arv_number}%'").first
+            else
+              Speciman.find_by(tracking_number:)
+            end
+    order || false
   end
 
   def self.query_results_by_npid(npid)
@@ -400,8 +402,9 @@ module OrderService
     master_facility = {}
     facility_samples = []
     facilities.each do |facility|
-      res = Site.find_by_sql("SELECT name AS site_name FROM sites WHERE id='#{facility}'")
+      res = Site.find_by_sql("SELECT name AS site_name, district FROM sites WHERE id='#{facility}'")
       unless res.blank?
+        ActiveRecord::Base.connection.execute("SET SESSION sql_mode = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION'")
         res_ = Speciman.find_by_sql("SELECT specimen.tracking_number AS tracking_number,
 																		specimen_types.name AS sample_type, specimen_statuses.name AS specimen_status,
 																		wards.name AS order_location, specimen.date_created AS date_created,
@@ -411,7 +414,8 @@ module OrderService
 																		specimen.sending_facility AS health_facility, specimen.requested_by AS requested_by,
 																		specimen.date_created AS date_drawn,
 																		patients.patient_number AS pat_id, patients.name AS pat_name,
-																		patients.dob AS dob, patients.gender AS sex
+																		patients.dob AS dob, patients.gender AS sex,
+                                    specimen.arv_number AS arv_number
 																		FROM specimen INNER JOIN specimen_statuses ON specimen_statuses.id = specimen.specimen_status_id
 																		LEFT JOIN specimen_types ON specimen_types.id = specimen.specimen_type_id
 																		INNER JOIN tests ON tests.specimen_id = specimen.id
@@ -419,7 +423,7 @@ module OrderService
 																		LEFT JOIN wards ON specimen.ward_id = wards.id
 						      									WHERE specimen.sending_facility ='#{res[0]['site_name'].gsub("'", "\\\\'")}'
 																		AND specimen.tracking_number NOT IN (SELECT tracking_number FROM specimen_dispatches)
-																		GROUP BY specimen.id DESC limit 500")
+																		GROUP BY specimen.id ORDER BY specimen.id DESC limit 500")
         tsts = {}
         if !res_.empty?
           res_.each do |ress|
@@ -454,7 +458,9 @@ module OrderService
                   id: ress.pat_id,
                   name: ress.pat_name,
                   gender: ress.sex,
-                  dob: ress.dob
+                  dob: ress.dob,
+                  arv_number: ress.arv_number,
+                  site_code_number: get_site_code_number(ress.tracking_number)
                 },
 
                 tests: tsts
@@ -522,8 +528,6 @@ module OrderService
         end
         next if tracking_number[0..4] == 'XCHSU'
 
-        dob = res.dob
-        dob = Time.new.strftime('%Y-%m-%d') if dob.nil?
         data[counter] = { sample_type: res.sample_type,
                           tracking_number:,
                           specimen_status: res.specimen_status,
@@ -543,7 +547,7 @@ module OrderService
                             id: res.pat_id,
                             name: patient_name,
                             gender: res.sex,
-                            dob:
+                            dob: res.dob
                           },
                           receiving_lab: res.target_lab,
                           sending_lab: res.health_facility,
@@ -798,6 +802,9 @@ module OrderService
       order.update(specimen_type_id: specimen_type.id)
     end
     order.update(specimen_status_id: specimen_status.id)
+    return [true, ''] if SpecimenStatusTrail.exists?(specimen_id: order.id, specimen_status_id: specimen_status.id)
+
+    # Create the status trail
     SpecimenStatusTrail.create(
       specimen_id: order.id,
       specimen_status_id: specimen_status.id,
@@ -1056,4 +1063,53 @@ module OrderService
     [false, e.message]
 
   end
+  def self.nlims_local_orders(start_date, end_date, concept, sending_facility: nil)
+    start_date = start_date.present? ? start_date.to_date.beginning_of_day : Date.today.beginning_of_day
+    end_date = end_date.present? ? end_date.to_date.end_of_day : Date.today.end_of_day
+    test_type = TestType.where("name LIKE '%#{concept[:name]}%'")
+    if sending_facility.present?
+      sp = Speciman.where('date_created >= ? AND date_created <= ? AND sending_facility = ?', start_date, end_date, sending_facility)
+    else
+      sp = Speciman.where('date_created >= ? AND date_created <= ?', start_date, end_date)
+    end
+    return sp if test_type.blank?
+
+    tests = Test.where(specimen_id: sp.pluck(:id), test_type_id: test_type&.ids)
+    return Speciman.where(id: tests.pluck(:specimen_id)) if sending_facility.present?
+
+    Speciman.where(id: tests.pluck(:specimen_id))
+  end
+
+  def self.order_summary_remark(emr_orders, nlims_orders, nlims_chsu: nil)
+    if nlims_chsu.present?
+      if emr_orders[:remark] == 'URL for Order Summary not available in EMR'
+        'URL for Order Summary not available in EMR - Update EMR-API to version >=5.6.1'
+      elsif emr_orders[:remark] == 'Connection to EMR refused - EMR down'
+        'Connection to EMR refused - EMR down - Check EMR API'
+      elsif emr_orders[:count].zero? && nlims_orders[:count].zero? && nlims_chsu[:count].zero?
+        'No orders drawn in EMR and no orders synched to NLIMS'
+      elsif emr_orders[:count] == nlims_orders[:count] && emr_orders[:count] == nlims_chsu[:count]
+        'All orders drawn in EMR are synched to NLIMS'
+      elsif (emr_orders[:count] > nlims_chsu[:count]) && (emr_orders[:count] > nlims_orders[:count])
+        'Some orders drawn in EMR are not synched to NLIMS'
+      elsif (nlims_orders[:count] > emr_orders[:count]) && nlims_orders[:count] == nlims_chsu[:count]
+        'Some orders synched to NLIMS were not drawn in EMR or were voided in EMR'
+      elsif (nlims_chsu[:count] < nlims_orders[:count])
+        'Some orders synched to NLIMS Local were not synched to NLIMS CHSU'
+      else
+        'Some orders synched to NLIMS were not drawn in EMR or were voided in EMR'
+      end
+    else
+      if emr_orders[:count].zero? && nlims_orders[:count].zero?
+        'No orders drawn in EMR and no orders synched to NLIMS'
+      elsif emr_orders[:count] == nlims_orders[:count]
+        'All orders drawn in EMR are synched to NLIMS'
+      elsif emr_orders[:count] > nlims_orders[:count]
+        'Some orders drawn in EMR are not synched to NLIMS'
+      else
+        'Some orders synched to NLIMS were not drawn in EMR or were voided in EMR'
+      end
+    end
+  end
+
 end

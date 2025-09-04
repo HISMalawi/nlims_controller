@@ -1,36 +1,43 @@
-<h1 style="text-align: center;">Latest Results by Site</h1>
+<h1 style="text-align: center; color: #2c3e50; margin-bottom: 30px;">Latest Results by Site</h1>
 
-<div style="display: flex; justify-content: center; margin-bottom: 20px;">
-  <label for="search-input">Search by Sending Facility:</label>
-  <input type="text" id="search-input" placeholder="Enter sending facility" onkeyup="filterTable()">
+<div style="display: flex; justify-content: center; margin-bottom: 25px;">
+  <div style="background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border: 1px solid #dee2e6;">
+    <label for="search-input" style="margin-right: 10px; font-weight: 500; color: #495057;">Search by Sending Facility:</label>
+    <input type="text" id="search-input" placeholder="Enter sending facility" onkeyup="filterTable()"
+           style="padding: 8px 12px; border: 1px solid #ced4da; border-radius: 4px; font-size: 14px; width: 250px;">
+  </div>
 </div>
 
 <div style="display: flex; justify-content: center;">
-  <table id="results-table" style="border: 1px solid #000; width: 80%; text-align: center; border-collapse: collapse;">
+  <table id="results-table" style="border: 1px solid #dee2e6; width: 95%; border-collapse: collapse; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border-radius: 8px; overflow: hidden;">
     <thead>
-      <tr style="background-color: #f2f2f2;">
-        <th style="padding: 12px; border: 1px solid #000;">#</th>
-        <th style="padding: 12px; border: 1px solid #000;">Sending Facility</th>
-        <th style="padding: 12px; border: 1px solid #000;">Tracking Number</th>
-        <th style="padding: 12px; border: 1px solid #000;">Max Result Date (EID/VL)</th>
-        <th style="padding: 12px; border: 1px solid #000;">Max Result Date (NLIMS)</th>
+      <tr style="background: linear-gradient(135deg, #0066cc 0%, #004499 100%); color: white;">
+        <th style="padding: 12px; border: 1px solid #dee2e6; font-size: 13px; font-weight: 600; text-align: center;">#</th>
+        <th style="padding: 12px; border: 1px solid #dee2e6; font-size: 13px; font-weight: 600; text-align: left;">Sending Facility</th>
+        <th style="padding: 12px; border: 1px solid #dee2e6; font-size: 13px; font-weight: 600; text-align: left;">Tracking Number</th>
+        <th style="padding: 12px; border: 1px solid #dee2e6; font-size: 13px; font-weight: 600; text-align: left;">Max Result Date (EID/VL)</th>
+        <th style="padding: 12px; border: 1px solid #dee2e6; font-size: 13px; font-weight: 600; text-align: left;">Max Result Date (NLIMS)</th>
+        <th style="padding: 12px; border: 1px solid #dee2e6; font-size: 13px; font-weight: 600; text-align: left;">Acknowledgement Level</th>
       </tr>
     </thead>
     <tbody>
       <% @latest_results_by_site.each_with_index do |result, index| %>
-        <tr>
-          <td style="padding: 12px; border: 1px solid #000;"><%= index + 1 %></td>
-          <td style="padding: 12px; border: 1px solid #000;"><%= result[:sending_facility] %></td>
-          <td style="padding: 12px; border: 1px solid #000;"><%= result[:tracking_number] %></td>
-          <td style="padding: 12px; border: 1px solid #000;"><%= result[:max_results_date_eid_vl] %></td>
-          <td style="padding: 12px; border: 1px solid #000;"><%= result[:max_result_date_nlims] %></td>
+        <tr style="background-color: <%= index.even? ? '#f8f9fa' : 'white' %>; transition: background-color 0.2s;"
+            onmouseover="this.style.backgroundColor='#e3f2fd'"
+            onmouseout="this.style.backgroundColor='<%= index.even? ? '#f8f9fa' : 'white' %>'">
+          <td style="padding: 10px 12px; border: 1px solid #dee2e6; font-size: 12px; text-align: center; color: #6c757d;"><%= index + 1 %></td>
+          <td style="padding: 10px 12px; border: 1px solid #dee2e6; font-size: 12px; text-align: left; font-weight: 500; color: #495057;"><%= result[:sending_facility] %></td>
+          <td style="padding: 10px 12px; border: 1px solid #dee2e6; font-size: 12px; text-align: left; font-family: monospace; color: #007bff;"><%= result[:tracking_number] %></td>
+          <td style="padding: 10px 12px; border: 1px solid #dee2e6; font-size: 12px; text-align: left; color: #495057;"><%= result[:max_results_date_eid_vl] %></td>
+          <td style="padding: 10px 12px; border: 1px solid #dee2e6; font-size: 12px; text-align: left; color: #495057;"><%= result[:max_result_date_nlims] %></td>
+          <td style="padding: 10px 12px; border: 1px solid #dee2e6; font-size: 12px; text-align: left; color: #495057;"><%= result[:test_result_receipent_types] %></td>
         </tr>
       <% end %>
     </tbody>
   </table>
 </div>
 
-<p id="no-results-message" style="text-align: center; display: none;">No results found.</p>
+<p id="no-results-message" style="text-align: center; display: none; color: #6c757d; font-style: italic; margin-top: 20px;">No results found.</p>
 
 <script>
   function filterTable() {

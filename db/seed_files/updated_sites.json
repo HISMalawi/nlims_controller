@@ -1,0 +1,7022 @@
+[
+  {
+    "id": 1,
+    "name": "Chitipa District Hospital",
+    "application_port": "0000",
+    "host_address": "10.40.22.3",
+    "enabled": true,
+    "district": "chitipa",
+    "region": "North"
+  },
+  {
+    "id": 2,
+    "name": "Ifumbo Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "chitipa",
+    "region": "North"
+  },
+  {
+    "id": 3,
+    "name": "Kameme Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "chitipa",
+    "region": "North"
+  },
+  {
+    "id": 4,
+    "name": "Kapenda Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "chitipa",
+    "region": "North"
+  },
+  {
+    "id": 5,
+    "name": "Misuku Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "chitipa",
+    "region": "North"
+  },
+  {
+    "id": 6,
+    "name": "Nthalire Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "chitipa",
+    "region": "North"
+  },
+  {
+    "id": 7,
+    "name": "Wenya Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "chitipa",
+    "region": "North"
+  },
+  {
+    "id": 8,
+    "name": "Kaseye Mission Hospital",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "chitipa",
+    "region": "North"
+  },
+  {
+    "id": 9,
+    "name": "Chambo Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "chitipa",
+    "region": "North"
+  },
+  {
+    "id": 10,
+    "name": "Banja La Mtsogolo Clinic",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "chitipa",
+    "region": "North"
+  },
+  {
+    "id": 13,
+    "name": "Karonga District Hospital",
+    "application_port": "0000",
+    "host_address": "10.40.24.3",
+    "enabled": true,
+    "district": "karonga",
+    "region": "North"
+  },
+  {
+    "id": 14,
+    "name": "Chilumba Rural Hospital",
+    "application_port": "3009",
+    "host_address": "10.40.59.3",
+    "enabled": true,
+    "district": "karonga",
+    "region": "North"
+  },
+  {
+    "id": 15,
+    "name": "Kaporo Rural Hospital",
+    "application_port": "3009",
+    "host_address": "10.40.63.3",
+    "enabled": true,
+    "district": "karonga",
+    "region": "North"
+  },
+  {
+    "id": 16,
+    "name": "Hara Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "karonga",
+    "region": "North"
+  },
+  {
+    "id": 17,
+    "name": "Iponga Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "karonga",
+    "region": "North"
+  },
+  {
+    "id": 18,
+    "name": "Kasoba Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "karonga",
+    "region": "North"
+  },
+  {
+    "id": 19,
+    "name": "Lupembe Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "karonga",
+    "region": "North"
+  },
+  {
+    "id": 20,
+    "name": "Lwezga Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "karonga",
+    "region": "North"
+  },
+  {
+    "id": 21,
+    "name": "Mlare Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "karonga",
+    "region": "North"
+  },
+  {
+    "id": 22,
+    "name": "Mpata Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "karonga",
+    "region": "North"
+  },
+  {
+    "id": 23,
+    "name": "Ngana Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "karonga",
+    "region": "North"
+  },
+  {
+    "id": 24,
+    "name": "Nyungwe Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "karonga",
+    "region": "North"
+  },
+  {
+    "id": 25,
+    "name": "Wiliro Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "karonga",
+    "region": "North"
+  },
+  {
+    "id": 26,
+    "name": "Fulirwa Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "karonga",
+    "region": "North"
+  },
+  {
+    "id": 27,
+    "name": "Atupele Community Hospital",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "karonga",
+    "region": "North"
+  },
+  {
+    "id": 28,
+    "name": "Sangiro Health centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "karonga",
+    "region": "North"
+  },
+  {
+    "id": 29,
+    "name": "St. Anne's Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "karonga",
+    "region": "North"
+  },
+  {
+    "id": 30,
+    "name": "Wovwe Escom Clinic",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "karonga",
+    "region": "North"
+  },
+  {
+    "id": 36,
+    "name": "Chilumba Barracks",
+    "application_port": "3009",
+    "host_address": "10.40.5",
+    "enabled": true,
+    "district": "karonga",
+    "region": "North"
+  },
+  {
+    "id": 38,
+    "name": "Nkhata Bay District Hospital",
+    "application_port": "0000",
+    "host_address": "10.40.26.3",
+    "enabled": true,
+    "district": "nkhatabay",
+    "region": "North"
+  },
+  {
+    "id": 39,
+    "name": "Thoto Dispensary",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "nkhatabay",
+    "region": "North"
+  },
+  {
+    "id": 40,
+    "name": "Bula Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "nkhatabay",
+    "region": "North"
+  },
+  {
+    "id": 41,
+    "name": "Chesamu Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "nkhatabay",
+    "region": "North"
+  },
+  {
+    "id": 42,
+    "name": "Chikwina Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "nkhatabay",
+    "region": "North"
+  },
+  {
+    "id": 43,
+    "name": "Chisala Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "nkhatabay",
+    "region": "North"
+  },
+  {
+    "id": 44,
+    "name": "Chitheka Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "nkhatabay",
+    "region": "North"
+  },
+  {
+    "id": 45,
+    "name": "Kachere Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "nkhatabay",
+    "region": "North"
+  },
+  {
+    "id": 46,
+    "name": "Kande Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "nkhatabay",
+    "region": "North"
+  },
+  {
+    "id": 47,
+    "name": "Liuzi Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "nkhatabay",
+    "region": "North"
+  },
+  {
+    "id": 48,
+    "name": "Old Maula Court Health Center",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "nkhatabay",
+    "region": "North"
+  },
+  {
+    "id": 49,
+    "name": "Mpamba Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "nkhatabay",
+    "region": "North"
+  },
+  {
+    "id": 50,
+    "name": "Mzenga Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "nkhatabay",
+    "region": "North"
+  },
+  {
+    "id": 51,
+    "name": "Usisya Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "nkhatabay",
+    "region": "North"
+  },
+  {
+    "id": 52,
+    "name": "Khondowe",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "nkhatabay",
+    "region": "North"
+  },
+  {
+    "id": 53,
+    "name": "Ruarwe Dispensary",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "nkhatabay",
+    "region": "North"
+  },
+  {
+    "id": 54,
+    "name": "Nthungwa Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "nkhatabay",
+    "region": "North"
+  },
+  {
+    "id": 55,
+    "name": "Lwazi Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "nkhatabay",
+    "region": "North"
+  },
+  {
+    "id": 56,
+    "name": "Chilambwe Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "nkhatabay",
+    "region": "North"
+  },
+  {
+    "id": 63,
+    "name": "Kavuzi Clinic",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "nkhatabay",
+    "region": "North"
+  },
+  {
+    "id": 67,
+    "name": "Rumphi District Hospital",
+    "application_port": "3009",
+    "host_address": "10.40.20.3",
+    "enabled": true,
+    "district": "rumphi",
+    "region": "North"
+  },
+  {
+    "id": 68,
+    "name": "Tcharo Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "rumphi",
+    "region": "North"
+  },
+  {
+    "id": 69,
+    "name": "Bolero Rural Hospital",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "rumphi",
+    "region": "North"
+  },
+  {
+    "id": 70,
+    "name": "Katowo Rural Hospital",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "rumphi",
+    "region": "North"
+  },
+  {
+    "id": 71,
+    "name": "Mhuju Rural Hospital",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "rumphi",
+    "region": "North"
+  },
+  {
+    "id": 72,
+    "name": "Chitimba Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "rumphi",
+    "region": "North"
+  },
+  {
+    "id": 73,
+    "name": "Chisimuka Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "rumphi",
+    "region": "North"
+  },
+  {
+    "id": 74,
+    "name": "Jalawe Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "rumphi",
+    "region": "North"
+  },
+  {
+    "id": 75,
+    "name": "Lura Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "rumphi",
+    "region": "North"
+  },
+  {
+    "id": 76,
+    "name": "Mphompha Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "rumphi",
+    "region": "North"
+  },
+  {
+    "id": 77,
+    "name": "Mwazisi Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "rumphi",
+    "region": "North"
+  },
+  {
+    "id": 78,
+    "name": "Mzokoto Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "rumphi",
+    "region": "North"
+  },
+  {
+    "id": 79,
+    "name": "Mchenga Clinic",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "rumphi",
+    "region": "North"
+  },
+  {
+    "id": 82,
+    "name": "Livingstonia Mission Hospital",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "rumphi",
+    "region": "North"
+  },
+  {
+    "id": 83,
+    "name": "Luwuchi Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "rumphi",
+    "region": "North"
+  },
+  {
+    "id": 84,
+    "name": "Mlowe Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "rumphi",
+    "region": "North"
+  },
+  {
+    "id": 85,
+    "name": "Nthenje Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "rumphi",
+    "region": "North"
+  },
+  {
+    "id": 86,
+    "name": "St. Patricks Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "rumphi",
+    "region": "North"
+  },
+  {
+    "id": 87,
+    "name": "Eva Demaya Private Clinic",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "rumphi",
+    "region": "North"
+  },
+  {
+    "id": 94,
+    "name": "Mzuzu Central Hospital",
+    "application_port": "0000",
+    "host_address": "10.40.11.2",
+    "enabled": true,
+    "district": "mzimba",
+    "region": "North"
+  },
+  {
+    "id": 95,
+    "name": "Mzimba District Hospital",
+    "application_port": "0000",
+    "host_address": "10.40.13.2",
+    "enabled": true,
+    "district": "mzimba",
+    "region": "North"
+  },
+  {
+    "id": 96,
+    "name": "Euthini Rural Hospital",
+    "application_port": "3009",
+    "host_address": "10.40.35.3",
+    "enabled": true,
+    "district": "mzimba",
+    "region": "North"
+  },
+  {
+    "id": 97,
+    "name": "Katete Community Hospital",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mzimba",
+    "region": "North"
+  },
+  {
+    "id": 98,
+    "name": "Bulala Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mzimba",
+    "region": "North"
+  },
+  {
+    "id": 99,
+    "name": "Bwengu Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mzimba",
+    "region": "North"
+  },
+  {
+    "id": 100,
+    "name": "Chikangawa Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mzimba",
+    "region": "North"
+  },
+  {
+    "id": 101,
+    "name": "Choma Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mzimba",
+    "region": "North"
+  },
+  {
+    "id": 102,
+    "name": "Edingeni Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mzimba",
+    "region": "North"
+  },
+  {
+    "id": 103,
+    "name": "Emfeni Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mzimba",
+    "region": "North"
+  },
+  {
+    "id": 104,
+    "name": "Emsizini Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mzimba",
+    "region": "North"
+  },
+  {
+    "id": 105,
+    "name": "Endindeni Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mzimba",
+    "region": "North"
+  },
+  {
+    "id": 106,
+    "name": "Engucwini Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mzimba",
+    "region": "North"
+  },
+  {
+    "id": 107,
+    "name": "Enukweni Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mzimba",
+    "region": "North"
+  },
+  {
+    "id": 108,
+    "name": "Hoho Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mzimba",
+    "region": "North"
+  },
+  {
+    "id": 109,
+    "name": "Jenda Health Centre",
+    "application_port": "3009",
+    "host_address": "10.40.43.3",
+    "enabled": true,
+    "district": "mzimba",
+    "region": "North"
+  },
+  {
+    "id": 110,
+    "name": "Kabuwa Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mzimba",
+    "region": "North"
+  },
+  {
+    "id": 111,
+    "name": "Kabwafu Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mzimba",
+    "region": "North"
+  },
+  {
+    "id": 112,
+    "name": "Kafukule Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mzimba",
+    "region": "North"
+  },
+  {
+    "id": 113,
+    "name": "Kamteteka Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mzimba",
+    "region": "North"
+  },
+  {
+    "id": 114,
+    "name": "Kamwe Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mzimba",
+    "region": "North"
+  },
+  {
+    "id": 115,
+    "name": "Khosolo Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mzimba",
+    "region": "North"
+  },
+  {
+    "id": 116,
+    "name": "Nkhuyukuyu Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mzimba",
+    "region": "North"
+  },
+  {
+    "id": 117,
+    "name": "Luvwere Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mzimba",
+    "region": "North"
+  },
+  {
+    "id": 118,
+    "name": "Luwawa Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mzimba",
+    "region": "North"
+  },
+  {
+    "id": 119,
+    "name": "Luwelezi Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mzimba",
+    "region": "North"
+  },
+  {
+    "id": 120,
+    "name": "Luzi Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mzimba",
+    "region": "North"
+  },
+  {
+    "id": 121,
+    "name": "Madede Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mzimba",
+    "region": "North"
+  },
+  {
+    "id": 122,
+    "name": "Malidade Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mzimba",
+    "region": "North"
+  },
+  {
+    "id": 123,
+    "name": "Manyamula Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mzimba",
+    "region": "North"
+  },
+  {
+    "id": 124,
+    "name": "Matuli Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mzimba",
+    "region": "North"
+  },
+  {
+    "id": 125,
+    "name": "Mbalachanda Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mzimba",
+    "region": "North"
+  },
+  {
+    "id": 126,
+    "name": "Mkoma Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mzimba",
+    "region": "North"
+  },
+  {
+    "id": 127,
+    "name": "Mpherembe Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mzimba",
+    "region": "North"
+  },
+  {
+    "id": 128,
+    "name": "Msese Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mzimba",
+    "region": "North"
+  },
+  {
+    "id": 129,
+    "name": "Mtende Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mzimba",
+    "region": "North"
+  },
+  {
+    "id": 130,
+    "name": "Mtwalo Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mzimba",
+    "region": "North"
+  },
+  {
+    "id": 131,
+    "name": "Mzalangwe Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mzimba",
+    "region": "North"
+  },
+  {
+    "id": 132,
+    "name": "Mzuzu Urban Health Centre",
+    "application_port": "0000",
+    "host_address": "10.40.32.3",
+    "enabled": true,
+    "district": "mzimba",
+    "region": "North"
+  },
+  {
+    "id": 133,
+    "name": "Njuyu Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mzimba",
+    "region": "North"
+  },
+  {
+    "id": 134,
+    "name": "Thunduwike Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mzimba",
+    "region": "North"
+  },
+  {
+    "id": 135,
+    "name": "Ehehieni  Dispensary",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mzimba",
+    "region": "North"
+  },
+  {
+    "id": 136,
+    "name": "Ekwaiweni Dispensary",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mzimba",
+    "region": "North"
+  },
+  {
+    "id": 137,
+    "name": "SOS Medical Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mzimba",
+    "region": "North"
+  },
+  {
+    "id": 138,
+    "name": "Vibangalala Dispensary",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mzimba",
+    "region": "North"
+  },
+  {
+    "id": 142,
+    "name": "Embangweni Mission Hospital",
+    "application_port": "0000",
+    "host_address": "10.40.38.3",
+    "enabled": true,
+    "district": "mzimba",
+    "region": "North"
+  },
+  {
+    "id": 143,
+    "name": "Mzambazi Community Hospital",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mzimba",
+    "region": "North"
+  },
+  {
+    "id": 144,
+    "name": "Ekwendeni Hospital",
+    "application_port": "3009",
+    "host_address": "10.40.40.3",
+    "enabled": true,
+    "district": "mzimba",
+    "region": "North"
+  },
+  {
+    "id": 145,
+    "name": "St. Johns Hospital",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mzimba",
+    "region": "North"
+  },
+  {
+    "id": 146,
+    "name": "St. John of God Mental Hospita",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mzimba",
+    "region": "North"
+  },
+  {
+    "id": 147,
+    "name": "Kalikumbi Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mzimba",
+    "region": "North"
+  },
+  {
+    "id": 148,
+    "name": "Lunjika Health Centre",
+    "application_port": "3009",
+    "host_address": "10.40.36.3",
+    "enabled": true,
+    "district": "mzimba",
+    "region": "North"
+  },
+  {
+    "id": 149,
+    "name": "Mabiri Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mzimba",
+    "region": "North"
+  },
+  {
+    "id": 150,
+    "name": "Mhalaunda Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mzimba",
+    "region": "North"
+  },
+  {
+    "id": 151,
+    "name": "Nkhorongo Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mzimba",
+    "region": "North"
+  },
+  {
+    "id": 161,
+    "name": "Macro Mzuzu",
+    "application_port": "3009",
+    "host_address": "10.40.30.3",
+    "enabled": true,
+    "district": "mzimba",
+    "region": "North"
+  },
+  {
+    "id": 164,
+    "name": "Raiply Clinic",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mzimba",
+    "region": "North"
+  },
+  {
+    "id": 166,
+    "name": "Moyale Barracks Health Centre",
+    "application_port": "3009",
+    "host_address": "10.40.50.3",
+    "enabled": true,
+    "district": "mzimba",
+    "region": "North"
+  },
+  {
+    "id": 170,
+    "name": "Mzuzu University Clinic",
+    "application_port": "3009",
+    "host_address": "10.40.32.3",
+    "enabled": true,
+    "district": "mzimba",
+    "region": "North"
+  },
+  {
+    "id": 172,
+    "name": "St Mary's Chizumulu Health Center",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "likoma",
+    "region": "North"
+  },
+  {
+    "id": 173,
+    "name": "Likoma St Peters",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "likoma",
+    "region": "North"
+  },
+  {
+    "id": 174,
+    "name": "Kasungu District Hospital",
+    "application_port": "3009",
+    "host_address": "10.41.156.3",
+    "enabled": true,
+    "district": "kasungu",
+    "region": "Central"
+  },
+  {
+    "id": 175,
+    "name": "Kaluluma Rural Hospital",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "kasungu",
+    "region": "Central"
+  },
+  {
+    "id": 176,
+    "name": "Bua Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "kasungu",
+    "region": "Central"
+  },
+  {
+    "id": 177,
+    "name": "Mwatitha Private Clinic",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "kasungu",
+    "region": "Central"
+  },
+  {
+    "id": 178,
+    "name": "Chamwabvi Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "kasungu",
+    "region": "Central"
+  },
+  {
+    "id": 179,
+    "name": "Chulu Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "kasungu",
+    "region": "Central"
+  },
+  {
+    "id": 180,
+    "name": "Kamboni Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "kasungu",
+    "region": "Central"
+  },
+  {
+    "id": 181,
+    "name": "Kapelula Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "kasungu",
+    "region": "Central"
+  },
+  {
+    "id": 182,
+    "name": "Kasalika Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "kasungu",
+    "region": "Central"
+  },
+  {
+    "id": 183,
+    "name": "Kawamba Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "kasungu",
+    "region": "Central"
+  },
+  {
+    "id": 184,
+    "name": "Khola Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "kasungu",
+    "region": "Central"
+  },
+  {
+    "id": 185,
+    "name": "Linyangwa Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "kasungu",
+    "region": "Central"
+  },
+  {
+    "id": 186,
+    "name": "Lodjwa Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "kasungu",
+    "region": "Central"
+  },
+  {
+    "id": 187,
+    "name": "Mdunga Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "kasungu",
+    "region": "Central"
+  },
+  {
+    "id": 188,
+    "name": "Mkhota Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "kasungu",
+    "region": "Central"
+  },
+  {
+    "id": 190,
+    "name": "Mtunthama Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "kasungu",
+    "region": "Central"
+  },
+  {
+    "id": 192,
+    "name": "Ofesi Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "kasungu",
+    "region": "Central"
+  },
+  {
+    "id": 193,
+    "name": "Santhe Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "kasungu",
+    "region": "Central"
+  },
+  {
+    "id": 194,
+    "name": "Simlemba Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "kasungu",
+    "region": "Central"
+  },
+  {
+    "id": 196,
+    "name": "Wimbe Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "kasungu",
+    "region": "Central"
+  },
+  {
+    "id": 197,
+    "name": "Chisinga Dispensary",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "kasungu",
+    "region": "Central"
+  },
+  {
+    "id": 198,
+    "name": "Dwangwa Dispensary",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "kasungu",
+    "region": "Central"
+  },
+  {
+    "id": 199,
+    "name": "Gogode Dispensary",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "kasungu",
+    "region": "Central"
+  },
+  {
+    "id": 202,
+    "name": "Nkhamenya Hospital",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "kasungu",
+    "region": "Central"
+  },
+  {
+    "id": 204,
+    "name": "Newa Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "kasungu",
+    "region": "Central"
+  },
+  {
+    "id": 205,
+    "name": "St. Andrews Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "kasungu",
+    "region": "Central"
+  },
+  {
+    "id": 221,
+    "name": "Kasungu BLM",
+    "application_port": "3009",
+    "host_address": null,
+    "enabled": false,
+    "district": "kasungu",
+    "region": "Central"
+  },
+  {
+    "id": 227,
+    "name": "Nkhotakota District Hospital",
+    "application_port": "3009",
+    "host_address": "10.40.8.3",
+    "enabled": true,
+    "district": "nkhotakota",
+    "region": "Central"
+  },
+  {
+    "id": 228,
+    "name": "Dwambazi Rural Hospital",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "nkhotakota",
+    "region": "Central"
+  },
+  {
+    "id": 229,
+    "name": "Benga Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "nkhotakota",
+    "region": "Central"
+  },
+  {
+    "id": 230,
+    "name": "Bua Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "nkhotakota",
+    "region": "Central"
+  },
+  {
+    "id": 231,
+    "name": "Katimbira Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "nkhotakota",
+    "region": "Central"
+  },
+  {
+    "id": 232,
+    "name": "Malowa Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "nkhotakota",
+    "region": "Central"
+  },
+  {
+    "id": 233,
+    "name": "Mpamantha Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "nkhotakota",
+    "region": "Central"
+  },
+  {
+    "id": 234,
+    "name": "Msenjere Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "nkhotakota",
+    "region": "Central"
+  },
+  {
+    "id": 235,
+    "name": "Mtosa Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "nkhotakota",
+    "region": "Central"
+  },
+  {
+    "id": 236,
+    "name": "Mwansambo Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "nkhotakota",
+    "region": "Central"
+  },
+  {
+    "id": 237,
+    "name": "Ngala Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "nkhotakota",
+    "region": "Central"
+  },
+  {
+    "id": 238,
+    "name": "Nkhunga Health Centre",
+    "application_port": "3009",
+    "host_address": "10.41.182.31",
+    "enabled": true,
+    "district": "nkhotakota",
+    "region": "Central"
+  },
+  {
+    "id": 239,
+    "name": "Kasasa Clinic",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "nkhotakota",
+    "region": "Central"
+  },
+  {
+    "id": 240,
+    "name": "Alinafe Community Hospital",
+    "application_port": "3009",
+    "host_address": "10.41.186.3",
+    "enabled": true,
+    "district": "nkhotakota",
+    "region": "Central"
+  },
+  {
+    "id": 241,
+    "name": "St. Annes Hospital",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "nkhotakota",
+    "region": "Central"
+  },
+  {
+    "id": 242,
+    "name": "Chididi Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "nkhotakota",
+    "region": "Central"
+  },
+  {
+    "id": 243,
+    "name": "Kapili Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "nkhotakota",
+    "region": "Central"
+  },
+  {
+    "id": 244,
+    "name": "Kasitu Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "nkhotakota",
+    "region": "Central"
+  },
+  {
+    "id": 245,
+    "name": "Liwaladzi Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "nkhotakota",
+    "region": "Central"
+  },
+  {
+    "id": 253,
+    "name": "World Medical Fund",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "nkhotakota",
+    "region": "Central"
+  },
+  {
+    "id": 254,
+    "name": "Matiki Health Centre",
+    "application_port": "3009",
+    "host_address": "10.41.181.3",
+    "enabled": true,
+    "district": "nkhotakota",
+    "region": "Central"
+  },
+  {
+    "id": 258,
+    "name": "Ntchisi District Hospital",
+    "application_port": "3009",
+    "host_address": "10.41.150.3",
+    "enabled": true,
+    "district": "ntchisi",
+    "region": "Central"
+  },
+  {
+    "id": 259,
+    "name": "Chinguluwe Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "ntchisi",
+    "region": "Central"
+  },
+  {
+    "id": 260,
+    "name": "Kamsonga Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "ntchisi",
+    "region": "Central"
+  },
+  {
+    "id": 261,
+    "name": "Kangolwa Health centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "ntchisi",
+    "region": "Central"
+  },
+  {
+    "id": 262,
+    "name": "Khuwi Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "ntchisi",
+    "region": "Central"
+  },
+  {
+    "id": 263,
+    "name": "Malomo Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "ntchisi",
+    "region": "Central"
+  },
+  {
+    "id": 264,
+    "name": "Mkhuzi Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "ntchisi",
+    "region": "Central"
+  },
+  {
+    "id": 265,
+    "name": "Mndinda Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "ntchisi",
+    "region": "Central"
+  },
+  {
+    "id": 266,
+    "name": "Mzandu Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "ntchisi",
+    "region": "Central"
+  },
+  {
+    "id": 267,
+    "name": "Nthondo Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "ntchisi",
+    "region": "Central"
+  },
+  {
+    "id": 268,
+    "name": "Chinthembwe Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "ntchisi",
+    "region": "Central"
+  },
+  {
+    "id": 269,
+    "name": "Fancy Private Clinic",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "ntchisi",
+    "region": "Central"
+  },
+  {
+    "id": 272,
+    "name": "Dowa District Hospital",
+    "application_port": "3009",
+    "host_address": "10.41.172.3",
+    "enabled": true,
+    "district": "dowa",
+    "region": "Central"
+  },
+  {
+    "id": 273,
+    "name": "Mponela Hospital",
+    "application_port": "3009",
+    "host_address": "10.41.174.3",
+    "enabled": true,
+    "district": "dowa",
+    "region": "Central"
+  },
+  {
+    "id": 274,
+    "name": "Bowe Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "dowa",
+    "region": "Central"
+  },
+  {
+    "id": 275,
+    "name": "Chakhaza Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "dowa",
+    "region": "Central"
+  },
+  {
+    "id": 276,
+    "name": "Chankhungu Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "dowa",
+    "region": "Central"
+  },
+  {
+    "id": 277,
+    "name": "Chinkhwiri Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "dowa",
+    "region": "Central"
+  },
+  {
+    "id": 278,
+    "name": "Chisepo Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "dowa",
+    "region": "Central"
+  },
+  {
+    "id": 279,
+    "name": "Chizolowondo Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "dowa",
+    "region": "Central"
+  },
+  {
+    "id": 280,
+    "name": "Dzeleka Ref Camp Health Center",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "dowa",
+    "region": "Central"
+  },
+  {
+    "id": 281,
+    "name": "Dzoole Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "dowa",
+    "region": "Central"
+  },
+  {
+    "id": 282,
+    "name": "Kayembe Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "dowa",
+    "region": "Central"
+  },
+  {
+    "id": 283,
+    "name": "Mbingwa Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "dowa",
+    "region": "Central"
+  },
+  {
+    "id": 284,
+    "name": "Msakambewa Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "dowa",
+    "region": "Central"
+  },
+  {
+    "id": 285,
+    "name": "Mvera Army Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "dowa",
+    "region": "Central"
+  },
+  {
+    "id": 286,
+    "name": "Mwangala Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "dowa",
+    "region": "Central"
+  },
+  {
+    "id": 287,
+    "name": "Nalunga Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "dowa",
+    "region": "Central"
+  },
+  {
+    "id": 288,
+    "name": "Thonje Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "dowa",
+    "region": "Central"
+  },
+  {
+    "id": 289,
+    "name": "Family Planning Association of",
+    "application_port": "3009",
+    "host_address": "",
+    "enabled": false,
+    "district": "dowa",
+    "region": "Central"
+  },
+  {
+    "id": 291,
+    "name": "Mvera Mission Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "dowa",
+    "region": "Central"
+  },
+  {
+    "id": 293,
+    "name": "Kasese Lifeline Malawi Health",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "dowa",
+    "region": "Central"
+  },
+  {
+    "id": 301,
+    "name": "Salima District Hospital",
+    "application_port": "3009",
+    "host_address": "10.41.154.3",
+    "enabled": true,
+    "district": "salima",
+    "region": "Central"
+  },
+  {
+    "id": 302,
+    "name": "Chagunda Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "salima",
+    "region": "Central"
+  },
+  {
+    "id": 303,
+    "name": "Chinguluwe Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "salima",
+    "region": "Central"
+  },
+  {
+    "id": 304,
+    "name": "Chipoka Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "salima",
+    "region": "Central"
+  },
+  {
+    "id": 305,
+    "name": "Khombedza Health Centre",
+    "application_port": "3009",
+    "host_address": "10.41.161.3",
+    "enabled": true,
+    "district": "salima",
+    "region": "Central"
+  },
+  {
+    "id": 306,
+    "name": "Lifuwu Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "salima",
+    "region": "Central"
+  },
+  {
+    "id": 307,
+    "name": "MAFCO",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "salima",
+    "region": "Central"
+  },
+  {
+    "id": 308,
+    "name": "Maganga Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "salima",
+    "region": "Central"
+  },
+  {
+    "id": 309,
+    "name": "Makioni Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "salima",
+    "region": "Central"
+  },
+  {
+    "id": 310,
+    "name": "Mchoka Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "salima",
+    "region": "Central"
+  },
+  {
+    "id": 311,
+    "name": "Parachute Battalion",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "salima",
+    "region": "Central"
+  },
+  {
+    "id": 312,
+    "name": "Salima BLM",
+    "application_port": "3009",
+    "host_address": "",
+    "enabled": false,
+    "district": "salima",
+    "region": "Central"
+  },
+  {
+    "id": 314,
+    "name": "Chitala Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "salima",
+    "region": "Central"
+  },
+  {
+    "id": 315,
+    "name": "Kaphatenga Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "salima",
+    "region": "Central"
+  },
+  {
+    "id": 316,
+    "name": "Ngodzi Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "salima",
+    "region": "Central"
+  },
+  {
+    "id": 317,
+    "name": "Thavite Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "salima",
+    "region": "Central"
+  },
+  {
+    "id": 325,
+    "name": "Lifeline Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "salima",
+    "region": "Central"
+  },
+  {
+    "id": 326,
+    "name": "Katawa Clinic",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "salima",
+    "region": "Central"
+  },
+  {
+    "id": 330,
+    "name": "Salima Admarc Dispensary",
+    "application_port": "3009",
+    "host_address": "",
+    "enabled": false,
+    "district": "salima",
+    "region": "Central"
+  },
+  {
+    "id": 331,
+    "name": "Kamuzu Central Hospital",
+    "application_port": "3009",
+    "host_address": "10.40.2.10",
+    "enabled": true,
+    "district": "lilongwe",
+    "region": "Central"
+  },
+  {
+    "id": 332,
+    "name": "Kabudula Rural Hospital",
+    "application_port": "3009",
+    "host_address": "10.41.16.3",
+    "enabled": true,
+    "district": "lilongwe",
+    "region": "Central"
+  },
+  {
+    "id": 333,
+    "name": "Mitundu Community Hospital",
+    "application_port": "3009",
+    "host_address": "10.41.27.3",
+    "enabled": true,
+    "district": "lilongwe",
+    "region": "Central"
+  },
+  {
+    "id": 334,
+    "name": "Kamuzu Barracks Hospital",
+    "application_port": "3009",
+    "host_address": "10.41.18.3",
+    "enabled": true,
+    "district": "lilongwe",
+    "region": "Central"
+  },
+  {
+    "id": 335,
+    "name": "Area 18 Urban Health Centre",
+    "application_port": "3009",
+    "host_address": "10.41.3.2",
+    "enabled": true,
+    "district": "lilongwe",
+    "region": "Central"
+  },
+  {
+    "id": 336,
+    "name": "Area 25 Urban Health Centre",
+    "application_port": "3009",
+    "host_address": "10.41.32.3",
+    "enabled": true,
+    "district": "lilongwe",
+    "region": "Central"
+  },
+  {
+    "id": 337,
+    "name": "Chadza Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "lilongwe",
+    "region": "Central"
+  },
+  {
+    "id": 338,
+    "name": "Chikowa Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "lilongwe",
+    "region": "Central"
+  },
+  {
+    "id": 339,
+    "name": "Chileka Health Centre",
+    "application_port": "3009",
+    "host_address": "10.41.9.3",
+    "enabled": true,
+    "district": "lilongwe",
+    "region": "Central"
+  },
+  {
+    "id": 340,
+    "name": "Chilobwe Majiga Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "lilongwe",
+    "region": "Central"
+  },
+  {
+    "id": 341,
+    "name": "Chimbalanga Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "lilongwe",
+    "region": "Central"
+  },
+  {
+    "id": 342,
+    "name": "Chitedze Health Centre",
+    "application_port": "3009",
+    "host_address": "10.41.10.3",
+    "enabled": true,
+    "district": "lilongwe",
+    "region": "Central"
+  },
+  {
+    "id": 343,
+    "name": "Chiunjiza Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "lilongwe",
+    "region": "Central"
+  },
+  {
+    "id": 344,
+    "name": "Chiwamba Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "lilongwe",
+    "region": "Central"
+  },
+  {
+    "id": 345,
+    "name": "Diamphwe Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "lilongwe",
+    "region": "Central"
+  },
+  {
+    "id": 346,
+    "name": "Dickson Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "lilongwe",
+    "region": "Central"
+  },
+  {
+    "id": 347,
+    "name": "Kang'oma Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "lilongwe",
+    "region": "Central"
+  },
+  {
+    "id": 348,
+    "name": "Dzenza Mission Hospital",
+    "application_port": "3009",
+    "host_address": "10.41.15.2",
+    "enabled": true,
+    "district": "lilongwe",
+    "region": "Central"
+  },
+  {
+    "id": 349,
+    "name": "Kawale Health Centre",
+    "application_port": "3009",
+    "host_address": "10.40.1.200",
+    "enabled": true,
+    "district": "lilongwe",
+    "region": "Central"
+  },
+  {
+    "id": 350,
+    "name": "Khongoni Health Centre",
+    "application_port": "3009",
+    "host_address": "10.41.20.3",
+    "enabled": true,
+    "district": "lilongwe",
+    "region": "Central"
+  },
+  {
+    "id": 351,
+    "name": "Lumbadzi Health Centre",
+    "application_port": "3009",
+    "host_address": "10.41.2.2",
+    "enabled": true,
+    "district": "lilongwe",
+    "region": "Central"
+  },
+  {
+    "id": 352,
+    "name": "Maluwa Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "lilongwe",
+    "region": "Central"
+  },
+  {
+    "id": 353,
+    "name": "Matapila Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "lilongwe",
+    "region": "Central"
+  },
+  {
+    "id": 354,
+    "name": "Mbabvi Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "lilongwe",
+    "region": "Central"
+  },
+  {
+    "id": 355,
+    "name": "Mbang'ombe 2 Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "lilongwe",
+    "region": "Central"
+  },
+  {
+    "id": 356,
+    "name": "Mbangombe Health Centre 1",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "lilongwe",
+    "region": "Central"
+  },
+  {
+    "id": 357,
+    "name": "Ming'ong'o Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "lilongwe",
+    "region": "Central"
+  },
+  {
+    "id": 358,
+    "name": "Mtenthela Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "lilongwe",
+    "region": "Central"
+  },
+  {
+    "id": 359,
+    "name": "Nathenje Health Centre",
+    "application_port": "3009",
+    "host_address": "10.41.29.0.3",
+    "enabled": true,
+    "district": "lilongwe",
+    "region": "Central"
+  },
+  {
+    "id": 360,
+    "name": "Ndaula Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "lilongwe",
+    "region": "Central"
+  },
+  {
+    "id": 361,
+    "name": "Ngoni Health Centre",
+    "application_port": "3009",
+    "host_address": "10.41.20.3",
+    "enabled": false,
+    "district": "lilongwe",
+    "region": "Central"
+  },
+  {
+    "id": 362,
+    "name": "Nsalu Health centre",
+    "application_port": "3009",
+    "host_address": "10.41.220.3",
+    "enabled": true,
+    "district": "lilongwe",
+    "region": "Central"
+  },
+  {
+    "id": 363,
+    "name": "Nthondo Health centre",
+    "application_port": "3009",
+    "host_address": "10.41.31.3",
+    "enabled": true,
+    "district": "lilongwe",
+    "region": "Central"
+  },
+  {
+    "id": 364,
+    "name": "Ukwe Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "lilongwe",
+    "region": "Central"
+  },
+  {
+    "id": 365,
+    "name": "Bwaila Hospital",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "lilongwe",
+    "region": "Central"
+  },
+  {
+    "id": 367,
+    "name": "City Assembly Health",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "lilongwe",
+    "region": "Central"
+  },
+  {
+    "id": 368,
+    "name": "David Livingstone Memorial Cli",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "lilongwe",
+    "region": "Central"
+  },
+  {
+    "id": 369,
+    "name": "Lilongwe City Assembly Chinsap",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "lilongwe",
+    "region": "Central"
+  },
+  {
+    "id": 371,
+    "name": "Dzalanyama Kapombeza",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "lilongwe",
+    "region": "Central"
+  },
+  {
+    "id": 372,
+    "name": "Nkhoma Mission Hospital",
+    "application_port": "3009",
+    "host_address": "10.41.30.3",
+    "enabled": true,
+    "district": "lilongwe",
+    "region": "Central"
+  },
+  {
+    "id": 373,
+    "name": "Chiwe Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "lilongwe",
+    "region": "Central"
+  },
+  {
+    "id": 374,
+    "name": "Nambuma Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "lilongwe",
+    "region": "Central"
+  },
+  {
+    "id": 375,
+    "name": "Daeyang Luke Hospital",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "lilongwe",
+    "region": "Central"
+  },
+  {
+    "id": 376,
+    "name": "Likuni Hospital",
+    "application_port": "3009",
+    "host_address": "10.40.0.3",
+    "enabled": true,
+    "district": "lilongwe",
+    "region": "Central"
+  },
+  {
+    "id": 377,
+    "name": "Mlale Mission Hospital",
+    "application_port": "3009",
+    "host_address": "10.41.33.3",
+    "enabled": true,
+    "district": "lilongwe",
+    "region": "Central"
+  },
+  {
+    "id": 378,
+    "name": "St. Gabriel Mission Hospital",
+    "application_port": "3009",
+    "host_address": "10.41.80.3",
+    "enabled": true,
+    "district": "lilongwe",
+    "region": "Central"
+  },
+  {
+    "id": 379,
+    "name": "Dzenza Health Centre",
+    "application_port": "3009",
+    "host_address": "10.41.15.2",
+    "enabled": true,
+    "district": "lilongwe",
+    "region": "Central"
+  },
+  {
+    "id": 380,
+    "name": "Malembo Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "lilongwe",
+    "region": "Central"
+  },
+  {
+    "id": 381,
+    "name": "Malingunde Health Centre",
+    "application_port": "3009",
+    "host_address": "10.41.24.3",
+    "enabled": true,
+    "district": "lilongwe",
+    "region": "Central"
+  },
+  {
+    "id": 382,
+    "name": "Mbwatalika Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "lilongwe",
+    "region": "Central"
+  },
+  {
+    "id": 392,
+    "name": "Chimwala Clinic",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "lilongwe",
+    "region": "Central"
+  },
+  {
+    "id": 409,
+    "name": "Kachale Health Center",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "lilongwe",
+    "region": "Central"
+  },
+  {
+    "id": 430,
+    "name": "Nkhalango Clinic",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "lilongwe",
+    "region": "Central"
+  },
+  {
+    "id": 433,
+    "name": "SOS Medical Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "lilongwe",
+    "region": "Central"
+  },
+  {
+    "id": 438,
+    "name": "ABC Comm. Hospital",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "lilongwe",
+    "region": "Central"
+  },
+  {
+    "id": 439,
+    "name": "Adventist Health Centre Area 1",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "lilongwe",
+    "region": "Central"
+  },
+  {
+    "id": 440,
+    "name": "Area 25 BLM",
+    "application_port": "3009",
+    "host_address": "",
+    "enabled": false,
+    "district": "lilongwe",
+    "region": "Central"
+  },
+  {
+    "id": 441,
+    "name": "BLM Kawale 1 Clinic",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "lilongwe",
+    "region": "Central"
+  },
+  {
+    "id": 444,
+    "name": "Partners In Hope Clinic Moyo C",
+    "application_port": "3009",
+    "host_address": "10.41.0.2",
+    "enabled": true,
+    "district": "lilongwe",
+    "region": "Central"
+  },
+  {
+    "id": 446,
+    "name": "Airwing Health Post",
+    "application_port": "3009",
+    "host_address": "10.45.71.31",
+    "enabled": true,
+    "district": "lilongwe",
+    "region": "Central"
+  },
+  {
+    "id": 448,
+    "name": "Area 30 Police Clinic",
+    "application_port": "3009",
+    "host_address": "10.41.7.3",
+    "enabled": true,
+    "district": "lilongwe",
+    "region": "Central"
+  },
+  {
+    "id": 450,
+    "name": "Bunda College Clinic",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "lilongwe",
+    "region": "Central"
+  },
+  {
+    "id": 454,
+    "name": "Limbe Leaf Tobacco Co. Ltd. Cl",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "lilongwe",
+    "region": "Central"
+  },
+  {
+    "id": 456,
+    "name": "Macro Lilongwe",
+    "application_port": "3009",
+    "host_address": "10.41.23.3",
+    "enabled": true,
+    "district": "lilongwe",
+    "region": "Central"
+  },
+  {
+    "id": 458,
+    "name": "New state house Clinic",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "lilongwe",
+    "region": "Central"
+  },
+  {
+    "id": 464,
+    "name": "Mchinji District Hospital",
+    "application_port": "3009",
+    "host_address": "10.41.152.10",
+    "enabled": true,
+    "district": "mchinji",
+    "region": "Central"
+  },
+  {
+    "id": 465,
+    "name": "Kochilira Rural Hospital",
+    "application_port": "3009",
+    "host_address": "10.41.96.3",
+    "enabled": true,
+    "district": "mchinji",
+    "region": "Central"
+  },
+  {
+    "id": 466,
+    "name": "Chiosya Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mchinji",
+    "region": "Central"
+  },
+  {
+    "id": 467,
+    "name": "Chipumi Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mchinji",
+    "region": "Central"
+  },
+  {
+    "id": 468,
+    "name": "Kaigwazanga Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mchinji",
+    "region": "Central"
+  },
+  {
+    "id": 469,
+    "name": "Kapanga Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mchinji",
+    "region": "Central"
+  },
+  {
+    "id": 470,
+    "name": "Mikundi Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mchinji",
+    "region": "Central"
+  },
+  {
+    "id": 471,
+    "name": "Mkanda Health Centre",
+    "application_port": "3009",
+    "host_address": "10.41.98.3",
+    "enabled": true,
+    "district": "mchinji",
+    "region": "Central"
+  },
+  {
+    "id": 472,
+    "name": "Nkhwazi Health Centre",
+    "application_port": "3009",
+    "host_address": "10.41.99.3",
+    "enabled": true,
+    "district": "mchinji",
+    "region": "Central"
+  },
+  {
+    "id": 473,
+    "name": "Tembwe Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mchinji",
+    "region": "Central"
+  },
+  {
+    "id": 474,
+    "name": "Namizana Clinic",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mchinji",
+    "region": "Central"
+  },
+  {
+    "id": 475,
+    "name": "Chimwankango Health Post",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mchinji",
+    "region": "Central"
+  },
+  {
+    "id": 476,
+    "name": "Gumba Health Post",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mchinji",
+    "region": "Central"
+  },
+  {
+    "id": 477,
+    "name": "Kazyozyo Health Post",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mchinji",
+    "region": "Central"
+  },
+  {
+    "id": 478,
+    "name": "Kapiri Mission Hospital",
+    "application_port": "3009",
+    "host_address": "10.41.108.3",
+    "enabled": true,
+    "district": "mchinji",
+    "region": "Central"
+  },
+  {
+    "id": 479,
+    "name": "St. Joseph  Community Hospital",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mchinji",
+    "region": "Central"
+  },
+  {
+    "id": 480,
+    "name": "St. Michael-Guillime",
+    "application_port": "3009",
+    "host_address": "10.41.100.3",
+    "enabled": true,
+    "district": "mchinji",
+    "region": "Central"
+  },
+  {
+    "id": 488,
+    "name": "Dedza District Hospital",
+    "application_port": "3009",
+    "host_address": "10.41.84.3",
+    "enabled": true,
+    "district": "dedza",
+    "region": "Central"
+  },
+  {
+    "id": 489,
+    "name": "Chikuse Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "dedza",
+    "region": "Central"
+  },
+  {
+    "id": 490,
+    "name": "Chimoto Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "dedza",
+    "region": "Central"
+  },
+  {
+    "id": 491,
+    "name": "Chitowo Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "dedza",
+    "region": "Central"
+  },
+  {
+    "id": 492,
+    "name": "Dzindevu Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "dedza",
+    "region": "Central"
+  },
+  {
+    "id": 493,
+    "name": "Golomoti Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "dedza",
+    "region": "Central"
+  },
+  {
+    "id": 494,
+    "name": "Kafere Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "dedza",
+    "region": "Central"
+  },
+  {
+    "id": 495,
+    "name": "Kalulu Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "dedza",
+    "region": "Central"
+  },
+  {
+    "id": 496,
+    "name": "Kanyezi Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "dedza",
+    "region": "Central"
+  },
+  {
+    "id": 497,
+    "name": "Kaphuka Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "dedza",
+    "region": "Central"
+  },
+  {
+    "id": 498,
+    "name": "Lobi Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "dedza",
+    "region": "Central"
+  },
+  {
+    "id": 499,
+    "name": "Maonde Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "dedza",
+    "region": "Central"
+  },
+  {
+    "id": 500,
+    "name": "Mayani Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "dedza",
+    "region": "Central"
+  },
+  {
+    "id": 501,
+    "name": "Mganja Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "dedza",
+    "region": "Central"
+  },
+  {
+    "id": 502,
+    "name": "Mlangali Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "dedza",
+    "region": "Central"
+  },
+  {
+    "id": 503,
+    "name": "Mphathi Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "dedza",
+    "region": "Central"
+  },
+  {
+    "id": 504,
+    "name": "Mtakataka Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "dedza",
+    "region": "Central"
+  },
+  {
+    "id": 505,
+    "name": "Chongoni College of Forestry D",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "dedza",
+    "region": "Central"
+  },
+  {
+    "id": 506,
+    "name": "Kaname Mdeza Dispensary",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "dedza",
+    "region": "Central"
+  },
+  {
+    "id": 507,
+    "name": "Mjini Dispensary",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "dedza",
+    "region": "Central"
+  },
+  {
+    "id": 508,
+    "name": "Dedza BLM",
+    "application_port": "3009",
+    "host_address": "",
+    "enabled": true,
+    "district": "dedza",
+    "region": "Central"
+  },
+  {
+    "id": 509,
+    "name": "Tsoyo Dispensary",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "dedza",
+    "region": "Central"
+  },
+  {
+    "id": 510,
+    "name": "Mua Rural Hospital",
+    "application_port": "3009",
+    "host_address": "10.41.94.3",
+    "enabled": true,
+    "district": "dedza",
+    "region": "Central"
+  },
+  {
+    "id": 511,
+    "name": "Bembeke Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "dedza",
+    "region": "Central"
+  },
+  {
+    "id": 512,
+    "name": "Kanyama Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "dedza",
+    "region": "Central"
+  },
+  {
+    "id": 513,
+    "name": "Kasina Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "dedza",
+    "region": "Central"
+  },
+  {
+    "id": 514,
+    "name": "Kaundu Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "dedza",
+    "region": "Central"
+  },
+  {
+    "id": 515,
+    "name": "Matumba Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "dedza",
+    "region": "Central"
+  },
+  {
+    "id": 516,
+    "name": "Mikondo Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "dedza",
+    "region": "Central"
+  },
+  {
+    "id": 517,
+    "name": "Mphunzi Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "dedza",
+    "region": "Central"
+  },
+  {
+    "id": 518,
+    "name": "Mtendere Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "dedza",
+    "region": "Central"
+  },
+  {
+    "id": 519,
+    "name": "Nakalanzi Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "dedza",
+    "region": "Central"
+  },
+  {
+    "id": 520,
+    "name": "Chiphwanya Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "dedza",
+    "region": "Central"
+  },
+  {
+    "id": 526,
+    "name": "Ntcheu District Hospital",
+    "application_port": "3009",
+    "host_address": "10.41.109.3",
+    "enabled": true,
+    "district": "ntcheu",
+    "region": "Central"
+  },
+  {
+    "id": 527,
+    "name": "Matchereza Health Post",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "ntcheu",
+    "region": "Central"
+  },
+  {
+    "id": 528,
+    "name": "Biliwiri Health Cnetre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "ntcheu",
+    "region": "Central"
+  },
+  {
+    "id": 529,
+    "name": "Bwanje Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "ntcheu",
+    "region": "Central"
+  },
+  {
+    "id": 530,
+    "name": "Champiti Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "ntcheu",
+    "region": "Central"
+  },
+  {
+    "id": 531,
+    "name": "Chikande Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "ntcheu",
+    "region": "Central"
+  },
+  {
+    "id": 532,
+    "name": "Doviko Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "ntcheu",
+    "region": "Central"
+  },
+  {
+    "id": 533,
+    "name": "Dzunje Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "ntcheu",
+    "region": "Central"
+  },
+  {
+    "id": 534,
+    "name": "Kampanje Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "ntcheu",
+    "region": "Central"
+  },
+  {
+    "id": 535,
+    "name": "Kandeu Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "ntcheu",
+    "region": "Central"
+  },
+  {
+    "id": 536,
+    "name": "Kapeni Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "ntcheu",
+    "region": "Central"
+  },
+  {
+    "id": 537,
+    "name": "Kasinje Health Centre",
+    "application_port": "3009",
+    "host_address": "10.41.197.3",
+    "enabled": true,
+    "district": "ntcheu",
+    "region": "Central"
+  },
+  {
+    "id": 538,
+    "name": "Katsekera Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "ntcheu",
+    "region": "Central"
+  },
+  {
+    "id": 539,
+    "name": "Lizulu Health Centre",
+    "application_port": "3009",
+    "host_address": "10.41.198.3",
+    "enabled": true,
+    "district": "ntcheu",
+    "region": "Central"
+  },
+  {
+    "id": 540,
+    "name": "Manjawira Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "ntcheu",
+    "region": "Central"
+  },
+  {
+    "id": 541,
+    "name": "Mlangeni Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "ntcheu",
+    "region": "Central"
+  },
+  {
+    "id": 542,
+    "name": "Nsiyaludzu Health Centre",
+    "application_port": "3009",
+    "host_address": "10.41.201.3",
+    "enabled": true,
+    "district": "ntcheu",
+    "region": "Central"
+  },
+  {
+    "id": 543,
+    "name": "Kaloga Maternity",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "ntcheu",
+    "region": "Central"
+  },
+  {
+    "id": 544,
+    "name": "Dzonzi Mvai Dispensary",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "ntcheu",
+    "region": "Central"
+  },
+  {
+    "id": 545,
+    "name": "Masasa Dispensary",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "ntcheu",
+    "region": "Central"
+  },
+  {
+    "id": 546,
+    "name": "Mphepozinayi Dispensary",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "ntcheu",
+    "region": "Central"
+  },
+  {
+    "id": 547,
+    "name": "Namisu Dispensary",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "ntcheu",
+    "region": "Central"
+  },
+  {
+    "id": 551,
+    "name": "Sr. Tereza Rural Hospital",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "ntcheu",
+    "region": "Central"
+  },
+  {
+    "id": 552,
+    "name": "Chigodi Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "ntcheu",
+    "region": "Central"
+  },
+  {
+    "id": 553,
+    "name": "Ganya Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "ntcheu",
+    "region": "Central"
+  },
+  {
+    "id": 554,
+    "name": "Gowa Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "ntcheu",
+    "region": "Central"
+  },
+  {
+    "id": 555,
+    "name": "Lake View Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "ntcheu",
+    "region": "Central"
+  },
+  {
+    "id": 556,
+    "name": "Matanda Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "ntcheu",
+    "region": "Central"
+  },
+  {
+    "id": 557,
+    "name": "Mlanda Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "ntcheu",
+    "region": "Central"
+  },
+  {
+    "id": 558,
+    "name": "Mtonda Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "ntcheu",
+    "region": "Central"
+  },
+  {
+    "id": 560,
+    "name": "Nsipe Health Centre",
+    "application_port": "3009",
+    "host_address": "10.41.205.3",
+    "enabled": true,
+    "district": "ntcheu",
+    "region": "Central"
+  },
+  {
+    "id": 561,
+    "name": "Senzani Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "ntcheu",
+    "region": "Central"
+  },
+  {
+    "id": 562,
+    "name": "Sharpe Valley Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "ntcheu",
+    "region": "Central"
+  },
+  {
+    "id": 563,
+    "name": "Tsangano Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "ntcheu",
+    "region": "Central"
+  },
+  {
+    "id": 565,
+    "name": "Chiole Clinic",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "ntcheu",
+    "region": "Central"
+  },
+  {
+    "id": 574,
+    "name": "Mangochi District Hospital",
+    "application_port": "0000",
+    "host_address": "10.42.39.3",
+    "enabled": true,
+    "district": "mangochi",
+    "region": "South"
+  },
+  {
+    "id": 575,
+    "name": "Monkeybay Community Hospital",
+    "application_port": "0000",
+    "host_address": "10.42.35.3",
+    "enabled": true,
+    "district": "mangochi",
+    "region": "South"
+  },
+  {
+    "id": 576,
+    "name": "Namwera Health Centre",
+    "application_port": "3009",
+    "host_address": "10.42.48.3",
+    "enabled": true,
+    "district": "mangochi",
+    "region": "South"
+  },
+  {
+    "id": 577,
+    "name": "Chikole Dispensary",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mangochi",
+    "region": "South"
+  },
+  {
+    "id": 578,
+    "name": "Chilipa Health Centre",
+    "application_port": "3009",
+    "host_address": "10.42.42.3",
+    "enabled": true,
+    "district": "mangochi",
+    "region": "South"
+  },
+  {
+    "id": 579,
+    "name": "Chilonga Health care",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mangochi",
+    "region": "South"
+  },
+  {
+    "id": 580,
+    "name": "Chiumbangame Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mangochi",
+    "region": "South"
+  },
+  {
+    "id": 581,
+    "name": "Jalasi Health Centre",
+    "application_port": "3009",
+    "host_address": "10.42.47.3",
+    "enabled": true,
+    "district": "mangochi",
+    "region": "South"
+  },
+  {
+    "id": 582,
+    "name": "Katuli Health Centre",
+    "application_port": "3009",
+    "host_address": "10.42.46.3",
+    "enabled": true,
+    "district": "mangochi",
+    "region": "South"
+  },
+  {
+    "id": 583,
+    "name": "Lungwena Health Centre",
+    "application_port": "3009",
+    "host_address": "10.42.45.3",
+    "enabled": true,
+    "district": "mangochi",
+    "region": "South"
+  },
+  {
+    "id": 584,
+    "name": "Makanjira Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mangochi",
+    "region": "South"
+  },
+  {
+    "id": 585,
+    "name": "Malukula Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mangochi",
+    "region": "South"
+  },
+  {
+    "id": 586,
+    "name": "Mkumba Health Centre",
+    "application_port": "3009",
+    "host_address": "10.42.33.3",
+    "enabled": true,
+    "district": "mangochi",
+    "region": "South"
+  },
+  {
+    "id": 587,
+    "name": "Mtimabi Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mangochi",
+    "region": "South"
+  },
+  {
+    "id": 588,
+    "name": "Nancholi Dispensary",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mangochi",
+    "region": "South"
+  },
+  {
+    "id": 589,
+    "name": "Nangalamu Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mangochi",
+    "region": "South"
+  },
+  {
+    "id": 590,
+    "name": "Nankumba Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mangochi",
+    "region": "South"
+  },
+  {
+    "id": 591,
+    "name": "St. Johns Seminary",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mangochi",
+    "region": "South"
+  },
+  {
+    "id": 592,
+    "name": "Phirilongwe Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mangochi",
+    "region": "South"
+  },
+  {
+    "id": 593,
+    "name": "Chiponde Dispensary",
+    "application_port": "3009",
+    "host_address": "10.42.49.3",
+    "enabled": true,
+    "district": "mangochi",
+    "region": "South"
+  },
+  {
+    "id": 594,
+    "name": "Chiunda Dispensary",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mangochi",
+    "region": "South"
+  },
+  {
+    "id": 595,
+    "name": "Iba Dispensary",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mangochi",
+    "region": "South"
+  },
+  {
+    "id": 596,
+    "name": "Kadango Dispensary",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mangochi",
+    "region": "South"
+  },
+  {
+    "id": 597,
+    "name": "Kukalanga Dispensary",
+    "application_port": "3009",
+    "host_address": "10.42.41.3",
+    "enabled": true,
+    "district": "mangochi",
+    "region": "South"
+  },
+  {
+    "id": 599,
+    "name": "Malombe Dispensary",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mangochi",
+    "region": "South"
+  },
+  {
+    "id": 601,
+    "name": "Sinyala Dispensary",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mangochi",
+    "region": "South"
+  },
+  {
+    "id": 602,
+    "name": "Maldeco Fisheries Clinic",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mangochi",
+    "region": "South"
+  },
+  {
+    "id": 604,
+    "name": "Mulibwanji Hospital",
+    "application_port": "0000",
+    "host_address": "10.42.50.3",
+    "enabled": true,
+    "district": "mangochi",
+    "region": "South"
+  },
+  {
+    "id": 605,
+    "name": "St. Martins Mission Hospital",
+    "application_port": "0000",
+    "host_address": "10.42.44.3",
+    "enabled": true,
+    "district": "mangochi",
+    "region": "South"
+  },
+  {
+    "id": 606,
+    "name": "Kapire Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mangochi",
+    "region": "South"
+  },
+  {
+    "id": 607,
+    "name": "Katema Health Centre",
+    "application_port": "3009",
+    "host_address": "10.42.43.3",
+    "enabled": true,
+    "district": "mangochi",
+    "region": "South"
+  },
+  {
+    "id": 608,
+    "name": "Koche Health Centre",
+    "application_port": "0000",
+    "host_address": "10.42.37.3",
+    "enabled": true,
+    "district": "mangochi",
+    "region": "South"
+  },
+  {
+    "id": 609,
+    "name": "Lugola Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mangochi",
+    "region": "South"
+  },
+  {
+    "id": 610,
+    "name": "Lulanga Health Centre",
+    "application_port": "3009",
+    "host_address": "10.42.75.3",
+    "enabled": true,
+    "district": "mangochi",
+    "region": "South"
+  },
+  {
+    "id": 611,
+    "name": "Luwalika Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mangochi",
+    "region": "South"
+  },
+  {
+    "id": 612,
+    "name": "Malembo Health Centre",
+    "application_port": "3009",
+    "host_address": "10.42.34.3",
+    "enabled": true,
+    "district": "mangochi",
+    "region": "South"
+  },
+  {
+    "id": 613,
+    "name": "Mase Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mangochi",
+    "region": "South"
+  },
+  {
+    "id": 614,
+    "name": "Mpondasi Health Centre",
+    "application_port": "3009",
+    "host_address": "10.42.38.3",
+    "enabled": true,
+    "district": "mangochi",
+    "region": "South"
+  },
+  {
+    "id": 615,
+    "name": "Namalaka Health Centre",
+    "application_port": "3009",
+    "host_address": "10.42.76.3",
+    "enabled": true,
+    "district": "mangochi",
+    "region": "South"
+  },
+  {
+    "id": 616,
+    "name": "Nankhwali Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mangochi",
+    "region": "South"
+  },
+  {
+    "id": 617,
+    "name": "Nkope Health Centre",
+    "application_port": "3009",
+    "host_address": "10.42.36.3",
+    "enabled": true,
+    "district": "mangochi",
+    "region": "South"
+  },
+  {
+    "id": 618,
+    "name": "Sister Martha Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mangochi",
+    "region": "South"
+  },
+  {
+    "id": 623,
+    "name": "Mama Khadija Private Clinic Na",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mangochi",
+    "region": "South"
+  },
+  {
+    "id": 625,
+    "name": "Kapire Dream Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mangochi",
+    "region": "South"
+  },
+  {
+    "id": 626,
+    "name": "Billy Riordan Memorial Health",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mangochi",
+    "region": "South"
+  },
+  {
+    "id": 628,
+    "name": "Malalwi Army Marine Dispensary",
+    "application_port": "3009",
+    "host_address": "10.45.67.3",
+    "enabled": true,
+    "district": "mangochi",
+    "region": "South"
+  },
+  {
+    "id": 629,
+    "name": "Ngapani Sable Clinic",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mangochi",
+    "region": "South"
+  },
+  {
+    "id": 631,
+    "name": "Machinga District Hospital",
+    "application_port": "0000",
+    "host_address": "10.42.23.200",
+    "enabled": true,
+    "district": "machinga",
+    "region": "South"
+  },
+  {
+    "id": 632,
+    "name": "Chikweo Health Centre",
+    "application_port": "3009",
+    "host_address": "10.42.31.3",
+    "enabled": true,
+    "district": "machinga",
+    "region": "South"
+  },
+  {
+    "id": 633,
+    "name": "Machinga Health Centre",
+    "application_port": "3009",
+    "host_address": "10.42.23.200",
+    "enabled": true,
+    "district": "machinga",
+    "region": "South"
+  },
+  {
+    "id": 634,
+    "name": "Mangamba Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "machinga",
+    "region": "South"
+  },
+  {
+    "id": 635,
+    "name": "Mkwepere Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "machinga",
+    "region": "South"
+  },
+  {
+    "id": 636,
+    "name": "Namanja Health Centre",
+    "application_port": "3009",
+    "host_address": "10.42.26.3",
+    "enabled": true,
+    "district": "machinga",
+    "region": "South"
+  },
+  {
+    "id": 637,
+    "name": "Nayinunje Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "machinga",
+    "region": "South"
+  },
+  {
+    "id": 638,
+    "name": "Nayuchi Health Centre",
+    "application_port": "3009",
+    "host_address": "10.42.27.3",
+    "enabled": true,
+    "district": "machinga",
+    "region": "South"
+  },
+  {
+    "id": 639,
+    "name": "Ngokwe Health Centre",
+    "application_port": "3009",
+    "host_address": "10.42.30.3",
+    "enabled": true,
+    "district": "machinga",
+    "region": "South"
+  },
+  {
+    "id": 640,
+    "name": "Ntaja Health Centre",
+    "application_port": "3009",
+    "host_address": "10.42.29.3",
+    "enabled": true,
+    "district": "machinga",
+    "region": "South"
+  },
+  {
+    "id": 641,
+    "name": "Nyambi Health Centre",
+    "application_port": "3009",
+    "host_address": "10.42.32.3",
+    "enabled": true,
+    "district": "machinga",
+    "region": "South"
+  },
+  {
+    "id": 642,
+    "name": "Chamba Dispensary",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "machinga",
+    "region": "South"
+  },
+  {
+    "id": 643,
+    "name": "Kawinga Dispensary",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "machinga",
+    "region": "South"
+  },
+  {
+    "id": 644,
+    "name": "Mbonechela Dispensary",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "machinga",
+    "region": "South"
+  },
+  {
+    "id": 645,
+    "name": "Mlomba Dispensary",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "machinga",
+    "region": "South"
+  },
+  {
+    "id": 646,
+    "name": "Gawanani Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "machinga",
+    "region": "South"
+  },
+  {
+    "id": 647,
+    "name": "Mpiri Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "machinga",
+    "region": "South"
+  },
+  {
+    "id": 648,
+    "name": "Mposa Health Centre",
+    "application_port": "3009",
+    "host_address": "10.42.24.3",
+    "enabled": true,
+    "district": "machinga",
+    "region": "South"
+  },
+  {
+    "id": 649,
+    "name": "Namandanje Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "machinga",
+    "region": "South"
+  },
+  {
+    "id": 650,
+    "name": "Nsanama Health Centre",
+    "application_port": "3009",
+    "host_address": "10.42.25.3",
+    "enabled": true,
+    "district": "machinga",
+    "region": "South"
+  },
+  {
+    "id": 651,
+    "name": "BLM Liwonde Clinic",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "machinga",
+    "region": "South"
+  },
+  {
+    "id": 654,
+    "name": "Liwonde Medical Clinic Chilik",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "machinga",
+    "region": "South"
+  },
+  {
+    "id": 663,
+    "name": "Zomba Central Hospital",
+    "application_port": "0000",
+    "host_address": "10.42.21.10",
+    "enabled": true,
+    "district": "zomba",
+    "region": "South"
+  },
+  {
+    "id": 664,
+    "name": "Domasi Rural Hospital",
+    "application_port": "0000",
+    "host_address": "10.42.1.3",
+    "enabled": true,
+    "district": "zomba",
+    "region": "South"
+  },
+  {
+    "id": 665,
+    "name": "Zomba Mental Hospital",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "zomba",
+    "region": "South"
+  },
+  {
+    "id": 666,
+    "name": "Police College Hospital",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "zomba",
+    "region": "South"
+  },
+  {
+    "id": 667,
+    "name": "Bimbi Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "zomba",
+    "region": "South"
+  },
+  {
+    "id": 668,
+    "name": "Chamba Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "zomba",
+    "region": "South"
+  },
+  {
+    "id": 669,
+    "name": "Chingale Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "zomba",
+    "region": "South"
+  },
+  {
+    "id": 670,
+    "name": "Chisi Island",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "zomba",
+    "region": "South"
+  },
+  {
+    "id": 671,
+    "name": "Lambulira Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "zomba",
+    "region": "South"
+  },
+  {
+    "id": 672,
+    "name": "Likangala Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "zomba",
+    "region": "South"
+  },
+  {
+    "id": 673,
+    "name": "Machinjiri Health Centre",
+    "application_port": "3009",
+    "host_address": "10.42.13.3",
+    "enabled": true,
+    "district": "zomba",
+    "region": "South"
+  },
+  {
+    "id": 674,
+    "name": "Magomero Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "zomba",
+    "region": "South"
+  },
+  {
+    "id": 675,
+    "name": "Makwapala Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "zomba",
+    "region": "South"
+  },
+  {
+    "id": 676,
+    "name": "Matawale Health Centre",
+    "application_port": "0000",
+    "host_address": "10.42.6.3",
+    "enabled": true,
+    "district": "zomba",
+    "region": "South"
+  },
+  {
+    "id": 677,
+    "name": "M'mambo Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "zomba",
+    "region": "South"
+  },
+  {
+    "id": 678,
+    "name": "Naisi Health Centre",
+    "application_port": "3009",
+    "host_address": "10.42.19.3",
+    "enabled": true,
+    "district": "zomba",
+    "region": "South"
+  },
+  {
+    "id": 679,
+    "name": "Namadidi Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "zomba",
+    "region": "South"
+  },
+  {
+    "id": 680,
+    "name": "Namasalima Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "zomba",
+    "region": "South"
+  },
+  {
+    "id": 681,
+    "name": "Nasawa Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "zomba",
+    "region": "South"
+  },
+  {
+    "id": 682,
+    "name": "Ngwelelo Health Centre",
+    "application_port": "0000",
+    "host_address": "10.42.5.3",
+    "enabled": true,
+    "district": "zomba",
+    "region": "South"
+  },
+  {
+    "id": 683,
+    "name": "Sadzi Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "zomba",
+    "region": "South"
+  },
+  {
+    "id": 684,
+    "name": "Thondwe Health Centre",
+    "application_port": "0000",
+    "host_address": "10.42.18.3",
+    "enabled": true,
+    "district": "zomba",
+    "region": "South"
+  },
+  {
+    "id": 685,
+    "name": "Zilindo Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "zomba",
+    "region": "South"
+  },
+  {
+    "id": 686,
+    "name": "Tisungane Clinic",
+    "application_port": "3009",
+    "host_address": "10.42.20.3",
+    "enabled": true,
+    "district": "zomba",
+    "region": "South"
+  },
+  {
+    "id": 687,
+    "name": "City Clinic Zomba",
+    "application_port": "3009",
+    "host_address": "10.42.58.3",
+    "enabled": true,
+    "district": "zomba",
+    "region": "South"
+  },
+  {
+    "id": 688,
+    "name": "Changalume Barracks",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "zomba",
+    "region": "South"
+  },
+  {
+    "id": 689,
+    "name": "Cobbe Barracks",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "zomba",
+    "region": "South"
+  },
+  {
+    "id": 691,
+    "name": "Pirimiti Rural Hospital",
+    "application_port": "0000",
+    "host_address": "10.42.16.3",
+    "enabled": true,
+    "district": "zomba",
+    "region": "South"
+  },
+  {
+    "id": 692,
+    "name": "St. Lukes Mission Hospital",
+    "application_port": "0000",
+    "host_address": "10.42.0.3",
+    "enabled": true,
+    "district": "zomba",
+    "region": "South"
+  },
+  {
+    "id": 693,
+    "name": "Chilipa Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "zomba",
+    "region": "South"
+  },
+  {
+    "id": 694,
+    "name": "Chipini Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "zomba",
+    "region": "South"
+  },
+  {
+    "id": 695,
+    "name": "Matiya Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "zomba",
+    "region": "South"
+  },
+  {
+    "id": 696,
+    "name": "Mayaka Health Centre",
+    "application_port": "0000",
+    "host_address": "10.42.2.3",
+    "enabled": true,
+    "district": "zomba",
+    "region": "South"
+  },
+  {
+    "id": 697,
+    "name": "Nkasala Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "zomba",
+    "region": "South"
+  },
+  {
+    "id": 699,
+    "name": "Namikango",
+    "application_port": "3009",
+    "host_address": "10.42.14.3",
+    "enabled": true,
+    "district": "zomba",
+    "region": "South"
+  },
+  {
+    "id": 700,
+    "name": "H Parker Sharp Dispensary",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "zomba",
+    "region": "South"
+  },
+  {
+    "id": 707,
+    "name": "Maela Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "zomba",
+    "region": "South"
+  },
+  {
+    "id": 708,
+    "name": "Mwandamu Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "zomba",
+    "region": "South"
+  },
+  {
+    "id": 710,
+    "name": "Zomba BLM",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "zomba",
+    "region": "South"
+  },
+  {
+    "id": 711,
+    "name": "Chancellor College",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "zomba",
+    "region": "South"
+  },
+  {
+    "id": 712,
+    "name": "State House Dispensary",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "zomba",
+    "region": "South"
+  },
+  {
+    "id": 713,
+    "name": "Zomba Central Prison Clinic",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "zomba",
+    "region": "South"
+  },
+  {
+    "id": 714,
+    "name": "Chiradzulu District Hospital",
+    "application_port": "0000",
+    "host_address": "10.43.68.3",
+    "enabled": true,
+    "district": "chiradzulu",
+    "region": "South"
+  },
+  {
+    "id": 715,
+    "name": "Chitera Health Centre",
+    "application_port": "3009",
+    "host_address": "10.43.76.3",
+    "enabled": true,
+    "district": "chiradzulu",
+    "region": "South"
+  },
+  {
+    "id": 716,
+    "name": "Mauwa Health Centre",
+    "application_port": "3009",
+    "host_address": "10.43.77.3",
+    "enabled": true,
+    "district": "chiradzulu",
+    "region": "South"
+  },
+  {
+    "id": 717,
+    "name": "Mbulumbuzi Health Centre",
+    "application_port": "3009",
+    "host_address": "10.43.78.3",
+    "enabled": true,
+    "district": "chiradzulu",
+    "region": "South"
+  },
+  {
+    "id": 718,
+    "name": "Milepa Health Centre",
+    "application_port": "3009",
+    "host_address": "10.43.79.3",
+    "enabled": true,
+    "district": "chiradzulu",
+    "region": "South"
+  },
+  {
+    "id": 719,
+    "name": "Namadzi Health Centre",
+    "application_port": "3009",
+    "host_address": "10.43.80.3",
+    "enabled": true,
+    "district": "chiradzulu",
+    "region": "South"
+  },
+  {
+    "id": 720,
+    "name": "Namitambo Health Centre",
+    "application_port": "0000",
+    "host_address": "10.43.81.3",
+    "enabled": true,
+    "district": "chiradzulu",
+    "region": "South"
+  },
+  {
+    "id": 721,
+    "name": "Ndunde Health Centre",
+    "application_port": "3009",
+    "host_address": "10.43.82.3",
+    "enabled": true,
+    "district": "chiradzulu",
+    "region": "South"
+  },
+  {
+    "id": 722,
+    "name": "Nkalo Health Centre",
+    "application_port": "3009",
+    "host_address": "10.43.83.3",
+    "enabled": true,
+    "district": "chiradzulu",
+    "region": "South"
+  },
+  {
+    "id": 723,
+    "name": "Thumbwe Health Centre",
+    "application_port": "3009",
+    "host_address": "10.43.85.3",
+    "enabled": true,
+    "district": "chiradzulu",
+    "region": "South"
+  },
+  {
+    "id": 724,
+    "name": "Namakhwa Jomo. Malavi Private",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "chiradzulu",
+    "region": "South"
+  },
+  {
+    "id": 726,
+    "name": "PIM Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "chiradzulu",
+    "region": "South"
+  },
+  {
+    "id": 728,
+    "name": "Bilal Islamic Clinic",
+    "application_port": "3009",
+    "host_address": "10.43.65.3",
+    "enabled": true,
+    "district": "chiradzulu",
+    "region": "South"
+  },
+  {
+    "id": 731,
+    "name": "Queen Elizabeth Central Hospital",
+    "application_port": "0000",
+    "host_address": "172.25.9.137",
+    "enabled": true,
+    "district": "blantyre",
+    "region": "South"
+  },
+  {
+    "id": 732,
+    "name": "Blantyre Civic Center Dispensary",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "blantyre",
+    "region": "South"
+  },
+  {
+    "id": 733,
+    "name": "Bangwe Health Centre",
+    "application_port": "0000",
+    "host_address": "10.43.0.3",
+    "enabled": true,
+    "district": "blantyre",
+    "region": "South"
+  },
+  {
+    "id": 734,
+    "name": "Chabvala Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "blantyre",
+    "region": "South"
+  },
+  {
+    "id": 735,
+    "name": "Chikowa Health Centre",
+    "application_port": "3009",
+    "host_address": "10.43.3.3",
+    "enabled": true,
+    "district": "blantyre",
+    "region": "South"
+  },
+  {
+    "id": 736,
+    "name": "Chileka Health Centre",
+    "application_port": "0000",
+    "host_address": "10.43.4.3",
+    "enabled": true,
+    "district": "blantyre",
+    "region": "South"
+  },
+  {
+    "id": 737,
+    "name": "Chilomoni Health Centre",
+    "application_port": "3009",
+    "host_address": "10.43.6.3",
+    "enabled": true,
+    "district": "blantyre",
+    "region": "South"
+  },
+  {
+    "id": 738,
+    "name": "Chimembe Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "blantyre",
+    "region": "South"
+  },
+  {
+    "id": 739,
+    "name": "Dziwe Health Centre",
+    "application_port": "3009",
+    "host_address": "10.43.14.3",
+    "enabled": true,
+    "district": "blantyre",
+    "region": "South"
+  },
+  {
+    "id": 740,
+    "name": "Limbe Health Centre",
+    "application_port": "0000",
+    "host_address": "10.43.17.3",
+    "enabled": true,
+    "district": "blantyre",
+    "region": "South"
+  },
+  {
+    "id": 741,
+    "name": "Lirangwe Health Centre",
+    "application_port": "3009",
+    "host_address": "10.43.18.3",
+    "enabled": true,
+    "district": "blantyre",
+    "region": "South"
+  },
+  {
+    "id": 742,
+    "name": "Lundu Health Centre",
+    "application_port": "3009",
+    "host_address": "10.43.19.3",
+    "enabled": true,
+    "district": "blantyre",
+    "region": "South"
+  },
+  {
+    "id": 743,
+    "name": "Madziabango Health Centre",
+    "application_port": "3009",
+    "host_address": "10.43.21.3",
+    "enabled": true,
+    "district": "blantyre",
+    "region": "South"
+  },
+  {
+    "id": 744,
+    "name": "Makata Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "blantyre",
+    "region": "South"
+  },
+  {
+    "id": 745,
+    "name": "Mdeka Health Centre",
+    "application_port": "3009",
+    "host_address": "10.43.25.3",
+    "enabled": true,
+    "district": "blantyre",
+    "region": "South"
+  },
+  {
+    "id": 746,
+    "name": "Mpemba Health Centre",
+    "application_port": "0000",
+    "host_address": "10.43.27.3",
+    "enabled": true,
+    "district": "blantyre",
+    "region": "South"
+  },
+  {
+    "id": 747,
+    "name": "Namikoko Health Centre",
+    "application_port": "3009",
+    "host_address": "10.43.28.3",
+    "enabled": true,
+    "district": "blantyre",
+    "region": "South"
+  },
+  {
+    "id": 748,
+    "name": "Ndirande Urban Health Centre",
+    "application_port": "0000",
+    "host_address": "10.43.29.3",
+    "enabled": true,
+    "district": "blantyre",
+    "region": "South"
+  },
+  {
+    "id": 749,
+    "name": "South Lunzu Health Centre",
+    "application_port": "0000",
+    "host_address": "10.43.45.3",
+    "enabled": true,
+    "district": "blantyre",
+    "region": "South"
+  },
+  {
+    "id": 750,
+    "name": "Sanjika Clinic",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "blantyre",
+    "region": "South"
+  },
+  {
+    "id": 751,
+    "name": "Zingwangwa Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "blantyre",
+    "region": "South"
+  },
+  {
+    "id": 752,
+    "name": "Blantyre Adventist Hospital",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "blantyre",
+    "region": "South"
+  },
+  {
+    "id": 753,
+    "name": "Mlambe Hospital",
+    "application_port": "3009",
+    "host_address": "10.43.26.3",
+    "enabled": true,
+    "district": "blantyre",
+    "region": "South"
+  },
+  {
+    "id": 754,
+    "name": "Chileka SDA Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "blantyre",
+    "region": "South"
+  },
+  {
+    "id": 755,
+    "name": "Malabada Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "blantyre",
+    "region": "South"
+  },
+  {
+    "id": 756,
+    "name": "St Vincent Health Centre",
+    "application_port": "3009",
+    "host_address": "10.43.46.3",
+    "enabled": true,
+    "district": "blantyre",
+    "region": "South"
+  },
+  {
+    "id": 757,
+    "name": "Umodzi Family Center",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "blantyre",
+    "region": "South"
+  },
+  {
+    "id": 758,
+    "name": "Soche SDA Dispensary",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "blantyre",
+    "region": "South"
+  },
+  {
+    "id": 767,
+    "name": "Mtengoumodzi Private Hospital",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "blantyre",
+    "region": "South"
+  },
+  {
+    "id": 769,
+    "name": "Mwaiwathu Private Hospital",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "blantyre",
+    "region": "South"
+  },
+  {
+    "id": 770,
+    "name": "Nyambadwe Private Hospital",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "blantyre",
+    "region": "South"
+  },
+  {
+    "id": 772,
+    "name": "Lumbira Mitsidi Health Centr",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "blantyre",
+    "region": "South"
+  },
+  {
+    "id": 792,
+    "name": "Kanjedza MASM Medi Clinic",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "blantyre",
+    "region": "South"
+  },
+  {
+    "id": 798,
+    "name": "Malamulo Day Clinic Amina",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "blantyre",
+    "region": "South"
+  },
+  {
+    "id": 799,
+    "name": "Merit Private Clinic Masangan",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "blantyre",
+    "region": "South"
+  },
+  {
+    "id": 801,
+    "name": "Moyo Private Clinic",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "blantyre",
+    "region": "South"
+  },
+  {
+    "id": 804,
+    "name": "Mwachira Private Clinic",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "blantyre",
+    "region": "South"
+  },
+  {
+    "id": 821,
+    "name": "Blantyre Dream Project Clinic",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "blantyre",
+    "region": "South"
+  },
+  {
+    "id": 824,
+    "name": "BLM Lunzu Clinic",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "blantyre",
+    "region": "South"
+  },
+  {
+    "id": 828,
+    "name": "Macro Blantyre Clinic",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "blantyre",
+    "region": "South"
+  },
+  {
+    "id": 833,
+    "name": "Blantyre Water Board - Mudi",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "blantyre",
+    "region": "South"
+  },
+  {
+    "id": 837,
+    "name": "Chichiri ESCOM Clinic",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "blantyre",
+    "region": "South"
+  },
+  {
+    "id": 838,
+    "name": "Chichiri Prison",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "blantyre",
+    "region": "South"
+  },
+  {
+    "id": 842,
+    "name": "Polytechnic",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "blantyre",
+    "region": "South"
+  },
+  {
+    "id": 848,
+    "name": "Kadidi Health Centre",
+    "application_port": "3009",
+    "host_address": "10.43.16.3",
+    "enabled": true,
+    "district": "blantyre",
+    "region": "South"
+  },
+  {
+    "id": 850,
+    "name": "Mwanza District Hospital",
+    "application_port": "3009",
+    "host_address": "10.43.113.2",
+    "enabled": true,
+    "district": "mwanza",
+    "region": "South"
+  },
+  {
+    "id": 851,
+    "name": "Kunenekude Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mwanza",
+    "region": "South"
+  },
+  {
+    "id": 852,
+    "name": "Thambani Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mwanza",
+    "region": "South"
+  },
+  {
+    "id": 853,
+    "name": "Tulonkhondo Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mwanza",
+    "region": "South"
+  },
+  {
+    "id": 854,
+    "name": "Mwanza BLM Clinic",
+    "application_port": "3009",
+    "host_address": "10.43.113.2",
+    "enabled": true,
+    "district": "mwanza",
+    "region": "South"
+  },
+  {
+    "id": 857,
+    "name": "Thyolo District Hospital",
+    "application_port": "0000",
+    "host_address": "10.43.180.10",
+    "enabled": true,
+    "district": "thyolo",
+    "region": "South"
+  },
+  {
+    "id": 858,
+    "name": "Thekerani Rural Hospital",
+    "application_port": "3009",
+    "host_address": "10.43.176.3",
+    "enabled": true,
+    "district": "thyolo",
+    "region": "South"
+  },
+  {
+    "id": 859,
+    "name": "Dzimbiri Health Post",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "thyolo",
+    "region": "South"
+  },
+  {
+    "id": 860,
+    "name": "Bvumbwe Makungwa Health Centre",
+    "application_port": "3009",
+    "host_address": "10.43.172.3",
+    "enabled": true,
+    "district": "thyolo",
+    "region": "South"
+  },
+  {
+    "id": 861,
+    "name": "Changata Health Centre",
+    "application_port": "3009",
+    "host_address": "10.43.191.3",
+    "enabled": true,
+    "district": "thyolo",
+    "region": "South"
+  },
+  {
+    "id": 862,
+    "name": "Chimaliro Health Centre",
+    "application_port": "3009",
+    "host_address": "10.43.170.3",
+    "enabled": true,
+    "district": "thyolo",
+    "region": "South"
+  },
+  {
+    "id": 863,
+    "name": "Chimvu",
+    "application_port": "3009",
+    "host_address": "10.46.8.3",
+    "enabled": true,
+    "district": "thyolo",
+    "region": "South"
+  },
+  {
+    "id": 864,
+    "name": "Chisoka Health Centre",
+    "application_port": "3009",
+    "host_address": "10.43.137.3",
+    "enabled": true,
+    "district": "thyolo",
+    "region": "South"
+  },
+  {
+    "id": 867,
+    "name": "Khonjeni Health Centre",
+    "application_port": "3009",
+    "host_address": "10.43.171.3",
+    "enabled": true,
+    "district": "thyolo",
+    "region": "South"
+  },
+  {
+    "id": 868,
+    "name": "Mikolongwe Health Centre",
+    "application_port": "3009",
+    "host_address": "10.43.175.3",
+    "enabled": true,
+    "district": "thyolo",
+    "region": "South"
+  },
+  {
+    "id": 869,
+    "name": "Zoa Health Centre",
+    "application_port": "3009",
+    "host_address": "10.43.188.3",
+    "enabled": true,
+    "district": "thyolo",
+    "region": "South"
+  },
+  {
+    "id": 870,
+    "name": "Amalika Dispensary",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "thyolo",
+    "region": "South"
+  },
+  {
+    "id": 871,
+    "name": "Mapanga Clinic",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "thyolo",
+    "region": "South"
+  },
+  {
+    "id": 872,
+    "name": "Chingadzi Rural Hospital",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "thyolo",
+    "region": "South"
+  },
+  {
+    "id": 873,
+    "name": "Malamulo Hospital",
+    "application_port": "3009",
+    "host_address": "10.43.173.3",
+    "enabled": true,
+    "district": "thyolo",
+    "region": "South"
+  },
+  {
+    "id": 874,
+    "name": "Chipho Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "thyolo",
+    "region": "South"
+  },
+  {
+    "id": 875,
+    "name": "Makapwa Health Centre",
+    "application_port": "3009",
+    "host_address": "10.46.15.3",
+    "enabled": true,
+    "district": "thyolo",
+    "region": "South"
+  },
+  {
+    "id": 877,
+    "name": "Molere Health Centre",
+    "application_port": "3009",
+    "host_address": "10.43.234.3",
+    "enabled": true,
+    "district": "thyolo",
+    "region": "South"
+  },
+  {
+    "id": 878,
+    "name": "Thomasi Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "thyolo",
+    "region": "South"
+  },
+  {
+    "id": 879,
+    "name": "Halena Oakely Mtambanyama Clinic",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "thyolo",
+    "region": "South"
+  },
+  {
+    "id": 887,
+    "name": "Mianga Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "thyolo",
+    "region": "South"
+  },
+  {
+    "id": 889,
+    "name": "Sambankhanga Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "thyolo",
+    "region": "South"
+  },
+  {
+    "id": 890,
+    "name": "Satemwa Clinic",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "thyolo",
+    "region": "South"
+  },
+  {
+    "id": 891,
+    "name": "Thunga Health Centre",
+    "application_port": "0000",
+    "host_address": "10.43.177.3",
+    "enabled": true,
+    "district": "thyolo",
+    "region": "South"
+  },
+  {
+    "id": 896,
+    "name": "Makwasa Estate Clinic",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "thyolo",
+    "region": "South"
+  },
+  {
+    "id": 897,
+    "name": "Mchima Clinic",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "thyolo",
+    "region": "South"
+  },
+  {
+    "id": 901,
+    "name": "Mulanje District Hospital",
+    "application_port": "0000",
+    "host_address": "10.43.95.2",
+    "enabled": true,
+    "district": "mulanje",
+    "region": "South"
+  },
+  {
+    "id": 902,
+    "name": "Bondo Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mulanje",
+    "region": "South"
+  },
+  {
+    "id": 903,
+    "name": "Chambe Health Centre",
+    "application_port": "3009",
+    "host_address": "10.43.86.3",
+    "enabled": true,
+    "district": "mulanje",
+    "region": "South"
+  },
+  {
+    "id": 904,
+    "name": "Chinyama Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mulanje",
+    "region": "South"
+  },
+  {
+    "id": 905,
+    "name": "Chisitu Health Centre",
+    "application_port": "3009",
+    "host_address": "10.43.138.3",
+    "enabled": true,
+    "district": "mulanje",
+    "region": "South"
+  },
+  {
+    "id": 906,
+    "name": "Chonde Health Centre",
+    "application_port": "0000",
+    "host_address": "10.43.87.3",
+    "enabled": true,
+    "district": "mulanje",
+    "region": "South"
+  },
+  {
+    "id": 907,
+    "name": "Dzenje Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mulanje",
+    "region": "South"
+  },
+  {
+    "id": 908,
+    "name": "Kambenje Health Centre",
+    "application_port": "3009",
+    "host_address": "10.43.88.3",
+    "enabled": true,
+    "district": "mulanje",
+    "region": "South"
+  },
+  {
+    "id": 909,
+    "name": "Mbiza Health Centre",
+    "application_port": "3009",
+    "host_address": "10.43.89.3",
+    "enabled": true,
+    "district": "mulanje",
+    "region": "South"
+  },
+  {
+    "id": 910,
+    "name": "Milonde Health Centre",
+    "application_port": "3009",
+    "host_address": "10.43.90.3",
+    "enabled": true,
+    "district": "mulanje",
+    "region": "South"
+  },
+  {
+    "id": 911,
+    "name": "Mimosa Dispensary",
+    "application_port": "3009",
+    "host_address": "10.43.91.3",
+    "enabled": true,
+    "district": "mulanje",
+    "region": "South"
+  },
+  {
+    "id": 912,
+    "name": "Mkomaula Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mulanje",
+    "region": "South"
+  },
+  {
+    "id": 913,
+    "name": "Mpala Health Centre",
+    "application_port": "3009",
+    "host_address": "10.43.92.3",
+    "enabled": true,
+    "district": "mulanje",
+    "region": "South"
+  },
+  {
+    "id": 914,
+    "name": "Mulomba Health Centre",
+    "application_port": "3009",
+    "host_address": "10.43.106.3",
+    "enabled": true,
+    "district": "mulanje",
+    "region": "South"
+  },
+  {
+    "id": 915,
+    "name": "Muloza Heath Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mulanje",
+    "region": "South"
+  },
+  {
+    "id": 916,
+    "name": "Namphungo Health Centre",
+    "application_port": "3009",
+    "host_address": "10.43.109.3",
+    "enabled": true,
+    "district": "mulanje",
+    "region": "South"
+  },
+  {
+    "id": 917,
+    "name": "Naphimba Health Centre",
+    "application_port": "3009",
+    "host_address": "10.43.110.3",
+    "enabled": true,
+    "district": "mulanje",
+    "region": "South"
+  },
+  {
+    "id": 918,
+    "name": "Thuchila Health Centre",
+    "application_port": "3009",
+    "host_address": "10.46.37.3",
+    "enabled": true,
+    "district": "mulanje",
+    "region": "South"
+  },
+  {
+    "id": 919,
+    "name": "Mulanje Mission Hospital",
+    "application_port": "3009",
+    "host_address": "10.43.103.3",
+    "enabled": true,
+    "district": "mulanje",
+    "region": "South"
+  },
+  {
+    "id": 920,
+    "name": "Namasalima Health Centre",
+    "application_port": "0000",
+    "host_address": "10.43.108.3",
+    "enabled": true,
+    "district": "mulanje",
+    "region": "South"
+  },
+  {
+    "id": 921,
+    "name": "Namulenga Health Centre",
+    "application_port": "3009",
+    "host_address": "10.43.34.3",
+    "enabled": true,
+    "district": "mulanje",
+    "region": "South"
+  },
+  {
+    "id": 922,
+    "name": "Thembe Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mulanje",
+    "region": "South"
+  },
+  {
+    "id": 923,
+    "name": "Thornwood Estate Clinic",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mulanje",
+    "region": "South"
+  },
+  {
+    "id": 930,
+    "name": "Lujeri Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "mulanje",
+    "region": "South"
+  },
+  {
+    "id": 943,
+    "name": "Chitekesa Health Centre",
+    "application_port": "3009",
+    "host_address": "10.43.147.3",
+    "enabled": true,
+    "district": "phalombe",
+    "region": "South"
+  },
+  {
+    "id": 944,
+    "name": "Kalinde Health Centre",
+    "application_port": "3009",
+    "host_address": "10.43.148.3",
+    "enabled": true,
+    "district": "phalombe",
+    "region": "South"
+  },
+  {
+    "id": 945,
+    "name": "Migowi Health Centre",
+    "application_port": "3009",
+    "host_address": "10.43.149.3",
+    "enabled": true,
+    "district": "phalombe",
+    "region": "South"
+  },
+  {
+    "id": 946,
+    "name": "Mkhwayi Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "phalombe",
+    "region": "South"
+  },
+  {
+    "id": 947,
+    "name": "Mpasa Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "phalombe",
+    "region": "South"
+  },
+  {
+    "id": 948,
+    "name": "Nambazo Health Centre",
+    "application_port": "3009",
+    "host_address": "10.43.150.3",
+    "enabled": true,
+    "district": "phalombe",
+    "region": "South"
+  },
+  {
+    "id": 949,
+    "name": "Nazombe Health Centre GoGo",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "phalombe",
+    "region": "South"
+  },
+  {
+    "id": 950,
+    "name": "Nkhulambe Health Centre",
+    "application_port": "3009",
+    "host_address": "10.43.152.3",
+    "enabled": true,
+    "district": "phalombe",
+    "region": "South"
+  },
+  {
+    "id": 951,
+    "name": "Holy Family Hospital",
+    "application_port": "0000",
+    "host_address": "10.43.156.3",
+    "enabled": true,
+    "district": "phalombe",
+    "region": "South"
+  },
+  {
+    "id": 952,
+    "name": "Chiringa Maternity",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "phalombe",
+    "region": "South"
+  },
+  {
+    "id": 956,
+    "name": "Chiringa CHAM Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "phalombe",
+    "region": "South"
+  },
+  {
+    "id": 957,
+    "name": "Mwanga Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "phalombe",
+    "region": "South"
+  },
+  {
+    "id": 958,
+    "name": "Sukasanje Health Centre",
+    "application_port": "3009",
+    "host_address": "10.42.104.3",
+    "enabled": true,
+    "district": "phalombe",
+    "region": "South"
+  },
+  {
+    "id": 959,
+    "name": "Mulungu Alinafe Clinic",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "phalombe",
+    "region": "South"
+  },
+  {
+    "id": 960,
+    "name": "Chikwawa District Hospital",
+    "application_port": "0000",
+    "host_address": "10.43.50.3",
+    "enabled": true,
+    "district": "chikwawa",
+    "region": "South"
+  },
+  {
+    "id": 961,
+    "name": "Ngabu Rural Hospital",
+    "application_port": "3009",
+    "host_address": "10.43.61.3",
+    "enabled": true,
+    "district": "chikwawa",
+    "region": "South"
+  },
+  {
+    "id": 962,
+    "name": "Beleu Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "chikwawa",
+    "region": "South"
+  },
+  {
+    "id": 963,
+    "name": "Chang'ambika Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "chikwawa",
+    "region": "South"
+  },
+  {
+    "id": 964,
+    "name": "Chapananga Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "chikwawa",
+    "region": "South"
+  },
+  {
+    "id": 965,
+    "name": "St. Lucious Private Clinic",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "chikwawa",
+    "region": "South"
+  },
+  {
+    "id": 966,
+    "name": "Chithumba Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "chikwawa",
+    "region": "South"
+  },
+  {
+    "id": 967,
+    "name": "Dolo Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "chikwawa",
+    "region": "South"
+  },
+  {
+    "id": 968,
+    "name": "Gaga Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "chikwawa",
+    "region": "South"
+  },
+  {
+    "id": 969,
+    "name": "Kakoma Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "chikwawa",
+    "region": "South"
+  },
+  {
+    "id": 970,
+    "name": "Makhwira Health Centre",
+    "application_port": "3009",
+    "host_address": "10.43.246.3",
+    "enabled": true,
+    "district": "chikwawa",
+    "region": "South"
+  },
+  {
+    "id": 971,
+    "name": "Maperera Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "chikwawa",
+    "region": "South"
+  },
+  {
+    "id": 972,
+    "name": "Mfera Health Centre",
+    "application_port": "3009",
+    "host_address": "10.43.59.3",
+    "enabled": true,
+    "district": "chikwawa",
+    "region": "South"
+  },
+  {
+    "id": 973,
+    "name": "Ndakwera Health Centre",
+    "application_port": "3009",
+    "host_address": "10.43.60.3",
+    "enabled": true,
+    "district": "chikwawa",
+    "region": "South"
+  },
+  {
+    "id": 975,
+    "name": "Kasinthula Dispensary",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "chikwawa",
+    "region": "South"
+  },
+  {
+    "id": 980,
+    "name": "St Montfort Hospital",
+    "application_port": "0000",
+    "host_address": "10.43.63.3",
+    "enabled": true,
+    "district": "chikwawa",
+    "region": "South"
+  },
+  {
+    "id": 981,
+    "name": "Misomali Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "chikwawa",
+    "region": "South"
+  },
+  {
+    "id": 982,
+    "name": "Ngabu SDA Health Centre",
+    "application_port": "3009",
+    "host_address": "10.43.62.3",
+    "enabled": true,
+    "district": "chikwawa",
+    "region": "South"
+  },
+  {
+    "id": 991,
+    "name": "SUCOMA Mangulenje Clinic",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "chikwawa",
+    "region": "South"
+  },
+  {
+    "id": 993,
+    "name": "SUCOMA Lengwe",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "chikwawa",
+    "region": "South"
+  },
+  {
+    "id": 995,
+    "name": "Kapichira Clinic",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "chikwawa",
+    "region": "South"
+  },
+  {
+    "id": 997,
+    "name": "Nsanje District Hospital",
+    "application_port": "0000",
+    "host_address": "10.43.136.10",
+    "enabled": true,
+    "district": "nsanje",
+    "region": "South"
+  },
+  {
+    "id": 998,
+    "name": "Kalemba Community Hospital",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "nsanje",
+    "region": "South"
+  },
+  {
+    "id": 999,
+    "name": "Kamphata Health Post",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "nsanje",
+    "region": "South"
+  },
+  {
+    "id": 1000,
+    "name": "Makhanga Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "nsanje",
+    "region": "South"
+  },
+  {
+    "id": 1001,
+    "name": "Masenjere Health Centre",
+    "application_port": "3009",
+    "host_address": "172.25.104.3",
+    "enabled": true,
+    "district": "nsanje",
+    "region": "South"
+  },
+  {
+    "id": 1002,
+    "name": "Mbenje Health Centre",
+    "application_port": "3009",
+    "host_address": "10.43.132.3",
+    "enabled": true,
+    "district": "nsanje",
+    "region": "South"
+  },
+  {
+    "id": 1003,
+    "name": "Ndamera Health Centre",
+    "application_port": "3009",
+    "host_address": "10.43.133.3",
+    "enabled": true,
+    "district": "nsanje",
+    "region": "South"
+  },
+  {
+    "id": 1004,
+    "name": "Nyamithuthu Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "nsanje",
+    "region": "South"
+  },
+  {
+    "id": 1005,
+    "name": "Phokera Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "nsanje",
+    "region": "South"
+  },
+  {
+    "id": 1006,
+    "name": "Sankhulani Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "nsanje",
+    "region": "South"
+  },
+  {
+    "id": 1007,
+    "name": "Sorgin Health Centre",
+    "application_port": "3009",
+    "host_address": "10.43.144.3",
+    "enabled": true,
+    "district": "nsanje",
+    "region": "South"
+  },
+  {
+    "id": 1008,
+    "name": "Tengani Health Centre",
+    "application_port": "3009",
+    "host_address": "10.43.145.3",
+    "enabled": true,
+    "district": "nsanje",
+    "region": "South"
+  },
+  {
+    "id": 1009,
+    "name": "Nkhande Dispensary",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "nsanje",
+    "region": "South"
+  },
+  {
+    "id": 1010,
+    "name": "Ching'oma Health Post",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "nsanje",
+    "region": "South"
+  },
+  {
+    "id": 1011,
+    "name": "Kanyimbi Health Post",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "nsanje",
+    "region": "South"
+  },
+  {
+    "id": 1012,
+    "name": "Mchacha Health Post",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "nsanje",
+    "region": "South"
+  },
+  {
+    "id": 1013,
+    "name": "Misamvu Health Post",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "nsanje",
+    "region": "South"
+  },
+  {
+    "id": 1014,
+    "name": "Mkango Health Post",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "nsanje",
+    "region": "South"
+  },
+  {
+    "id": 1015,
+    "name": "Mlolo Health Post",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "nsanje",
+    "region": "South"
+  },
+  {
+    "id": 1016,
+    "name": "Trinity Hospital",
+    "application_port": "3009",
+    "host_address": "10.43.146.3",
+    "enabled": true,
+    "district": "nsanje",
+    "region": "South"
+  },
+  {
+    "id": 1017,
+    "name": "Chididi Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "nsanje",
+    "region": "South"
+  },
+  {
+    "id": 1018,
+    "name": "Lulwe Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "nsanje",
+    "region": "South"
+  },
+  {
+    "id": 1019,
+    "name": "Tikondane Clinic",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "nsanje",
+    "region": "South"
+  },
+  {
+    "id": 1020,
+    "name": "Balaka District Hospital",
+    "application_port": "0000",
+    "host_address": "10.42.51.3",
+    "enabled": true,
+    "district": "balaka",
+    "region": "South"
+  },
+  {
+    "id": 1021,
+    "name": "Chiendausiku Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "balaka",
+    "region": "South"
+  },
+  {
+    "id": 1022,
+    "name": "Kalembo Health Centre",
+    "application_port": "3009",
+    "host_address": "10.42.53.3",
+    "enabled": true,
+    "district": "balaka",
+    "region": "South"
+  },
+  {
+    "id": 1023,
+    "name": "Kwitanda Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "balaka",
+    "region": "South"
+  },
+  {
+    "id": 1024,
+    "name": "Mbera Health Centre",
+    "application_port": "3009",
+    "host_address": "10.42.90.3",
+    "enabled": true,
+    "district": "balaka",
+    "region": "South"
+  },
+  {
+    "id": 1025,
+    "name": "Namanolo Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "balaka",
+    "region": "South"
+  },
+  {
+    "id": 1026,
+    "name": "Balaka BLM Clinic",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "balaka",
+    "region": "South"
+  },
+  {
+    "id": 1027,
+    "name": "Phimbi Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "balaka",
+    "region": "South"
+  },
+  {
+    "id": 1031,
+    "name": "Kankao Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "balaka",
+    "region": "South"
+  },
+  {
+    "id": 1032,
+    "name": "Phalula Health Centre",
+    "application_port": "3009",
+    "host_address": "10.42.85.3",
+    "enabled": true,
+    "district": "balaka",
+    "region": "South"
+  },
+  {
+    "id": 1033,
+    "name": "Ulongwe Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "balaka",
+    "region": "South"
+  },
+  {
+    "id": 1034,
+    "name": "Utale 1 Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "balaka",
+    "region": "South"
+  },
+  {
+    "id": 1035,
+    "name": "Utale 2 Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "balaka",
+    "region": "South"
+  },
+  {
+    "id": 1039,
+    "name": "Balaka Dream Clinic",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "balaka",
+    "region": "South"
+  },
+  {
+    "id": 1041,
+    "name": "Lisungwi Community Hospital",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "neno",
+    "region": "South"
+  },
+  {
+    "id": 1042,
+    "name": "Neno District Hospital",
+    "application_port": "3009",
+    "host_address": "10.43.125.100",
+    "enabled": true,
+    "district": "neno",
+    "region": "South"
+  },
+  {
+    "id": 1043,
+    "name": "Chifunga Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "neno",
+    "region": "South"
+  },
+  {
+    "id": 1044,
+    "name": "Ligowe Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "neno",
+    "region": "South"
+  },
+  {
+    "id": 1045,
+    "name": "Luwani Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "neno",
+    "region": "South"
+  },
+  {
+    "id": 1046,
+    "name": "Magaleta Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "neno",
+    "region": "South"
+  },
+  {
+    "id": 1047,
+    "name": "Matandani Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "neno",
+    "region": "South"
+  },
+  {
+    "id": 1048,
+    "name": "Matope Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "neno",
+    "region": "South"
+  },
+  {
+    "id": 1049,
+    "name": "Neno Parish Health Centre",
+    "application_port": "3009",
+    "host_address": "10.43.125.100",
+    "enabled": true,
+    "district": "neno",
+    "region": "South"
+  },
+  {
+    "id": 1050,
+    "name": "Nsambe Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "neno",
+    "region": "South"
+  },
+  {
+    "id": 1051,
+    "name": "Mota-Engil Clinic - Mkwinda Ca",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "neno",
+    "region": "South"
+  },
+  {
+    "id": 1053,
+    "name": "Nkula Health Centre",
+    "application_port": "0000",
+    "host_address": "",
+    "enabled": false,
+    "district": "neno",
+    "region": "South"
+  },
+  {
+    "id": 1055,
+    "name": "Chintheche Rural Hospital",
+    "application_port": null,
+    "host_address": "10.40.51.3",
+    "enabled": true,
+    "district": "Nkhatabay",
+    "region": "North"
+  },
+  {
+    "id": 1056,
+    "name": "Gateway Clinic (Blantyre)",
+    "application_port": null,
+    "host_address": "10.43.15.3",
+    "enabled": true,
+    "district": "Blantyre",
+    "region": "South"
+  },
+  {
+    "id": 1057,
+    "name": "Fidelity Private Clinic",
+    "application_port": null,
+    "host_address": "",
+    "enabled": false,
+    "district": "Lilongwe",
+    "region": "Central"
+  },
+  {
+    "id": 1058,
+    "name": "Tachira Private Clinic",
+    "application_port": null,
+    "host_address": "",
+    "enabled": false,
+    "district": "Lilongwe",
+    "region": "Central"
+  },
+  {
+    "id": 1059,
+    "name": "Nyamandi PVT Clinic",
+    "application_port": null,
+    "host_address": "",
+    "enabled": false,
+    "district": "Lilongwe",
+    "region": "Central"
+  },
+  {
+    "id": 1060,
+    "name": "Maziko Private Clinic Area 23",
+    "application_port": null,
+    "host_address": "",
+    "enabled": false,
+    "district": "Lilongwe",
+    "region": "Central"
+  },
+  {
+    "id": 1061,
+    "name": "Kachere Private Clinic Area 23",
+    "application_port": null,
+    "host_address": "",
+    "enabled": false,
+    "district": "Lilongwe",
+    "region": "Central"
+  },
+  {
+    "id": 1062,
+    "name": "Nancholi Youth Stand Alone Clinic",
+    "application_port": null,
+    "host_address": "",
+    "enabled": false,
+    "district": "Blantyre",
+    "region": "South"
+  },
+  {
+    "id": 1063,
+    "name": "Khola Health Center",
+    "application_port": null,
+    "host_address": "",
+    "enabled": false,
+    "district": "Kasungu",
+    "region": "Central"
+  },
+  {
+    "id": 1064,
+    "name": "Mnyanja Health Center",
+    "application_port": null,
+    "host_address": "",
+    "enabled": false,
+    "district": "Kasungu",
+    "region": "Central"
+  },
+  {
+    "id": 1065,
+    "name": "Kalimanjira Health Centre",
+    "application_port": null,
+    "host_address": "",
+    "enabled": false,
+    "district": "Ntcheu",
+    "region": "Central"
+  },
+  {
+    "id": 1066,
+    "name": "Area 36 PVT Clinic",
+    "application_port": null,
+    "host_address": "",
+    "enabled": false,
+    "district": "Lilongwe",
+    "region": "Central"
+  },
+  {
+    "id": 1067,
+    "name": "Lengwe Health Center",
+    "application_port": null,
+    "host_address": "",
+    "enabled": false,
+    "district": "Chikwawa",
+    "region": "South"
+  },
+  {
+    "id": 1068,
+    "name": "Illovo Mwanza Health Center",
+    "application_port": null,
+    "host_address": "",
+    "enabled": false,
+    "district": "Nsanje",
+    "region": "South"
+  },
+  {
+    "id": 1069,
+    "name": "Maimed private Clinic",
+    "application_port": null,
+    "host_address": "",
+    "enabled": false,
+    "district": "Blantyre",
+    "region": "South"
+  },
+  {
+    "id": 1070,
+    "name": "Kapeni Dream",
+    "application_port": null,
+    "host_address": "",
+    "enabled": false,
+    "district": "Blantyre",
+    "region": "South"
+  },
+  {
+    "id": 1071,
+    "name": "Achikondi PVT Clinic",
+    "application_port": null,
+    "host_address": "",
+    "enabled": false,
+    "district": "Lilongwe",
+    "region": "Central"
+  },
+  {
+    "id": 1072,
+    "name": "Ameca",
+    "application_port": null,
+    "host_address": "",
+    "enabled": false,
+    "district": "Blantyre",
+    "region": "South"
+  },
+  {
+    "id": 1073,
+    "name": "Umunthu Foundation",
+    "application_port": null,
+    "host_address": "",
+    "enabled": false,
+    "district": "Blantyre",
+    "region": "South"
+  },
+  {
+    "id": 1074,
+    "name": "Alumenda",
+    "application_port": null,
+    "host_address": "",
+    "enabled": false,
+    "district": "Chikwawa",
+    "region": "South"
+  },
+  {
+    "id": 1075,
+    "name": "Blessings Hospital",
+    "application_port": null,
+    "host_address": "",
+    "enabled": false,
+    "district": "mulanje",
+    "region": "South"
+  },
+  {
+    "id": 1076,
+    "name": "Ruo Dispensary",
+    "application_port": null,
+    "host_address": "",
+    "enabled": false,
+    "district": "mulanje",
+    "region": "South"
+  },
+  {
+    "id": 1077,
+    "name": "LLYLC-FPAM",
+    "application_port": null,
+    "host_address": "",
+    "enabled": false,
+    "district": "mulanje",
+    "region": "South"
+  },
+  {
+    "id": 1078,
+    "name": "Chiwoza Health Center",
+    "application_port": null,
+    "host_address": "",
+    "enabled": false,
+    "district": "mulanje",
+    "region": "South"
+  },
+  {
+    "id": 1079,
+    "name": "Baylor Childrens Foundation Malawi",
+    "application_port": null,
+    "host_address": "",
+    "enabled": false,
+    "district": "Lilongwe",
+    "region": "Central"
+  },
+  {
+    "id": 1080,
+    "name": "Manolo Health Centre",
+    "application_port": null,
+    "host_address": "",
+    "enabled": false,
+    "district": "Mzimba",
+    "region": "North"
+  },
+  {
+    "id": 1081,
+    "name": "Dambe Health Center",
+    "application_port": null,
+    "host_address": "",
+    "enabled": false,
+    "district": "neno",
+    "region": "South"
+  },
+  {
+    "id": 1082,
+    "name": "Nandumbo Health Center",
+    "application_port": null,
+    "host_address": "",
+    "enabled": false,
+    "district": "balaka",
+    "region": "South"
+  },
+  {
+    "id": 1083,
+    "name": "MAULA PRISON HEALTH CENTER",
+    "application_port": null,
+    "host_address": "",
+    "enabled": false,
+    "district": "Lilongwe",
+    "region": "Central"
+  },
+  {
+    "id": 1084,
+    "name": "McGuire Wellness Center",
+    "application_port": null,
+    "host_address": "",
+    "enabled": false,
+    "district": "Lilongwe",
+    "region": "Central"
+  },
+  {
+    "id": 1085,
+    "name": "Kaweche Health Center",
+    "application_port": null,
+    "host_address": "",
+    "enabled": false,
+    "district": "Mzimba",
+    "region": "North"
+  },
+  {
+    "id": 1086,
+    "name": "Phalombe Mission Hospital",
+    "application_port": "3009",
+    "host_address": "10.43.223.3",
+    "enabled": true,
+    "district": "Phalombe",
+    "region": "South"
+  },
+  {
+    "id": 1087,
+    "name": "Gola Dispensary",
+    "application_port": null,
+    "host_address": "",
+    "enabled": false,
+    "district": "Chikwawa",
+    "region": "South"
+  },
+  {
+    "id": 1088,
+    "name": "Sucoma Health Center",
+    "application_port": null,
+    "host_address": "",
+    "enabled": false,
+    "district": "Chikwawa",
+    "region": "South"
+  },
+  {
+    "id": 1089,
+    "name": "Mkumaniza Health Center",
+    "application_port": null,
+    "host_address": "",
+    "enabled": false,
+    "district": "Chikwawa",
+    "region": "South"
+  },
+  {
+    "id": 1090,
+    "name": "Chipwaila Health Center",
+    "application_port": null,
+    "host_address": "",
+    "enabled": false,
+    "district": "Chikwawa",
+    "region": "South"
+  },
+  {
+    "id": 1091,
+    "name": "Didi Health Center",
+    "application_port": null,
+    "host_address": "",
+    "enabled": false,
+    "district": "Thyolo",
+    "region": "South"
+  },
+  {
+    "id": 1092,
+    "name": "St Josephs Mitengo Health Center",
+    "application_port": "3009",
+    "host_address": "10.43.189.3",
+    "enabled": true,
+    "district": "Thyolo",
+    "region": "South"
+  },
+  {
+    "id": 1093,
+    "name": "Nkhataombere Health Center",
+    "application_port": null,
+    "host_address": "",
+    "enabled": false,
+    "district": "Thyolo",
+    "region": "South"
+  },
+  {
+    "id": 1094,
+    "name": "Mbalanguzi Dispensary",
+    "application_port": null,
+    "host_address": "",
+    "enabled": false,
+    "district": "Thyolo",
+    "region": "South"
+  },
+  {
+    "id": 1095,
+    "name": "Mangunda Health Centre",
+    "application_port": "3009",
+    "host_address": "10.43.174.3",
+    "enabled": true,
+    "district": "Thyolo",
+    "region": "South"
+  },
+  {
+    "id": 1096,
+    "name": "Gombe Health Centre",
+    "application_port": null,
+    "host_address": "",
+    "enabled": false,
+    "district": "Thyolo",
+    "region": "South"
+  },
+  {
+    "id": 1097,
+    "name": "Bvumbwe Research Health Centre",
+    "application_port": "3009",
+    "host_address": "10.43.168.3",
+    "enabled": true,
+    "district": "Thyolo",
+    "region": "South"
+  },
+  {
+    "id": 1098,
+    "name": "Mpingo Maternity Wing",
+    "application_port": null,
+    "host_address": "",
+    "enabled": false,
+    "district": "Blantyre",
+    "region": "South"
+  },
+  {
+    "id": 1099,
+    "name": "Pensulo Health Centre",
+    "application_port": null,
+    "host_address": "",
+    "enabled": false,
+    "district": "Blantyre",
+    "region": "South"
+  },
+  {
+    "id": 1100,
+    "name": "Phalombe District Hospital",
+    "application_port": "3009",
+    "host_address": "10.43.223.3",
+    "enabled": true,
+    "district": "Phalombe",
+    "region": "South"
+  },
+  {
+    "id": 1101,
+    "name": "Zomba Forestry Dispensary",
+    "application_port": null,
+    "host_address": "",
+    "enabled": false,
+    "district": "Zomba",
+    "region": "South"
+  },
+  {
+    "id": 1102,
+    "name": "Nambiti II Health Center",
+    "application_port": null,
+    "host_address": "",
+    "enabled": false,
+    "district": "Phalombe",
+    "region": "South"
+  },
+  {
+    "id": 1103,
+    "name": "Nzama Health Center",
+    "application_port": null,
+    "host_address": "",
+    "enabled": false,
+    "district": "Ntcheu",
+    "region": "South"
+  },
+  {
+    "id": 1104,
+    "name": "Mlangeni Police Health Centre",
+    "application_port": null,
+    "host_address": "",
+    "enabled": false,
+    "district": "ntcheu",
+    "region": "Central"
+  },
+  {
+    "id": 1105,
+    "name": "Mtakataka Police Health Centre",
+    "application_port": null,
+    "host_address": "",
+    "enabled": false,
+    "district": "Dedza",
+    "region": "Central"
+  },
+  {
+    "id": 1106,
+    "name": "Kapiri Health Centre",
+    "application_port": "3009",
+    "host_address": "10.41.108.3",
+    "enabled": true,
+    "district": "Mchinji",
+    "region": "Central"
+  },
+  {
+    "id": 1107,
+    "name": "Lemwe Health Center",
+    "application_port": null,
+    "host_address": "",
+    "enabled": false,
+    "district": "Lilongwe",
+    "region": "Central"
+  },
+  {
+    "id": 1108,
+    "name": "Khasu Health Center",
+    "application_port": null,
+    "host_address": "",
+    "enabled": false,
+    "district": "Lilongwe",
+    "region": "Central"
+  },
+  {
+    "id": 1111,
+    "name": "Chezi Dispensary",
+    "application_port": null,
+    "host_address": "",
+    "enabled": false,
+    "district": "Dowa",
+    "region": "Central"
+  },
+  {
+    "id": 1112,
+    "name": "Mpherere Health Center",
+    "application_port": null,
+    "host_address": "",
+    "enabled": false,
+    "district": "Ntchisi",
+    "region": "Central"
+  },
+  {
+    "id": 1113,
+    "name": "Dwangwa Clinic Dispensary",
+    "application_port": null,
+    "host_address": "",
+    "enabled": false,
+    "district": "Ntchisi",
+    "region": "Central"
+  },
+  {
+    "id": 1114,
+    "name": "Ngonga Health Center",
+    "application_port": null,
+    "host_address": "",
+    "enabled": false,
+    "district": "Rumphi",
+    "region": "North"
+  },
+  {
+    "id": 1116,
+    "name": "Chitawira Private Hospital",
+    "application_port": null,
+    "host_address": "",
+    "enabled": false,
+    "district": "Blantyre",
+    "region": "South"
+  },
+  {
+    "id": 1117,
+    "name": "Lilongwe MASM Clinic",
+    "application_port": null,
+    "host_address": "",
+    "enabled": false,
+    "district": "lilongwe",
+    "region": "Central"
+  },
+  {
+    "id": 1118,
+    "name": "Midzemba Dispensary",
+    "application_port": null,
+    "host_address": "",
+    "enabled": false,
+    "district": "Neno",
+    "region": "South"
+  },
+  {
+    "id": 1119,
+    "name": "Zalewa Dispensary",
+    "application_port": null,
+    "host_address": "",
+    "enabled": false,
+    "district": "Neno",
+    "region": "South"
+  },
+  {
+    "id": 1120,
+    "name": "Zomba MASM Clinic",
+    "application_port": null,
+    "host_address": "",
+    "enabled": false,
+    "district": "Zomba",
+    "region": "South"
+  },
+  {
+    "id": 1121,
+    "name": "Somba",
+    "application_port": null,
+    "host_address": "",
+    "enabled": false,
+    "district": "Mangochi",
+    "region": "South"
+  },
+  {
+    "id": 1122,
+    "name": "Limbe Diagnostic Center",
+    "application_port": "3009",
+    "host_address": "10.43.17.3",
+    "enabled": true,
+    "district": "Blantyre",
+    "region": "South"
+  },
+  {
+    "id": 1123,
+    "name": "Kanjedza Police Dispensary",
+    "application_port": null,
+    "host_address": "",
+    "enabled": false,
+    "district": "Blantyre",
+    "region": "South"
+  },
+  {
+    "id": 1124,
+    "name": "Nyanyala Health Center",
+    "application_port": null,
+    "host_address": "",
+    "enabled": false,
+    "district": "Balaka",
+    "region": "South"
+  },
+  {
+    "id": 1125,
+    "name": "Chirimba Heath Centre",
+    "application_port": null,
+    "host_address": "",
+    "enabled": false,
+    "district": "Blantyre",
+    "region": "South"
+  },
+  {
+    "id": 1126,
+    "name": "Makheta Heath Centre",
+    "application_port": null,
+    "host_address": "",
+    "enabled": false,
+    "district": "Blantyre",
+    "region": "South"
+  },
+  {
+    "id": 1127,
+    "name": "Ntholowa Heath Centre",
+    "application_port": "3009",
+    "host_address": "10.42.97.3",
+    "enabled": true,
+    "district": "machinga",
+    "region": "South"
+  },
+  {
+    "id": 1128,
+    "name": "Senga Bay Baptist Dispensary",
+    "application_port": null,
+    "host_address": "",
+    "enabled": false,
+    "district": "Salima",
+    "region": "South"
+  },
+  {
+    "id": 1129,
+    "name": "Police College Dispensary",
+    "application_port": null,
+    "host_address": "",
+    "enabled": false,
+    "district": "Salima",
+    "region": "South"
+  },
+  {
+    "id": 1130,
+    "name": "Nsabwe Health Centre",
+    "application_port": null,
+    "host_address": "",
+    "enabled": false,
+    "district": "Thyolo",
+    "region": "South"
+  },
+  {
+    "id": 1131,
+    "name": "Mtengowanthenga Hospital",
+    "application_port": "3009",
+    "host_address": "10.41.176.3",
+    "enabled": true,
+    "district": "Dowa",
+    "region": "Central"
+  },
+  {
+    "id": 1132,
+    "name": "BT Civic Centre Dispensary",
+    "application_port": null,
+    "host_address": "",
+    "enabled": false,
+    "district": "Blantyre",
+    "region": "South"
+  },
+  {
+    "id": 1133,
+    "name": "Bilira Health Centre",
+    "application_port": "3009",
+    "host_address": "10.41.200.3",
+    "enabled": true,
+    "district": "Ntcheu",
+    "region": "Central"
+  },
+  {
+    "id": 1134,
+    "name": "Balaka OPD Health Centre",
+    "application_port": "3009",
+    "host_address": "10.42.52.200",
+    "enabled": true,
+    "district": "Balaka",
+    "region": "South"
+  },
+  {
+    "id": 1135,
+    "name": "Asalam Health Centre",
+    "application_port": null,
+    "host_address": "",
+    "enabled": false,
+    "district": "Mangochi",
+    "region": "South"
+  },
+  {
+    "id": 1137,
+    "name": "Madisi Hospital",
+    "application_port": "3009",
+    "host_address": "10.41.173.3",
+    "enabled": true,
+    "district": "Dowa",
+    "region": "Central"
+  },
+  {
+    "id": 1141,
+    "name": "HIV Reception",
+    "application_port": null,
+    "host_address": "172.25.9.131",
+    "enabled": true,
+    "district": "Blantyre",
+    "region": "South"
+  },
+  {
+    "id": 1143,
+    "name": "Nguludi Hospital",
+    "application_port": "3009",
+    "host_address": "10.43.84.3",
+    "enabled": true,
+    "district": "Chiradzulu",
+    "region": "South"
+  },
+  {
+    "id": 1144,
+    "name": "Soche Health Centre",
+    "application_port": "3009",
+    "host_address": "10.43.44.3",
+    "enabled": true,
+    "district": "blantyre",
+    "region": "South"
+  },
+  {
+    "id": 1145,
+    "name": "DHO Mobile",
+    "application_port": null,
+    "host_address": "",
+    "enabled": false,
+    "district": "blantyre",
+    "region": "South"
+  },
+  {
+    "id": 1146,
+    "name": "Majete",
+    "application_port": null,
+    "host_address": "",
+    "enabled": false,
+    "district": "Nsanje",
+    "region": "South"
+  },
+  {
+    "id": 1147,
+    "name": "MASM Area 43",
+    "application_port": null,
+    "host_address": "",
+    "enabled": false,
+    "district": "Nsanje",
+    "region": "Central"
+  },
+  {
+    "id": 1148,
+    "name": "Dignitas Study (Unknown Facilities)",
+    "application_port": null,
+    "host_address": "",
+    "enabled": false,
+    "district": "Zomba",
+    "region": "South"
+  },
+  {
+    "id": 1149,
+    "name": "Unknown Facility From Thyolo Lab",
+    "application_port": "3009",
+    "host_address": "10.43.180.2",
+    "enabled": true,
+    "district": "Thyolo",
+    "region": "South"
+  },
+  {
+    "id": 1150,
+    "name": "Unknown facilities from Mzuzu Central",
+    "application_port": "3009",
+    "host_address": "10.40.11.3",
+    "enabled": true,
+    "district": "Mzimba",
+    "region": "North"
+  },
+  {
+    "id": 1151,
+    "name": "Unknown facilities from Kamuzu Central Lab",
+    "application_port": null,
+    "host_address": "",
+    "enabled": false,
+    "district": "Lilongwe",
+    "region": "Central"
+  },
+  {
+    "id": 1152,
+    "name": "Unknown facilities from Dream Balaka",
+    "application_port": null,
+    "host_address": "",
+    "enabled": false,
+    "district": "Balaka",
+    "region": "South"
+  },
+  {
+    "id": 1153,
+    "name": "Unknown facilities from Mzimba Lab",
+    "application_port": "3009",
+    "host_address": "10.40.13.3",
+    "enabled": true,
+    "district": "Mzimba",
+    "region": "North"
+  },
+  {
+    "id": 1154,
+    "name": "Unknown facilities from PIH Lab",
+    "application_port": "",
+    "host_address": "",
+    "enabled": false,
+    "district": "Lilongwe",
+    "region": "Central"
+  },
+  {
+    "id": 1156,
+    "name": "Martin Preuss Centre",
+    "application_port": "3009",
+    "host_address": "10.41.4.2",
+    "enabled": true,
+    "district": "lilongwe",
+    "region": "central"
+  },
+  {
+    "id": 1157,
+    "name": "Lighthouse",
+    "application_port": "3009",
+    "host_address": "10.41.21.3",
+    "enabled": true,
+    "district": "lilongwe",
+    "region": "central"
+  }
+]

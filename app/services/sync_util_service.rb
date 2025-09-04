@@ -12,7 +12,7 @@ module SyncUtilService
       result_date:,
       acknwoledged_by: ack_by,
       acknwoledged_to_nlims: false,
-      acknwoledment_level: level
+      acknowledgment_level: level
     )
     test_record = Test.find_by(id: test_id)
     test_record.update(

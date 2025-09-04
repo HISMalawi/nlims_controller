@@ -3,6 +3,8 @@
 #  This migration creates the 'order_sync_trackers' table.
 class CreateOrderSyncTrackers < ActiveRecord::Migration[7.1]
   def change
+    return if table_exists?(:order_sync_trackers)
+
     create_table :order_sync_trackers do |t|
       t.string :tracking_number
       t.boolean :synced, default: false

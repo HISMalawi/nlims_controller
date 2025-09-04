@@ -11,6 +11,8 @@ module  SyncToNlimsService
       ).each do |tracker|
         nlims = NlimsSyncUtilsService.new(tracking_number(tracker&.test_id))
         nlims.push_test_actions_to_nlims(test_id: tracker&.test_id, action: 'status_update')
+      rescue StandardError => e
+        Rails.logger.error("Failed to push test actions to NLMIS: #{e.message}")
       end
     end
 
@@ -21,6 +23,8 @@ module  SyncToNlimsService
       ).each do |tracker|
         nlims = NlimsSyncUtilsService.new(tracker&.tracking_number)
         nlims.push_order_to_master_nlims(tracker&.tracking_number)
+      rescue StandardError => e
+        Rails.logger.error("Failed to push order to NLMIS: #{e.message}")
       end
     end
 
@@ -32,6 +36,8 @@ module  SyncToNlimsService
       ).each do |tracker|
         nlims = NlimsSyncUtilsService.new(tracking_number(tracker&.test_id))
         nlims.push_test_actions_to_nlims(test_id: tracker&.test_id, action: 'result_update')
+      rescue StandardError => e
+        Rails.logger.error("Failed to push test actions to NLMIS: #{e.message}")
       end
     end
 
@@ -41,14 +47,20 @@ module  SyncToNlimsService
         created_at: (Date.today - 120)..Date.today + 1
       ).each do |tracker|
         order = Speciman.find_by(tracking_number: tracker&.tracking_number)
-        nlims = NlimsSyncUtilsService.new(order&.tracking_number)
-        nlims.push_order_update_to_nlims(order&.id)
+        begin
+          nlims = NlimsSyncUtilsService.new(order&.tracking_number)
+          nlims.push_order_update_to_nlims(order&.id, status: tracker&.status)
+        rescue StandardError => e
+          Rails.logger.error("Failed to push order update to NLMIS: #{e.message}")
+        end
       end
     end
 
     def push_acknwoledgement_to_master_nlims
       nlims = NlimsSyncUtilsService.new(nil)
       nlims.push_acknwoledgement_to_master_nlims
+    rescue StandardError => e
+      Rails.logger.error("Failed to push acknowledgement to Master NLIMS: #{e.message}")
     end
 
     def synchronize_test_catalog

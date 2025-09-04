@@ -1,34 +1,53 @@
-<h1 style="text-align: center;">Search Orders</h1>
+<h1 style="text-align: center; color: #2c3e50; margin-bottom: 30px;">Search Orders</h1>
 
-<div style="display: flex; justify-content: center; margin-bottom: 20px;">
-  <form action="<%= search_orders_path %>" method="get">
-    <label for="tracking_number">Tracking Number:</label>
-    <input type="text" name="tracking_number" id="tracking_number" value="<%= params[:tracking_number] %>">
-    <button type="submit">Search</button>
-  </form>
+<div style="display: flex; justify-content: center; margin-bottom: 30px;">
+  <div style="background: white; padding: 25px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border: 1px solid #dee2e6; min-width: 400px;">
+    <form action="<%= search_orders_path %>" method="get" style="display: flex; flex-direction: column; gap: 15px;">
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <label for="tracking_number" style="font-weight: 500; color: #495057; font-size: 14px;">Tracking Number:</label>
+        <input type="text" name="tracking_number" id="tracking_number" value="<%= params[:tracking_number] %>"
+               style="padding: 10px 12px; border: 1px solid #ced4da; border-radius: 4px; font-size: 14px; width: 100%; box-sizing: border-box;"
+               placeholder="Enter tracking number to search">
+      </div>
+      <button type="submit" style="background: linear-gradient(135deg, #0066cc 0%, #004499 100%); color: white; border: none; padding: 12px 20px; border-radius: 4px; font-size: 14px; font-weight: 500; cursor: pointer; transition: opacity 0.2s;"
+              onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
+        Search Orders
+      </button>
+    </form>
+  </div>
 </div>
 
 <% if params[:tracking_number].present? %>
   <% if @orders.any? %>
     <div style="display: flex; justify-content: center;">
-      <table style="border: 1px solid #000; width: 80%; text-align: center; border-collapse: collapse;">
-        <tr style="background-color: #f2f2f2;">
-          <th style="padding: 12px; border: 1px solid #000;">Sending Facility</th>
-          <th style="padding: 12px; border: 1px solid #000;">Tracking Number</th>
-          <th style="padding: 12px; border: 1px solid #000;">Date Created(EMR)</th>
-          <th style="padding: 12px; border: 1px solid #000;">Date Created(NLIMS)</th>
-        </tr>
-        <% @orders.each do |order| %>
-          <tr>
-            <td style="padding: 12px; border: 1px solid #000;"><%= order.sending_facility %></td>
-            <td style="padding: 12px; border: 1px solid #000;"><%= order.tracking_number %></td>
-            <td style="padding: 12px; border: 1px solid #000;"><%= order.date_created %></td>
-            <td style="padding: 12px; border: 1px solid #000;"><%= order.created_at %></td>
+      <table style="border: 1px solid #dee2e6; width: 90%; border-collapse: collapse; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border-radius: 8px; overflow: hidden;">
+        <thead>
+          <tr style="background: linear-gradient(135deg, #0066cc 0%, #004499 100%); color: white;">
+            <th style="padding: 12px; border: 1px solid #dee2e6; font-size: 13px; font-weight: 600; text-align: left;">Sending Facility</th>
+            <th style="padding: 12px; border: 1px solid #dee2e6; font-size: 13px; font-weight: 600; text-align: left;">Tracking Number</th>
+            <th style="padding: 12px; border: 1px solid #dee2e6; font-size: 13px; font-weight: 600; text-align: left;">Date Created (EMR)</th>
+            <th style="padding: 12px; border: 1px solid #dee2e6; font-size: 13px; font-weight: 600; text-align: left;">Date Created (NLIMS)</th>
           </tr>
-        <% end %>
+        </thead>
+        <tbody>
+          <% @orders.each_with_index do |order, index| %>
+            <tr style="background-color: <%= index.even? ? '#f8f9fa' : 'white' %>; transition: background-color 0.2s;"
+                onmouseover="this.style.backgroundColor='#e3f2fd'"
+                onmouseout="this.style.backgroundColor='<%= index.even? ? '#f8f9fa' : 'white' %>'">
+              <td style="padding: 10px 12px; border: 1px solid #dee2e6; font-size: 12px; text-align: left; font-weight: 500; color: #495057;"><%= order.sending_facility %></td>
+              <td style="padding: 10px 12px; border: 1px solid #dee2e6; font-size: 12px; text-align: left; font-family: monospace; color: #007bff; font-weight: 600;"><%= order.tracking_number %></td>
+              <td style="padding: 10px 12px; border: 1px solid #dee2e6; font-size: 12px; text-align: left; color: #495057;"><%= order.date_created %></td>
+              <td style="padding: 10px 12px; border: 1px solid #dee2e6; font-size: 12px; text-align: left; color: #495057;"><%= order.created_at %></td>
+            </tr>
+          <% end %>
+        </tbody>
       </table>
     </div>
   <% else %>
-    <p style="text-align: center;">No orders found.</p>
+    <div style="text-align: center; margin-top: 30px;">
+      <div style="background: #fff3cd; border: 1px solid #ffeaa7; color: #856404; padding: 15px; border-radius: 8px; display: inline-block;">
+        <strong>No orders found</strong> for tracking number "<%= params[:tracking_number] %>"
+      </div>
+    </div>
   <% end %>
 <% end %>

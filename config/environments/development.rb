@@ -26,13 +26,30 @@ Rails.application.configure do
     config.cache_store = :null_store
   end
 
+  config.action_mailer.delivery_method = :smtp
+  host = 'smtp.office365.com'
+  config.action_mailer.default_url_options = {host: host}
+
+  # SMTP Settings
+  config.action_mailer.smtp_settings = {
+    address: 'smtp.office365.com',
+    port: 587,
+    user_name: ENV['NLIMS_EMAIL_ADDRESS'],
+    password: ENV['NLIMS_EMAIL_PASSWORD'],
+    authentication: :login,
+    enable_starttls_auto: true,
+    domain: 'pedaids.org'
+  }
+
   # Don't care if the mailer can't send.
-  config.action_mailer.raise_delivery_errors = false
+  config.action_mailer.raise_delivery_errors = true
 
   config.action_mailer.perform_caching = false
 
   # Print deprecation notices to the Rails logger.
   config.active_support.deprecation = :log
+
+  config.active_job.queue_adapter = :sidekiq
 
   # Raise an error on page load if there are pending migrations.
   config.active_record.migration_error = :page_load

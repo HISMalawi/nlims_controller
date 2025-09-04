@@ -1,0 +1,336 @@
+<h1 style="text-align: center;">Integrated Sites</h1>
+
+<!-- Summary Section -->
+<div id="summary-section" style="margin-bottom: 20px; padding: 15px; background-color: #fff3cd; border: 1px solid #ffeaa7; border-radius: 5px;">
+  <h3 style="margin: 0 0 15px 0; text-align: center; color: #856404;">Site Status Summary</h3>
+  <div style="display: flex; justify-content: center; flex-wrap: wrap; gap: 20px;">
+    <div style="text-align: center; min-width: 120px;">
+      <div style="background-color: #d1ecf1; color: #0c5460; padding: 10px; border-radius: 5px; border: 1px solid #bee5eb;">
+        <div style="font-size: 24px; font-weight: bold;" id="total-count">0</div>
+        <div style="font-size: 12px;">Total<br>Sites</div>
+      </div>
+    </div>
+    <div style="text-align: center; min-width: 120px;">
+      <div style="background-color: #d4edda; color: #155724; padding: 10px; border-radius: 5px; border: 1px solid #c3e6cb;">
+        <div style="font-size: 24px; font-weight: bold;" id="healthy-count">0</div>
+        <div style="font-size: 12px;">Healthy<br>Sites</div>
+      </div>
+    </div>
+    <div style="text-align: center; min-width: 120px;">
+      <div style="background-color: #f8d7da; color: #721c24; padding: 10px; border-radius: 5px; border: 1px solid #f5c6cb;">
+        <div style="font-size: 24px; font-weight: bold;" id="sync-issues-count">0</div>
+        <div style="font-size: 12px;">Not Synced<br>(> 48hrs)</div>
+      </div>
+    </div>
+    <div style="text-align: center; min-width: 120px;">
+      <div style="background-color: #f8d7da; color: #721c24; padding: 10px; border-radius: 5px; border: 1px solid #f5c6cb;">
+        <div style="font-size: 24px; font-weight: bold;" id="app-down-count">0</div>
+        <div style="font-size: 12px;">App Status<br>Down</div>
+      </div>
+    </div>
+    <div style="text-align: center; min-width: 120px;">
+      <div style="background-color: #f8d7da; color: #721c24; padding: 10px; border-radius: 5px; border: 1px solid #f5c6cb;">
+        <div style="font-size: 24px; font-weight: bold;" id="ping-failed-count">0</div>
+        <div style="font-size: 12px;">Ping Status<br>Failed</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Filter Controls -->
+<div style="display: flex; justify-content: center; flex-wrap: wrap; gap: 15px; margin-bottom: 20px; padding: 15px; background-color: #f8f9fa; border-radius: 5px;">
+  <div style="display: flex; flex-direction: column; align-items: center;">
+    <label for="search-input" style="margin-bottom: 5px; font-weight: bold;">Search Facility/District:</label>
+    <input type="text" id="search-input" placeholder="Enter sending facility or district" onkeyup="filterTable()" style="padding: 5px; border: 1px solid #ccc; border-radius: 3px; width: 200px;">
+  </div>
+  
+  <div style="display: flex; flex-direction: column; align-items: center;">
+    <label for="sync-filter" style="margin-bottom: 5px; font-weight: bold;">Last Sync:</label>
+    <select id="sync-filter" onchange="filterTable()" style="padding: 5px; border: 1px solid #ccc; border-radius: 3px; width: 150px;">
+      <option value="">All</option>
+      <option value="recent">Recent (< 48hrs)</option>
+      <option value="old">Old (> 48hrs)</option>
+    </select>
+  </div>
+  
+  <div style="display: flex; flex-direction: column; align-items: center;">
+    <label for="app-status-filter" style="margin-bottom: 5px; font-weight: bold;">App Status:</label>
+    <select id="app-status-filter" onchange="filterTable()" style="padding: 5px; border: 1px solid #ccc; border-radius: 3px; width: 120px;">
+      <option value="">All</option>
+      <option value="Running">Running</option>
+      <option value="Down">Down</option>
+    </select>
+  </div>
+  
+  <div style="display: flex; flex-direction: column; align-items: center;">
+    <label for="ping-status-filter" style="margin-bottom: 5px; font-weight: bold;">Ping Status:</label>
+    <select id="ping-status-filter" onchange="filterTable()" style="padding: 5px; border: 1px solid #ccc; border-radius: 3px; width: 120px;">
+      <option value="">All</option>
+      <option value="Success">Success</option>
+      <option value="Failed">Failed</option>
+    </select>
+  </div>
+  
+  <div style="display: flex; flex-direction: column; align-items: center; justify-content: flex-end;">
+    <button onclick="clearFilters()" style="padding: 8px 15px; background-color: #6c757d; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 12px;">Clear Filters</button>
+  </div>
+</div>
+
+<div style="display: flex; justify-content: center;">
+  <table id="orders-table" style="border: 1px solid #000; width: 95%; border-collapse: collapse;">
+    <thead>
+      <tr style="background: linear-gradient(135deg, #0066cc 0%, #004499 100%); color: white;">
+        <th style="padding: 8px; border: 1px solid #000; font-size: 12px; text-align: center;">#</th>
+        <th style="padding: 8px; border: 1px solid #000; font-size: 12px; text-align: left;">Sending Facility</th>
+        <th style="padding: 8px; border: 1px solid #000; font-size: 12px; text-align: left;">District</th>
+        <th style="padding: 8px; border: 1px solid #000; font-size: 12px; text-align: left;">IP Address</th>
+        <th style="padding: 8px; border: 1px solid #000; font-size: 12px; text-align: center;">Port</th>
+        <th style="padding: 8px; border: 1px solid #000; font-size: 12px; text-align: left;">Last Synced Order Timestamp (CHSU)</th>
+        <th style="padding: 8px; border: 1px solid #000; font-size: 12px; text-align: center;">App Status</th>
+        <th style="padding: 8px; border: 1px solid #000; font-size: 12px; text-align: center;">Ping Status</th>
+        <th style="padding: 8px; border: 1px solid #000; font-size: 12px; text-align: center;">App Version</th>
+        <th style="padding: 8px; border: 1px solid #000; font-size: 12px; text-align: center;">EMR Orders Past 24hrs</th>
+        <th style="padding: 8px; border: 1px solid #000; font-size: 12px; text-align: center;">NLIMS Local Orders Past 24hrs</th>
+        <th style="padding: 8px; border: 1px solid #000; font-size: 12px; text-align: center;">NLIMS CHSU Orders Past 24hrs</th>
+        <th style="padding: 8px; border: 1px solid #000; font-size: 12px; text-align: center;">Orders Summary Remark</th>
+        <th style="padding: 8px; border: 1px solid #000; font-size: 12px; text-align: center;">App-Ping Status Last Updated At</th>
+        <th style="padding: 8px; border: 1px solid #000; font-size: 12px; text-align: center;">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @sites[:data].each_with_index do |site, index| %>
+        <tr>
+          <td style="padding: 8px; border: 1px solid #000; font-size: 11px; text-align: center;"><%= index + 1 %></td>
+          <td style="padding: 8px; border: 1px solid #000; font-size: 11px; text-align: left;"><%= site[:sending_facility] %></td>
+          <td style="padding: 8px; border: 1px solid #000; font-size: 11px; text-align: left;"><%= site[:district] || 'N/A' %></td>
+          <td style="padding: 8px; border: 1px solid #000; font-size: 11px; text-align: left;"><%= site[:ip_address] || 'N/A' %></td>
+          <td style="padding: 8px; border: 1px solid #000; font-size: 11px; text-align: center;"><%= site[:port] || 'N/A' %></td>
+          <td style="padding: 8px; border: 1px solid #000; font-size: 11px; text-align: left; background-color: <%= site[:is_gt_24hr] ? '#f8d7da' : '#d4edda' %>; color: <%= site[:is_gt_24hr] ? '#721c24' : '#155724' %>;" data-sync-status="<%= site[:is_gt_24hr] ? 'old' : 'recent' %>">
+            <%= site[:last_sync_date] %>
+          </td>
+          <td style="padding: 8px; border: 1px solid #000; font-size: 11px; text-align: center; background-color: <%= site[:app_status] == 'Running' ? '#d4edda' : '#f8d7da' %>; color: <%= site[:app_status] == 'Running' ? '#155724' : '#721c24' %>;">
+            <strong><%= site[:app_status] %></strong>
+          </td>
+          <td style="padding: 8px; border: 1px solid #000; font-size: 11px; text-align: center; background-color: <%= site[:ping_status] == 'Success' ? '#d4edda' : '#f8d7da' %>; color: <%= site[:ping_status] == 'Success' ? '#155724' : '#721c24' %>;">
+            <strong><%= site[:ping_status] %></strong>
+          </td>
+           <td style="padding: 8px; border: 1px solid #000; font-size: 11px; text-align: center;">
+            <strong><%= site[:app_version] %></strong>
+          </td>
+          <td style="padding: 8px; border: 1px solid #000; font-size: 11px; text-align: center;">
+            <%= site[:order_summary]['emr'] ? site[:order_summary]['emr']['count'] : 0 %>
+          </td>
+          <td style="padding: 8px; border: 1px solid #000; font-size: 11px; text-align: center;">
+            <%= site[:order_summary]['nlims_local'] ? site[:order_summary]['nlims_local']['count'] : 0 %>
+          </td>
+          <td style="padding: 8px; border: 1px solid #000; font-size: 11px; text-align: center;">
+            <%= site[:order_summary]['nlims_chsu'] ? site[:order_summary]['nlims_chsu']['count'] : 0 %>
+          </td>
+          <td style="padding: 8px; border: 1px solid #000; font-size: 10px; text-align: center;">
+            <%= site[:order_summary]['overall_remark'] || 'N/A' %>
+          </td>
+          <td style="padding: 8px; border: 1px solid #000; font-size: 10px; text-align: center;" id="status-updated-<%= index %>">
+            <%= site[:status_last_updated] %>
+          </td>
+          <td style="padding: 8px; border: 1px solid #000; font-size: 11px; text-align: center;">
+            <button onclick="refreshSiteStatus('<%= site[:sending_facility] %>', <%= index %>)" 
+                    id="refresh-btn-<%= index %>"
+                    style="padding: 4px 8px; background-color: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 10px;">
+              Refresh
+            </button>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>
+
+<p id="no-results-message" style="text-align: center; display: none; color: #721c24; font-weight: bold; margin-top: 20px;">No matching records found.</p>
+
+<script>
+  // Initialize summary counts on page load
+  document.addEventListener('DOMContentLoaded', function() {
+    updateSummary();
+  });
+
+  function updateSummary() {
+    const table = document.getElementById('orders-table');
+    const rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+    
+    let syncIssues = 0;
+    let appDown = 0;
+    let pingFailed = 0;
+    let healthy = 0;
+    let total = 0;
+
+    for (const row of rows) {
+      // Only count visible rows
+      if (row.style.display !== 'none') {
+        total++;
+        
+        const syncStatus = row.cells[5].getAttribute('data-sync-status');
+        const appStatus = row.cells[6].innerText.trim();
+        const pingStatus = row.cells[7].innerText.trim();
+
+        // Count issues
+        if (syncStatus === 'old') syncIssues++;
+        if (appStatus === 'Down') appDown++;
+        if (pingStatus === 'Failed') pingFailed++;
+        
+        // Count healthy sites (recent sync, running app, successful ping)
+        if (syncStatus === 'recent' && appStatus === 'Running' && pingStatus === 'Success') {
+          healthy++;
+        }
+      }
+    }
+
+    // Update the summary display
+    document.getElementById('sync-issues-count').textContent = syncIssues;
+    document.getElementById('app-down-count').textContent = appDown;
+    document.getElementById('ping-failed-count').textContent = pingFailed;
+    document.getElementById('healthy-count').textContent = healthy;
+    document.getElementById('total-count').textContent = total;
+  }
+
+  function filterTable() {
+    const searchInput = document.getElementById('search-input').value.toLowerCase();
+    const syncFilter = document.getElementById('sync-filter').value;
+    const appStatusFilter = document.getElementById('app-status-filter').value;
+    const pingStatusFilter = document.getElementById('ping-status-filter').value;
+    
+    const table = document.getElementById('orders-table');
+    const rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+    let hasResults = false;
+
+    for (const row of rows) {
+      const sendingFacility = row.cells[1].innerText.toLowerCase();
+      const district = row.cells[2].innerText.toLowerCase();
+      const syncStatus = row.cells[5].getAttribute('data-sync-status');
+      const appStatus = row.cells[6].innerText.trim();
+      const pingStatus = row.cells[7].innerText.trim();
+
+      // Check all filter conditions
+      const matchesSearch = searchInput === '' || 
+                           sendingFacility.includes(searchInput) || 
+                           district.includes(searchInput);
+      
+      const matchesSync = syncFilter === '' || syncStatus === syncFilter;
+      
+      const matchesAppStatus = appStatusFilter === '' || appStatus === appStatusFilter;
+      
+      const matchesPingStatus = pingStatusFilter === '' || pingStatus === pingStatusFilter;
+
+      // Show row only if all conditions are met
+      if (matchesSearch && matchesSync && matchesAppStatus && matchesPingStatus) {
+        row.style.display = '';
+        hasResults = true;
+      } else {
+        row.style.display = 'none';
+      }
+    }
+
+    // Show/hide "No results found" message
+    document.getElementById('no-results-message').style.display = hasResults ? 'none' : 'block';
+    
+    // Update summary counts based on filtered results
+    updateSummary();
+  }
+
+  function clearFilters() {
+    document.getElementById('search-input').value = '';
+    document.getElementById('sync-filter').value = '';
+    document.getElementById('app-status-filter').value = '';
+    document.getElementById('ping-status-filter').value = '';
+    filterTable();
+  }
+
+  async function refreshSiteStatus(siteName, rowIndex) {
+    const refreshBtn = document.getElementById(`refresh-btn-${rowIndex}`);
+    const statusCell = document.getElementById(`status-updated-${rowIndex}`);
+    const table = document.getElementById('orders-table');
+    const row = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr')[rowIndex];
+    
+    // Disable button and show loading state
+    refreshBtn.disabled = true;
+    refreshBtn.textContent = 'Loading...';
+    refreshBtn.style.backgroundColor = '#6c757d';
+    
+    try {
+      const response = await fetch(`/refresh_app_ping_status?site_name=${encodeURIComponent(siteName)}`);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      // Update the row with new data
+      if (data.app_status) {
+        const appStatusCell = row.cells[6];
+        appStatusCell.innerHTML = `<strong>${data.app_status}</strong>`;
+        appStatusCell.style.backgroundColor = data.app_status === 'Running' ? '#d4edda' : '#f8d7da';
+        appStatusCell.style.color = data.app_status === 'Running' ? '#155724' : '#721c24';
+      }
+      
+      if (data.ping_status) {
+        const pingStatusCell = row.cells[7];
+        pingStatusCell.innerHTML = `<strong>${data.ping_status}</strong>`;
+        pingStatusCell.style.backgroundColor = data.ping_status === 'Success' ? '#d4edda' : '#f8d7da';
+        pingStatusCell.style.color = data.ping_status === 'Success' ? '#155724' : '#721c24';
+      }
+      
+      if (data.status_last_updated) {
+        statusCell.textContent = data.status_last_updated;
+      }
+      if (data.last_sync_date){
+        const syncStatusCell = row.cells[5];
+        syncStatusCell.textContent = data.last_sync_date;
+        syncStatusCell.setAttribute('data-sync-status', data.is_gt_24hr ? 'old' : 'recent');
+        syncStatusCell.style.backgroundColor = data.is_gt_24hr ? '#f8d7da' : '#d4edda';
+        syncStatusCell.style.color = data.is_gt_24hr ? '#721c24' : '#155724';
+      }
+      if (data.app_version){
+        const appVersionCell = row.cells[8];
+        appVersionCell.textContent = data.app_version;
+      }
+      if (data.order_summary){
+        const emrOrdersCell = row.cells[9];
+        const nlimsLocalOrdersCell = row.cells[10];
+        const nlimsChsuOrdersCell = row.cells[11];
+        const overallRemarkCell = row.cells[12];
+        emrOrdersCell.textContent = data.order_summary['emr'] ? data.order_summary['emr']['count'] : 0;
+        nlimsLocalOrdersCell.textContent = data.order_summary['nlims_local'] ? data.order_summary['nlims_local']['count'] : 0;
+        nlimsChsuOrdersCell.textContent = data.order_summary['nlims_chsu'] ? data.order_summary['nlims_chsu']['count'] : 0;
+        overallRemarkCell.textContent = data.order_summary['overall_remark'] || 'N/A';
+      }
+      
+      // Update summary counts after refresh
+      updateSummary();
+      
+      // Show success feedback
+      refreshBtn.style.backgroundColor = '#28a745';
+      refreshBtn.textContent = 'Updated';
+      
+      setTimeout(() => {
+        refreshBtn.style.backgroundColor = '#007bff';
+        refreshBtn.textContent = 'Refresh';
+        refreshBtn.disabled = false;
+      }, 2000);
+      
+    } catch (error) {
+      console.error('Error refreshing site status:', error);
+      
+      // Show error feedback
+      refreshBtn.style.backgroundColor = '#dc3545';
+      refreshBtn.textContent = 'Error';
+      
+      setTimeout(() => {
+        refreshBtn.style.backgroundColor = '#007bff';
+        refreshBtn.textContent = 'Refresh';
+        refreshBtn.disabled = false;
+      }, 3000);
+      
+      alert(`Failed to refresh status for ${siteName}. Please try again.`);
+    }
+  }
+</script>

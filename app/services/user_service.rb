@@ -22,36 +22,41 @@ module UserService
   end
 
   def self.remove_tokens_for_account_creation
-    tokens = JSON.parse(File.read("#{Rails.root}/tmp/nlims_account_creating_token.json"))
+    file_path = "#{Rails.root}/tmp/nlims_account_creating_token.json"
+    begin
+      tokens = JSON.parse(File.read(file_path))
+    rescue StandardError => e
+      Rails.logger.error("Error reading tokens file: #{e.message}")
+      File.write(file_path, { 'tokens' => ['0'] }.to_json)
+      tokens = { 'tokens' => ['0'] }
+    end
     return unless tokens['tokens'].length > 10
 
     header = {}
-    File.unlink("#{Rails.root}/tmp/nlims_account_creating_token.json")
-    FileUtils.touch "#{Rails.root}/tmp/nlims_account_creating_token.json"
+    File.write(file_path, { 'tokens' => [] }.to_json)
     header['tokens'] = ['0']
-    File.open("#{Rails.root}/tmp/nlims_account_creating_token.json", 'w') do |f|
-      f.write(header.to_json)
-    end
+    File.write(file_path, header.to_json)
   end
 
   def self.create_token
-    token_chars = ('a'..'z').to_a + ('A'..'Z').to_a + ('0'..'9').to_a
-    token_length = 12
-    Array.new(token_length) { token_chars[rand(token_chars.length)] }.join
+    # token_chars = ('a'..'z').to_a + ('A'..'Z').to_a + ('0'..'9').to_a
+    # token_length = 12
+    # Array.new(token_length) { token_chars[rand(token_chars.length)] }.join
+    SecureRandom.uuid
   end
 
   def self.compute_expiry_time
     token = create_token
     time = Time.now
-    time += 6.hours
+    time += 24.hours
     { token:, expiry_time: time.strftime('%Y%m%d%H%M%S') }
   end
 
   def self.check_token(token)
     user = User.where(token:).first
-
-    return false if user.nil?
-    return true if user.token_expiry_time > Time.now
+    return false unless user
+    return false unless user.token_expiry_time.present?
+    return true if user.token_expiry_time > Time.now.strftime('%Y%m%d%H%M%S')
 
     false
   end
@@ -93,7 +98,9 @@ module UserService
 
   def self.re_authenticate(username, password)
     user = User.where(username:).first
-    token = create_token
+    token_valid = check_token(user.token) if user
+
+    token = token_valid ? user.token : create_token
     expiry_time = compute_expiry_time
 
     return false unless user

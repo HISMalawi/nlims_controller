@@ -1,5 +1,7 @@
 class CreateDataAnomalies < ActiveRecord::Migration[5.1]
   def change
+    return if table_exists?(:data_anomalies)
+
     create_table :data_anomalies do |t|
       t.string :data_type
       t.string :data   

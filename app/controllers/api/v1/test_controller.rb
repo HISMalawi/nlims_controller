@@ -294,10 +294,29 @@ class API::V1::TestController < ApplicationController
     render(plain: response.to_json) && return
   end
 
+  def sites
+    render json: Site.all.order(:name)
+  end
+
   private
 
   def update_remote_host
-    host = TrackingNumberHost.find_by(tracking_number: params[:tracking_number])
+    return unless params[:tracking_number].present?
+
+    host = if Config.local_nlims?
+             TrackingNumberHost.find_or_create_by(
+               tracking_number: params[:tracking_number],
+               source_host: request.remote_ip
+             )
+           else
+             TrackingNumberHost.find_by(
+               tracking_number: params[:tracking_number],
+               source_host: request.remote_ip
+             )
+           end
+
+    return unless host.present?
+
     host&.update(
       update_host: request.remote_ip,
       update_app_uuid: User.find_by(token: request.headers['token'])&.app_uuid

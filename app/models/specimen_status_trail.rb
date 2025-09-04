@@ -13,6 +13,7 @@ class SpecimenStatusTrail < ApplicationRecord
 
   def push_status_to_master_nlims
     return if Config.master_update_source?(tracking_number)
+    return if OrderStatusSyncTracker.exists?(tracking_number:, status:)
 
     OrderStatusSyncTracker.create(tracking_number:, status:)
     SyncWithNlimsJob.perform_async({
@@ -24,6 +25,8 @@ class SpecimenStatusTrail < ApplicationRecord
 
   def push_status_to_local_nlims
     return if Config.same_source?(tracking_number)
+    return if !local_nlims? && !Config.host_valid?(tracking_number)
+    return if OrderStatusSyncTracker.exists?(tracking_number:, status:)
 
     OrderStatusSyncTracker.create(tracking_number:, status:)
     SyncWithNlimsJob.perform_async({

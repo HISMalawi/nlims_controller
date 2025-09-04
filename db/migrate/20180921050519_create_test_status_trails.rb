@@ -1,5 +1,7 @@
 class CreateTestStatusTrails < ActiveRecord::Migration[5.1]
   def change
+    return if table_exists?(:test_status_trails)
+
     create_table :test_status_trails do |t|
 
       t.references :test

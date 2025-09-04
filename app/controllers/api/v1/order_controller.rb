@@ -263,7 +263,7 @@ class API::V1::OrderController < ApplicationController
             date_dispatched ||= Time.current.strftime('%Y-%m-%d %H:%M:%S')
             delivery_type = params[:properties]['delivery_type']
             delivery_location = params[:properties]['delivery_location']
-            dispatcher = 'rh4'
+            dispatcher = params[:properties]['dispatcher'] || 'rh4'
             if tracking_numbers && date_dispatched && delivery_type
               dispatcher_type = SpecimenDispatchType.find_by(name: delivery_type)
               msg = ''
@@ -331,7 +331,7 @@ class API::V1::OrderController < ApplicationController
       }
       render(plain: response.to_json) && return
     end
-    if msg
+    if msg.present?
       response = {
         status: 401,
         error: true,
@@ -590,7 +590,7 @@ class API::V1::OrderController < ApplicationController
             result_date: result['result_date'],
             acknwoledged_by: 'emr_at_facility',
             acknwoledged_to_nlims: false,
-            acknwoledment_level: 2
+            acknowledgment_level: 2
           )
         end
       end
@@ -704,12 +704,26 @@ class API::V1::OrderController < ApplicationController
     render(plain: response.to_json) && return
   end
 
+  def order_tracking_numbers_to_logged
+    order_id = params.require(:order_id)
+    tracking_numbers = Speciman.where(id: (order_id.to_i).., created_at: '2022-01-01'..).order(id: :asc).where.not(id: order_id.to_i)
+                               .limit(params[:limit] || 50_000).select(:id, :tracking_number)
+    render json: tracking_numbers
+  end
+
+  def verify_order_tracking_number_exist
+    exist = TrackingNumberLogger.where(tracking_number: params[:tracking_number]).exists? || Speciman.where(tracking_number: params[:tracking_number]).exists?
+    render json: { data: exist, message: exist ? 'Tracking number exists' : 'Tracking number does not exist', status: 200 }
+  end
+
   private
 
   def remote_host
     return unless params[:tracking_number].present?
 
-    TrackingNumberHost.find_or_create_by(
+    return if TrackingNumberHost.where(tracking_number: params[:tracking_number]).exists?
+
+    TrackingNumberHost.create(
       tracking_number: params[:tracking_number],
       source_host: request.remote_ip,
       source_app_uuid: User.find_by(token: request.headers['token'])&.app_uuid
@@ -717,8 +731,12 @@ class API::V1::OrderController < ApplicationController
   end
 
   def update_remote_host
+    return unless params[:tracking_number].present?
+
     host = TrackingNumberHost.find_by(tracking_number: params[:tracking_number])
-    host.update(
+    return unless host.present?
+
+    host&.update(
       update_host: request.remote_ip,
       update_app_uuid: User.find_by(token: request.headers['token'])&.app_uuid
     )
