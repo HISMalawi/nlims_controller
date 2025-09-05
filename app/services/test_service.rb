@@ -308,20 +308,20 @@ module TestService
       result_value = measure.nlims_code == 'NLIMS_TI_0294_MWI' ? test_result[:value].gsub(',', '') : test_result[:value]
       next if result_already_available?(lab_test_id, measure.id, result_value)
 
-      test_result = TestResult.find_by(test_id: lab_test_id, measure_id: measure.id)
+      previous_result = TestResult.find_by(test_id: lab_test_id, measure_id: measure.id)
       device_name = "#{test_result[:platform]} #{test_result[:platformserial]}".strip
-      if test_result.present?
+      if previous_result.present?
         TestResultTrail.create!(
           measure_id: measure.id,
           test_id: lab_test_id,
-          old_result: test_result.result,
+          old_result: previous_result.result,
           new_result: result_value,
-          old_device_name: test_result.device_name,
+          old_device_name: previous_result.device_name,
           new_device_name: device_name,
-          old_time_entered: test_result.time_entered,
+          old_time_entered: previous_result.time_entered,
           new_time_entered: test_result[:result_date]
         )
-        test_result.update!(result: result_value, time_entered: test_result[:result_date])
+        previous_result.update!(result: result_value, time_entered: test_result[:result_date])
         test_status_trail = TestStatusTrail.where(test_id: lab_test_id, test_status_id: 5).first
         test_status_trail.update!(time_updated: test_result[:result_date]) unless test_status_trail.blank?
         result_sync_tracker(params[:tracking_number], lab_test_id)

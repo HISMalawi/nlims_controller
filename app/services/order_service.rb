@@ -888,13 +888,11 @@ module OrderService
   end
 
   def self.create_specimen(params)
-    params[:sample_status] = 'specimen_accepted' if params[:sample_status] == 'specimen-accepted'
-    params[:sample_status] = 'specimen_accepted' if params[:status] == 'specimen-accepted'
-    sample_status_id = SpecimenStatus.get_specimen_status_id(params[:sample_status])
+    sample_status_id = SpecimenStatus.get_specimen_status_id(params[:sample_status]&.gsub('-', '_'))
     order_ward = Ward.get_ward_id(NameMapping.actual_name_of(params[:order_location]))
     Speciman.create!(
       tracking_number: params[:tracking_number],
-      specimen_type_id: SpecimenType.get_specimen_type_id(params[:sample_type]),
+      specimen_type_id: SpecimenType.find_by(nlims_code: params.dig(:sample_type, :nlims_code))&.id,
       specimen_status_id: sample_status_id,
       couch_id: params[:couch_id] || SecureRandom.uuid,
       ward_id: order_ward,
@@ -923,15 +921,6 @@ module OrderService
       time_created: time_created,
       test_status_id: test_status_id
     )
-    Test.create(
-            specimen_id: sp_obj.id,
-            test_type_id: rst,
-            patient_id: patient_obj.id,
-            created_by: "#{params[:who_order_test_first_name]} #{params[:who_order_test_last_name]}",
-            panel_id: '',
-            time_created: time,
-            test_status_id: rst2
-          )
   end
 
   def self.create_patient(params)
@@ -960,15 +949,14 @@ module OrderService
   def self.create_order_v2(params)
     ActiveRecord::Base.transaction do
       params[:tests].each do |tst|
-        tst =  check_test_name(tst)
-        return [false, 'test name not available in nlims'] if tst == false
+        test_name = TestType.find_by(nlims_code: tst.dig(:test_type, :nlims_code))
+        return [false, 'test name not available in nlims'] unless test_name.present?
       end
-      params[:sample_type] = NameMapping.actual_name_of(params[:sample_type])
-      spc = SpecimenType.find_by(name: params[:sample_type])
-      return [false, 'specimen type not available in nlims'] if spc.blank?
+      specimen_type = SpecimenType.find_by(nlims_code: params.dig(:sample_type, :nlims_code))
+      return [false, 'specimen type not available in nlims'] if specimen_type.blank?
 
-      spc = SpecimenStatus.find_by(name: params[:sample_status])
-      return [false, 'specimen status not available in nlims'] if spc.blank?
+      specimen_status = SpecimenStatus.find_by(name: params[:sample_status]&.gsub('-', '_'))
+      return [false, 'specimen status not available in nlims'] if specimen_status.blank?
 
       patient = create_patient(params)
       specimen = create_specimen(params)
@@ -981,11 +969,11 @@ module OrderService
         time_created = params[:date_sample_drawn] || Date.today
         test_status_id = TestStatus.get_test_status_id('drawn')
         created_by = "#{params[:who_order_test_first_name]} #{params[:who_order_test_last_name]}"
-        if check_test(lab_test)
+        if PanelType.find_by(name: lab_test.dig(:test_type, :name)).blank?
           create_test(
             patient,
             specimen,
-            TestType.get_test_type_id(lab_test),
+            TestType.find_by(nlims_code: lab_test.dig(:test_type, :nlims_code))&.id,
             time_created,
             test_status_id,
             created_by,
@@ -1013,28 +1001,30 @@ module OrderService
     [false, e.message]
   end
 
-  def self.update_test(params)
+  def self.update_tests(params)
     order, lab_test, test_status = validate_test_update_params(params)
     return [false, lab_test] if order == false
 
     ActiveRecord::Base.transaction do
       params[:status_trail].each do |trail|
-        next if TestStatusTrail.exists?(test_id: lab_test.id, test_status_id: test_status.id)
+        trail_status = TestStatus.find_by(name: trail[:status])
+        next unless trail_status.present?
+        next if TestStatusTrail.exists?(test_id: lab_test.id, test_status_id: trail_status.id)
 
         TestStatusTrail.create!(
           test_id: lab_test.id,
           time_updated: trail[:timestamp],
-          test_status_id: trail[:test_status_id],
+          test_status_id: trail_status.id,
           who_updated_id: trail[:updated_by]['id_number'].to_s,
           who_updated_name: "#{trail[:updated_by]['first_name']} #{trail[:updated_by]['last_name']}",
           who_updated_phone_number: trail[:updated_by]['phone_number'].to_s
         )
       end
-      TestService.update_test_status(lab_test.id, test_status.id)
+      TestService.update_test_status(lab_test.id, test_status)
       if params[:test_results].present? && test_status&.id == TestStatus.get_test_status_id('verified')
         TestService.add_test_results(params, lab_test.id)
       end
-    [true, '']
+      [true, 'test updated successfuly']
     rescue StandardError => e
       [false, e.message]
     end
@@ -1043,14 +1033,14 @@ module OrderService
   def self.validate_test_update_params(params)
     return [false, 'tracking number not provided'] if params[:tracking_number].blank?
     return [false, 'test status not provided'] if params[:test_status].blank?
-    return [false, 'test type not provided'] if params.dig(:test_types, :nlims_code).blank?
+    return [false, 'test type not provided'] if params.dig(:test_type, :nlims_code).blank?
     return [false, 'time updated not provided'] if params[:time_updated].blank?
 
-    order = OrderService.get_order_by_tracking_number_sql(params[:tracking_number])
+    order = OrderService.get_order_by_tracking_number_sql(params[:tracking_number], nil)
     return [false, 'order not available'] unless order
 
     lab_test = Test.joins(:test_type)
-                   .where(specimen_id: order.id, test_types: { nlims_code: params.dig(:test_types, :nlims_code) }).first
+                   .where(specimen_id: order.id, test_types: { nlims_code: params.dig(:test_type, :nlims_code) }).first
     return [false, 'order with such test not available'] unless lab_test
 
     test_status = TestStatus.find_by(name: params[:test_status])
@@ -1063,7 +1053,7 @@ module OrderService
 
     state, error_message = TestService.validate_time_updated(params[:time_updated], order)
     unless state
-      failed_test_update = FailedTestUpdate.find_or_create_by(tracking_number: params[:tracking_number], test_name: params.dig(:test_types, :name), failed_step_status: test_status&.name)
+      failed_test_update = FailedTestUpdate.find_or_create_by(tracking_number: params[:tracking_number], test_name: params.dig(:test_type, :name), failed_step_status: test_status&.name)
       failed_test_update.update(error_message: error_message, time_from_source: params[:time_updated])
       return [false, error_message]
     end

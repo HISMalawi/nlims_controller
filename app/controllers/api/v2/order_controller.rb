@@ -132,13 +132,59 @@ class API::V2::OrderController < ApplicationController
 
   def create_order
     message = required_params
-    render json: { error: message }, status: :bad_request if message
+    if message.present?
+      render json: { error: true, message: message, data: {} }, status: :unprocessable_entity and return
+    end
 
-    order = OrderService.create_order(params)
-    if order[:status] == 'success'
-      render json: { tracking_number: order[:tracking_number], message: 'Order created successfully' }, status: :created
+    specimen = Speciman.find_by(tracking_number: params[:tracking_number])
+    if specimen.present?
+      if params[:tests].present?
+        params[:tests].each do |lab_test|
+          OrderService.update_tests(lab_test)
+        end
+      end
+      render json: {
+        error: false,
+        message: 'order already available',
+        data: { tracking_number: specimen.tracking_number }
+      }, status: :created and return
+    end
+
+    status, response = OrderService.create_order_v2(params)
+    if status == true
+      if params[:tests].present?
+        params[:tests].each do |lab_test|
+          OrderService.update_tests(lab_test)
+        end
+      end
+      render json: {
+        error: false,
+        message: 'order created successfuly',
+        data: { tracking_number: response }
+      }, status: :created
     else
-      render json: { error: order[:message] }, status: :unprocessable_entity
+      render json: {
+        error: true,
+        message: response,
+        data: {}
+      }, status: :unprocessable_entity
+    end
+  end
+
+  def update_tests
+    status, response = OrderService.update_tests(params)
+    if status == true
+      render json: {
+        error: false,
+        message: response,
+        data: {}
+      }, status: :ok
+    else
+      render json: {
+        error: true,
+        message: response,
+        data: {}
+      }, status: :unprocessable_entity
     end
   end
 
@@ -155,15 +201,13 @@ class API::V2::OrderController < ApplicationController
   end
 
   def required_params
-    required_params = {
+    required = {
       'district' => 'district not provided',
       'health_facility_name' => 'health facility name not provided',
       'requesting_clinician' => 'requesting clinician not provided',
       'first_name' => 'patient first name not provided',
       'last_name' => 'patient last name not provided',
-      'phone_number' => 'patient phone number not provided',
       'gender' => 'patient gender not provided',
-      'national_patient_id' => 'patient ID not provided',
       'sample_type' => 'sample type not provided',
       'tests' => 'tests not provided',
       'date_sample_drawn' => 'date for sample drawn not provided',
@@ -174,6 +218,6 @@ class API::V2::OrderController < ApplicationController
       'who_order_test_first_name' => 'first name for person ordering not provided',
       'who_order_test_last_name' => 'last name for person ordering not provided'
     }
-    required_params.detect { |key, _| !params[key] }&.last
+    required.detect { |key, _| params[key].blank? }&.last
   end
 end
