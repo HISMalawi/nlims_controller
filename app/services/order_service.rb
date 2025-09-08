@@ -10,7 +10,7 @@ module OrderService
         return [false, 'test name not available in nlims'] if tst == false
       end
       params[:sample_type] = NameMapping.actual_name_of(params[:sample_type])
-      spc = SpecimenType.find_by(name: params[:sample_type])
+      spc = SpecimenType.find_by(name: params[:sample_type]) || SpecimenType.find_by(preferred_name: params[:sample_type])
       return [false, 'specimen type not available in nlims'] if spc.blank?
 
       spc = SpecimenStatus.find_by(name: params[:sample_status])
@@ -83,7 +83,7 @@ module OrderService
             test_status_id: rst2
           )
         else
-          pa_id = PanelType.where(name: tst).first
+          pa_id = PanelType.where(name: tst)&.first || PanelType.where(preferred_name: tst)&.first
           res = TestType.find_by_sql("SELECT test_types.id FROM test_types INNER JOIN panels
                                                             ON panels.test_type_id = test_types.id
                                                             INNER JOIN panel_types ON panel_types.id = panels.panel_type_id
@@ -270,7 +270,7 @@ module OrderService
   end
 
   def self.check_test_name(test_name)
-    test_type = TestType.find_by(name: test_name)
+    test_type = TestType.find_by(name: test_name) || TestType.find_by(preferred_name: test_name)
     return test_type.name if test_type.present?
 
     FailedTestType.find_or_create_by(test_type: test_name, reason: 'Test Type not avail in NLIMS')

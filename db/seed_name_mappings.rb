@@ -22,6 +22,8 @@ end
 name_mappings = {
   'PIMA CD4' => 'CD4',
   'Viral Load Gene X-per' => 'Viral Load',
+  'HIV viral load' => 'Viral Load',
+  'CD4 Count' => 'CD4 Enumeration',
   'Cr Ag' => 'Cryptococcus Antigen Test',
   'Cd4 Count' => 'CD4',
   'Gene Xpert' => 'TB Tests',

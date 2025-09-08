@@ -9,9 +9,9 @@ module TestService
     sql_order = OrderService.get_order_by_tracking_number_sql(params[:tracking_number], params[:arv_number])
     return [false, 'order not available'] if sql_order == false
 
-    test_name = NameMapping.actual_name_of(params[:test_name])
+    test_name = OrderService.check_test_name(NameMapping.actual_name_of(params[:test_name]))
     test_status = TestStatus.find_by(name: params[:test_status])
-    return [false, 'wrong parameter on test name provided'] unless TestType.exists?(name: test_name)
+    return [false, 'wrong parameter on test name provided'] unless test_name
     return [false, 'test status provided, not within scope of tests statuses'] if test_status.blank?
 
     test_id = Test.find_by_sql("SELECT tests.id FROM tests INNER JOIN test_types ON tests.test_type_id = test_types.id
@@ -48,13 +48,19 @@ module TestService
           return [false, error_message]
         end
         params[:results].each do |measure_name, result_value|
-          measure_id = Measure.where(name: measure_name).first&.id
+          measures = Measure.where(name: measure_name) || Measure.where(preferred_name: measure_name)
+          next unless measures.exists?
+
+          measure_id = TesttypeMeasure.where(test_type_id: Test.find_by(id: test_id)&.test_type_id, measure_id: measures&.ids)&.first&.measure_id
+          measure_id ||= measures.first&.id
           next if measure_id.blank?
           next if result_value == 'Failed'
           next if result_value.blank?
           next if result_already_available?(test_id, measure_id, result_value)
 
+          # Handle special case for Viral Load to remove commas
           result_value = result_value.gsub(',', '') if Measure.find_by(name: 'Viral Load')&.id == measure_id
+
           device_name = params[:platform].blank? ? '' : params[:platform]
           if TestResult.exists?(test_id:, measure_id:)
             test_result = TestResult.find_by(test_id:, measure_id: measure_id)
@@ -112,18 +118,16 @@ module TestService
       nil => [10, 11]
     }.freeze
     lab_test = Test.find_by(id: test_id)
-
-    return false unless lab_test && new_status
+    return false unless lab_test.present? && new_status.present?
 
     current_status = lab_test.test_status_id
-    new_status_id = new_status.id
-
-    # Check if transition is allowed
-    if allowed_transitions[current_status]&.include?(new_status_id) ||
-       allowed_transitions[nil]&.include?(new_status_id)
-      lab_test.update!(test_status_id: new_status_id)
-    elsif new_status_id == 12
-      lab_test.update!(test_status_id: new_status_id)
+    if allowed_transitions[current_status]&.include?(new_status.id) ||
+       allowed_transitions[nil]&.include?(new_status.id)
+      lab_test.update!(test_status_id: new_status.id)
+    elsif new_status.id == 12
+      lab_test.update!(test_status_id: new_status.id)
+    elsif new_status.id == 5
+      lab_test.update!(test_status_id: new_status.id)
     else
       false
     end
@@ -299,7 +303,8 @@ module TestService
 
   def self.add_test_results(params, lab_test_id)
     params[:test_results].each do |test_result|
-      measure = Measure.find_by(nlims_code: test_result[:nlims_code])
+      measures = Measure.where(nlims_code: test_result[:nlims_code]) || Measure.where(name: test_result[:name])
+      measure = TesttypeMeasure.where(test_type_id: Test.find_by(id: lab_test_id)&.test_type_id, measure_id: measures&.ids)&.first&.measure
       next if measure.blank?
       next if test_result[:value] == 'Failed'
       next unless test_result[:value].present?
@@ -333,7 +338,7 @@ module TestService
           device_name: device_name,
           time_entered: test_result[:result_date]
         )
-        result_sync_tracker(params[:tracking_number], lab_test_id) if test_result&.persisted?
+        result_sync_tracker(params[:tracking_number], lab_test_id)
       end
     end
   end

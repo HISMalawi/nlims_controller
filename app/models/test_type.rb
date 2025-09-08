@@ -21,7 +21,7 @@ class TestType < ApplicationRecord
     NLIMS_CODE_PREFIX = 'TT'
 
     def self.get_test_type_id(type)
-      TestType.find_by(name: type)&.id
+      TestType.find_by(name: type)&.id || TestType.find_by(preferred_name: type)&.id
     end
 
     def as_json(options = {})

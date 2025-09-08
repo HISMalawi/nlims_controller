@@ -10,6 +10,6 @@ class SpecimenType < ApplicationRecord
   NLIMS_CODE_PREFIX = 'SP'
 
   def self.get_specimen_type_id(type)
-    SpecimenType.find_by(name: type).id
+    SpecimenType.find_by(name: type)&.id || SpecimenType.find_by(preferred_name: type)&.id
   end
 end
