@@ -110,12 +110,12 @@ module TestService
 
   def self.update_test_status(test_id, new_status)
     allowed_transitions = {
-      9 => [2, 3, 4, 5],
-      2 => [3, 4, 5],
-      3 => [4, 5],
+      9 => [2, 3, 4, 5, 6],
+      2 => [3, 4, 5, 6],
+      3 => [4, 5, 6],
       4 => [5],
       12 => [4, 5],
-      nil => [10, 11]
+      nil => [10, 11, 6]
     }.freeze
     lab_test = Test.find_by(id: test_id)
     return false unless lab_test.present? && new_status.present?
