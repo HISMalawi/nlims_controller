@@ -144,7 +144,7 @@ module OrderService
                               INNER JOIN specimen ON specimen.id = tests.specimen_id
                               INNER JOIN test_types ON test_types.id = tests.test_type_id
                               INNER JOIN test_statuses ON test_statuses.id = tests.test_status_id
-                              WHERE specimen.tracking_number ='#{tracking_number}' AND test_types.name='#{test_name}'")
+                              WHERE specimen.tracking_number ='#{tracking_number}' AND test_types.name='#{test_name}' OR test_types.preferred_name='#{test_name}'")
       unless tst.empty?
         tst.each do |t|
           updater_trailer = {}
@@ -160,7 +160,7 @@ module OrderService
               "status": trail[0]['test_status']
             }
           end
-          tsts[t.test_name] = { "status": t.test_status, "update_details": updater_trailer }
+          tsts[t.test_name] = { "status": t['test_status'], "update_details": updater_trailer }
           result_got = TestResult.find_by_sql("SELECT * FROM test_results WHERE test_id='#{t.test_id}'")
           next if result_got.blank?
 
@@ -435,7 +435,7 @@ module OrderService
 																	WHERE specimen.tracking_number ='#{ress.tracking_number}'")
             unless tst.empty?
               tst.each do |t|
-                tsts[t.test_name] = t.test_status
+                tsts[t.test_name] = t['test_status']
               end
             end
             facility_samples.push(
@@ -470,7 +470,7 @@ module OrderService
           end
 
         else
-          facility_samples.push('N/A')
+          facility_samples.push()
         end
 
       end
@@ -499,8 +499,8 @@ module OrderService
                   LEFT JOIN wards ON specimen.ward_id = wards.id
                   INNER JOIN test_types ON test_types.id = tests.test_type_id
                   INNER JOIN sites ON sites.name = specimen.sending_facility
-            WHERE (substr(specimen.created_at,1,10) BETWEEN '#{date_from}' AND '#{date}')
-            AND (test_types.name ='Viral Load' AND sites.region='#{region}') GROUP BY specimen.id DESC limit 35000")
+            WHERE (DATE(specimen.created_at) BETWEEN '#{date_from}' AND '#{date}')
+            AND ((test_types.name ='Viral Load' OR test_types.preferred_name ='Viral Load') AND sites.region='#{region}') ORDER BY specimen.id DESC limit 35000")
     tsts = {}
     data = []
     counter = 0
@@ -516,7 +516,7 @@ module OrderService
                                                 WHERE specimen.tracking_number ='#{tracking_number}'")
         if tst.length > 0
           tst.each do |t|
-            tsts[t.test_name] = t.test_status
+            tsts[t.test_name] = t['test_status']
           end
         end
         patient_name = res.pat_name.gsub("'", ' ')
@@ -845,7 +845,7 @@ module OrderService
 															WHERE specimen.tracking_number ='#{tracking_number}'")
       unless tst.empty?
         tst.each do |t|
-          tsts[t.test_name] = t.test_status
+          tsts[t.test_name] = t['test_status']
         end
       end
       arv_number = res.arv_number

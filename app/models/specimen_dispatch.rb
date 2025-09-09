@@ -2,7 +2,5 @@
 
 # # This is the model for the specimen dispatch table
 class SpecimenDispatch < ApplicationRecord
-  include Codeable
-
-  NLIMS_CODE_PREFIX = 'SD'
+  belongs_to :specimen_dispatch_types, class_name: 'SpecimenDispatchType', foreign_key: 'dispatcher_type_id'
 end
