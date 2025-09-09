@@ -1072,6 +1072,7 @@ module OrderService
     return sp if test_type.blank?
 
     tests = Test.where(specimen_id: sp.pluck(:id), test_type_id: test_type&.ids)
+                .where.not(test_status_id: TestStatus.get_test_status_id('voided'))
     return Speciman.where(id: tests.pluck(:specimen_id)) if sending_facility.present?
 
     Speciman.where(id: tests.pluck(:specimen_id))
