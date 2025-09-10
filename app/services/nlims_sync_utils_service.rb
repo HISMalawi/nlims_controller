@@ -219,6 +219,7 @@ class NlimsSyncUtilsService
     if response['error'] == false && ['order created successfuly',
                                       'order already available'].include?(response['message'])
       OrderSyncTracker.find_by(tracking_number:).update(synced: true)
+      puts "Order pushed to Master NLIMS successfully for tracking number: #{tracking_number}"
       return true
     end
     SyncUtilService.log_error(
