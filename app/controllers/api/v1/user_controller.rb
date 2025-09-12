@@ -1,6 +1,44 @@
 # frozen_string_literal: true
 
+# User controller for managing users
 class API::V1::UserController < ApplicationController
+  def index
+    render json: User.where.not(username: 'admin').order(:username)
+                     .select(:id, :username, :app_name, :app_uuid, :location, :partner, :created_at)
+  end
+
+  def show
+    render json: User.find(params[:id])
+                     .slice(:id, :username, :app_name, :app_uuid, :location, :partner, :created_at)
+  end
+
+  def create
+    unless params[:location] && params[:app_name] && params[:password] && params[:username] && params[:partner]
+      render json: { message: 'missing parameter, please check' }, status: 422 and return
+    end
+
+    status = UserService.check_user(params[:username])
+    render json: { message: 'username already taken' }, status: 422 and return if status == true
+
+    details = UserService.create_user(params)
+    render json: { message: 'account created successfuly', data: details }, status: 200 and return
+  end
+
+  def update
+    user = User.find(params[:id])
+    user.update(user_params)
+    render json: user
+  end
+
+  def check_username
+    status = UserService.check_user(params[:username])
+    if status == false
+      render json: { message: 'username available' }, status: 200
+    else
+      render json: { message: 'username already taken, please choose another one' }, status: 422
+    end
+  end
+
   def create_user
     token = request.headers['token']
     if params[:location] && params[:app_name] && params[:password] && params[:username] && token && params[:partner]
@@ -174,5 +212,11 @@ class API::V1::UserController < ApplicationController
         data: { token: auth[:token], expiry_time: auth[:expiry_time] }
       }
     end
+  end
+
+  private
+
+  def user_params
+    params.require(:user).permit(:username, :app_name, :app_uuid, :location, :partner, :password)
   end
 end

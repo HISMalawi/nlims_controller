@@ -50,6 +50,11 @@ Rails.application.routes.draw do
       get	 '/check_token_validity'	=>	'user#check_token_validity'
       post '/login' => 'user#login'
       post '/refresh_token' => 'user#refresh_token'
+      resources :users, controller: :user, only: %i[index create show update] do
+        collection do
+          get '/check_username/:username' => 'user#check_username'
+        end
+      end
 
       # other routes
       get '/retrieve_order_location'	=> 'test#retrieve_order_location'
