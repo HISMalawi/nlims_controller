@@ -4,6 +4,7 @@
 class SpecimenType < ApplicationRecord
   include Codeable
 
+  has_paper_trail
   has_many :specimen, dependent: :restrict_with_error, class_name: 'Speciman'
   has_many :testtype_specimentypes, class_name: 'TesttypeSpecimentype'
 

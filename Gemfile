@@ -11,7 +11,7 @@ ruby '3.2.0'
 gem 'rails', '~> 7.1.0'
 
 gem 'mime-types', '~> 3.3'
-
+gem 'paper_trail', '~> 16.0'
 gem 'parallel'
 gem 'ruby-progressbar'
 # Use mysql as the database for Active Record
