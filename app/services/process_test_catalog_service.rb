@@ -22,6 +22,12 @@ module ProcessTestCatalogService
       return false if test_catalog.nil?
 
       ActiveRecord::Base.transaction do
+        create_or_update_specimens(test_catalog[:specimen_types])
+        test_catalog[:departments].each do |item|
+          create_or_update_department(item)
+        end
+        create_or_update_drugs(test_catalog[:drugs])
+        create_or_update_organisms(test_catalog[:organisms])
         create_or_update_test_types(test_catalog[:test_types])
         create_or_update_test_panels(test_catalog[:test_panels])
       end
