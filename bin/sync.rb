@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 begin
-  SyncToNlimsService.synchronize_test_catalog
+  SyncToNlimsService.synchronize_test_catalog if Config.local_nlims?
 rescue StandardError => e
   puts "Error: #{e.message} ==> Synchronize Test Catalog"
 end
