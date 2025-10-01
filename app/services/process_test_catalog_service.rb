@@ -41,19 +41,20 @@ module ProcessTestCatalogService
         record.preferred_name = data[:preferred_name]
         record.moh_code = data[:moh_code]
         record.loinc_code = data[:loinc_code]
-        record.short_name = data[:short_name]
+        record.short_name = data[:short_name] if record.respond_to?(:short_name)
         record.description = data[:description]
         record.save!
       else
-        record.update!(
+        attrs = {
           name: data[:name],
           nlims_code: data[:nlims_code],
           preferred_name: data[:preferred_name],
           moh_code: data[:moh_code],
           loinc_code: data[:loinc_code],
-          short_name: data[:short_name],
           description: data[:description]
-        )
+        }
+        attrs[:short_name] = data[:short_name] if record.respond_to?(:short_name)
+        record.update!(attrs)
       end
       record
     end
@@ -105,7 +106,7 @@ module ProcessTestCatalogService
     def create_or_update_test_indicator_ranges(test_indicator_ranges, measures_id)
       unless test_indicator_ranges.empty?
         MeasureRange.where(measures_id:).each do |test_indicator_range|
-          test_indicator_range.void('Removed from test indicator')
+          test_indicator_range.destroy!
         end
       end
       test_indicator_ranges.map do |test_indicator_range|
@@ -130,7 +131,7 @@ module ProcessTestCatalogService
         record ||= Measure.new
         if record.new_record?
           record.name = item[:name]
-          record.measure_type_id = MeasureType.find(item[:measure_type][:name])
+          record.measure_type_id = MeasureType.find_by(name: item[:measure_type][:name])&.id
           record.unit = item[:unit] if item[:unit].present?
           record.save!
         end
@@ -146,6 +147,7 @@ module ProcessTestCatalogService
         record = TestType.find_by(nlims_code: item[:nlims_code]) if item[:nlims_code].present?
         record ||= TestType.find_by(scientific_name: item[:scientific_name]) if item[:scientific_name].present?
         record ||= TestType.find_by(name: item[:name])
+        record ||= TestType.find_by(name: item[:preferred_name]) if item[:preferred_name].present?
         record ||= TestType.find_by(name: item[:iblis_mapping_name]) if item[:iblis_mapping_name].present?
         record ||= TestType.new
         if record.new_record?
@@ -194,7 +196,7 @@ module ProcessTestCatalogService
         else
           record = create_or_update_record(record, item)
         end
-        record.test_types = TestType.where(id: item.map { |tt| tt[:id] })
+        record.test_types = TestType.where(name: item[:test_types].map { |tt| tt[:name] })
       end
     end
   end

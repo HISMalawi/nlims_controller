@@ -4,7 +4,8 @@ rm Gemfile.lock && bundle config set --local path 'vendor/bundle' && bundle inst
   bundle exec rake db:seed:specific\[seed_test_results_recepient_types.rb\] &&
   bundle exec rake db:seed:specific\[seed_name_mappings.rb\] &&
   bundle exec rake db:seed:specific\[init_tracking_number.rb\] &&
-  bundle exec rake db:seed:specific\[seed_additional_test_statuses.rb\]
+  bundle exec rake db:seed:specific\[seed_additional_test_statuses.rb\] &&
+  bundle exec rails r bin/load_test_catalog.rb
 )
 bundle exec rails r bin/updater.rb && bash bin/add_cronjob.sh
 
