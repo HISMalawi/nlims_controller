@@ -65,7 +65,7 @@ class HomeController < ApplicationController
   def refresh_app_ping_status
     integration_service = IntegrationStatusService.new
     site = Site.find_by(name: params[:site_name])
-    status = integration_service.application_status(site&.host_address, site&.application_port)
+    status = integration_service.application_status(site&.host_address, site&.application_port, site&.id)
     ping_status = integration_service.ping_server(site&.host_address)
     timestamp = Time.now.strftime('%d/%b/%Y %H:%M')
     last_sync_date = integration_service.last_sync_date(site&.name)

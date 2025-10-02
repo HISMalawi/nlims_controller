@@ -67,6 +67,7 @@ class EmrSyncService
     {
       emr: {
         count: response['count'],
+        last_order_date: response['last_order_date'],
         lab_orders: include_data ? response['lab_orders'].pluck('accession_number') : [],
         remark: response['count'].zero? ? 'No orders drawn in EMR' : 'Orders drawn in EMR'
       }
@@ -76,6 +77,7 @@ class EmrSyncService
     {
       emr: {
         count: 0,
+        last_order_date: nil,
         lab_orders: [],
         remark: 'Connection to EMR refused - EMR down'
       }
@@ -85,6 +87,7 @@ class EmrSyncService
       {
         emr: {
           count: 0,
+          last_order_date: nil,
           lab_orders: [],
           remark: 'URL for Order Summary not available in EMR'
         }
@@ -95,6 +98,7 @@ class EmrSyncService
     {
       emr: {
         count: 0,
+        last_order_date: nil,
         lab_orders: [],
         remark: e.message
       }
