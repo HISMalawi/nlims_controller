@@ -221,6 +221,49 @@ class CatalogService
     @catalog.save!
   end
 
+  def create_organism(params)
+    organism_params = params[:organism]
+    organism_data = initialize_organism(organism_params)
+
+    # Serialize drugs if provided
+    update_organism_drugs(organism_data, params[:drugs]) if params[:drugs]
+
+    @catalog.catalog['organisms'] ||= []
+    @catalog.catalog['organisms'] << organism_data
+    @catalog.save!
+
+    organism_data
+  end
+
+  def update_organism(id, params)
+    organism_data = find_organism_in_catalog(id)
+    raise ActiveRecord::RecordNotFound, 'Organism not found' unless organism_data.present?
+
+    organism_params = params[:organism] || params
+
+    # Update basic attributes
+    organism_params.each do |key, value|
+      key_str = key.to_s
+      next if key_str == 'id'
+
+      organism_data[key_str] = value
+    end
+
+    # Update drugs as full objects if provided
+    update_organism_drugs(organism_data, params[:drugs]) if params[:drugs]
+
+    organism_data['updated_at'] = Time.now
+    @catalog.save!
+    organism_data
+  end
+
+  def delete_organism(id)
+    @catalog.catalog['organisms']&.reject! do |o|
+      o['id'].to_s == id.to_s
+    end
+    @catalog.save!
+  end
+
   private
 
   def find_test_type_in_catalog(id)
@@ -253,6 +296,24 @@ class CatalogService
       'organisms' => [],
       'lab_test_sites' => [],
       'equipment' => []
+    }
+  end
+
+  def initialize_organism(params)
+    next_id = (@catalog.catalog['organisms']&.map { |o| o['id'] }&.max || 0) + 1
+    {
+      'id' => next_id,
+      'name' => params[:name],
+      'short_name' => params[:short_name],
+      'preferred_name' => params[:preferred_name],
+      'scientific_name' => params[:scientific_name],
+      'description' => params[:description],
+      'moh_code' => params[:moh_code],
+      'nlims_code' => params[:nlims_code],
+      'loinc_code' => params[:loinc_code],
+      'created_at' => params[:created_at].present? ? params[:created_at] : Time.now,
+      'updated_at' => params[:updated_at].present? ? params[:updated_at] : Time.now,
+      'drugs' => []
     }
   end
 
@@ -553,6 +614,17 @@ class CatalogService
 
       serialize_test_type(test_type)
     end.compact
+  end
+
+  def update_organism_drugs(organism_data, drug_ids)
+    return unless drug_ids.is_a?(Array)
+
+    organism_data['drugs'] = drug_ids.map do |id|
+      drug = find_drug_in_catalog(id) || Drug.find_by(id: id).as_json
+      next unless drug
+
+      drug
+    end
   end
 
   def serialize_test_type(test_type)

@@ -1,72 +1,95 @@
-# OrganismsController module for API
+# frozen_string_literal: true
+
 module API
-  # OrganismsController module for V1
   module V1
-    # OrganismsController class for V1
     class OrganismsController < ApplicationController
       skip_before_action :authenticate_request
       before_action :authenticate_frontend_ui_service, only: %i[create show edit update destroy]
-      before_action :set_organism, only: %i[show edit update destroy]
+      before_action :set_catalog
+      before_action :set_organism, only: %i[show update destroy]
 
-      # GET /organisms
+      # GET /api/v1/test_catalogs/:catalog_id/organisms
       def index
-        @organisms = if params[:search].present?
-                       Organism.where('name LIKE ?', "%#{params[:search]}%")
-                     else
-                       Organism.all
-                     end
-        render json: @organisms.order(:name)
+        organisms = @catalog.catalog['organisms'] || []
+        organisms = organisms.map { |o| o&.with_indifferent_access }
+
+        if params[:search].present?
+          search_term = params[:search].downcase
+          organisms = organisms.select do |o|
+            [
+              o[:name],
+              o[:short_name],
+              o[:preferred_name],
+              o[:scientific_name],
+              o[:moh_code],
+              o[:nlims_code],
+              o[:loinc_code],
+              o[:description]
+            ].compact.any? { |v| v.to_s.downcase.include?(search_term) }
+          end
+        end
+
+        if params[:nlims_code].present?
+          organisms = organisms.select do |o|
+            o[:nlims_code].to_s.downcase.include?(params[:nlims_code].to_s.downcase)
+          end
+        end
+
+        organisms = organisms.sort_by { |o| o[:name].to_s }
+
+        render json: organisms
       end
 
-      # GET /organisms/:id
+      # GET /api/v1/test_catalogs/:catalog_id/organisms/:id
       def show
         render json: @organism
       end
 
-      # POST /organisms
+      # POST /api/v1/test_catalogs/:catalog_id/organisms
       def create
-        @organism = Organism.new(organism_params.except(:drugs))
-        if @organism.save
-          update_organism_drugs
-          render json: @organism, status: :created
-        else
-          render json: { errors: @organism.errors.full_messages }, status: :unprocessable_entity
-        end
+        service = CatalogService.new(@catalog)
+        organism = service.create_organism(params)
+
+        render json: organism, status: :created
+      rescue StandardError => e
+        render json: { error: e.message }, status: :unprocessable_entity
       end
 
-      # PATCH/PUT /organisms/:id
+      # PUT/PATCH /api/v1/test_catalogs/:catalog_id/organisms/:id
       def update
-        if @organism.update(organism_params.except(:drugs))
-          update_organism_drugs
-          render json: @organism
-        else
-          render json: { errors: @organism.errors.full_messages }, status: :unprocessable_entity
-        end
+        service = CatalogService.new(@catalog)
+        organism = service.update_organism(@organism['id'], params)
+
+        render json: organism
+      rescue StandardError => e
+        render json: { error: e.message }, status: :unprocessable_entity
       end
 
-      # DELETE /organisms/:id
+      # DELETE /api/v1/test_catalogs/:catalog_id/organisms/:id
       def destroy
-        @organism.destroy
+        service = CatalogService.new(@catalog)
+        service.delete_organism(@organism['id'])
+
         head :no_content
+      rescue StandardError => e
+        render json: { error: e.message }, status: :unprocessable_entity
       end
 
       private
 
-      def set_organism
-        @organism = Organism.includes(:drugs).find(params[:id])
+      def set_catalog
+        @catalog = TestCatalogVersion.find_by(id: params[:catalog_id]) || TestCatalogVersion.last
       rescue ActiveRecord::RecordNotFound
+        render json: { error: 'Catalog not found' }, status: :not_found
+      end
+
+      def set_organism
+        service = CatalogService.new(@catalog)
+        @organism = service.send(:find_organism_in_catalog, params[:id])
+
+        return if @organism
+
         render json: { error: 'Organism not found' }, status: :not_found
-      end
-
-      def organism_params
-        params.require(:organism).permit(:name, :description, :short_name, :moh_code, :nlims_code, :loinc_code,
-                                         :preferred_name, :scientific_name, drugs: [])
-      end
-
-      def update_organism_drugs
-        return unless params[:drugs].present?
-
-        @organism.drugs = Drug.where(id: params[:drugs])
       end
     end
   end
