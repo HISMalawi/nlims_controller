@@ -99,6 +99,51 @@ class CatalogService
     @catalog.save!
   end
 
+  # Test Panel CRUD methods
+  def create_test_panel(params)
+    test_panel_params = params[:test_panel] || params
+
+    test_panel_data = initialize_test_panel(test_panel_params)
+
+    # Add test types association
+    update_test_panel_test_types(test_panel_data, params[:test_types])
+
+    @catalog.catalog['test_panels'] ||= []
+    @catalog.catalog['test_panels'] << test_panel_data
+    @catalog.save!
+
+    test_panel_data
+  end
+
+  def update_test_panel(id, params)
+    test_panel_data = find_test_panel_in_catalog(id)
+    raise ActiveRecord::RecordNotFound, 'Test panel not found' unless test_panel_data.present?
+
+    test_panel_params = params[:test_panel] || params
+
+    # Update attributes
+    test_panel_params.each do |key, value|
+      key_str = key.to_s
+      next if key_str == 'id'
+
+      test_panel_data[key_str] = value
+    end
+    # Update test types association
+    update_test_panel_test_types(test_panel_data, params[:test_types])
+
+    test_panel_data['updated_at'] = Time.now
+
+    @catalog.save!
+    test_panel_data
+  end
+
+  def delete_test_panel(id)
+    @catalog.catalog['test_panels']&.reject! do |tp|
+      tp['id'] == id.to_i
+    end
+    @catalog.save!
+  end
+
   private
 
   def find_test_type_in_catalog(id)
@@ -263,17 +308,21 @@ class CatalogService
 
   def serialize_measure_ranges(ranges_params, measure_id)
     ranges_params.map do |range_params|
-      range_params.is_a?(Hash) ? range_params.deep_stringify_keys : {
-        'id' => range_params[:id].present? ? range_params[:id] : SecureRandom.uuid,
-        'sex' => range_params[:sex],
-        'age_max' => range_params[:age_max],
-        'age_min' => range_params[:age_min],
-        'measure_id' => measure_id,
-        'range_lower' => range_params[:range_lower],
-        'range_upper' => range_params[:range_upper],
-        'value' => range_params[:value],
-        'interpretation' => range_params[:interpretation]
-      }
+      if range_params.is_a?(Hash)
+        range_params.deep_stringify_keys
+      else
+        {
+          'id' => range_params[:id].present? ? range_params[:id] : SecureRandom.uuid,
+          'sex' => range_params[:sex],
+          'age_max' => range_params[:age_max],
+          'age_min' => range_params[:age_min],
+          'measure_id' => measure_id,
+          'range_lower' => range_params[:range_lower],
+          'range_upper' => range_params[:range_upper],
+          'value' => range_params[:value],
+          'interpretation' => range_params[:interpretation]
+        }
+      end
     end
   end
 
@@ -350,5 +399,55 @@ class CatalogService
       'created_at' => params[:created_at].present? ? params[:created_at] : Time.now,
       'updated_at' => params[:updated_at].present? ? params[:updated_at] : Time.now
     }
+  end
+
+  def find_test_panel_in_catalog(id)
+    @catalog.catalog['test_panels']&.find { |tp| tp['id'] == id.to_i }
+  end
+
+  def initialize_test_panel(params)
+    next_id = (@catalog.catalog['test_panels']&.map { |tp| tp['id'] }&.max || 0) + 1
+    {
+      'id' => next_id,
+      'nlims_code' => params[:nlims_code] || "NLIMS_TP_#{next_id.to_s.rjust(4, '0')}_MWI",
+      'name' => params[:name],
+      'preferred_name' => params[:preferred_name],
+      'scientific_name' => params[:scientific_name],
+      'short_name' => params[:short_name],
+      'moh_code' => params[:moh_code],
+      'loinc_code' => params[:loinc_code],
+      'description' => params[:description],
+      'created_at' => params[:created_at].present? ? params[:created_at] : Time.now,
+      'updated_at' => params[:updated_at].present? ? params[:updated_at] : Time.now,
+      'test_types' => []
+    }
+  end
+
+  def update_test_panel_test_types(test_panel_data, test_type_ids)
+    return unless test_type_ids
+
+    test_panel_data['test_types'] = test_type_ids.map do |id|
+      test_type = find_test_type_in_catalog(id) ||
+                  TestType.find_by(id: id)
+
+      next unless test_type
+      serialize_test_type(test_type)
+    end.compact
+  end
+
+  def serialize_test_type(test_type)
+    if test_type.is_a?(Hash)
+      test_type
+    else
+      {
+        'id' => test_type.id,
+        'name' => test_type.name,
+        'nlims_code' => test_type.nlims_code,
+        'preferred_name' => test_type.preferred_name,
+        'scientific_name' => test_type.scientific_name,
+        'short_name' => test_type.short_name,
+        'description' => test_type.description
+      }
+    end
   end
 end
