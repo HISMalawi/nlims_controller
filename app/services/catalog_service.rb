@@ -183,6 +183,44 @@ class CatalogService
     @catalog.save!
   end
 
+  def create_department(params)
+    department_params = params[:department] || params
+
+    department_data = initialize_department(department_params)
+
+    @catalog.catalog['departments'] ||= []
+    @catalog.catalog['departments'] << department_data
+    @catalog.save!
+
+    department_data
+  end
+
+  def update_department(id, params)
+    department_data = find_department_in_catalog(id)
+    raise ActiveRecord::RecordNotFound, 'Department not found' unless department_data.present?
+
+    department_params = params[:department] || params
+
+    # Update attributes
+    department_params.each do |key, value|
+      key_str = key.to_s
+      next if key_str == 'id'
+
+      department_data[key_str] = value
+    end
+
+    department_data['updated_at'] = Time.now
+    @catalog.save!
+    department_data
+  end
+
+  def delete_department(id)
+    @catalog.catalog['departments']&.reject! do |d|
+      d['id'].to_s == id.to_s
+    end
+    @catalog.save!
+  end
+
   private
 
   def find_test_type_in_catalog(id)
@@ -457,6 +495,27 @@ class CatalogService
     }
   end
 
+  def initialize_department(params)
+    next_id = (@catalog.catalog['departments']&.map { |d| d['id'] }&.max || 0) + 1
+    {
+      'id' => next_id,
+      'name' => params[:name],
+      'preferred_name' => params[:preferred_name],
+      'scientific_name' => params[:scientific_name],
+      'short_name' => params[:short_name],
+      'description' => params[:description],
+      'nlims_code' => params[:nlims_code] || "NLIMS_TC_#{next_id.to_s.rjust(4, '0')}_MWI",
+      'loinc_code' => params[:loinc_code],
+      'moh_code' => params[:moh_code],
+      'created_at' => params[:created_at].present? ? params[:created_at] : Time.now,
+      'updated_at' => params[:updated_at].present? ? params[:updated_at] : Time.now
+    }
+  end
+
+  def find_department_in_catalog(id)
+    @catalog.catalog['departments']&.find { |d| d['id'] == id.to_i }
+  end
+
   def find_test_panel_in_catalog(id)
     @catalog.catalog['test_panels']&.find { |tp| tp['id'] == id.to_i }
   end
@@ -491,6 +550,7 @@ class CatalogService
                   TestType.find_by(id: id)
 
       next unless test_type
+
       serialize_test_type(test_type)
     end.compact
   end
