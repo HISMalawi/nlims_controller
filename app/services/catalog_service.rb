@@ -144,6 +144,45 @@ class CatalogService
     @catalog.save!
   end
 
+  def create_drug(params)
+    drug_params = params[:drug] || params
+
+    drug_data = initialize_drug(drug_params)
+
+    @catalog.catalog['drugs'] ||= []
+    @catalog.catalog['drugs'] << drug_data
+    @catalog.save!
+
+    drug_data
+  end
+
+  def update_drug(id, params)
+    drug_data = find_drug_in_catalog(id)
+    raise ActiveRecord::RecordNotFound, 'Drug not found' unless drug_data.present?
+
+    drug_params = params[:drug] || params
+
+    # Update attributes
+    drug_params.each do |key, value|
+      key_str = key.to_s
+      next if key_str == 'id'
+
+      drug_data[key_str] = value
+    end
+
+    drug_data['updated_at'] = Time.now
+
+    @catalog.save!
+    drug_data
+  end
+
+  def delete_drug(id)
+    @catalog.catalog['drugs']&.reject! do |d|
+      d['id'] == id.to_i
+    end
+    @catalog.save!
+  end
+
   private
 
   def find_test_type_in_catalog(id)
@@ -401,8 +440,29 @@ class CatalogService
     }
   end
 
+  def initialize_drug(params)
+    next_id = (@catalog.catalog['drugs']&.map { |d| d['id'] }&.max || 0) + 1
+    {
+      'id' => next_id,
+      'name' => params[:name],
+      'preferred_name' => params[:preferred_name],
+      'scientific_name' => params[:scientific_name],
+      'short_name' => params[:short_name],
+      'description' => params[:description],
+      'nlims_code' => params[:nlims_code] || "NLIMS_DRG_#{next_id.to_s.rjust(4, '0')}_MWI",
+      'loinc_code' => params[:loinc_code],
+      'moh_code' => params[:moh_code],
+      'created_at' => params[:created_at].present? ? params[:created_at] : Time.now,
+      'updated_at' => params[:updated_at].present? ? params[:updated_at] : Time.now
+    }
+  end
+
   def find_test_panel_in_catalog(id)
     @catalog.catalog['test_panels']&.find { |tp| tp['id'] == id.to_i }
+  end
+
+  def find_drug_in_catalog(id)
+    @catalog.catalog['drugs']&.find { |d| d['id'] == id.to_i }
   end
 
   def initialize_test_panel(params)

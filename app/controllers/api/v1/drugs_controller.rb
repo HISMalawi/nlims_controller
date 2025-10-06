@@ -1,66 +1,101 @@
 # frozen_string_literal: true
 
-# DrugsController module for API
 module API
-  # DrugsController module for V1
   module V1
-    # DrugsController class for V1
     class DrugsController < ApplicationController
       skip_before_action :authenticate_request
       before_action :authenticate_frontend_ui_service, only: %i[create show edit update destroy]
-      before_action :set_drug, only: %i[show edit update destroy]
+      before_action :set_catalog
+      before_action :set_drug, only: %i[show update destroy]
 
-      # GET /drugs
+      # GET /api/v1/test_catalogs/:catalog_id/drugs
       def index
-        @drugs = if params[:search].present?
-                   Drug.where('name LIKE ?', "%#{params[:search]}%")
-                 else
-                   Drug.all
-                 end
-        render json: @drugs.order(:name)
+        drugs = @catalog.catalog['drugs'] || []
+        drugs = drugs.map { |d| d&.with_indifferent_access }
+
+        if params[:search].present?
+          search_term = params[:search].downcase
+          drugs = drugs.select do |d|
+            [
+              d[:name],
+              d[:short_name],
+              d[:preferred_name],
+              d[:scientific_name],
+              d[:nlims_code],
+              d[:moh_code],
+              d[:loinc_code]
+            ].compact.any? { |v| v.to_s.downcase.include?(search_term) }
+          end
+        end
+
+        if params[:nlims_code].present?
+          drugs = drugs.select do |d|
+            d[:nlims_code].to_s.downcase.include?(params[:nlims_code].to_s.downcase)
+          end
+        end
+
+        drugs = drugs.sort_by { |d| d[:name].to_s }
+        render json: drugs
       end
 
-      # GET /drugs/:id
+      # GET /api/v1/test_catalogs/:catalog_id/drugs/:id
       def show
         render json: @drug
       end
 
-      # POST /drugs
+      # POST /api/v1/test_catalogs/:catalog_id/drugs
       def create
-        @drug = Drug.new(drug_params)
-        if @drug.save
-          render json: @drug, status: :created
-        else
-          render json: @drug.errors, status: :unprocessable_entity
-        end
+        service = CatalogService.new(@catalog)
+        drug = service.create_drug(drug_params)
+
+        render json: drug, status: :created
+      rescue StandardError => e
+        render json: { error: e.message }, status: :unprocessable_entity
       end
 
-      # PATCH/PUT /drugs/:id
+      # PUT/PATCH /api/v1/test_catalogs/:catalog_id/drugs/:id
       def update
-        if @drug.update(drug_params)
-          render json: @drug
-        else
-          render json: @drug.errors, status: :unprocessable_entity
-        end
+        service = CatalogService.new(@catalog)
+        drug = service.update_drug(@drug['id'], drug_params)
+
+        render json: drug
+      rescue StandardError => e
+        render json: { error: e.message }, status: :unprocessable_entity
       end
 
-      # DELETE /drugs/:id
+      # DELETE /api/v1/test_catalogs/:catalog_id/drugs/:id
       def destroy
-        @drug.destroy
+        service = CatalogService.new(@catalog)
+        service.delete_drug(@drug['id'])
+
         head :no_content
+      rescue StandardError => e
+        render json: { error: e.message }, status: :unprocessable_entity
       end
 
       private
 
-      def set_drug
-        @drug = Drug.find(params[:id])
+      def set_catalog
+        @catalog = TestCatalogVersion.find_by(id: params[:catalog_id]) || TestCatalogVersion.last
       rescue ActiveRecord::RecordNotFound
+        render json: { error: 'Catalog not found' }, status: :not_found
+      end
+
+      def set_drug
+        service = CatalogService.new(@catalog)
+        @drug = service.send(:find_drug_in_catalog, params[:id])
+
+        return if @drug
+
         render json: { error: 'Drug not found' }, status: :not_found
       end
 
       def drug_params
-        params.require(:drug).permit(:name, :description, :short_name, :moh_code, :nlims_code, :loinc_code,
-                                     :preferred_name, :scientific_name)
+        params.require(:drug).permit(
+          :name, :short_name, :preferred_name, :scientific_name,
+          :description, :moh_code, :nlims_code, :loinc_code,
+          :created_at, :updated_at
+        )
       end
     end
   end
