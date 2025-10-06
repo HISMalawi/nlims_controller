@@ -23,7 +23,7 @@ class CatalogService
     update_equipment(test_type_data, catalog_params[:equipment])
 
     # Update timestamp
-    test_type_data['updated_at'] = Time.current.iso8601
+    test_type_data['updated_at'] = Time.now
 
     @catalog.save!
     test_type_data
@@ -59,6 +59,46 @@ class CatalogService
     @catalog.save!
   end
 
+  # Specimen Type CRUD methods
+  def create_specimen_type(params)
+    specimen_params = params[:specimen_type] || params
+
+    specimen_type_data = initialize_specimen_type(specimen_params)
+
+    @catalog.catalog['specimen_types'] ||= []
+    @catalog.catalog['specimen_types'] << specimen_type_data
+    @catalog.save!
+
+    specimen_type_data
+  end
+
+  def update_specimen_type(id, params)
+    specimen_type_data = find_specimen_type_in_catalog(id)
+    raise ActiveRecord::RecordNotFound, 'Specimen type not found' unless specimen_type_data.present?
+
+    specimen_params = params[:specimen_type] || params
+
+    # Update attributes
+    specimen_params.each do |key, value|
+      key_str = key.to_s
+      next if key_str == 'id'
+
+      specimen_type_data[key_str] = value
+    end
+
+    specimen_type_data['updated_at'] = Time.now
+
+    @catalog.save!
+    specimen_type_data
+  end
+
+  def delete_specimen_type(id)
+    @catalog.catalog['specimen_types']&.reject! do |st|
+      st['id'] == id.to_i
+    end
+    @catalog.save!
+  end
+
   private
 
   def find_test_type_in_catalog(id)
@@ -67,10 +107,9 @@ class CatalogService
 
   def initialize_test_type(params)
     next_id = (@catalog.catalog['test_types']&.map { |t| t['id'] }&.max || 0) + 1
-
     {
       'id' => next_id,
-      'nlims_code' => params[:nlims_code] || "NLIMS_TT_#{next_id.to_s.rjust(4, '0')}_MWI",
+      'nlims_code' => params[:nlims_code].present? ? params[:nlims_code] : "NLIMS_TT_#{next_id.to_s.rjust(4, '0')}_MWI",
       'name' => params[:name],
       'preferred_name' => params[:preferred_name],
       'scientific_name' => params[:scientific_name],
@@ -84,9 +123,9 @@ class CatalogService
       'can_be_done_on_sex' => params[:can_be_done_on_sex],
       'iblis_mapping_name' => params[:iblis_mapping_name],
       'prevalence_threshold' => params[:prevalence_threshold],
-      'test_category_id' => params[:test_category_id],
-      'created_at' => params[:created_at] || Time.current.iso8601,
-      'updated_at' => params[:updated_at] || Time.current.iso8601,
+      'test_category' => find_test_category_in_catalog(params[:test_category_id]),
+      'created_at' => params[:created_at].present? ? params[:created_at] : Time.now,
+      'updated_at' => params[:updated_at].present? ? params[:updated_at] : Time.now,
       'specimen_types' => [],
       'measures' => [],
       'organisms' => [],
@@ -189,32 +228,52 @@ class CatalogService
   end
 
   def serialize_measure(measure_params)
+    next_id = SecureRandom.uuid
     measure_data = if measure_params.is_a?(Hash)
                      measure_params.deep_stringify_keys
                    else
                      {
-                       'id' => measure_params[:id],
+                       'id' => measure_params[:id].present? ? measure_params[:id] : next_id,
                        'name' => measure_params[:name],
-                       'nlims_code' => measure_params[:nlims_code],
+                       'loinc_code' => measure_params[:loinc_code],
+                       'moh_code' => measure_params[:moh_code],
+                       'nlims_code' => measure_params[:nlims_code].present? ? measure_params[:nlims_code] : '',
                        'unit' => measure_params[:unit],
+                       'iblis_mapping_name' => measure_params[:iblis_mapping_name],
                        'preferred_name' => measure_params[:preferred_name],
-                       'measure_type_id' => measure_params[:measure_type_id]
+                       'scientific_name' => measure_params[:scientific_name],
+                       'measure_type_id' => measure_params[:measure_type_id],
+                       'short_name' => measure_params[:short_name],
+                       'description' => measure_params[:description],
+                       'measure_type' => MeasureType.find_by(id: measure_params[:measure_type_id]).as_json,
+                       'created_at' => Time.now,
+                       'updated_at' => Time.now
                      }
                    end
 
     # Handle nested measure ranges
     if measure_params.respond_to?(:[]) && measure_params[:measure_ranges_attributes]
       measure_data['measure_ranges_attributes'] = serialize_measure_ranges(
-        measure_params[:measure_ranges_attributes]
+        measure_params[:measure_ranges_attributes], measure_data['id']
       )
     end
 
     measure_data
   end
 
-  def serialize_measure_ranges(ranges_params)
+  def serialize_measure_ranges(ranges_params, measure_id)
     ranges_params.map do |range_params|
-      range_params.is_a?(Hash) ? range_params.deep_stringify_keys : range_params.to_json
+      range_params.is_a?(Hash) ? range_params.deep_stringify_keys : {
+        'id' => range_params[:id].present? ? range_params[:id] : SecureRandom.uuid,
+        'sex' => range_params[:sex],
+        'age_max' => range_params[:age_max],
+        'age_min' => range_params[:age_min],
+        'measure_id' => measure_id,
+        'range_lower' => range_params[:range_lower],
+        'range_upper' => range_params[:range_upper],
+        'value' => range_params[:value],
+        'interpretation' => range_params[:interpretation]
+      }
     end
   end
 
@@ -270,5 +329,26 @@ class CatalogService
 
   def find_equipment_in_catalog(id)
     @catalog.catalog['equipment']&.find { |e| e['id'] == id.to_i }
+  end
+
+  def find_test_category_in_catalog(id)
+    @catalog.catalog['departments']&.find { |d| d['id'] == id.to_i }
+  end
+
+  def initialize_specimen_type(params)
+    next_id = (@catalog.catalog['specimen_types']&.map { |st| st['id'] }&.max || 0) + 1
+    {
+      'id' => next_id,
+      'nlims_code' => params[:nlims_code] || "NLIMS_SP_#{next_id.to_s.rjust(4, '0')}_MWI",
+      'name' => params[:name],
+      'preferred_name' => params[:preferred_name],
+      'scientific_name' => params[:scientific_name],
+      'moh_code' => params[:moh_code],
+      'loinc_code' => params[:loinc_code],
+      'description' => params[:description],
+      'iblis_mapping_name' => params[:iblis_mapping_name],
+      'created_at' => params[:created_at].present? ? params[:created_at] : Time.now,
+      'updated_at' => params[:updated_at].present? ? params[:updated_at] : Time.now
+    }
   end
 end
