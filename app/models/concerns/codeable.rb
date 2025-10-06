@@ -13,12 +13,13 @@ module Codeable
     validates :nlims_code, uniqueness: { case_sensitive: false }, allow_nil: true unless name == 'Measure'
 
     after_create :set_nlims_code
+    after_update :set_nlims_code, if: -> { saved_change_to_name? }
   end
 
   private
 
   def set_nlims_code
-    return if nlims_code.present?
+    return if nlims_code.present? && nlims_code != ''
 
     if is_a?(Measure)
       # Try reusing existing nlims_code from another Measure with same name

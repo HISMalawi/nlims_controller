@@ -158,6 +158,160 @@ module API
         render json: @measure_types
       end
 
+      def release_version
+        approved = TestCatalogService.release_version(params.require(:version_details))
+        render json: approved
+      end
+
+      def approve_test_catalog
+        approved = TestCatalogService.approve_version(@catalog)
+        render json: approved
+      end
+
+      def retrieve_test_catalog
+        render json: TestCatalogService.retrieve_test_catalog(params[:version])
+      end
+
+      def retrieve_test_catalog_versions
+        render json: TestCatalogService.test_catalog_versions
+      end
+
+      def new_test_catalog_version_available
+        previous_version = TestCatalogVersion.find_by(version: params[:version])&.version || '0'
+        render json: TestCatalogService.new_version_available?(previous_version)
+      end
+
+      def import
+        if params[:file].nil?
+          render json: { success: false, error: 'No file uploaded' }, status: :unprocessable_entity
+          return
+        end
+
+        begin
+          uploaded_file = params[:file]
+          safe_filename = uploaded_file.original_filename.encode('UTF-8', invalid: :replace, undef: :replace,
+                                                                          replace: '_')
+          file_ext = File.extname(safe_filename).downcase
+
+          excel_mime_types = [
+            'application/vnd.ms-excel',
+            'application/msexcel',
+            'application/x-msexcel',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'application/vnd.ms-excel.sheet.macroEnabled.12',
+            'application/vnd.ms-excel.sheet.binary.macroEnabled.12'
+          ]
+
+          is_acceptable_extension = %w[.xls .xlsx].include?(file_ext)
+
+          content_type = begin
+            uploaded_file.content_type
+          rescue StandardError
+            nil
+          end
+          content_type ||= case file_ext
+                           when '.xls'
+                             'application/vnd.ms-excel'
+                           when '.xlsx'
+                             'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                           else
+                             'application/octet-stream'
+                           end
+
+          unless excel_mime_types.include?(content_type) || is_acceptable_extension
+            render json: {
+              success: false,
+              error: 'Invalid file format. Please upload an Excel file',
+              details: {
+                content_type: content_type,
+                extension: file_ext
+              }
+            }, status: :unprocessable_entity
+            return
+          end
+
+          temp_file = Tempfile.new(['import', file_ext])
+          begin
+            uploaded_io = uploaded_file.respond_to?(:tempfile) ? uploaded_file.tempfile : uploaded_file
+            file_content = nil
+
+            begin
+              file_content = File.binread(uploaded_io.path)
+            rescue StandardError => e
+              begin
+                uploaded_io.rewind
+              rescue StandardError
+                nil
+              end
+              file_content = begin
+                uploaded_io.read
+              rescue StandardError
+                nil
+              end
+
+              raise "Could not read file content: #{e.message}" unless file_content
+            end
+
+            temp_file.binmode
+            temp_file.write(file_content)
+            temp_file.rewind
+
+            temp_file.instance_eval do
+              def original_filename
+                "import#{File.extname(path)}"
+              end
+
+              def content_type
+                case File.extname(path).downcase
+                when '.xls'
+                  'application/vnd.ms-excel'
+                when '.xlsx'
+                  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                else
+                  'application/octet-stream'
+                end
+              end
+            end
+
+            result = TestCatalogService.import(temp_file)
+
+            if result[:success]
+              render json: result, status: :ok
+            else
+              render json: result, status: :unprocessable_entity
+            end
+          ensure
+            begin
+              temp_file.close
+              temp_file.unlink
+            rescue StandardError => e
+              Rails.logger.error("Error cleaning up temp file: #{e.message}")
+            end
+          end
+        rescue ActionController::BadRequest => e
+          raise e
+        rescue StandardError => e
+          Rails.logger.error("Import error: #{e.message}\n#{e.backtrace.join("\n")}")
+
+          error_message = case e.message
+                          when /invalid byte sequence/
+                            'The file contains invalid characters. Please save it as UTF-8 encoded and try again.'
+                          when /premature end of data/
+                            'The Excel file appears to be corrupt or improperly formatted. Please check the file format.'
+                          when /unknown encoding name/
+                            'Could not determine the file encoding. Please save the file as UTF-8 and try again.'
+                          else
+                            "Error processing file: #{e.message}"
+                          end
+
+          render json: {
+            success: false,
+            error: error_message,
+            details: e.backtrace.first(5)
+          }, status: :unprocessable_entity
+        end
+      end
+
       private
 
       def set_catalog
@@ -179,28 +333,28 @@ module API
         params.permit(
           :catalog_id,
           test_catalog: {
-            test_type: [
-              :name, :preferred_name, :scientific_name, :short_name,
-              :moh_code, :loinc_code, :nlims_code, :description,
-              :targetTAT, :target_tat, :assay_format, :hr_cadre_required,
-              :can_be_done_on_sex, :iblis_mapping_name,
-              :prevalence_threshold, :test_category_id, :created_at, :updated_at
+            test_type: %i[
+              name preferred_name scientific_name short_name
+              moh_code loinc_code nlims_code description
+              targetTAT target_tat assay_format hr_cadre_required
+              can_be_done_on_sex iblis_mapping_name
+              prevalence_threshold test_category_id created_at updated_at
             ],
             specimen_types: [],
             organisms: [],
             lab_test_sites: [],
             equipment: [],
             measures: [
-              :id, :name, :nlims_code, :unit, :preferred_name, 
+              :id, :name, :nlims_code, :unit, :preferred_name,
               :scientific_name, :short_name, :description,
               :measure_type_id, :iblis_mapping_name, :moh_code,
               :loinc_code, :created_at, :updated_at, :measures_id,
-              measure_type: [:id, :name, :description, :created_at, :updated_at, structure: {}],
-              measure_ranges_attributes: [
-                :id, :sex, :age_min, :age_max, :value,
-                :range_lower, :range_upper, :interpretation,
-                :measures_id, :created_at, :updated_at
-              ]
+              { measure_type: [:id, :name, :description, :created_at, :updated_at, { structure: {} }],
+                measure_ranges_attributes: %i[
+                  id sex age_min age_max value
+                  range_lower range_upper interpretation
+                  measures_id created_at updated_at
+                ] }
             ]
           }
         )
@@ -264,126 +418,6 @@ module API
       #   render json: @test_type.as_json(context: :single_item), status: :created
       # end
 
-      # def import
-      #   if params[:file].nil?
-      #     render json: { success: false, error: 'No file uploaded' }, status: :unprocessable_entity
-      #     return
-      #   end
-
-      #   begin
-      #     uploaded_file = params[:file]
-      #     safe_filename = uploaded_file.original_filename.encode('UTF-8', invalid: :replace, undef: :replace, replace: '_')
-      #     file_ext = File.extname(safe_filename).downcase
-
-      #     excel_mime_types = [
-      #       'application/vnd.ms-excel',
-      #       'application/msexcel',
-      #       'application/x-msexcel',
-      #       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      #       'application/vnd.ms-excel.sheet.macroEnabled.12',
-      #       'application/vnd.ms-excel.sheet.binary.macroEnabled.12'
-      #     ]
-
-      #     is_acceptable_extension = %w[.xls .xlsx].include?(file_ext)
-
-      #     content_type = uploaded_file.content_type rescue nil
-      #     content_type ||= case file_ext
-      #                    when '.xls'
-      #                      'application/vnd.ms-excel'
-      #                    when '.xlsx'
-      #                      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-      #                    else
-      #                      'application/octet-stream'
-      #                    end
-
-      #     unless excel_mime_types.include?(content_type) || is_acceptable_extension
-      #       render json: {
-      #         success: false,
-      #         error: 'Invalid file format. Please upload an Excel file',
-      #         details: {
-      #           content_type: content_type,
-      #           extension: file_ext
-      #         }
-      #       }, status: :unprocessable_entity
-      #       return
-      #     end
-
-      #     temp_file = Tempfile.new(['import', file_ext])
-      #     begin
-      #       uploaded_io = uploaded_file.respond_to?(:tempfile) ? uploaded_file.tempfile : uploaded_file
-      #       file_content = nil
-
-      #       begin
-      #         file_content = File.binread(uploaded_io.path)
-      #       rescue => e
-      #         uploaded_io.rewind rescue nil
-      #         file_content = uploaded_io.read rescue nil
-
-      #         unless file_content
-      #           raise "Could not read file content: #{e.message}"
-      #         end
-      #       end
-
-      #       temp_file.binmode
-      #       temp_file.write(file_content)
-      #       temp_file.rewind
-
-      #       temp_file.instance_eval do
-      #         def original_filename
-      #           "import#{File.extname(path)}"
-      #         end
-
-      #         def content_type
-      #           case File.extname(path).downcase
-      #           when '.xls'
-      #             'application/vnd.ms-excel'
-      #           when '.xlsx'
-      #             'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-      #           else
-      #             'application/octet-stream'
-      #           end
-      #         end
-      #       end
-
-      #       result = TestCatalogService.import(temp_file)
-
-      #       if result[:success]
-      #         render json: result, status: :ok
-      #       else
-      #         render json: result, status: :unprocessable_entity
-      #       end
-      #     ensure
-      #       begin
-      #         temp_file.close
-      #         temp_file.unlink
-      #       rescue => e
-      #         Rails.logger.error("Error cleaning up temp file: #{e.message}")
-      #       end
-      #     end
-      #   rescue ActionController::BadRequest => e
-      #     raise e
-      #   rescue => e
-      #     Rails.logger.error("Import error: #{e.message}\n#{e.backtrace.join("\n")}")
-
-      #     error_message = case e.message
-      #                    when /invalid byte sequence/
-      #                      "The file contains invalid characters. Please save it as UTF-8 encoded and try again."
-      #                    when /premature end of data/
-      #                      "The Excel file appears to be corrupt or improperly formatted. Please check the file format."
-      #                    when /unknown encoding name/
-      #                      "Could not determine the file encoding. Please save the file as UTF-8 and try again."
-      #                    else
-      #                      "Error processing file: #{e.message}"
-      #                    end
-
-      #     render json: {
-      #       success: false,
-      #       error: error_message,
-      #       details: e.backtrace.first(5)
-      #     }, status: :unprocessable_entity
-      #   end
-      # end
-
       # def update
       #   TestCatalogService.update_test_type(@test_type, test_type_params)
       #   render json: @test_type.as_json(context: :single_item), status: :ok
@@ -396,24 +430,6 @@ module API
       #                 Measure.all
       #               end
       #   render json: @measures
-      # end
-
-      # def approve_test_catalog
-      #   approved = TestCatalogService.approve_test_catalog(params.require(:version_details))
-      #   render json: approved
-      # end
-
-      # def retrieve_test_catalog
-      #   render json: TestCatalogService.retrieve_test_catalog(params[:version])
-      # end
-
-      # def retrieve_test_catalog_versions
-      #   render json: TestCatalogService.test_catalog_versions
-      # end
-
-      # def new_test_catalog_version_available
-      #   previous_version = TestCatalogVersion.find_by(version: params[:version])&.version || '0'
-      #   render json: TestCatalogService.new_version_available?(previous_version)
       # end
 
       # def destroy

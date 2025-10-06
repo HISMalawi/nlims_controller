@@ -76,6 +76,7 @@ Rails.application.routes.draw do
 
       # test catalog routes
       post '/approve_test_catalog' => 'test_types#approve_test_catalog'
+      post '/release_test_catalog' => 'test_types#release_version'
       get  '/retrieve_test_catalog'	=> 'test_types#retrieve_test_catalog'
       get '/retrieve_test_catalog_versions' => 'test_types#retrieve_test_catalog_versions'
       get '/check_new_test_catalog_version_available' => 'test_types#new_test_catalog_version_available'
