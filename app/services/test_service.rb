@@ -39,7 +39,7 @@ module TestService
         )
       end
       TestStatusUpdaterService.call(test_id, test_status)
-      if test_status.id == 5 && params[:results]
+      if test_status.id == TestStatus.find_by(name: 'verified')&.id && params[:results]
         result_date = params[:result_date].blank? ? Time.now.strftime('%Y%m%d%H%M%S') : params[:result_date]
         state, error_message = validate_time_updated(result_date, sql_order)
         unless state
