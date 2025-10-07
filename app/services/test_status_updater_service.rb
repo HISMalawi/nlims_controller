@@ -16,7 +16,8 @@ class TestStatusUpdaterService
                                   test-rejected],
     'pending' => %w[started completed verified rejected test_on_repeat test-rejected voided],
     'started' => %w[completed verified rejected test_on_repeat test-rejected voided],
-    'completed' => %w[verified rejected test_on_repeat test-rejected],
+    'completed' => %w[verified test_on_repeat],
+    'verified' => %w[test_on_repeat],
     'test_on_repeat' => %w[completed verified]
   }.freeze
 
