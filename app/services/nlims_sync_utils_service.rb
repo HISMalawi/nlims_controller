@@ -275,7 +275,11 @@ class NlimsSyncUtilsService
 
   def buid_acknowledment_to_master_data(acknowledgement)
     test_to_ack = TestType.find(Test.find(acknowledgement&.test_id)&.test_type_id)&.name
-    level = TestResultRecepientType.find_by(id: acknowledgement&.acknwoledment_level)
+    level = begin
+      TestResultRecepientType.find_by(id: acknowledgement&.acknwoledment_level)
+    rescue StandardError
+      nil
+    end
     level ||= TestResultRecepientType.find_by(id: acknowledgement&.acknowledgment_level)
     {
       'tracking_number': acknowledgement&.tracking_number,
@@ -314,13 +318,13 @@ class NlimsSyncUtilsService
   def update_order_source_couch_id(tracking_number, sending_facility, couch_id)
     url = "#{@address}/api/v1/update_order_source_couch_id"
     response = JSON.parse(RestClient::Request.execute(
-                 method: :post,
-                 url:,
-                 timeout: 10,
-                 payload: { tracking_number:, sending_facility:, couch_id: },
-                 content_type: :json,
-                 headers: { content_type: :json, accept: :json, token: @token }
-               ))
+                            method: :post,
+                            url:,
+                            timeout: 10,
+                            payload: { tracking_number:, sending_facility:, couch_id: },
+                            content_type: :json,
+                            headers: { content_type: :json, accept: :json, token: @token }
+                          ))
     puts response
   rescue StandardError => e
     puts "Error: #{e.message} ==> NLIMS Update Order Source Couch ID to Master NLIMS"

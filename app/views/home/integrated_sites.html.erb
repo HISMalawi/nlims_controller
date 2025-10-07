@@ -86,6 +86,7 @@
         <th style="padding: 8px; border: 1px solid #000; font-size: 12px; text-align: left;">IP Address</th>
         <th style="padding: 8px; border: 1px solid #000; font-size: 12px; text-align: center;">Port</th>
         <th style="padding: 8px; border: 1px solid #000; font-size: 12px; text-align: left;">Last Synced Order Timestamp (CHSU)</th>
+        <th style="padding: 8px; border: 1px solid #000; font-size: 12px; text-align: center;">Last Order Drawn Date in EMR</th>
         <th style="padding: 8px; border: 1px solid #000; font-size: 12px; text-align: center;">App Status</th>
         <th style="padding: 8px; border: 1px solid #000; font-size: 12px; text-align: center;">Ping Status</th>
         <th style="padding: 8px; border: 1px solid #000; font-size: 12px; text-align: center;">App Version</th>
@@ -108,6 +109,7 @@
           <td style="padding: 8px; border: 1px solid #000; font-size: 11px; text-align: left; background-color: <%= site[:is_gt_24hr] ? '#f8d7da' : '#d4edda' %>; color: <%= site[:is_gt_24hr] ? '#721c24' : '#155724' %>;" data-sync-status="<%= site[:is_gt_24hr] ? 'old' : 'recent' %>">
             <%= site[:last_sync_date] %>
           </td>
+          <td style="padding: 8px; border: 1px solid #000; font-size: 11px; text-align: center;"><%= site[:order_summary]['emr'] ? site[:order_summary]['emr']['last_order_date'] || 'N/A' : 'N/A' %></td>
           <td style="padding: 8px; border: 1px solid #000; font-size: 11px; text-align: center; background-color: <%= site[:app_status] == 'Running' ? '#d4edda' : '#f8d7da' %>; color: <%= site[:app_status] == 'Running' ? '#155724' : '#721c24' %>;">
             <strong><%= site[:app_status] %></strong>
           </td>
@@ -266,14 +268,14 @@
       
       // Update the row with new data
       if (data.app_status) {
-        const appStatusCell = row.cells[6];
+        const appStatusCell = row.cells[7];
         appStatusCell.innerHTML = `<strong>${data.app_status}</strong>`;
         appStatusCell.style.backgroundColor = data.app_status === 'Running' ? '#d4edda' : '#f8d7da';
         appStatusCell.style.color = data.app_status === 'Running' ? '#155724' : '#721c24';
       }
       
       if (data.ping_status) {
-        const pingStatusCell = row.cells[7];
+        const pingStatusCell = row.cells[8];
         pingStatusCell.innerHTML = `<strong>${data.ping_status}</strong>`;
         pingStatusCell.style.backgroundColor = data.ping_status === 'Success' ? '#d4edda' : '#f8d7da';
         pingStatusCell.style.color = data.ping_status === 'Success' ? '#155724' : '#721c24';
@@ -290,14 +292,16 @@
         syncStatusCell.style.color = data.is_gt_24hr ? '#721c24' : '#155724';
       }
       if (data.app_version){
-        const appVersionCell = row.cells[8];
+        const appVersionCell = row.cells[9];
         appVersionCell.textContent = data.app_version;
       }
       if (data.order_summary){
-        const emrOrdersCell = row.cells[9];
-        const nlimsLocalOrdersCell = row.cells[10];
-        const nlimsChsuOrdersCell = row.cells[11];
-        const overallRemarkCell = row.cells[12];
+        const lastOrderDrawnDateCell = row.cells[6];
+        const emrOrdersCell = row.cells[10];
+        const nlimsLocalOrdersCell = row.cells[11];
+        const nlimsChsuOrdersCell = row.cells[12];
+        const overallRemarkCell = row.cells[13];
+        lastOrderDrawnDateCell.textContent = data.order_summary['emr'] ? data.order_summary['emr']['last_order_date'] || 'N/A' : 'N/A';
         emrOrdersCell.textContent = data.order_summary['emr'] ? data.order_summary['emr']['count'] : 0;
         nlimsLocalOrdersCell.textContent = data.order_summary['nlims_local'] ? data.order_summary['nlims_local']['count'] : 0;
         nlimsChsuOrdersCell.textContent = data.order_summary['nlims_chsu'] ? data.order_summary['nlims_chsu']['count'] : 0;
