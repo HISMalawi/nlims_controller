@@ -38,8 +38,8 @@ module TestService
           who_updated_phone_number: ''
         )
       end
-      update_test_status(test_id, test_status)
-      if test_status.id == 5 && params[:results]
+      TestStatusUpdaterService.call(test_id, test_status)
+      if test_status.id == TestStatus.find_by(name: 'verified')&.id && params[:results]
         result_date = params[:result_date].blank? ? Time.now.strftime('%Y%m%d%H%M%S') : params[:result_date]
         state, error_message = validate_time_updated(result_date, sql_order)
         unless state
@@ -100,33 +100,6 @@ module TestService
     end
     # Proceed - return success or continue with rest of logic
     [true, nil]
-  end
-
-  def self.update_test_status(test_id, new_status)
-    allowed_transitions = {
-      9 => [2, 3, 4, 5],
-      2 => [3, 4, 5],
-      3 => [4, 5],
-      4 => [5],
-      12 => [4, 5],
-      nil => [10, 11]
-    }.freeze
-    test = Test.find_by(id: test_id)
-
-    return false unless test && new_status
-
-    current_status = test.test_status_id
-    new_status_id = new_status.id
-
-    # Check if transition is allowed
-    if allowed_transitions[current_status]&.include?(new_status_id) ||
-       allowed_transitions[nil]&.include?(new_status_id)
-      test.update!(test_status_id: new_status_id)
-    elsif new_status_id == 12
-      test.update!(test_status_id: new_status_id)
-    else
-      false
-    end
   end
 
   def self.result_sync_tracker(tracking_number, test_id)
