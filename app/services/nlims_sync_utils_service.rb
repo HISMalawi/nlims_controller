@@ -25,7 +25,8 @@ class NlimsSyncUtilsService
     {
       tracking_number: order&.tracking_number,
       status: status,
-      who_updated: who_updated(order_status_trail)
+      who_updated: who_updated(order_status_trail),
+      time_updated: order_status_trail&.time_updated
     }
   end
 
@@ -131,7 +132,8 @@ class NlimsSyncUtilsService
       test_status: test_status,
       test_name: TestType.find_by(id: test_record&.test_type_id)&.name,
       result_date: '',
-      who_updated: who_updated(test_status_trail)
+      who_updated: who_updated(test_status_trail),
+      time_updated: test_status_trail&.time_updated
     }
     return payload if results.empty?
 
