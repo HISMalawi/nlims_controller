@@ -6,9 +6,9 @@ test_statuses = %w[pending started completed verified rejected test_on_repeat te
 
 test_statuses.each do |status|
   puts "Seeding additional test status: #{status}"
-  status = TestStatus.find_by(name: status)
-  puts "#{status.name} already exists, skipping..." if status.present?
-  next if status.present?
+  record = TestStatus.find_by(name: status)
+  puts "#{record.name} already exists, skipping..." if record.present?
+  next if record.present?
 
   TestStatus.find_or_create_by!(name: status)
 end
@@ -17,9 +17,9 @@ specimen_statuses = %w[specimen_collected specimen_rejected specimen_accepted sa
                        sample_rejected_at_hub sample_accepted_at_ml sample_rejected_at_ml]
 specimen_statuses.each do |status|
   puts "Seeding additional specimen status: #{status}"
-  status = SpecimenStatus.find_by(name: status)
-  puts "#{status.name} already exists, skipping..." if status.present?
-  next if status.present?
+  record = SpecimenStatus.find_by(name: status)
+  puts "#{record.name} already exists, skipping..." if record.present?
+  next if record.present?
 
   SpecimenStatus.find_or_create_by!(name: status)
 end
