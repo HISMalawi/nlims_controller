@@ -102,7 +102,8 @@ class IntegrationStatusService
         status_last_updated: Time.now.strftime('%d/%b/%Y %H:%M'),
         last_sync_date_gt_24hr: last_sync_date_gt_24hr?(last_sync_date),
         last_sync_date: last_sync_date.present? ? last_sync_date.strftime('%d/%b/%Y %H:%M') : 'Has Never Synced with NLIMS',
-        order_summary: order_summary
+        order_summary: order_summary,
+        last_app_check_in_date: AppCheckIn.where(site_id: site[:id]).order('check_in_time DESC').first&.check_in_time
       }
     rescue StandardError => e
       puts "[Error] #{e.class}: #{e.message}"
