@@ -38,8 +38,8 @@ module TestService
           who_updated_phone_number: ''
         )
       end
-      update_test_status(test_id, test_status)
-      if test_status.id == 5 && params[:results]
+      TestStatusUpdaterService.call(test_id, test_status)
+      if test_status.id == TestStatus.find_by(name: 'verified')&.id && params[:results]
         result_date = params[:result_date].blank? ? Time.now.strftime('%Y%m%d%H%M%S') : params[:result_date]
         state, error_message = validate_time_updated(result_date, sql_order)
         unless state
@@ -77,7 +77,7 @@ module TestService
             test_result.update!(result: result_value, time_entered: result_date)
             test_status_trail = TestStatusTrail.where(test_id:, test_status_id: 5).first
             test_status_trail.update!(time_updated: result_date) unless test_status_trail.blank?
-            result_sync_tracker(params[:tracking_number], test_id)
+            result_sync_tracker(params[:tracking_number], test_id, force_create: true)
           else
             test_result = TestResult.create!(measure_id: measure_id, test_id: test_id, result: result_value, device_name: device_name,
                                              time_entered: result_date)
@@ -108,32 +108,7 @@ module TestService
     [true, nil]
   end
 
-  def self.update_test_status(test_id, new_status)
-    allowed_transitions = {
-      9 => [2, 3, 4, 5, 6],
-      2 => [3, 4, 5, 6],
-      3 => [4, 5, 6],
-      4 => [5],
-      12 => [4, 5],
-      nil => [10, 11, 6]
-    }.freeze
-    lab_test = Test.find_by(id: test_id)
-    return false unless lab_test.present? && new_status.present?
-
-    current_status = lab_test.test_status_id
-    if allowed_transitions[current_status]&.include?(new_status.id) ||
-       allowed_transitions[nil]&.include?(new_status.id)
-      lab_test.update!(test_status_id: new_status.id)
-    elsif new_status.id == 12
-      lab_test.update!(test_status_id: new_status.id)
-    elsif new_status.id == 5
-      lab_test.update!(test_status_id: new_status.id)
-    else
-      false
-    end
-  end
-
-  def self.result_sync_tracker(tracking_number, test_id)
+  def self.result_sync_tracker(tracking_number, test_id, force_create: false)
     if !Config.local_nlims? && !Config.same_source?(tracking_number) && Config.host_valid?(tracking_number) && !ResultSyncTracker.exists?(
       tracking_number:, test_id:, app: 'nlims'
     )
@@ -148,7 +123,8 @@ module TestService
     end
     return if Config.master_update_source?(tracking_number)
 
-    return if ResultSyncTracker.exists?(tracking_number:, test_id:, app: 'nlims')
+    results_exists = ResultSyncTracker.exists?(tracking_number:, test_id:, app: 'nlims')
+    return if results_exists && !force_create
 
     # Create a new ResultSyncTracker record
     ResultSyncTracker.create(tracking_number:, test_id:, app: 'nlims')

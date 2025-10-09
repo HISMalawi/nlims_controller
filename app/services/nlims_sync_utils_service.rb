@@ -25,7 +25,8 @@ class NlimsSyncUtilsService
     {
       tracking_number: order&.tracking_number,
       status: status,
-      who_updated: who_updated(order_status_trail)
+      who_updated: who_updated(order_status_trail),
+      time_updated: order_status_trail&.time_updated
     }
   end
 
@@ -121,9 +122,13 @@ class NlimsSyncUtilsService
 
       results_object[Measure.find_by(id: result.measure_id)&.name] = result&.result
     end
-    test_status = StatusSyncTracker.find_by(tracking_number:, test_id: test_record&.id, sync_status: false)&.status
-    test_status ||= StatusSyncTracker.where(tracking_number:, test_id: test_record&.id).last&.status
-    test_status_id = TestStatus.find_by(name: test_status)&.id
+    if action == 'status_update'
+      test_status = StatusSyncTracker.find_by(tracking_number:, test_id: test_record&.id, sync_status: false)&.status
+      test_status ||= StatusSyncTracker.where(tracking_number:, test_id: test_record&.id).last&.status
+      test_status_id = TestStatus.find_by(name: test_status)&.id
+    else
+      test_status_id = test_record&.test_status_id
+    end
     test_status_trail = TestStatusTrail.where(test_id: test_record&.id, test_status_id:).order(created_at: :desc).first
 
     payload = {
@@ -131,7 +136,8 @@ class NlimsSyncUtilsService
       test_status: test_status,
       test_name: TestType.find_by(id: test_record&.test_type_id)&.name,
       result_date: '',
-      who_updated: who_updated(test_status_trail)
+      who_updated: who_updated(test_status_trail),
+      time_updated: test_status_trail&.time_updated
     }
     return payload if results.empty?
 
@@ -276,7 +282,11 @@ class NlimsSyncUtilsService
 
   def buid_acknowledment_to_master_data(acknowledgement)
     test_to_ack = TestType.find(Test.find(acknowledgement&.test_id)&.test_type_id)&.name
-    level = TestResultRecepientType.find_by(id: acknowledgement&.acknwoledment_level)
+    level = begin
+      TestResultRecepientType.find_by(id: acknowledgement&.acknwoledment_level)
+    rescue StandardError
+      nil
+    end
     level ||= TestResultRecepientType.find_by(id: acknowledgement&.acknowledgment_level)
     {
       'tracking_number': acknowledgement&.tracking_number,
@@ -315,13 +325,13 @@ class NlimsSyncUtilsService
   def update_order_source_couch_id(tracking_number, sending_facility, couch_id)
     url = "#{@address}/api/v1/update_order_source_couch_id"
     response = JSON.parse(RestClient::Request.execute(
-                 method: :post,
-                 url:,
-                 timeout: 10,
-                 payload: { tracking_number:, sending_facility:, couch_id: },
-                 content_type: :json,
-                 headers: { content_type: :json, accept: :json, token: @token }
-               ))
+                            method: :post,
+                            url:,
+                            timeout: 10,
+                            payload: { tracking_number:, sending_facility:, couch_id: },
+                            content_type: :json,
+                            headers: { content_type: :json, accept: :json, token: @token }
+                          ))
     puts response
   rescue StandardError => e
     puts "Error: #{e.message} ==> NLIMS Update Order Source Couch ID to Master NLIMS"

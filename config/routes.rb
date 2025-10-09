@@ -63,6 +63,7 @@ Rails.application.routes.draw do
 
       # status of the app
       get '/ping' => 'status#ping'
+      post '/check_in' => 'status#check_in'
       post '/register_order_source' => 'source_tracker#register_order_source'
       post '/update_order_source_couch_id' => 'source_tracker#update_order_source_couch_id'
 

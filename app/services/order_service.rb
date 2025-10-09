@@ -795,25 +795,27 @@ module OrderService
     return [false, 'wrong parameter for specimen status'] if specimen_status.blank?
 
     order = Speciman.find_by(tracking_number: params['tracking_number'])
-    unless params['specimen_type'].blank?
-      specimen_type = SpecimenType.find_by(name: params['specimen_type'])
-      return [false, 'wrong parameter for specimen type'] if specimen_type.blank?
+    ActiveRecord::Base.transaction do
+      unless params['specimen_type'].blank?
+        specimen_type = SpecimenType.find_by(name: params['specimen_type'])
+        return [false, 'wrong parameter for specimen type'] if specimen_type.blank?
 
-      order.update(specimen_type_id: specimen_type.id)
+        order.update!(specimen_type_id: specimen_type.id)
+      end
+      SpecimenStatusUpdaterService.call(order, specimen_status)
+      return [true, ''] if SpecimenStatusTrail.exists?(specimen_id: order.id, specimen_status_id: specimen_status.id)
+
+      who_updated = params['who_updated'].present? ? params['who_updated'] : {}
+      SpecimenStatusTrail.create!(
+        specimen_id: order.id,
+        specimen_status_id: specimen_status.id,
+        time_updated: params['time_updated'].blank? ? Time.new.strftime('%Y%m%d%H%M%S') : params['time_updated'],
+        who_updated_id: who_updated['id'],
+        who_updated_name: "#{who_updated['first_name']} #{who_updated['last_name']}",
+        who_updated_phone_number: who_updated['phone_number']
+      )
+      [true, '']
     end
-    order.update(specimen_status_id: specimen_status.id)
-    return [true, ''] if SpecimenStatusTrail.exists?(specimen_id: order.id, specimen_status_id: specimen_status.id)
-
-    # Create the status trail
-    SpecimenStatusTrail.create(
-      specimen_id: order.id,
-      specimen_status_id: specimen_status.id,
-      time_updated: Time.new.strftime('%Y%m%d%H%M%S'),
-      who_updated_id: params['who_updated']['id'],
-      who_updated_name: "#{params['who_updated']['first_name']} #{params['who_updated']['last_name']}",
-      who_updated_phone_number: params['who_updated']['phone_number']
-    )
-    [true, '']
   end
 
   def self.query_order_by_tracking_number(tracking_number)

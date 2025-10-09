@@ -1,5 +1,8 @@
 #!/bin/bash
-rm Gemfile.lock && bundle config set --local path 'vendor/bundle' && bundle install --local && bundle exec rails db:migrate && (
+
+# Uncomment the following line to set the bundle path to vendor/bundle instead of the system default - usually when multiple apps are using the same gems which could lead to version conflicts/ application crashes
+# bundle config set --local path 'vendor/bundle'
+rm Gemfile.lock && bundle install --local && bundle exec rails db:migrate && (
   bundle exec rake db:seed:specific\[seed_dispatcher_types.rb\] &&
   bundle exec rake db:seed:specific\[seed_test_results_recepient_types.rb\] &&
   bundle exec rake db:seed:specific\[seed_name_mappings.rb\] &&

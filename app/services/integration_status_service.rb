@@ -12,10 +12,10 @@ class IntegrationStatusService
     Net::Ping::External.new(ip_address || '').ping
   end
 
-  def application_status(ip_address, port)
+  def application_status(ip_address, port, site_id)
     return false if ip_address.blank? || port.blank?
 
-    url = "http://#{ip_address}:#{port}/api/v1/ping"
+    url = "http://#{ip_address}:#{port}/api/v1/ping?site_id=#{site_id}"
 
     response = RestClient::Request.execute(
       method: :get,
@@ -55,7 +55,8 @@ class IntegrationStatusService
   end
 
   def last_sync_date_gt_24hr?(last_sync_date)
-    last_sync_date.present? ? last_sync_date < 48.hours.ago : true
+    puts "last sync date: #{last_sync_date}"
+    last_sync_date.present? && last_sync_date != 'Has Never Synced with NLIMS' ? last_sync_date < 48.hours.ago : true
   end
 
   # rubocop:disable Metrics/MethodLength
@@ -63,6 +64,7 @@ class IntegrationStatusService
   def check_integration_status
     site_data = @sites.map do |site|
       {
+        id: site.id,
         name: site.name,
         ip_address: site.host_address,
         app_port: site.application_port
@@ -87,7 +89,7 @@ class IntegrationStatusService
       ping_status = ping_server(ip_address)
 
       puts "checking application status #{sending_facility} : #{ip_address}"
-      status = application_status(ip_address, application_port)
+      status = application_status(ip_address, application_port, site[:id])
       order_summary = fetch_order_summary(ip_address, application_port, sending_facility)
 
       results << {
@@ -100,7 +102,8 @@ class IntegrationStatusService
         status_last_updated: Time.now.strftime('%d/%b/%Y %H:%M'),
         last_sync_date_gt_24hr: last_sync_date_gt_24hr?(last_sync_date),
         last_sync_date: last_sync_date.present? ? last_sync_date.strftime('%d/%b/%Y %H:%M') : 'Has Never Synced with NLIMS',
-        order_summary: order_summary
+        order_summary: order_summary,
+        last_app_check_in_date: AppCheckIn.where(site_id: site[:id]).order('check_in_time DESC').first&.check_in_time
       }
     rescue StandardError => e
       puts "[Error] #{e.class}: #{e.message}"
@@ -115,6 +118,7 @@ class IntegrationStatusService
   def generate_status_report
     data = check_integration_status.sort_by { |site| site[:name].to_s.downcase }
     Report.find_or_create_by(name: 'integration_status').update(data:)
+    Report.create(name: 'integration_status_history', data:)
   end
 
   def fetch_order_summary(ip_address, port, sending_facility)
@@ -147,6 +151,7 @@ class IntegrationStatusService
     {
       "emr": {
         "count": 0,
+        "last_order_date": nil,
         "lab_orders": [],
         "remark": 'NLIMS Local Not Reachable'
       },
