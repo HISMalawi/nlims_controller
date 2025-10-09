@@ -19,7 +19,7 @@ module Codeable
   private
 
   def set_nlims_code
-    return if nlims_code.present? && nlims_code != ''
+    return if nlims_code.present?
 
     if is_a?(Measure)
       # Try reusing existing nlims_code from another Measure with same name

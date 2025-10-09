@@ -47,13 +47,13 @@ module ProcessTestCatalogService
       else
         attrs = {
           name: data[:name],
-          nlims_code: data[:nlims_code],
           preferred_name: data[:preferred_name],
           moh_code: data[:moh_code],
           loinc_code: data[:loinc_code],
           description: data[:description]
         }
         attrs[:short_name] = data[:short_name] if record.respond_to?(:short_name)
+        attrs[:nlims_code] = data[:nlims_code] if record.respond_to?(:nlims_code) && data[:nlims_code].present?
         record.update!(attrs)
       end
       record

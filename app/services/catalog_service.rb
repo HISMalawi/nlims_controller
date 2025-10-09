@@ -274,7 +274,7 @@ class CatalogService
     next_id = (@catalog.catalog['test_types']&.map { |t| t['id'] }&.max || 0) + 1
     {
       'id' => next_id,
-      'nlims_code' => params[:nlims_code].present? ? params[:nlims_code] : "NLIMS_TT_#{next_id.to_s.rjust(4, '0')}_MWI",
+      'nlims_code' => params[:nlims_code].present? ? params[:nlims_code] : "",
       'name' => params[:name],
       'preferred_name' => params[:preferred_name],
       'scientific_name' => params[:scientific_name],
@@ -526,7 +526,7 @@ class CatalogService
     next_id = (@catalog.catalog['specimen_types']&.map { |st| st['id'] }&.max || 0) + 1
     {
       'id' => next_id,
-      'nlims_code' => params[:nlims_code] || "NLIMS_SP_#{next_id.to_s.rjust(4, '0')}_MWI",
+      'nlims_code' => params[:nlims_code] || "",
       'name' => params[:name],
       'preferred_name' => params[:preferred_name],
       'scientific_name' => params[:scientific_name],
@@ -548,7 +548,7 @@ class CatalogService
       'scientific_name' => params[:scientific_name],
       'short_name' => params[:short_name],
       'description' => params[:description],
-      'nlims_code' => params[:nlims_code] || "NLIMS_DRG_#{next_id.to_s.rjust(4, '0')}_MWI",
+      'nlims_code' => params[:nlims_code] || "",
       'loinc_code' => params[:loinc_code],
       'moh_code' => params[:moh_code],
       'created_at' => params[:created_at].present? ? params[:created_at] : Time.now,
@@ -565,7 +565,7 @@ class CatalogService
       'scientific_name' => params[:scientific_name],
       'short_name' => params[:short_name],
       'description' => params[:description],
-      'nlims_code' => params[:nlims_code] || "NLIMS_TC_#{next_id.to_s.rjust(4, '0')}_MWI",
+      'nlims_code' => params[:nlims_code] || "",
       'loinc_code' => params[:loinc_code],
       'moh_code' => params[:moh_code],
       'created_at' => params[:created_at].present? ? params[:created_at] : Time.now,
@@ -589,7 +589,7 @@ class CatalogService
     next_id = (@catalog.catalog['test_panels']&.map { |tp| tp['id'] }&.max || 0) + 1
     {
       'id' => next_id,
-      'nlims_code' => params[:nlims_code] || "NLIMS_TP_#{next_id.to_s.rjust(4, '0')}_MWI",
+      'nlims_code' => params[:nlims_code] || "",
       'name' => params[:name],
       'preferred_name' => params[:preferred_name],
       'scientific_name' => params[:scientific_name],
