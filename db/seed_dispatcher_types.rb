@@ -1,6 +1,6 @@
 dispatcher_types = %w[delivering_samples_to_molecular_lab delivering_samples_to_district_hub
                       delivering_results_to_facility sample_dispatched_from_facility sample_received_at_ml_directly
-                      sample_received_at_ml_from_hub sample_received_at_hub]
+                      sample_received_at_ml_from_hub sample_received_at_hub sample_dispatched_from_hub]
 
 puts 'loading dispatcher types--------------'
 
