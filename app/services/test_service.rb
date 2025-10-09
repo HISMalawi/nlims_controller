@@ -305,7 +305,7 @@ module TestService
         previous_result.update!(result: result_value, time_entered: test_result[:result_date])
         test_status_trail = TestStatusTrail.where(test_id: lab_test_id, test_status_id: 5).first
         test_status_trail.update!(time_updated: test_result[:result_date]) unless test_status_trail.blank?
-        result_sync_tracker(params[:tracking_number], lab_test_id)
+        result_sync_tracker(params[:tracking_number], lab_test_id, force_create: true)
       else
         TestResult.create!(
           measure_id: measure.id,

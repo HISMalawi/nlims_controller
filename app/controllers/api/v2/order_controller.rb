@@ -138,11 +138,6 @@ class API::V2::OrderController < ApplicationController
 
     specimen = Speciman.find_by(tracking_number: params[:tracking_number])
     if specimen.present?
-      if params[:tests].present?
-        params[:tests].each do |lab_test|
-          OrderService.update_tests(lab_test)
-        end
-      end
       render json: {
         error: false,
         message: 'order already available',
@@ -179,6 +174,51 @@ class API::V2::OrderController < ApplicationController
         message: response,
         data: {}
       }, status: :ok
+    else
+      render json: {
+        error: true,
+        message: response,
+        data: {}
+      }, status: :unprocessable_entity
+    end
+  end
+
+  def create_order_once_off
+    message = required_params
+    if message.present?
+      render json: { error: true, message: message, data: {} }, status: :unprocessable_entity and return
+    end
+
+    specimen = Speciman.find_by(tracking_number: params[:tracking_number])
+    if specimen.present?
+      if params[:tests].present?
+        params[:tests].each do |lab_test|
+          OrderService.update_tests(lab_test)
+        end
+      end
+      render json: {
+        error: false,
+        message: 'order already available',
+        data: { tracking_number: specimen.tracking_number }
+      }, status: :created and return
+    end
+
+    status, response = OrderService.create_order_v2(params)
+    if status == true
+      if Config.local_nlims?
+        nlims = NlimsSyncUtilsService.new(nil)
+        nlims.once_off_push_orders_to_master_nlims(response, once_off: true)
+      end
+      if params[:tests].present?
+        params[:tests].each do |lab_test|
+          OrderService.update_tests(lab_test)
+        end
+      end
+      render json: {
+        error: false,
+        message: 'order created successfuly',
+        data: { tracking_number: response }
+      }, status: :created
     else
       render json: {
         error: true,

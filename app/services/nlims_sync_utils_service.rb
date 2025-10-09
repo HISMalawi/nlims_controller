@@ -76,11 +76,11 @@ class NlimsSyncUtilsService
 
   def push_test_actions_to_nlims(test_id: nil, action: 'status_update')
     test_record = Test.find_by(id: test_id)
-    tracking_number = Speciman.find(test_record&.specimen_id)&.tracking_number
-    payload = test_action_payload(tracking_number, test_record, action)
+    order = Speciman.find(test_record&.specimen_id)
+    payload = test_action_payload(order, test_record)
     return true if payload.nil?
 
-    url = "#{@address}/api/v1/update_test"
+    url = "#{@address}/api/v2/update_tests"
     response = JSON.parse(RestClient::Request.execute(
                             method: :post,
                             url:,
@@ -94,10 +94,10 @@ class NlimsSyncUtilsService
     end
 
     unless action == 'status_update'
-      ResultSyncTracker.find_by(tracking_number:, test_id:, app: 'nlims')&.update(sync_status: true)
+      ResultSyncTracker.find_by(tracking_number: order&.tracking_number, test_id:, app: 'nlims')&.update(sync_status: true)
     end
     StatusSyncTracker.find_by(
-      tracking_number:,
+      tracking_number: order&.tracking_number,
       test_id:,
       status: payload[:test_status],
       app: 'nlims'
@@ -113,39 +113,37 @@ class NlimsSyncUtilsService
     false
   end
 
-  def test_action_payload(tracking_number, test_record, action)
-    results_object = {}
-    results = []
-    results = TestResult.where(test_id: test_record&.id) unless action == 'status_update'
-    results.each do |result|
-      next if result.result.blank? || result.measure_id.blank?
-
-      results_object[Measure.find_by(id: result.measure_id)&.name] = result&.result
-    end
-    if action == 'status_update'
-      test_status = StatusSyncTracker.find_by(tracking_number:, test_id: test_record&.id, sync_status: false)&.status
-      test_status ||= StatusSyncTracker.where(tracking_number:, test_id: test_record&.id).last&.status
-      test_status_id = TestStatus.find_by(name: test_status)&.id
-    else
-      test_status_id = test_record&.test_status_id
-    end
-    test_status_trail = TestStatusTrail.where(test_id: test_record&.id, test_status_id:).order(created_at: :desc).first
-
-    payload = {
-      tracking_number:,
-      test_status: test_status,
-      test_name: TestType.find_by(id: test_record&.test_type_id)&.name,
-      result_date: '',
-      who_updated: who_updated(test_status_trail),
-      time_updated: test_status_trail&.time_updated
+  def test_action_payload(order, test_record)
+    test_status = TestStatus.find_by(id: test_record&.test_status_id)
+    {
+      tracking_number: order&.tracking_number,
+      arv_number: order&.arv_number,
+      test_status: test_status&.name,
+      time_updated: test_record&.updated_at,
+      test_type: {
+        name: TestType.find_by(id: test_record&.test_type_id)&.name,
+        nlims_code: TestType.find_by(id: test_record&.test_type_id)&.nlims_code
+      },
+      status_trail: TestStatusTrail.where(test_id: test_record&.id).map do |trail|
+        {
+          status: TestStatus.find_by(id: trail&.test_status_id)&.name,
+          timestamp: trail&.time_updated,
+          updated_by: who_updated(trail)
+        }
+      end,
+      test_results: TestResult.where(test_id: test_record&.id).where.not(result: '').where.not(result: nil).map do |res|
+        measure = Measure.find_by(id: res.measure_id)
+        {
+          name: measure&.name,
+          nlims_code: measure&.nlims_code,
+          unit: measure&.unit,
+          value: res.result,
+          result_date: res.time_entered,
+          platform: res.device_name,
+          platformserial: ''
+        }
+      end
     }
-    return payload if results.empty?
-
-    payload[:test_status] = 'verified' unless test_status.present?
-    payload[:result_date] = results.first&.time_entered
-    payload[:platform] = results.first&.device_name
-    payload[:results] = results_object
-    payload
   end
 
   def who_updated(test_status_trail)
@@ -160,7 +158,9 @@ class NlimsSyncUtilsService
     {
       first_name: who_updated_name[0],
       last_name: who_updated_name[1],
-      id: ''
+      id: '',
+      id_number: test_status_trail&.who_updated_id,
+      phone_number: test_status_trail&.who_updated_phone_number
     }
   end
 
@@ -170,28 +170,34 @@ class NlimsSyncUtilsService
 
     tests = Test.where(specimen_id: order&.id)
     client = Patient.find_by(id: tests&.first&.patient_id)
+    specimen_type = SpecimenType.find_by(id: order.specimen_type_id)
     who_order_test_last_name = tests&.first&.created_by&.split(' ')&.last
     who_order_test_first_name = tests&.first&.created_by&.split(' ')&.first
     {
       tracking_number: order.tracking_number,
-      date_sample_drawn: order.date_created,
-      date_received: order.created_at,
-      health_facility_name: order.sending_facility,
-      district: order.district,
-      target_lab: order.target_lab,
-      couch_id: order.couch_id,
-      requesting_clinician: order.requested_by,
-      return_json: 'true',
-      sample_type: SpecimenType.find_by(id: order.specimen_type_id)&.name,
-      tests: TestType.where(id: tests.pluck(:test_type_id)).pluck(:name),
+      sample_type: {
+        name: specimen_type.name,
+        nlims_code: specimen_type.nlims_code
+      },
       sample_status: SpecimenStatus.find_by(id: order.specimen_status_id)&.name,
-      sample_priority: order.priority,
-      reason_for_test: order.priority,
       order_location: Ward.find_by(id: order.ward_id)&.name || order.sending_facility,
+      sample_priority: order.priority,
       who_order_test_id: nil,
       who_order_test_last_name: who_order_test_last_name.blank? ? '' : who_order_test_last_name,
       who_order_test_first_name: who_order_test_first_name.blank? ? '' : who_order_test_first_name,
       who_order_test_phone_number: '',
+      target_lab: order.target_lab,
+      date_sample_drawn: order.date_created,
+      date_received: order.created_at,
+      health_facility_name: order.sending_facility,
+      district: order.district,
+      couch_id: order.couch_id,
+      requesting_clinician: order.requested_by,
+      return_json: 'true',
+      tests: tests.map do |t|
+        test_action_payload(order, t)
+      end,
+      reason_for_test: order.priority,
       first_name: client.first_name,
       last_name: client.last_name,
       middle_name: client.middle_name,
@@ -209,11 +215,11 @@ class NlimsSyncUtilsService
     }
   end
 
-  def push_order_to_master_nlims(tracking_number)
+  def push_order_to_master_nlims(tracking_number, once_off=false)
     payload = build_order_payload(tracking_number)
     return false if payload.nil?
 
-    url = "#{@address}/api/v1/create_order/"
+    url = once_off ? "#{@address}/api/v2/create_order_once_off/" : "#{@address}/api/v2/create_order/"
     response = JSON.parse(RestClient::Request.execute(
                             method: :post,
                             url:,
@@ -242,6 +248,10 @@ class NlimsSyncUtilsService
       payload:
     )
     false
+  end
+
+  def once_off_push_orders_to_master_nlims(tracking_number, url)
+    push_order_to_master_nlims(tracking_number, url)
   end
 
   def push_acknwoledgement_to_master_nlims(pending_acks: nil)
@@ -483,10 +493,10 @@ class NlimsSyncUtilsService
 
   def get_test_catalog(version)
     response = RestClient::Request.execute(
-        method: :get,
-        url: "#{@address}/api/v1/retrieve_test_catalog?version=#{version}",
-        headers: { content_type: :json, accept: :json, 'token': @token }
-      )
+      method: :get,
+      url: "#{@address}/api/v1/retrieve_test_catalog?version=#{version}",
+      headers: { content_type: :json, accept: :json, 'token': @token }
+    )
     if response.code == 200
       JSON.parse(response.body, symbolize_names: true)
     else
@@ -496,10 +506,10 @@ class NlimsSyncUtilsService
 
   def check_new_test_catalog_version(version)
     response = RestClient::Request.execute(
-        method: :get,
-        url: "#{@address}/api/v1/check_new_test_catalog_version_available?version=#{version}",
-        headers: { content_type: :json, accept: :json, 'token': @token }
-      )
+      method: :get,
+      url: "#{@address}/api/v1/check_new_test_catalog_version_available?version=#{version}",
+      headers: { content_type: :json, accept: :json, 'token': @token }
+    )
     JSON.parse(response.body, symbolize_names: true)
   end
 end

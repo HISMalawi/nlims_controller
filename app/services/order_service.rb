@@ -1022,7 +1022,7 @@ module OrderService
           who_updated_phone_number: trail[:updated_by]['phone_number'].to_s
         )
       end
-      TestService.update_test_status(lab_test.id, test_status)
+      TestStatusUpdaterService.call(lab_test.id, test_status)
       if params[:test_results].present? && test_status&.id == TestStatus.get_test_status_id('verified')
         TestService.add_test_results(params, lab_test.id)
       end
@@ -1049,9 +1049,6 @@ module OrderService
     unless test_status
       return [false, "test status provided, not within scope of tests statuses available:#{TestStatus.all.pluck(:name)}"]
     end
-
-    already_updated = TestService.check_if_test_updated?(lab_test.id, test_status.id)
-    return [false, 'order already updated with such state'] if already_updated
 
     state, error_message = TestService.validate_time_updated(params[:time_updated], order)
     unless state
