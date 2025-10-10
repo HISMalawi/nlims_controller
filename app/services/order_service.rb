@@ -909,7 +909,10 @@ module OrderService
       district: params[:district],
       date_created: params[:date_sample_drawn] || Date.today,
       arv_number: params[:arv_number] || 'N/A',
-      art_regimen: params[:art_regimen] || 'N/A'
+      art_regimen: params[:art_regimen] || 'N/A',
+      source_system: params[:source_system],
+      clinical_history: params[:clinical_history],
+      lab_location: params[:lab_location]
     )
   end
 

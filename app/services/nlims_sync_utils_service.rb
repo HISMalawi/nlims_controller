@@ -211,7 +211,10 @@ class NlimsSyncUtilsService
       phone_number: client[:phone_number],
       art_start_date: order.art_start_date,
       art_regimen: order.art_regimen,
-      arv_number: order.arv_number
+      arv_number: order.arv_number,
+      lab_location: order.lab_location,
+      source_system: order.source_system,
+      clinical_history: order.clinical_history
     }
   end
 
