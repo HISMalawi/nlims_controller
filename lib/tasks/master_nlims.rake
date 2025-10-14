@@ -33,5 +33,5 @@ def vl_without_results
     FROM tests INNER JOIN specimen ON specimen.id = tests.specimen_id
     INNER JOIN test_types ON test_types.id = tests.test_type_id
     WHERE tests.id NOT IN (SELECT test_id FROM test_results where test_id IS NOT NULL)
-    AND DATE(specimen.date_created) > '2025-01-01' AND test_types.name LIKE '%Viral Load%'")
+    AND DATE(specimen.date_created) > '2025-01-01' AND test_types.name LIKE '%HIV Viral Load%'")
 end

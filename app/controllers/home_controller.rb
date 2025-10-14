@@ -5,7 +5,7 @@ class HomeController < ApplicationController
     @info = 'NLIMS SERVICE'
     start_date = Date.today - 1.day
     end_date = Date.today
-    concept = { name: 'Viral Load', id: 856 }
+    concept = { name: 'HIV Viral Load', id: 856 }
     @git_tag = git_tag
     @local_nlims = Config.local_nlims? ? 'Local' : 'Master'
     return unless @local_nlims == 'Local'

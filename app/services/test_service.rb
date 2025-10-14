@@ -147,8 +147,6 @@ module TestService
   end
 
   def self.acknowledge_test_results_receiptient(tracking_number, test_name, date, recipient_type)
-    test_name = 'Viral Load' if test_name == 'HIV viral load'
-    test_name = 'CD4' if test_name == 'CD4 count'
     res = Test.find_by_sql("SELECT tests.id FROM tests INNER JOIN test_types ON test_types.id = tests.test_type_id
             INNER JOIN specimen ON specimen.id = tests.specimen_id
             where specimen.tracking_number ='#{tracking_number}' AND test_types.name='#{test_name}'")

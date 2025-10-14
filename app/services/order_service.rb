@@ -500,7 +500,7 @@ module OrderService
                   INNER JOIN test_types ON test_types.id = tests.test_type_id
                   INNER JOIN sites ON sites.name = specimen.sending_facility
             WHERE (DATE(specimen.created_at) BETWEEN '#{date_from}' AND '#{date}')
-            AND ((test_types.name ='Viral Load' OR test_types.preferred_name ='Viral Load') AND sites.region='#{region}') ORDER BY specimen.id DESC limit 35000")
+            AND ((test_types.name ='HIV Viral Load' OR test_types.preferred_name ='Viral Load') AND sites.region='#{region}') ORDER BY specimen.id DESC limit 35000")
     tsts = {}
     data = []
     counter = 0
