@@ -9,6 +9,9 @@ module OrderService
         tst =  check_test_name(tst)
         return [false, 'test name not available in nlims'] if tst == false
       end
+      if !tests_allowed?(params[:tests].map { |tst| NameMapping.actual_name_of(tst) }) && !Config.local_nlims?
+        return [false, 'test name not allowed for v1 endpoint, use v2 endpoint']
+      end
       params[:sample_type] = NameMapping.actual_name_of(params[:sample_type])
       spc = SpecimenType.find_by(name: params[:sample_type]) || SpecimenType.find_by(preferred_name: params[:sample_type])
       return [false, 'specimen type not available in nlims'] if spc.blank?
@@ -107,8 +110,15 @@ module OrderService
     [true, tracking_number]
   end
 
+  def self.v1_allowed_tests
+    ['HIV Viral Load', 'Viral Load', 'Early Infant Diagnosis']
+  end
+
+  def self.tests_allowed?(tests)
+    tests.all? { |test| v1_allowed_tests.map(&:downcase).include?(test.downcase) }
+  end
+
   def self.check_order(tracking_number)
-    # Speciman.where(tracking_number:).exists? || TrackingNumberLogger.where(tracking_number:).exists?
     Speciman.where(tracking_number:).exists?
   end
 
