@@ -136,7 +136,7 @@ class API::V2::OrderController < ApplicationController
       render json: { error: true, message: message, data: {} }, status: :unprocessable_entity and return
     end
 
-    specimen = Speciman.find_by(tracking_number: params[:tracking_number])
+    specimen = Speciman.find_by(tracking_number: params[:order][:tracking_number])
     if specimen.present?
       render json: {
         error: false,
@@ -189,7 +189,7 @@ class API::V2::OrderController < ApplicationController
       render json: { error: true, message: message, data: {} }, status: :unprocessable_entity and return
     end
 
-    specimen = Speciman.find_by(tracking_number: params[:tracking_number])
+    specimen = Speciman.find_by(tracking_number: params[:order][:tracking_number])
     if specimen.present?
       if params[:tests].present?
         params[:tests].each do |lab_test|
@@ -228,6 +228,17 @@ class API::V2::OrderController < ApplicationController
     end
   end
 
+  def find_order_by_tracking_number
+    order = Speciman.find_by(tracking_number: params[:tracking_number])
+    if params[:couch_id].present?
+      order = Speciman.find_by(tracking_number: params[:tracking_number], couch_id: params[:couch_id])
+    end
+    if order.nil?
+      render json: { error: true, message: 'Order Not Available', data: {} }, status: :not_found and return
+    end
+    render json: { error: false, message: 'Order Found', data: OrderSerializer.serialize(order) }, status: :ok
+  end
+
   private
 
   def remote_host
@@ -242,22 +253,29 @@ class API::V2::OrderController < ApplicationController
 
   def required_params
     required = {
-      'district' => 'district not provided',
-      'health_facility_name' => 'health facility name not provided',
-      'requesting_clinician' => 'requesting clinician not provided',
-      'first_name' => 'patient first name not provided',
-      'last_name' => 'patient last name not provided',
-      'gender' => 'patient gender not provided',
-      'sample_type' => 'sample type not provided',
-      'tests' => 'tests not provided',
-      'date_sample_drawn' => 'date for sample drawn not provided',
-      'sample_status' => 'sample status not provided',
-      'sample_priority' => 'sample priority level not provided',
-      'target_lab' => 'target lab for sample not provided',
-      'order_location' => 'sample order location not provided',
-      'who_order_test_first_name' => 'first name for person ordering not provided',
-      'who_order_test_last_name' => 'last name for person ordering not provided'
+      %i[order district] => 'district not provided',
+      %i[order sending_facility] => 'health facility name not provided',
+      %i[order tracking_number] => 'tracking number not provided',
+      %i[order requested_by] => 'requesting clinician not provided',
+      %i[patient first_name] => 'patient first name not provided',
+      %i[patient last_name] => 'patient last name not provided',
+      %i[patient gender] => 'patient gender not provided',
+      %i[order sample_type name] => 'sample type not provided',
+      [:tests] => 'tests not provided',
+      %i[order date_created] => 'date for sample drawn not provided',
+      %i[order sample_status name] => 'sample status not provided',
+      %i[order priority] => 'sample priority level not provided',
+      %i[order target_lab] => 'target lab for sample not provided',
+      %i[order order_location] => 'sample order location not provided',
+      %i[order drawn_by name] => 'first name for person ordering not provided',
+      %i[order drawn_by id] => 'last name for person ordering not provided'
     }
-    required.detect { |key, _| params[key].blank? }&.last
+
+    required.each do |path, message|
+      value = params.dig(*path.map(&:to_s))
+      return message if value.blank?
+    end
+
+    nil
   end
 end

@@ -2,6 +2,8 @@
 
 # Model class for specimen status trail
 class SpecimenStatusTrail < ApplicationRecord
+  belongs_to :specimen_status, class_name: 'SpecimenStatus', foreign_key: 'specimen_status_id'
+
   after_commit :push_status_to_master_nlims, on: %i[create], if: :local_nlims?
   after_commit :push_status_to_local_nlims, on: %i[create], unless: :local_nlims?
 

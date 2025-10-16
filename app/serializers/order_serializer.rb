@@ -6,7 +6,7 @@ module OrderSerializer
     def serialize(order)
       {
         order: {
-          couch_id: order&.couch_id,
+          uuid: order&.couch_id,
           tracking_number: order&.tracking_number,
           sample_type: order&.specimen_types,
           sample_status: order&.specimen_statuses,
@@ -21,15 +21,15 @@ module OrderSerializer
           },
           target_lab: order&.target_lab,
           sending_facility: order&.sending_facility,
+          district: order&.district,
           site_code_number: Site.find_by(name: order&.sending_facility)&.site_code_number || '',
           requested_by: order&.requested_by,
-          district: order&.district,
           art_start_date: order&.art_start_date,
           arv_number: order&.arv_number,
           art_regimen: order&.art_regimen,
+          clinical_history: order&.clinical_history,
           lab_location: order&.lab_location,
           source_system: order&.source_system,
-          clinical_history: order&.clinical_history,
           status_trail: order&.specimen_status_trail&.map do |trail|
             {
               status_id: trail&.specimen_status_id,
@@ -58,6 +58,7 @@ module OrderSerializer
         gender: patient&.gender,
         date_of_birth: patient&.dob,
         address: patient&.address,
+        email: patient&.email,
         phone_number: patient&.phone_number
       }
     end

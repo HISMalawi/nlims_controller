@@ -76,8 +76,8 @@ class NlimsSyncUtilsService
 
   def push_test_actions_to_nlims(test_id: nil, action: 'status_update')
     test_record = Test.find_by(id: test_id)
-    order = Speciman.find(test_record&.specimen_id)
-    payload = test_action_payload(order, test_record)
+    order = test_record&.speciman
+    payload = TestSerializer.serialize(test_record)
     return true if payload.nil?
 
     url = "#{@address}/api/v2/update_tests"
@@ -219,7 +219,10 @@ class NlimsSyncUtilsService
   end
 
   def push_order_to_master_nlims(tracking_number, once_off=false)
-    payload = build_order_payload(tracking_number)
+    order = Speciman.find_by(tracking_number:)
+    return false if order.nil?
+
+    payload = OrderSerializer.serialize(order)
     return false if payload.nil?
 
     url = once_off ? "#{@address}/api/v2/create_order_once_off/" : "#{@address}/api/v2/create_order/"

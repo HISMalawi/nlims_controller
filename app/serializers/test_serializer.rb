@@ -7,7 +7,7 @@ module TestSerializer
       {
         tracking_number: test&.speciman&.tracking_number,
         arv_number:test&.speciman&.arv_number,
-        couch_id: test&.speciman&.couch_id,
+        uuid: test&.speciman&.couch_id,
         test_status: test&.test_status&.name,
         time_updated: test&.test_status_trail&.where(test_status_id: test&.test_status_id)&.first&.time_updated || test&.updated_at,
         test_type: test&.test_type,
@@ -29,7 +29,6 @@ module TestSerializer
             measure: {
               name: result&.measure&.name,
               nlims_code: result&.measure&.nlims_code,
-              unit: result&.measure&.unit,
               moh_code: result&.measure&.moh_code,
               loinc_code: result&.measure&.loinc_code,
               preferred_name: result&.measure&.preferred_name,
@@ -39,6 +38,7 @@ module TestSerializer
             },
             result: {
               value: result&.result,
+              unit: result&.unit,
               result_date: result&.time_entered,
               platform: result&.device_name,
               platformserial: ''

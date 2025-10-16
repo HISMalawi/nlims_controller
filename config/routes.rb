@@ -103,6 +103,7 @@ Rails.application.routes.draw do
       post '/create_order'	=> 'order#create_order'
       post '/update_tests' => 'order#update_tests'
       post '/create_order_once_off' => 'order#create_order_once_off'
+      get '/find_order_by_tracking_number' => 'order#find_order_by_tracking_number'
     end
   end
 end

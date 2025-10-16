@@ -900,30 +900,47 @@ module OrderService
   end
 
   def self.create_specimen(params)
-    sample_status_id = SpecimenStatus.get_specimen_status_id(params[:sample_status]&.gsub('-', '_'))
+    sample_status_id = SpecimenStatus.get_specimen_status_id(params[:sample_status][:name]&.gsub('-', '_'))
     order_ward = Ward.get_ward_id(NameMapping.actual_name_of(params[:order_location]))
-    Speciman.create!(
+    order = Speciman.create!(
+      couch_id: params[:uuid] || SecureRandom.uuid,
       tracking_number: params[:tracking_number],
       specimen_type_id: SpecimenType.find_by(nlims_code: params.dig(:sample_type, :nlims_code))&.id,
       specimen_status_id: sample_status_id,
-      couch_id: params[:couch_id] || SecureRandom.uuid,
       ward_id: order_ward,
-      priority: params[:sample_priority],
-      drawn_by_id: params[:who_order_test_id],
-      drawn_by_name: "#{params[:who_order_test_first_name]} #{params[:who_order_test_last_name]}",
-      drawn_by_phone_number: params[:who_order_test_phone_number],
+      date_created: params[:date_created] || Date.today,
+      priority: params[:priority],
+      drawn_by_id: params[:drawn_by][:id],
+      drawn_by_name: params[:drawn_by][:name],
+      drawn_by_phone_number: params[:drawn_by][:phone_number],
       target_lab: params[:target_lab],
-      art_start_date: params[:art_start_date],
-      sending_facility: params[:health_facility_name],
-      requested_by: params[:requesting_clinician],
+      sending_facility: params[:sending_facility],
       district: params[:district],
-      date_created: params[:date_sample_drawn] || Date.today,
+      requested_by: params[:requested_by],
+      art_start_date: params[:art_start_date],
       arv_number: params[:arv_number] || 'N/A',
       art_regimen: params[:art_regimen] || 'N/A',
-      source_system: params[:source_system],
       clinical_history: params[:clinical_history],
-      lab_location: params[:lab_location]
+      lab_location: params[:lab_location],
+      source_system: params[:source_system]
     )
+    if params[:status_trail].present?
+      params[:status_trail].each do |trail|
+        specimen_status = SpecimenStatus.find_by(name: trail[:status])
+        next unless specimen_status.present?
+        next if SpecimenStatusTrail.exists?(specimen_id: order.id, specimen_status_id: specimen_status.id)
+
+        SpecimenStatusTrail.create!(
+          specimen_id: order.id,
+          time_updated: trail[:timestamp],
+          specimen_status_id: specimen_status.id,
+          who_updated_id: trail[:updated_by]['id'].to_s,
+          who_updated_name: "#{trail[:updated_by]['first_name']} #{trail[:updated_by]['last_name']}",
+          who_updated_phone_number: trail[:updated_by]['phone_number'].to_s
+        )
+      end
+    end
+    order
   end
 
   def self.create_test(patient, specimen, testype_id, time_created, test_status_id, created_by, panel_id = nil)
@@ -940,23 +957,23 @@ module OrderService
 
   def self.create_patient(params)
     npid = params[:national_patient_id]
-    patient_obj = Patient.where(patient_number: npid)
-    patient_obj = patient_obj.first unless patient_obj.blank?
-    if patient_obj.blank?
-      patient_obj = patient_obj.create!(
+    name = "#{params[:first_name]} #{params[:last_name]}"
+    patient_obj = Patient.find_by(patient_number: npid)
+    if patient_obj.present?
+      patient_obj.dob = params[:date_of_birth]
+      patient_obj.update!(name:)
+      patient_obj.save!
+    else
+      patient_obj = Patient.create!(
         patient_number: npid,
-        name: "#{params[:first_name]} #{params[:last_name]}",
-        email: '',
+        name:,
+        email: params[:email],
         dob: params[:date_of_birth],
         gender: params[:gender],
         phone_number: params[:phone_number],
-        address: '',
+        address: params[:address],
         external_patient_number: ''
       )
-    else
-      patient_obj.dob = params[:date_of_birth]
-      patient_obj.update(name: "#{params[:first_name]} #{params[:last_name]}")
-      patient_obj.save
     end
     patient_obj
   end
@@ -965,25 +982,27 @@ module OrderService
     ActiveRecord::Base.transaction do
       params[:tests].each do |tst|
         test_name = TestType.find_by(nlims_code: tst.dig(:test_type, :nlims_code))
-        return [false, 'test name not available in nlims'] unless test_name.present?
+        return [false, "test name not available in nlims for #{tst.dig(:test_type, :nlims_code)}"] unless test_name.present?
       end
-      specimen_type = SpecimenType.find_by(nlims_code: params.dig(:sample_type, :nlims_code))
-      return [false, 'specimen type not available in nlims'] if specimen_type.blank?
+      specimen_type = SpecimenType.find_by(nlims_code: params[:order].dig(:sample_type, :nlims_code))
+      return [false, "specimen type not available in nlims for #{params[:order].dig(:sample_type, :nlims_code)}"] if specimen_type.blank?
 
-      specimen_status = SpecimenStatus.find_by(name: params[:sample_status]&.gsub('-', '_'))
-      return [false, 'specimen status not available in nlims'] if specimen_status.blank?
+      if params[:order][:sample_status].present?
+        specimen_status = SpecimenStatus.find_by(name: params[:order][:sample_status][:name]&.gsub('-', '_'))
+        return [false, 'specimen status not available in nlims'] if specimen_status.blank?
+      end
 
-      patient = create_patient(params)
-      specimen = create_specimen(params)
+      patient = create_patient(params[:patient])
+      specimen = create_specimen(params[:order])
       Visit.create(
         patient_id: patient.id,
         visit_type_id: '',
-        ward_id: Ward.get_ward_id(NameMapping.actual_name_of(params[:order_location]))
+        ward_id: Ward.get_ward_id(NameMapping.actual_name_of(params[:order][:order_location]))
       )
       params[:tests].each do |lab_test|
-        time_created = params[:date_sample_drawn] || Date.today
+        time_created = params[:order][:date_created] || Date.today
         test_status_id = TestStatus.get_test_status_id('drawn')
-        created_by = "#{params[:who_order_test_first_name]} #{params[:who_order_test_last_name]}"
+        created_by = params[:order][:drawn_by][:name]
         if PanelType.find_by(name: lab_test.dig(:test_type, :name)).blank?
           create_test(
             patient,
@@ -1011,7 +1030,7 @@ module OrderService
         end
       end
     end
-    [true, params[:tracking_number]]
+    [true, params[:order][:tracking_number]]
   rescue StandardError => e
     [false, e.message]
   end
@@ -1030,7 +1049,7 @@ module OrderService
           test_id: lab_test.id,
           time_updated: trail[:timestamp],
           test_status_id: trail_status.id,
-          who_updated_id: trail[:updated_by]['id_number'].to_s,
+          who_updated_id: trail[:updated_by]['id'].to_s,
           who_updated_name: "#{trail[:updated_by]['first_name']} #{trail[:updated_by]['last_name']}",
           who_updated_phone_number: trail[:updated_by]['phone_number'].to_s
         )
@@ -1072,6 +1091,7 @@ module OrderService
 
     [order, lab_test, test_status]
   end
+
   def self.nlims_local_orders(start_date, end_date, concept, sending_facility: nil)
     start_date = start_date.present? ? start_date.to_date.beginning_of_day : Date.today.beginning_of_day
     end_date = end_date.present? ? end_date.to_date.end_of_day : Date.today.end_of_day
