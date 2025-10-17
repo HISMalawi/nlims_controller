@@ -6,8 +6,6 @@ class SyncWithEmrJob
 
   def perform(params)
     tracking_number, status, test_id, action = params.values_at('tracking_number', 'status', 'test_id', 'action')
-    return if Speciman.find_by(tracking_number:)&.source_system&.downcase == 'iblis'
-
     emr_service = EmrSyncService.new(tracking_number)
     if action == 'status_update'
       time = StatusSyncTracker.find_by(tracking_number:, test_id:, status:, app: 'emr')&.time_updated

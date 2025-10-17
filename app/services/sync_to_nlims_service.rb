@@ -8,8 +8,9 @@ module  SyncToNlimsService
         sync_status: false,
         app: 'nlims',
         created_at: (Date.today - 120)..Date.today + 1
-      ).each do |tracker|
+      ).limit(2).each do |tracker|
         nlims = NlimsSyncUtilsService.new(tracking_number(tracker&.test_id))
+        puts "Pushing status to nlims for test id: #{tracker&.test_id}"
         nlims.push_test_actions_to_nlims(test_id: tracker&.test_id, action: 'status_update')
       rescue StandardError => e
         Rails.logger.error("Failed to push test actions to NLMIS: #{e.message}")

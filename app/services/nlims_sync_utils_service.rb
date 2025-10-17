@@ -39,7 +39,7 @@ class NlimsSyncUtilsService
                             method: :post,
                             url:,
                             timeout: 10,
-                            payload:,
+                            payload: payload.to_json,
                             content_type: :json,
                             headers: { content_type: :json, accept: :json, token: @token }
                           ))
@@ -85,24 +85,25 @@ class NlimsSyncUtilsService
                             method: :post,
                             url:,
                             timeout: 10,
-                            payload:,
+                            payload: payload.to_json,
                             content_type: :json,
                             headers: { content_type: :json, accept: :json, token: @token }
                           ))
-    unless (response['error'] == false && response['message'] == 'test updated successfuly') || (response['error'] == true && response['message'] == 'order already updated with such state')
-      return false
+                          puts response
+    if ['test updated successfuly', 'order already updated with such state'].include?(response['message'])
+      unless action == 'status_update'
+        ResultSyncTracker.find_by(tracking_number: order&.tracking_number, test_id:, app: 'nlims')&.update(sync_status: true)
+      end
+      StatusSyncTracker.find_by(
+        tracking_number: order&.tracking_number,
+        test_id:,
+        status: payload[:test_status],
+        app: 'nlims'
+      )&.update(sync_status: true)
+      true
+    else
+      false
     end
-
-    unless action == 'status_update'
-      ResultSyncTracker.find_by(tracking_number: order&.tracking_number, test_id:, app: 'nlims')&.update(sync_status: true)
-    end
-    StatusSyncTracker.find_by(
-      tracking_number: order&.tracking_number,
-      test_id:,
-      status: payload[:test_status],
-      app: 'nlims'
-    )&.update(sync_status: true)
-    true
   rescue StandardError => e
     puts "Error: #{e.message} ==> NLIMS test actions Push"
     SyncUtilService.log_error(
@@ -111,39 +112,6 @@ class NlimsSyncUtilsService
       payload:
     )
     false
-  end
-
-  def test_action_payload(order, test_record)
-    test_status = TestStatus.find_by(id: test_record&.test_status_id)
-    {
-      tracking_number: order&.tracking_number,
-      arv_number: order&.arv_number,
-      test_status: test_status&.name,
-      time_updated: test_record&.updated_at,
-      test_type: {
-        name: TestType.find_by(id: test_record&.test_type_id)&.name,
-        nlims_code: TestType.find_by(id: test_record&.test_type_id)&.nlims_code
-      },
-      status_trail: TestStatusTrail.where(test_id: test_record&.id).map do |trail|
-        {
-          status: TestStatus.find_by(id: trail&.test_status_id)&.name,
-          timestamp: trail&.time_updated,
-          updated_by: who_updated(trail)
-        }
-      end,
-      test_results: TestResult.where(test_id: test_record&.id).where.not(result: '').where.not(result: nil).map do |res|
-        measure = Measure.find_by(id: res.measure_id)
-        {
-          name: measure&.name,
-          nlims_code: measure&.nlims_code,
-          unit: measure&.unit,
-          value: res.result,
-          result_date: res.time_entered,
-          platform: res.device_name,
-          platformserial: ''
-        }
-      end
-    }
   end
 
   def who_updated(test_status_trail)
@@ -164,60 +132,6 @@ class NlimsSyncUtilsService
     }
   end
 
-  def build_order_payload(tracking_number)
-    order = Speciman.find_by(tracking_number:)
-    return nil if order.nil? || order.specimen_type_id.zero?
-
-    tests = Test.where(specimen_id: order&.id)
-    client = Patient.find_by(id: tests&.first&.patient_id)
-    specimen_type = SpecimenType.find_by(id: order.specimen_type_id)
-    who_order_test_last_name = tests&.first&.created_by&.split(' ')&.last
-    who_order_test_first_name = tests&.first&.created_by&.split(' ')&.first
-    {
-      tracking_number: order.tracking_number,
-      sample_type: {
-        name: specimen_type.name,
-        nlims_code: specimen_type.nlims_code
-      },
-      sample_status: SpecimenStatus.find_by(id: order.specimen_status_id)&.name,
-      order_location: Ward.find_by(id: order.ward_id)&.name || order.sending_facility,
-      sample_priority: order.priority,
-      who_order_test_id: nil,
-      who_order_test_last_name: who_order_test_last_name.blank? ? '' : who_order_test_last_name,
-      who_order_test_first_name: who_order_test_first_name.blank? ? '' : who_order_test_first_name,
-      who_order_test_phone_number: '',
-      target_lab: order.target_lab,
-      date_sample_drawn: order.date_created,
-      date_received: order.created_at,
-      health_facility_name: order.sending_facility,
-      district: order.district,
-      couch_id: order.couch_id,
-      requesting_clinician: order.requested_by,
-      return_json: 'true',
-      tests: tests.map do |t|
-        test_action_payload(order, t)
-      end,
-      reason_for_test: order.priority,
-      first_name: client.first_name,
-      last_name: client.last_name,
-      middle_name: client.middle_name,
-      date_of_birth: client[:dob],
-      gender: client.sex,
-      patient_residence: client[:address],
-      patient_location: '',
-      patient_town: '',
-      patient_district: '',
-      national_patient_id: client[:patient_number],
-      phone_number: client[:phone_number],
-      art_start_date: order.art_start_date,
-      art_regimen: order.art_regimen,
-      arv_number: order.arv_number,
-      lab_location: order.lab_location,
-      source_system: order.source_system,
-      clinical_history: order.clinical_history
-    }
-  end
-
   def push_order_to_master_nlims(tracking_number, once_off=false)
     order = Speciman.find_by(tracking_number:)
     return false if order.nil?
@@ -230,13 +144,14 @@ class NlimsSyncUtilsService
                             method: :post,
                             url:,
                             timeout: 10,
-                            payload:,
+                            payload: payload.to_json,
                             content_type: :json,
                             headers: { content_type: :json, accept: :json, token: @token }
                           ))
     if response['error'] == false && ['order created successfuly',
                                       'order already available'].include?(response['message'])
-      OrderSyncTracker.find_by(tracking_number:).update(synced: true)
+      OrderSyncTracker.find_by(tracking_number:)&.update(synced: true)
+      StatusSyncTracker.where(tracking_number:)&.update(sync_status: true)
       puts "Order pushed to Master NLIMS successfully for tracking number: #{tracking_number}"
       return true
     end

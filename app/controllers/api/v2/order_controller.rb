@@ -207,7 +207,11 @@ class API::V2::OrderController < ApplicationController
     if status == true
       if Config.local_nlims?
         nlims = NlimsSyncUtilsService.new(nil)
-        nlims.once_off_push_orders_to_master_nlims(response, once_off: true)
+        begin
+          nlims.once_off_push_orders_to_master_nlims(response, once_off: true)
+        rescue StandardError => e
+          puts "Error: #{e.message}"
+        end
       end
       if params[:tests].present?
         params[:tests].each do |lab_test|
@@ -233,9 +237,8 @@ class API::V2::OrderController < ApplicationController
     if params[:couch_id].present?
       order = Speciman.find_by(tracking_number: params[:tracking_number], couch_id: params[:couch_id])
     end
-    if order.nil?
-      render json: { error: true, message: 'Order Not Available', data: {} }, status: :not_found and return
-    end
+    render json: { error: true, message: 'Order Not Available', data: {} }, status: :not_found and return if order.nil?
+
     render json: { error: false, message: 'Order Found', data: OrderSerializer.serialize(order) }, status: :ok
   end
 
@@ -267,8 +270,7 @@ class API::V2::OrderController < ApplicationController
       %i[order priority] => 'sample priority level not provided',
       %i[order target_lab] => 'target lab for sample not provided',
       %i[order order_location] => 'sample order location not provided',
-      %i[order drawn_by name] => 'first name for person ordering not provided',
-      %i[order drawn_by id] => 'last name for person ordering not provided'
+      %i[order drawn_by name] => 'first name for person ordering not provided'
     }
 
     required.each do |path, message|
