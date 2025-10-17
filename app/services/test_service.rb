@@ -23,7 +23,8 @@ module TestService
     time_updated = params[:time_updated].blank? ? Time.now.strftime('%Y%m%d%H%M%S') : params[:time_updated]
     state, error_message = validate_time_updated(time_updated, sql_order)
     unless state
-      failed_test_update = FailedTestUpdate.find_or_create_by(tracking_number: params[:tracking_number], test_name: test_name, failed_step_status: test_status&.name)
+      failed_test_update = FailedTestUpdate.find_or_create_by(tracking_number: params[:tracking_number],
+                                                              test_name: test_name, failed_step_status: test_status&.name)
       failed_test_update.update(error_message: error_message, time_from_source: time_updated)
       return [false, error_message]
     end
@@ -43,7 +44,8 @@ module TestService
         result_date = params[:result_date].blank? ? Time.now.strftime('%Y%m%d%H%M%S') : params[:result_date]
         state, error_message = validate_time_updated(result_date, sql_order)
         unless state
-          failed_test_update = FailedTestUpdate.find_or_create_by(tracking_number: params[:tracking_number], test_name: test_name, failed_step_status: test_status&.name)
+          failed_test_update = FailedTestUpdate.find_or_create_by(tracking_number: params[:tracking_number],
+                                                                  test_name: test_name, failed_step_status: test_status&.name)
           failed_test_update.update(error_message: error_message, time_from_source: result_date)
           return [false, error_message]
         end
@@ -51,7 +53,8 @@ module TestService
           measures = Measure.where(name: measure_name) || Measure.where(preferred_name: measure_name)
           next unless measures.exists?
 
-          measure_id = TesttypeMeasure.where(test_type_id: Test.find_by(id: test_id)&.test_type_id, measure_id: measures&.ids)&.first&.measure_id
+          measure_id = TesttypeMeasure.where(test_type_id: Test.find_by(id: test_id)&.test_type_id,
+                                             measure_id: measures&.ids)&.first&.measure_id
           measure_id ||= measures.first&.id
           next if measure_id.blank?
           next if result_value == 'Failed'
@@ -99,7 +102,7 @@ module TestService
         time_updated_date = time_updated.to_s.to_date
         created_date = sql_order.date_created.to_date
         return [false, 'time updated or result date provided is in the past'] if time_updated_date < created_date
-      rescue StandardError => e
+      rescue StandardError
         # Any error (invalid date format, type mismatch, etc.) - just proceed
         [true, nil]
       end
@@ -180,6 +183,18 @@ module TestService
     else
       [false, '']
     end
+  end
+
+  def self.vl_without_results
+    last_date = (Date.today - 6.months).to_s
+    Test.find_by_sql("SELECT specimen.tracking_number as tracking_number, specimen.id as specimen_id,
+      tests.id as test_id,test_type_id as test_type_id, test_types.name as test_name, specimen.couch_id as couch_id,
+      specimen.sending_facility as sending_facility
+      FROM tests INNER JOIN specimen ON specimen.id = tests.specimen_id
+      INNER JOIN test_types ON test_types.id = tests.test_type_id
+      WHERE tests.id NOT IN (SELECT test_id FROM test_results where test_id IS NOT NULL)
+      AND DATE(specimen.date_created) > '#{last_date}' AND
+      (test_types.name LIKE '%HIV Viral Load%' OR test_types.preferred_name LIKE '%Viral Load%')")
   end
 
   def self.query_test_status(tracking_number)
@@ -278,14 +293,20 @@ module TestService
   def self.add_test_results(params, lab_test_id)
     params[:test_results].each do |test_result|
       measures = Measure.where(nlims_code: test_result[:measure][:nlims_code]) || Measure.where(name: test_result[:measure][:name])
-      measure = TesttypeMeasure.where(test_type_id: Test.find_by(id: lab_test_id)&.test_type_id, measure_id: measures&.ids)&.first&.measure
+      measure = TesttypeMeasure.where(test_type_id: Test.find_by(id: lab_test_id)&.test_type_id,
+                                      measure_id: measures&.ids)&.first&.measure
       result_params = test_result[:result]
       next if measure.blank?
       next if result_params[:value] == 'Failed'
       next unless result_params[:value].present?
 
       # Handle special case for Viral Load to remove commas
-      result_value = measure.nlims_code == 'NLIMS_TI_0294_MWI' ? result_params[:value].gsub(',', '') : result_params[:value]
+      result_value = if measure.nlims_code == 'NLIMS_TI_0294_MWI'
+                       result_params[:value].gsub(',',
+                                                  '')
+                     else
+                       result_params[:value]
+                     end
       next if result_already_available?(lab_test_id, measure.id, result_value)
 
       previous_result = TestResult.find_by(test_id: lab_test_id, measure_id: measure.id)
@@ -299,9 +320,10 @@ module TestService
           old_device_name: previous_result.device_name,
           new_device_name: device_name,
           old_time_entered: previous_result.time_entered,
-          new_time_entered: result_params[:result_date] 
+          new_time_entered: result_params[:result_date]
         )
-        previous_result.update!(result: result_value, time_entered: result_params[:result_date], unit: result_params[:unit])
+        previous_result.update!(result: result_value, time_entered: result_params[:result_date],
+                                unit: result_params[:unit])
         test_status_trail = TestStatusTrail.where(test_id: lab_test_id, test_status_id: 5).first
         test_status_trail.update!(time_updated: result_params[:result_date]) unless test_status_trail.blank?
         result_sync_tracker(params[:tracking_number], lab_test_id, force_create: true)
