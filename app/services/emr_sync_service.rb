@@ -45,11 +45,7 @@ class EmrSyncService
 
   def create_account_in_emr
     url = "#{@address}/api/v1/lab/users"
-    JSON.parse(RestClient.post(
-                 url,
-                 { 'username': @username, 'password': @password }.to_json,
-                 content_type: 'application/json'
-               ))
+    post_to_emr(url, { 'username': @username, 'password': @password })
     puts 'Account created in EMR'
   rescue StandardError => e
     puts "Error creating account in EMR: #{e.message}"
@@ -57,7 +53,7 @@ class EmrSyncService
   end
 
   def emr_order_summary(start_date, end_date, concept, include_data: false)
-    url = "#{@address}/api/v1/lab/orders/summary?start_date=#{start_date}&end_date=#{end_date}&concept_id=#{concept[:id]}&include_data=#{include_data}"
+    url = "#{@address}/api/v1/lab/orders/summary?start_date=#{start_date}&end_date=#{end_date}&concept_id=#{concept[:id]}&include_data=#{include_data}&no_client=true"
     response = RestClient.get(
       url,
       content_type: 'application/json',
@@ -112,7 +108,7 @@ class EmrSyncService
     url = "#{@address}/api/v1/lab/users/login"
     response = RestClient.post(
       url,
-      { 'username': @username, 'password': @password },
+      { 'username': @username, 'password': @password, 'no_client': true }.to_json,
       content_type: 'application/json'
     )
     handle_response(response)
@@ -132,6 +128,7 @@ class EmrSyncService
 
   # Push the payload to EMR
   def post_to_emr(url, payload)
+    payload[:no_client] = true
     response = RestClient.post(
       url,
       payload.to_json,
