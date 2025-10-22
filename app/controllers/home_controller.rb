@@ -19,7 +19,8 @@ class HomeController < ApplicationController
     @emr_auth = emr.token.blank? ? 'Failed' : 'Successful'
     @emr_address = emr.address
     @sidekiq_service_status = SystemctlService.sidekiq_service_status
-    @emr_orders = emr.emr_order_summary(start_date, end_date, concept, include_data: false)[:emr]
+    @emr_orders = emr.emr_order_summary(start_date, end_date, concept, include_data: false)&.dig(:emr)
+    @emr_orders ||= { count: 0, last_order_date: nil, lab_orders: [], remark: 'EMR Not Reachable/ERROR Fetching EMR Orders Summary' }
     nlims_local = OrderService.nlims_local_orders(start_date, end_date, concept)
     @nlims_orders = { count: nlims_local.count, lab_orders: [] }
     @overall_remark = OrderService.order_summary_remark(@emr_orders, @nlims_orders)
