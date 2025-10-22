@@ -43,7 +43,7 @@ def pull_and_process_data_master_nlims(res)
   puts "NLIMS authentication: #{nlims_service.token.present? ? 'Success' : 'Failed'}"
   return unless nlims_service.token.present?
 
-  puts "Number of records to process: #{res.count}"
+  puts "Number of records to process for status and results syncing: #{res.count}"
   return if res.blank?
 
   emr_service = EmrSyncService.new(nil)
@@ -75,7 +75,7 @@ def pull_and_process_data_master_nlims(res)
         next if Speciman.find_by(tracking_number:)&.source_system&.downcase == 'iblis'
 
         puts "Updating EMR for tracking number: #{tracking_number}"
-        StatusSyncTracker.where(tracking_number:, test_id:, app: 'emr') do |status_tracker|
+        StatusSyncTracker.where(tracking_number:, test_id:, app: 'emr').each do |status_tracker|
           emr_service.push_status_to_emr(tracking_number, status_tracker.status, status_tracker.created_at, test_id)
         end
         test_result = TestResult.find_by(test_id:)
@@ -96,7 +96,9 @@ def push_acknwoledgement_to_master_nlims
   results_acks = ResultsAcknwoledge.where(acknwoledged_to_nlims: false)
   return if results_acks.empty?
 
+  puts "Number of acknowledgements to process: #{results_acks.count}"
   results_acks.each do |results_ack|
+    puts "Acknowledgement for tracking number: #{results_ack&.tracking_number}"
     test_record = Test.find_by(id: results_ack.test_id)
     level = TestResultRecepientType.find_by(id: results_ack&.acknowledgment_level)
     data = {
@@ -114,7 +116,7 @@ def push_acknwoledgement_to_master_nlims
       url = "#{nlims_service.address}/api/v1/acknowledge/test/results/recipient"
       begin
         order_res = JSON.parse(RestClient.post(url, data.to_json, headers))
-        puts "#{order_res} => master ack response"
+        puts "#{order_res['message']} => master ack response"
         next unless order_res['error'] == false
 
         ackn = ResultsAcknwoledge.find_by(id: results_ack&.id)
