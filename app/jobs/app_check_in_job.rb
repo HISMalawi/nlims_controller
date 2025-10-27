@@ -3,6 +3,8 @@
 # Job for handling app check-ins
 class AppCheckInJob
   include Sidekiq::Job
+  sidekiq_options lock: :until_executed,
+                  on_conflict: :reject
 
   def perform(site_id)
     nlims = NlimsSyncUtilsService.new(nil)
