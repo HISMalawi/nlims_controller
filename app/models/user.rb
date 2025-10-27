@@ -3,6 +3,8 @@
 # User model
 class User < ApplicationRecord
   before_create :set_app_uuid
+  has_and_belongs_to_many :roles
+  validates :username, uniqueness: true, presence: true
 
   def self.current
     Thread.current['current_user']

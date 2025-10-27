@@ -3,13 +3,27 @@
 # User controller for managing users
 class API::V1::UserController < ApplicationController
   def index
-    render json: User.where.not(username: 'admin').order(:username)
-                     .select(:id, :username, :app_name, :app_uuid, :location, :partner, :created_at)
+    excluded_roles = %w[admin system]
+    users = User
+            .joins(:roles)
+            .where.not(roles: { name: excluded_roles })
+            .distinct
+            .where.not(username: 'admin')
+            .order(:username)
+            .select(:id, :username, :app_name, :app_uuid, :location, :partner, :created_at, :disabled)
+
+    render json: users
   end
 
   def show
-    render json: User.find(params[:id])
-                     .slice(:id, :username, :app_name, :app_uuid, :location, :partner, :created_at)
+    user = User.includes(:roles).find(params[:id])
+
+    render json: user.as_json(
+      only: %i[id username app_name app_uuid location partner created_at],
+      include: {
+        roles: { only: %i[id name] }
+      }
+    )
   end
 
   def create
@@ -26,8 +40,17 @@ class API::V1::UserController < ApplicationController
 
   def update
     user = User.find(params[:id])
-    user.update(user_params)
-    render json: user
+    user.update!(user_params)
+    if params[:roles].present?
+      role_names = params[:roles].map { |r| r[:name] }
+      roles = Role.where(name: role_names)
+      user.roles = roles
+    end
+
+    render json: user.as_json(
+      only: %i[id username app_name app_uuid location partner created_at],
+      include: { roles: { only: [:name] } }
+    )
   end
 
   def check_username
@@ -53,7 +76,8 @@ class API::V1::UserController < ApplicationController
             message: 'account created successfuly',
             data: {
               token: details[:token],
-              expiry_time: details[:expiry_time]
+              expiry_time: details[:expiry_time],
+              roles: details[:roles]
             }
           }
         else
@@ -193,13 +217,45 @@ class API::V1::UserController < ApplicationController
   def login
     if params[:username] && params[:password]
       auth = UserService.re_authenticate(params[:username], params[:password])
-      return render json: { message: 'Wrong username or password' } if auth == false
+      return render json: { message: 'Wrong username or password' }, status: 401 if auth == false
 
-      render json: { user: User.where(username: params[:username]).select(:id, :username, :app_name, :app_uuid).first,
-                     data: { token: auth[:token], expiry_time: auth[:expiry_time] } }
+      user = User
+             .includes(:roles)
+             .where(username: params[:username])
+             .select(:id, :username, :app_name, :app_uuid, :disabled, :location, :partner)
+             .first
+
+      return render json: { message: 'User disabled' }, status: 401 if user.disabled
+
+      render json: {
+        user: user.as_json(
+          only: %i[id username app_name app_uuid disabled location partner],
+          include: {
+            roles: { only: [:name] }
+          }
+        ),
+        data: {
+          token: auth[:token],
+          expiry_time: auth[:expiry_time]
+        }
+      }
     else
       render json: { message: 'Username or Password not provided' }, status: 401
     end
+  end
+
+  def roles
+    render json: Role.all
+  end
+
+  def locations
+    render json: Site.pluck(:district)&.compact&.map(&:capitalize)&.sort_by(&:downcase)&.uniq
+  end
+
+  def disable_enable_user
+    user = User.find(params[:id])
+    user.update(disabled: params[:disabled])
+    render json: user
   end
 
   def refresh_token

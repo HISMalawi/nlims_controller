@@ -53,6 +53,11 @@ Rails.application.routes.draw do
       resources :users, controller: :user, only: %i[index create show update] do
         collection do
           get '/check_username/:username' => 'user#check_username'
+          get '/roles/all' => 'user#roles'
+          get '/locations/all' => 'user#locations'
+        end
+        member do
+          post '/disable_enable' => 'user#disable_enable_user'
         end
       end
 

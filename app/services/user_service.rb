@@ -1,7 +1,7 @@
 module UserService
   def self.create_user(params)
     details = compute_expiry_time
-    User.create(
+    user = User.create!(
       app_name: params[:app_name],
       partner: params[:partner],
       location: params[:location],
@@ -11,7 +11,14 @@ module UserService
       app_uuid: params[:app_uuid],
       token_expiry_time: details[:expiry_time]
     )
-    { token: details[:token], expiry_time: details[:expiry_time] }
+    if params[:roles].present?
+      params[:roles].each do |role|
+        user.roles << Role.find_by(name: role)
+      end
+    else
+      user.roles << Role.find_by(name: 'system')
+    end
+    { token: details[:token], expiry_time: details[:expiry_time], roles: user.roles.pluck(:name) }
   end
 
   def self.check_account_creation_request(token)
