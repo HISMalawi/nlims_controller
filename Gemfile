@@ -34,6 +34,7 @@ gem 'net-ping'
 gem 'rack-cors'
 gem 'sidekiq'
 gem 'sidekiq-cron'
+gem "sidekiq-unique-jobs"
 
 gem 'passenger'
 gem 'rest-client', '~> 2.1'
