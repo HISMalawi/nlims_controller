@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'roo'
 
 module TestCatalogService
@@ -63,14 +64,14 @@ module TestCatalogService
     end
     measure_params.map do |measure_data|
       measure_record = if measure_data[:id].present?
-                          measure = existing_measures[measure_data[:id]]
-                          measure.update!(measure_data.except(:measure_ranges_attributes))
-                          measure.update_columns(nlims_code: measure.nlims_code || "NLIMS_TI_#{measure.id.to_s.rjust(4,
-                                                                                                                     '0')}_MWI")
-                          measure.measure_ranges.create!(measure_data[:measure_ranges_attributes])
-                          measure
+                         measure = existing_measures[measure_data[:id]]
+                         measure.update!(measure_data.except(:measure_ranges_attributes))
+                         measure.update_columns(nlims_code: measure.nlims_code || "NLIMS_TI_#{measure.id.to_s.rjust(4,
+                                                                                                                    '0')}_MWI")
+                         measure.measure_ranges.create!(measure_data[:measure_ranges_attributes])
+                         measure
                        else
-                          Measure.create!(measure_data)
+                         Measure.create!(measure_data)
                        end
       measures << measure_record&.id
     end
@@ -146,6 +147,23 @@ module TestCatalogService
     }
   end
 
+  def self.generate_csv(version)
+    catalog = retrieve_test_catalog(version)
+    File.write(
+      'test_catalog_version.json',
+      JSON.pretty_generate(
+        catalog.as_json(
+          except: %i[status approved_by rejected_by approved_at rejected_at rejection_reason]
+        )
+      )
+    )
+  end
+
+  def self.download_test_catalog(version)
+    catalog = retrieve_test_catalog(version)
+    send_data(catalog.catalog.to_json, filename: "test_catalog_v#{catalog.version}.json")
+  end
+
   def self.import(file)
     results = {
       test_types: {
@@ -186,22 +204,20 @@ module TestCatalogService
 
       # Try each Excel format until one works
       excel_formats.each do |format|
-        begin
-          spreadsheet = Roo::Spreadsheet.open(file.path, extension: format[:extension])
-          Rails.logger.info("Successfully opened file as #{format[:name]} format")
-          break
-        rescue => e
-          Rails.logger.debug("Failed to open as #{format[:name]}: #{e.message}")
-          next
-        end
+        spreadsheet = Roo::Spreadsheet.open(file.path, extension: format[:extension])
+        Rails.logger.info("Successfully opened file as #{format[:name]} format")
+        break
+      rescue StandardError => e
+        Rails.logger.debug("Failed to open as #{format[:name]}: #{e.message}")
+        next
       end
 
       # If all specific formats fail, try auto-detection
       if spreadsheet.nil?
         begin
           spreadsheet = Roo::Spreadsheet.open(file.path)
-          Rails.logger.info("Successfully opened file with auto-detection")
-        rescue => e
+          Rails.logger.info('Successfully opened file with auto-detection')
+        rescue StandardError => e
           return {
             success: false,
             error: "Could not open Excel file: #{e.message}"
@@ -213,37 +229,34 @@ module TestCatalogService
       sheets_processed = false
 
       # Check for specific sheet names first
-      if spreadsheet.sheets.include?("Test Types")
+      if spreadsheet.sheets.include?('Test Types')
         process_test_types_sheet(spreadsheet, results)
         sheets_processed = true
       end
 
-      if spreadsheet.sheets.include?("Test Type Measures")
+      if spreadsheet.sheets.include?('Test Type Measures')
         process_test_measures_sheet(spreadsheet, results)
         sheets_processed = true
       end
 
       # If no specific sheets found, process the first sheet intelligently
-      unless sheets_processed
-        if spreadsheet.sheets.any?
-          first_sheet = spreadsheet.sheet(spreadsheet.sheets.first)
-          headers = first_sheet.row(1)&.map(&:to_s)&.map(&:strip)
+      if !sheets_processed && spreadsheet.sheets.any?
+        first_sheet = spreadsheet.sheet(spreadsheet.sheets.first)
+        headers = first_sheet.row(1)&.map(&:to_s)&.map(&:strip)
 
-          # Determine what type of sheet this is based on headers
-          if headers&.include?('TEST TYPE') && headers&.include?('NAME')
-            # This looks like a measures sheet
-            process_test_measures_sheet_with_sheet(first_sheet, results)
-          elsif headers&.include?('NAME') && headers&.include?('TEST CATEGORY/DEPARTMENT')
-            # This looks like a test types sheet
-            process_test_types_with_sheet(first_sheet, results)
-          else
-            # Default to test types processing
-            process_test_types_with_sheet(first_sheet, results)
-          end
+        # Determine what type of sheet this is based on headers
+        if headers&.include?('TEST TYPE') && headers.include?('NAME')
+          # This looks like a measures sheet
+          process_test_measures_sheet_with_sheet(first_sheet, results)
+        elsif headers&.include?('NAME') && headers.include?('TEST CATEGORY/DEPARTMENT')
+          # This looks like a test types sheet
+          process_test_types_with_sheet(first_sheet, results)
+        else
+          # Default to test types processing
+          process_test_types_with_sheet(first_sheet, results)
         end
       end
-
-    rescue => e
+    rescue StandardError => e
       Rails.logger.error("Import error: #{e.message}\n#{e.backtrace.join("\n")}")
       return {
         success: false,
@@ -292,8 +305,8 @@ module TestCatalogService
       if test_name.blank?
         results[:test_types][:errors] << {
           row: row_idx,
-          test_name: "Empty",
-          error: "Test name is required"
+          test_name: 'Empty',
+          error: 'Test name is required'
         }
         results[:test_types][:failed] += 1
         next
@@ -308,9 +321,7 @@ module TestCatalogService
       begin
         ActiveRecord::Base.transaction do
           test_category_name = row[header_map['TEST CATEGORY/DEPARTMENT']]&.to_s&.strip
-          if test_category_name.blank?
-            raise "Test category/department is required"
-          end
+          raise 'Test category/department is required' if test_category_name.blank?
 
           test_category = TestCategory.find_or_create_by!(name: test_category_name)
 
@@ -332,6 +343,7 @@ module TestCatalogService
             specimen_types = row[header_map['SPECIMEN TYPES']].to_s.split(',').map(&:strip)
             specimen_types.each do |specimen_name|
               next if specimen_name.blank?
+
               specimen = SpecimenType.find_or_create_by!(name: specimen_name)
               TesttypeSpecimentype.find_or_create_by!(
                 test_type_id: test_type.id,
@@ -341,7 +353,8 @@ module TestCatalogService
           end
 
           if header_map['IS MACHINE ORIENTED'] && row[header_map['IS MACHINE ORIENTED']]&.to_s&.strip.present?
-            machine_oriented = ['yes', 'true', '1', 'y'].include?(row[header_map['IS MACHINE ORIENTED']].to_s.strip.downcase)
+            machine_oriented = %w[yes true 1
+                                  y].include?(row[header_map['IS MACHINE ORIENTED']].to_s.strip.downcase)
             test_type.update_columns(machine_oriented: machine_oriented)
           end
 
@@ -353,6 +366,7 @@ module TestCatalogService
             lab_levels = row[header_map['LABORATORY LEVEL']].to_s.split(',').map(&:strip)
             lab_levels.each do |lab_level|
               next if lab_level.blank?
+
               lab_site = LabTestSite.find_or_create_by!(name: lab_level)
               TestTypeLabTestSite.find_or_create_by!(
                 test_type_id: test_type.id,
@@ -366,7 +380,7 @@ module TestCatalogService
 
         results[:test_types][:created] += 1
         results[:test_types][:created_names] << test_name
-      rescue => e
+      rescue StandardError => e
         results[:test_types][:failed] += 1
         results[:test_types][:errors] << {
           row: row_idx,
@@ -411,8 +425,8 @@ module TestCatalogService
       if test_name.blank?
         results[:test_types][:errors] << {
           row: row_idx,
-          test_name: "Empty",
-          error: "Test name is required"
+          test_name: 'Empty',
+          error: 'Test name is required'
         }
         results[:test_types][:failed] += 1
         next
@@ -427,9 +441,7 @@ module TestCatalogService
       begin
         ActiveRecord::Base.transaction do
           test_category_name = row[header_map['TEST CATEGORY/DEPARTMENT']]&.to_s&.strip
-          if test_category_name.blank?
-            raise "Test category/department is required"
-          end
+          raise 'Test category/department is required' if test_category_name.blank?
 
           test_category = TestCategory.find_or_create_by!(name: test_category_name)
 
@@ -451,6 +463,7 @@ module TestCatalogService
             specimen_types = row[header_map['SPECIMEN TYPES']].to_s.split(',').map(&:strip)
             specimen_types.each do |specimen_name|
               next if specimen_name.blank?
+
               specimen = SpecimenType.find_or_create_by!(name: specimen_name)
               TesttypeSpecimentype.find_or_create_by!(
                 test_type_id: test_type.id,
@@ -460,7 +473,8 @@ module TestCatalogService
           end
 
           if header_map['IS MACHINE ORIENTED'] && row[header_map['IS MACHINE ORIENTED']]&.to_s&.strip.present?
-            machine_oriented = ['yes', 'true', '1', 'y'].include?(row[header_map['IS MACHINE ORIENTED']].to_s.strip.downcase)
+            machine_oriented = %w[yes true 1
+                                  y].include?(row[header_map['IS MACHINE ORIENTED']].to_s.strip.downcase)
             test_type.update_columns(machine_oriented: machine_oriented)
           end
 
@@ -472,6 +486,7 @@ module TestCatalogService
             lab_levels = row[header_map['LABORATORY LEVEL']].to_s.split(',').map(&:strip)
             lab_levels.each do |lab_level|
               next if lab_level.blank?
+
               lab_site = LabTestSite.find_or_create_by!(name: lab_level)
               TestTypeLabTestSite.find_or_create_by!(
                 test_type_id: test_type.id,
@@ -485,7 +500,7 @@ module TestCatalogService
 
         results[:test_types][:created] += 1
         results[:test_types][:created_names] << test_name
-      rescue => e
+      rescue StandardError => e
         results[:test_types][:failed] += 1
         results[:test_types][:errors] << {
           row: row_idx,
@@ -533,9 +548,9 @@ module TestCatalogService
       if test_type_name.blank? || measure_name.blank?
         results[:measures][:errors] << {
           row: row_idx,
-          test_type: test_type_name || "Empty",
-          measure_name: measure_name || "Empty",
-          error: "Test type and measure name are required"
+          test_type: test_type_name || 'Empty',
+          measure_name: measure_name || 'Empty',
+          error: 'Test type and measure name are required'
         }
         results[:measures][:failed] += 1
         next
@@ -546,9 +561,7 @@ module TestCatalogService
           # Find the test type
           test_type = TestType.find_by(name: test_type_name)
 
-          unless test_type
-            raise "Test type '#{test_type_name}' not found"
-          end
+          raise "Test type '#{test_type_name}' not found" unless test_type
 
           # Get measure type
           measure_type_name = row[header_map['MEASURE TYPE']]&.to_s&.strip || 'Numeric'
@@ -561,8 +574,14 @@ module TestCatalogService
 
           # Add optional fields if they exist
           measure_attributes[:short_name] = row[header_map['SHORT NAME']]&.to_s&.strip if header_map['SHORT NAME']
-          measure_attributes[:preferred_name] = row[header_map['PREFERRED NAME']]&.to_s&.strip if header_map['PREFERRED NAME']
-          measure_attributes[:scientific_name] = row[header_map['SCIENTIFIC NAME']]&.to_s&.strip if header_map['SCIENTIFIC NAME']
+          if header_map['PREFERRED NAME']
+            measure_attributes[:preferred_name] =
+              row[header_map['PREFERRED NAME']]&.to_s&.strip
+          end
+          if header_map['SCIENTIFIC NAME']
+            measure_attributes[:scientific_name] =
+              row[header_map['SCIENTIFIC NAME']]&.to_s&.strip
+          end
           measure_attributes[:description] = row[header_map['DESCRIPTION']]&.to_s&.strip if header_map['DESCRIPTION']
           measure_attributes[:unit] = row[header_map['UNIT']]&.to_s&.strip if header_map['UNIT']
 
@@ -578,17 +597,32 @@ module TestCatalogService
           end
 
           # Create measure range if range data is provided
-          if (header_map['MIN AGE'] || header_map['MAX AGE'] || header_map['LOWER RANGE'] ||
-              header_map['UPPER RANGE'] || header_map['SEX'] || header_map['VALUE'])
+          if header_map['MIN AGE'] || header_map['MAX AGE'] || header_map['LOWER RANGE'] ||
+             header_map['UPPER RANGE'] || header_map['SEX'] || header_map['VALUE']
 
             range_attributes = {}
 
-            range_attributes[:age_min] = row[header_map['MIN AGE']].to_i if header_map['MIN AGE'] && !row[header_map['MIN AGE']].nil?
-            range_attributes[:age_max] = row[header_map['MAX AGE']].to_i if header_map['MAX AGE'] && !row[header_map['MAX AGE']].nil?
-            range_attributes[:range_lower] = row[header_map['LOWER RANGE']]&.to_s&.strip if header_map['LOWER RANGE'] && row[header_map['LOWER RANGE']]
-            range_attributes[:range_upper] = row[header_map['UPPER RANGE']]&.to_s&.strip if header_map['UPPER RANGE'] && row[header_map['UPPER RANGE']]
+            if header_map['MIN AGE'] && !row[header_map['MIN AGE']].nil?
+              range_attributes[:age_min] =
+                row[header_map['MIN AGE']].to_i
+            end
+            if header_map['MAX AGE'] && !row[header_map['MAX AGE']].nil?
+              range_attributes[:age_max] =
+                row[header_map['MAX AGE']].to_i
+            end
+            if header_map['LOWER RANGE'] && row[header_map['LOWER RANGE']]
+              range_attributes[:range_lower] =
+                row[header_map['LOWER RANGE']]&.to_s&.strip
+            end
+            if header_map['UPPER RANGE'] && row[header_map['UPPER RANGE']]
+              range_attributes[:range_upper] =
+                row[header_map['UPPER RANGE']]&.to_s&.strip
+            end
             range_attributes[:sex] = row[header_map['SEX']]&.to_s&.strip if header_map['SEX'] && row[header_map['SEX']]
-            range_attributes[:value] = row[header_map['VALUE']]&.to_s&.strip if header_map['VALUE'] && row[header_map['VALUE']]
+            if header_map['VALUE'] && row[header_map['VALUE']]
+              range_attributes[:value] =
+                row[header_map['VALUE']]&.to_s&.strip
+            end
 
             # Create the measure range only if we have range data
             if range_attributes.present?
@@ -601,7 +635,7 @@ module TestCatalogService
         end
 
         results[:measures][:created] += 1
-      rescue => e
+      rescue StandardError => e
         results[:measures][:failed] += 1
         results[:measures][:errors] << {
           row: row_idx,
