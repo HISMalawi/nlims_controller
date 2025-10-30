@@ -501,7 +501,8 @@ module OrderService
                   patients.patient_number AS pat_id, patients.name AS pat_name,
                   patients.dob AS dob, patients.gender AS sex,
                   art_regimen AS art_regi, arv_number AS arv_number,
-                  art_start_date AS art_start_date
+                  art_start_date AS art_start_date,
+                  sites.site_code_number AS site_code_number
                   FROM specimen INNER JOIN specimen_statuses ON specimen_statuses.id = specimen.specimen_status_id
                   LEFT JOIN specimen_types ON specimen_types.id = specimen.specimen_type_id
                   INNER JOIN tests ON tests.specimen_id = specimen.id
@@ -517,7 +518,7 @@ module OrderService
     if orders.length > 0
       orders.each do |res|
         tracking_number = res.tracking_number
-        site_code_number = get_site_code_number(tracking_number)
+        # site_code_number = get_site_code_number(tracking_number)
         tst = Test.find_by_sql("SELECT test_types.name AS test_name, test_statuses.name AS test_status
                                                 FROM tests
                                                 INNER JOIN specimen ON specimen.id = tests.specimen_id
@@ -546,7 +547,7 @@ module OrderService
                           priority: res.priority,
                           art_regimen: res.art_regi,
                           arv_number:,
-                          site_code_number:,
+                          site_code_number: res.site_code_number.present? ? res.site_code_number : '',
                           art_start_date: res.art_start_date,
                           sample_created_by: {
                             id: res.drawe_number,

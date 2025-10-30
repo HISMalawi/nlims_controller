@@ -124,10 +124,12 @@ module ProcessTestCatalogService
 
     def create_or_update_test_indicators(test_indicators)
       test_indicators.map do |item|
-        record = Measure.find_by(nlims_code: item[:nlims_code]) if item[:nlims_code].present?
-        record ||= Measure.find_by(scientific_name: item[:scientific_name]) if item[:scientific_name].present?
-        record ||= Measure.find_by(name: item[:name])
-        record ||= Measure.find_by(name: item[:iblis_mapping_name]) if item[:iblis_mapping_name].present?
+        record = Measure.find_by(nlims_code: item[:nlims_code], unit: item[:unit]) if item[:nlims_code].present?
+        record ||= Measure.find_by(scientific_name: item[:scientific_name], unit: item[:unit]) if item[:scientific_name].present?
+        record ||= Measure.find_by(name: item[:iblis_mapping_name], unit: item[:unit]) if item[:iblis_mapping_name].present?
+        record ||= Measure.find_by(preferred_name: item[:preferred_name], unit: item[:unit]) if item[:preferred_name].present?
+        record ||= Measure.find_by(name: item[:name], unit: item[:unit])
+        record ||= Measure.find_by(id: item[:id], nlims_code: item[:nlims_code]) if item[:nlims_code].present?
         record ||= Measure.new
         if record.new_record?
           record.name = item[:name]
@@ -164,6 +166,8 @@ module ProcessTestCatalogService
         test_type.hr_cadre_required = item[:hr_cadre_required]
         test_type.targetTAT = item[:targetTAT]
         test_type.lab_test_sites = create_or_update_lab_test_sites(item[:lab_test_sites])
+        test_type.test_category = create_or_update_department(item[:test_category])
+        test_type.save!
       end
     end
 
