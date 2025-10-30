@@ -64,7 +64,7 @@ cd "$NLIMS_CONTROLLER_DIR"
 # git fetch --tags
 
 # Minimum required version
-REQUIRED_VERSION="v2.4.9"
+REQUIRED_VERSION="v2.5.0"
 
 # Get current tag (if checked out on a tag)
 CURRENT_TAG=$(git describe --tags --exact-match 2>/dev/null)
