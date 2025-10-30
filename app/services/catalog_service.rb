@@ -21,6 +21,7 @@ class CatalogService
     update_organisms(test_type_data, catalog_params[:organisms])
     update_lab_test_sites(test_type_data, catalog_params[:lab_test_sites])
     update_equipment(test_type_data, catalog_params[:equipment])
+    update_test_category(test_type_data, test_type_params[:test_category_id])
 
     # Update timestamp
     test_type_data['updated_at'] = Time.now
@@ -365,6 +366,13 @@ class CatalogService
 
       serialize_organism(organism)
     end.compact
+  end
+
+  def update_test_category(test_type_data, category_id)
+    return unless category_id
+
+    test_type_data['test_category'] = find_test_category_in_catalog(category_id) ||
+                                      TestCategory.find_by(id: category_id)
   end
 
   def update_lab_test_sites(test_type_data, site_ids)
