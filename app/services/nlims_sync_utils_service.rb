@@ -138,6 +138,7 @@ class NlimsSyncUtilsService
 
     payload = OrderSerializer.serialize(order)
     return false if payload.nil?
+    return true if payload[:tests].empty?
 
     url = once_off ? "#{@address}/api/v2/create_order_once_off/" : "#{@address}/api/v2/create_order/"
     response = JSON.parse(RestClient::Request.execute(

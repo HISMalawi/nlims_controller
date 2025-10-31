@@ -148,13 +148,13 @@ module OrderService
     if !res.empty?
       site_code_number = get_site_code_number(tracking_number)
       res = res[0]
-      tst = Test.find_by_sql("SELECT test_types.name AS test_name, test_statuses.name AS test_status,
+      tst = Test.find_by_sql("SELECT test_types.name AS test_name, test_types.preferred_name, test_statuses.name AS test_status,
                               tests.id  AS test_id
                               FROM tests
                               INNER JOIN specimen ON specimen.id = tests.specimen_id
                               INNER JOIN test_types ON test_types.id = tests.test_type_id
                               INNER JOIN test_statuses ON test_statuses.id = tests.test_status_id
-                              WHERE specimen.tracking_number ='#{tracking_number}' AND test_types.name='#{test_name}' OR test_types.preferred_name='#{test_name}'")
+                              WHERE specimen.tracking_number ='#{tracking_number}' AND (test_types.name='#{test_name}' OR test_types.preferred_name='#{test_name}')")
       unless tst.empty?
         tst.each do |t|
           updater_trailer = {}
@@ -170,7 +170,8 @@ module OrderService
               "status": trail[0]['test_status']
             }
           end
-          tsts[t.test_name] = { "status": t['test_status'], "update_details": updater_trailer }
+          tsts[t.preferred_name] = { "status": t['test_status'], "update_details": updater_trailer } if t.test_name&.downcase == 'hiv viral load'
+          tsts[t.test_name] = { "status": t['test_status'], "update_details": updater_trailer } unless t.test_name&.downcase == 'hiv viral load'
           result_got = TestResult.find_by_sql("SELECT * FROM test_results WHERE test_id='#{t.test_id}'")
           next if result_got.blank?
 
@@ -416,7 +417,7 @@ module OrderService
       unless res.blank?
         ActiveRecord::Base.connection.execute("SET SESSION sql_mode = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION'")
         res_ = Speciman.find_by_sql("SELECT specimen.tracking_number AS tracking_number,
-																		specimen_types.name AS sample_type, specimen_statuses.name AS specimen_status,
+																		specimen_types.name AS sample_type, specimen_types.preferred_name AS sample_type_preferred_name, specimen_statuses.name AS specimen_status,
 																		wards.name AS order_location, specimen.date_created AS date_created,
 																		specimen.priority AS priority,
 																		specimen.drawn_by_id AS drawer_id, specimen.drawn_by_name AS drawer_name,
@@ -437,7 +438,7 @@ module OrderService
         tsts = {}
         if !res_.empty?
           res_.each do |ress|
-            tst = Test.find_by_sql("SELECT test_types.name AS test_name, test_statuses.name AS test_status
+            tst = Test.find_by_sql("SELECT test_types.name AS test_name,test_types.preferred_name, test_statuses.name AS test_status
 																	FROM tests
 																	INNER JOIN specimen ON specimen.id = tests.specimen_id
 																	INNER JOIN test_types ON test_types.id = tests.test_type_id
@@ -445,13 +446,14 @@ module OrderService
 																	WHERE specimen.tracking_number ='#{ress.tracking_number}'")
             unless tst.empty?
               tst.each do |t|
-                tsts[t.test_name] = t['test_status']
+                tsts[t.preferred_name] = t['test_status'] if t.test_name&.downcase == 'hiv viral load'
+                tsts[t.test_name] = t['test_status'] unless t.test_name&.downcase == 'hiv viral load'
               end
             end
             facility_samples.push(
               {
                 tracking_number: ress.tracking_number,
-                sample_type: ress.sample_type,
+                sample_type: ress.sample_type == "Venous Whole Blood" ? ress.sample_type_preferred_name : ress.sample_type,
                 specimen_status: ress.specimen_status,
                 order_location: ress.order_location,
                 date_created: ress.date_created,
@@ -491,7 +493,7 @@ module OrderService
   end
 
   def self.retrieve_samples(date, date_from, region)
-    orders = Speciman.find_by_sql("SELECT specimen_types.name AS sample_type, specimen_statuses.name AS specimen_status,
+    orders = Speciman.find_by_sql("SELECT specimen_types.name AS sample_type, specimen_types.preferred_name AS sample_type_preferred_name, specimen_statuses.name AS specimen_status,
                   specimen.tracking_number AS tracking_number,
                   wards.name AS order_location, specimen.date_created AS date_created, specimen.priority AS priority,
                   specimen.drawn_by_id AS drawer_id, specimen.drawn_by_name AS drawer_name,
@@ -519,7 +521,7 @@ module OrderService
       orders.each do |res|
         tracking_number = res.tracking_number
         # site_code_number = get_site_code_number(tracking_number)
-        tst = Test.find_by_sql("SELECT test_types.name AS test_name, test_statuses.name AS test_status
+        tst = Test.find_by_sql("SELECT test_types.name AS test_name, test_types.preferred_name, test_statuses.name AS test_status
                                                 FROM tests
                                                 INNER JOIN specimen ON specimen.id = tests.specimen_id
                                                 INNER JOIN test_types ON test_types.id = tests.test_type_id
@@ -527,7 +529,8 @@ module OrderService
                                                 WHERE specimen.tracking_number ='#{tracking_number}'")
         if tst.length > 0
           tst.each do |t|
-            tsts[t.test_name] = t['test_status']
+            tsts[t.preferred_name] = t['test_status'] if t.test_name&.downcase == 'hiv viral load'
+            tsts[t.test_name] = t['test_status'] unless t.test_name&.downcase == 'hiv viral load'
           end
         end
         patient_name = res.pat_name.gsub("'", ' ')
@@ -539,7 +542,7 @@ module OrderService
         end
         next if tracking_number[0..4] == 'XCHSU'
 
-        data[counter] = { sample_type: res.sample_type,
+        data[counter] = { sample_type: res.sample_type == "Venous Whole Blood" ? res.sample_type_preferred_name : res.sample_type,
                           tracking_number:,
                           specimen_status: res.specimen_status,
                           order_location: res.order_location,
@@ -562,7 +565,7 @@ module OrderService
                           },
                           receiving_lab: res.target_lab,
                           sending_lab: res.health_facility,
-                          sending_lab_code: site_code_number,
+                          sending_lab_code: res.site_code_number.present? ? res.site_code_number : '',
                           requested_by: res.requested_by,
                           tests: tsts }
         counter += 1
@@ -830,7 +833,7 @@ module OrderService
   end
 
   def self.query_order_by_tracking_number(tracking_number)
-    res = Speciman.find_by_sql("SELECT specimen_types.name AS sample_type, specimen_statuses.name AS specimen_status,
+    res = Speciman.find_by_sql("SELECT specimen_types.name AS sample_type, specimen_types.preferred_name AS sample_type_preferred_name, specimen_statuses.name AS specimen_status,
                               wards.name AS order_location, specimen.date_created AS date_created, specimen.priority AS priority,
                               specimen.drawn_by_id AS drawer_id, specimen.drawn_by_name AS drawer_name,
                               specimen.drawn_by_phone_number AS drawe_number, specimen.target_lab AS target_lab,
@@ -850,7 +853,7 @@ module OrderService
     if !res.empty?
       site_code_number = get_site_code_number(tracking_number)
       res = res[0]
-      tst = Test.find_by_sql("SELECT test_types.name AS test_name, test_statuses.name AS test_status
+      tst = Test.find_by_sql("SELECT test_types.name AS test_name, test_types.preferred_name, test_statuses.name AS test_status
 															FROM tests
 															INNER JOIN specimen ON specimen.id = tests.specimen_id
 															INNER JOIN test_types ON test_types.id = tests.test_type_id
@@ -858,7 +861,8 @@ module OrderService
 															WHERE specimen.tracking_number ='#{tracking_number}'")
       unless tst.empty?
         tst.each do |t|
-          tsts[t.test_name] = t['test_status']
+          tsts[t.preferred_name] = t['test_status'] if t.test_name&.downcase == 'hiv viral load'
+          tsts[t.test_name] = t['test_status'] unless t.test_name&.downcase == 'hiv viral load'
         end
       end
       arv_number = res.arv_number
@@ -868,7 +872,7 @@ module OrderService
       end
       {
         gen_details: {
-          sample_type: res.sample_type,
+          sample_type: res.sample_type == "Venous Whole Blood" ? res.sample_type_preferred_name : res.sample_type,
           specimen_status: res.specimen_status,
           order_location: res.order_location,
           date_created: res.date_created,

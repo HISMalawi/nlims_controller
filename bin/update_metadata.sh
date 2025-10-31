@@ -10,7 +10,7 @@ rm Gemfile.lock && bundle install --local && bundle exec rails db:migrate && (
   bundle exec rake db:seed:specific\[seed_additional_test_statuses.rb\] &&
   bundle exec rake db:seed:specific\[seed_roles.rb\] &&
   bundle exec rake db:seed:specific\[add_roles_to_users.rb\] &&
-  bundle exec rails r bin/load_test_catalog.rb
+  bundle exec rake db:load_metadata
 )
 bundle exec rails r bin/updater.rb && bash bin/add_cronjob.sh
 
