@@ -169,7 +169,8 @@ module API
       end
 
       def retrieve_test_catalog
-        render json: TestCatalogService.retrieve_test_catalog(params[:version])
+        render json: TestCatalogService.retrieve_test_catalog(params[:version])&.as_json(except: %i[status approved_by
+                                                                                                    rejected_by approved_at rejected_at rejection_reason])
       end
 
       def retrieve_test_catalog_versions

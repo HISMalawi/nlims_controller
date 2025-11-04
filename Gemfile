@@ -34,15 +34,22 @@ gem 'net-ping'
 gem 'rack-cors'
 gem 'sidekiq'
 gem 'sidekiq-cron'
-gem "sidekiq-unique-jobs"
+gem 'sidekiq-unique-jobs'
 
 gem 'passenger'
 gem 'rest-client', '~> 2.1'
-gem 'sucker_punch'
 gem 'roo', '~> 2.10.0'
+gem 'sucker_punch'
+
+# Swagger
+gem 'rswag'
+gem 'rswag-api'
+gem 'rswag-ui'
 group :development, :test do
   # Call 'byebug' anywhere in the code to stop execution and get a debugger console
   gem 'byebug', platforms: %i[mri mingw x64_mingw]
+  gem 'rspec-rails'
+  gem 'rswag-specs'
 end
 
 group :development do
