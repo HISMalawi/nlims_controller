@@ -147,7 +147,7 @@ module TestCatalogService
     }
   end
 
-  def self.generate_csv(version)
+  def self.generate_json(version)
     catalog = retrieve_test_catalog(version)
     File.write(
       'test_catalog_version.json',
