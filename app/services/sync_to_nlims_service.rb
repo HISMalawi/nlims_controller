@@ -29,6 +29,18 @@ module  SyncToNlimsService
       end
     end
 
+    def force_sync_order_to_nlims
+      specimen = Speciman.where.not(
+        tracking_number: OrderSyncTracker.pluck(:tracking_number)
+      )
+      specimen.each do |order|
+        nlims = NlimsSyncUtilsService.new(order&.tracking_number)
+        nlims.push_order_to_master_nlims(order&.tracking_number)
+      rescue StandardError => e
+        Rails.logger.error("Failed to push order to NLMIS: #{e.message}")
+      end
+    end
+
     def push_result_to_nlims
       ResultSyncTracker.where(
         sync_status: false,

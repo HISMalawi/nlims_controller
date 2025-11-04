@@ -15,6 +15,13 @@ rescue StandardError => e
 end
 
 begin
+  puts 'Force Pushing Orders to NLIMS'
+  SyncToNlimsService.force_sync_order_to_nlims if Config.local_nlims?
+rescue StandardError => e
+  puts "Error: #{e.message} ==> Force Push Order to Master NLIMS"
+end
+
+begin
   puts 'Pushing Order Updates to NLIMS'
   SyncToNlimsService.push_order_update_to_nlims
 rescue StandardError => e
