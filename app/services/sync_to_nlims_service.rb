@@ -34,6 +34,7 @@ module  SyncToNlimsService
         tracking_number: OrderSyncTracker.pluck(:tracking_number)
       )
       specimen.each do |order|
+        OrderSyncTracker.find_or_create_by(tracking_number: order&.tracking_number)
         nlims = NlimsSyncUtilsService.new(order&.tracking_number)
         nlims.push_order_to_master_nlims(order&.tracking_number)
       rescue StandardError => e
