@@ -9,8 +9,11 @@ module OrderService
         tst =  check_test_name(tst)
         return [false, 'test name not available in nlims'] if tst == false
       end
+      if !tests_allowed?(params[:tests].map { |tst| NameMapping.actual_name_of(tst) }) && !Config.local_nlims?
+        return [false, 'test name not allowed for v1 endpoint, use v2 endpoint']
+      end
       params[:sample_type] = NameMapping.actual_name_of(params[:sample_type])
-      spc = SpecimenType.find_by(name: params[:sample_type])
+      spc = SpecimenType.find_by(name: params[:sample_type]) || SpecimenType.find_by(preferred_name: params[:sample_type])
       return [false, 'specimen type not available in nlims'] if spc.blank?
 
       spc = SpecimenStatus.find_by(name: params[:sample_status])
@@ -83,7 +86,7 @@ module OrderService
             test_status_id: rst2
           )
         else
-          pa_id = PanelType.where(name: tst).first
+          pa_id = PanelType.where(name: tst)&.first || PanelType.where(preferred_name: tst)&.first
           res = TestType.find_by_sql("SELECT test_types.id FROM test_types INNER JOIN panels
                                                             ON panels.test_type_id = test_types.id
                                                             INNER JOIN panel_types ON panel_types.id = panels.panel_type_id
@@ -107,8 +110,15 @@ module OrderService
     [true, tracking_number]
   end
 
+  def self.v1_allowed_tests
+    ['HIV Viral Load', 'Viral Load', 'Early Infant Diagnosis']
+  end
+
+  def self.tests_allowed?(tests)
+    tests.all? { |test| v1_allowed_tests.map(&:downcase).include?(test.downcase) }
+  end
+
   def self.check_order(tracking_number)
-    # Speciman.where(tracking_number:).exists? || TrackingNumberLogger.where(tracking_number:).exists?
     Speciman.where(tracking_number:).exists?
   end
 
@@ -138,13 +148,13 @@ module OrderService
     if !res.empty?
       site_code_number = get_site_code_number(tracking_number)
       res = res[0]
-      tst = Test.find_by_sql("SELECT test_types.name AS test_name, test_statuses.name AS test_status,
+      tst = Test.find_by_sql("SELECT test_types.name AS test_name, test_types.preferred_name, test_statuses.name AS test_status,
                               tests.id  AS test_id
                               FROM tests
                               INNER JOIN specimen ON specimen.id = tests.specimen_id
                               INNER JOIN test_types ON test_types.id = tests.test_type_id
                               INNER JOIN test_statuses ON test_statuses.id = tests.test_status_id
-                              WHERE specimen.tracking_number ='#{tracking_number}' AND test_types.name='#{test_name}'")
+                              WHERE specimen.tracking_number ='#{tracking_number}' AND (test_types.name='#{test_name}' OR test_types.preferred_name='#{test_name}')")
       unless tst.empty?
         tst.each do |t|
           updater_trailer = {}
@@ -160,7 +170,8 @@ module OrderService
               "status": trail[0]['test_status']
             }
           end
-          tsts[t.test_name] = { "status": t.test_status, "update_details": updater_trailer }
+          tsts[t.preferred_name] = { "status": t['test_status'], "update_details": updater_trailer } if t.test_name&.downcase == 'hiv viral load'
+          tsts[t.test_name] = { "status": t['test_status'], "update_details": updater_trailer } unless t.test_name&.downcase == 'hiv viral load'
           result_got = TestResult.find_by_sql("SELECT * FROM test_results WHERE test_id='#{t.test_id}'")
           next if result_got.blank?
 
@@ -270,8 +281,8 @@ module OrderService
   end
 
   def self.check_test_name(test_name)
-    tst = TestType.find_by_sql("SELECT name AS tst_name FROM test_types WHERE name ='#{test_name}' LIMIT 1")
-    return tst[0].tst_name unless tst.empty?
+    test_type = TestType.find_by(name: test_name) || TestType.find_by(preferred_name: test_name)
+    return test_type.name if test_type.present?
 
     FailedTestType.find_or_create_by(test_type: test_name, reason: 'Test Type not avail in NLIMS')
     false
@@ -406,7 +417,7 @@ module OrderService
       unless res.blank?
         ActiveRecord::Base.connection.execute("SET SESSION sql_mode = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION'")
         res_ = Speciman.find_by_sql("SELECT specimen.tracking_number AS tracking_number,
-																		specimen_types.name AS sample_type, specimen_statuses.name AS specimen_status,
+																		specimen_types.name AS sample_type, specimen_types.preferred_name AS sample_type_preferred_name, specimen_statuses.name AS specimen_status,
 																		wards.name AS order_location, specimen.date_created AS date_created,
 																		specimen.priority AS priority,
 																		specimen.drawn_by_id AS drawer_id, specimen.drawn_by_name AS drawer_name,
@@ -427,7 +438,7 @@ module OrderService
         tsts = {}
         if !res_.empty?
           res_.each do |ress|
-            tst = Test.find_by_sql("SELECT test_types.name AS test_name, test_statuses.name AS test_status
+            tst = Test.find_by_sql("SELECT test_types.name AS test_name,test_types.preferred_name, test_statuses.name AS test_status
 																	FROM tests
 																	INNER JOIN specimen ON specimen.id = tests.specimen_id
 																	INNER JOIN test_types ON test_types.id = tests.test_type_id
@@ -435,13 +446,14 @@ module OrderService
 																	WHERE specimen.tracking_number ='#{ress.tracking_number}'")
             unless tst.empty?
               tst.each do |t|
-                tsts[t.test_name] = t.test_status
+                tsts[t.preferred_name] = t['test_status'] if t.test_name&.downcase == 'hiv viral load'
+                tsts[t.test_name] = t['test_status'] unless t.test_name&.downcase == 'hiv viral load'
               end
             end
             facility_samples.push(
               {
                 tracking_number: ress.tracking_number,
-                sample_type: ress.sample_type,
+                sample_type: ress.sample_type == "Venous Whole Blood" ? ress.sample_type_preferred_name : ress.sample_type,
                 specimen_status: ress.specimen_status,
                 order_location: ress.order_location,
                 date_created: ress.date_created,
@@ -470,7 +482,7 @@ module OrderService
           end
 
         else
-          facility_samples.push('N/A')
+          facility_samples.push()
         end
 
       end
@@ -481,7 +493,7 @@ module OrderService
   end
 
   def self.retrieve_samples(date, date_from, region)
-    orders = Speciman.find_by_sql("SELECT specimen_types.name AS sample_type, specimen_statuses.name AS specimen_status,
+    orders = Speciman.find_by_sql("SELECT specimen_types.name AS sample_type, specimen_types.preferred_name AS sample_type_preferred_name, specimen_statuses.name AS specimen_status,
                   specimen.tracking_number AS tracking_number,
                   wards.name AS order_location, specimen.date_created AS date_created, specimen.priority AS priority,
                   specimen.drawn_by_id AS drawer_id, specimen.drawn_by_name AS drawer_name,
@@ -491,7 +503,8 @@ module OrderService
                   patients.patient_number AS pat_id, patients.name AS pat_name,
                   patients.dob AS dob, patients.gender AS sex,
                   art_regimen AS art_regi, arv_number AS arv_number,
-                  art_start_date AS art_start_date
+                  art_start_date AS art_start_date,
+                  sites.site_code_number AS site_code_number
                   FROM specimen INNER JOIN specimen_statuses ON specimen_statuses.id = specimen.specimen_status_id
                   LEFT JOIN specimen_types ON specimen_types.id = specimen.specimen_type_id
                   INNER JOIN tests ON tests.specimen_id = specimen.id
@@ -499,16 +512,16 @@ module OrderService
                   LEFT JOIN wards ON specimen.ward_id = wards.id
                   INNER JOIN test_types ON test_types.id = tests.test_type_id
                   INNER JOIN sites ON sites.name = specimen.sending_facility
-            WHERE (substr(specimen.created_at,1,10) BETWEEN '#{date_from}' AND '#{date}')
-            AND (test_types.name ='Viral Load' AND sites.region='#{region}') GROUP BY specimen.id DESC limit 35000")
+            WHERE (DATE(specimen.created_at) BETWEEN '#{date_from}' AND '#{date}')
+            AND ((test_types.name ='HIV Viral Load' OR test_types.preferred_name ='Viral Load') AND sites.region='#{region}') ORDER BY specimen.id DESC limit 35000")
     tsts = {}
     data = []
     counter = 0
     if orders.length > 0
       orders.each do |res|
         tracking_number = res.tracking_number
-        site_code_number = get_site_code_number(tracking_number)
-        tst = Test.find_by_sql("SELECT test_types.name AS test_name, test_statuses.name AS test_status
+        # site_code_number = get_site_code_number(tracking_number)
+        tst = Test.find_by_sql("SELECT test_types.name AS test_name, test_types.preferred_name, test_statuses.name AS test_status
                                                 FROM tests
                                                 INNER JOIN specimen ON specimen.id = tests.specimen_id
                                                 INNER JOIN test_types ON test_types.id = tests.test_type_id
@@ -516,7 +529,8 @@ module OrderService
                                                 WHERE specimen.tracking_number ='#{tracking_number}'")
         if tst.length > 0
           tst.each do |t|
-            tsts[t.test_name] = t.test_status
+            tsts[t.preferred_name] = t['test_status'] if t.test_name&.downcase == 'hiv viral load'
+            tsts[t.test_name] = t['test_status'] unless t.test_name&.downcase == 'hiv viral load'
           end
         end
         patient_name = res.pat_name.gsub("'", ' ')
@@ -528,7 +542,7 @@ module OrderService
         end
         next if tracking_number[0..4] == 'XCHSU'
 
-        data[counter] = { sample_type: res.sample_type,
+        data[counter] = { sample_type: res.sample_type == "Venous Whole Blood" ? res.sample_type_preferred_name : res.sample_type,
                           tracking_number:,
                           specimen_status: res.specimen_status,
                           order_location: res.order_location,
@@ -536,7 +550,7 @@ module OrderService
                           priority: res.priority,
                           art_regimen: res.art_regi,
                           arv_number:,
-                          site_code_number:,
+                          site_code_number: res.site_code_number.present? ? res.site_code_number : '',
                           art_start_date: res.art_start_date,
                           sample_created_by: {
                             id: res.drawe_number,
@@ -551,7 +565,7 @@ module OrderService
                           },
                           receiving_lab: res.target_lab,
                           sending_lab: res.health_facility,
-                          sending_lab_code: site_code_number,
+                          sending_lab_code: res.site_code_number.present? ? res.site_code_number : '',
                           requested_by: res.requested_by,
                           tests: tsts }
         counter += 1
@@ -819,7 +833,7 @@ module OrderService
   end
 
   def self.query_order_by_tracking_number(tracking_number)
-    res = Speciman.find_by_sql("SELECT specimen_types.name AS sample_type, specimen_statuses.name AS specimen_status,
+    res = Speciman.find_by_sql("SELECT specimen_types.name AS sample_type, specimen_types.preferred_name AS sample_type_preferred_name, specimen_statuses.name AS specimen_status,
                               wards.name AS order_location, specimen.date_created AS date_created, specimen.priority AS priority,
                               specimen.drawn_by_id AS drawer_id, specimen.drawn_by_name AS drawer_name,
                               specimen.drawn_by_phone_number AS drawe_number, specimen.target_lab AS target_lab,
@@ -839,7 +853,7 @@ module OrderService
     if !res.empty?
       site_code_number = get_site_code_number(tracking_number)
       res = res[0]
-      tst = Test.find_by_sql("SELECT test_types.name AS test_name, test_statuses.name AS test_status
+      tst = Test.find_by_sql("SELECT test_types.name AS test_name, test_types.preferred_name, test_statuses.name AS test_status
 															FROM tests
 															INNER JOIN specimen ON specimen.id = tests.specimen_id
 															INNER JOIN test_types ON test_types.id = tests.test_type_id
@@ -847,7 +861,8 @@ module OrderService
 															WHERE specimen.tracking_number ='#{tracking_number}'")
       unless tst.empty?
         tst.each do |t|
-          tsts[t.test_name] = t.test_status
+          tsts[t.preferred_name] = t['test_status'] if t.test_name&.downcase == 'hiv viral load'
+          tsts[t.test_name] = t['test_status'] unless t.test_name&.downcase == 'hiv viral load'
         end
       end
       arv_number = res.arv_number
@@ -857,7 +872,7 @@ module OrderService
       end
       {
         gen_details: {
-          sample_type: res.sample_type,
+          sample_type: res.sample_type == "Venous Whole Blood" ? res.sample_type_preferred_name : res.sample_type,
           specimen_status: res.specimen_status,
           order_location: res.order_location,
           date_created: res.date_created,
@@ -889,6 +904,199 @@ module OrderService
     end
   end
 
+  def self.create_specimen(params)
+    sample_status_id = SpecimenStatus.get_specimen_status_id(params[:sample_status][:name]&.gsub('-', '_'))
+    order_ward = Ward.get_ward_id(NameMapping.actual_name_of(params[:order_location]))
+    order = Speciman.create!(
+      couch_id: params[:uuid] || SecureRandom.uuid,
+      tracking_number: params[:tracking_number],
+      specimen_type_id: SpecimenType.find_by(nlims_code: params.dig(:sample_type, :nlims_code))&.id,
+      specimen_status_id: sample_status_id,
+      ward_id: order_ward,
+      date_created: params[:date_created] || Date.today,
+      priority: params[:priority],
+      drawn_by_id: params[:drawn_by][:id],
+      drawn_by_name: params[:drawn_by][:name],
+      drawn_by_phone_number: params[:drawn_by][:phone_number],
+      target_lab: params[:target_lab],
+      sending_facility: params[:sending_facility],
+      district: params[:district],
+      requested_by: params[:requested_by],
+      art_start_date: params[:art_start_date],
+      arv_number: params[:arv_number] || 'N/A',
+      art_regimen: params[:art_regimen] || 'N/A',
+      clinical_history: params[:clinical_history],
+      lab_location: params[:lab_location],
+      source_system: params[:source_system]
+    )
+    if params[:status_trail].present?
+      params[:status_trail].each do |trail|
+        specimen_status = SpecimenStatus.find_by(name: trail[:status])
+        next unless specimen_status.present?
+        next if SpecimenStatusTrail.exists?(specimen_id: order.id, specimen_status_id: specimen_status.id)
+
+        SpecimenStatusTrail.create!(
+          specimen_id: order.id,
+          time_updated: trail[:timestamp],
+          specimen_status_id: specimen_status.id,
+          who_updated_id: trail[:updated_by]['id'].to_s,
+          who_updated_name: "#{trail[:updated_by]['first_name']} #{trail[:updated_by]['last_name']}",
+          who_updated_phone_number: trail[:updated_by]['phone_number'].to_s
+        )
+      end
+    end
+    order
+  end
+
+  def self.create_test(patient, specimen, testype_id, time_created, test_status_id, created_by, panel_id = nil)
+    Test.create!(
+      specimen_id: specimen.id,
+      test_type_id: testype_id,
+      patient_id: patient.id,
+      created_by: created_by,
+      panel_id: panel_id,
+      time_created: time_created,
+      test_status_id: test_status_id
+    )
+  end
+
+  def self.create_patient(params)
+    npid = params[:national_patient_id]
+    name = "#{params[:first_name]} #{params[:last_name]}"
+    patient_obj = Patient.find_by(patient_number: npid)
+    if patient_obj.present?
+      patient_obj.dob = params[:date_of_birth]
+      patient_obj.update!(name:)
+      patient_obj.save!
+    else
+      patient_obj = Patient.create!(
+        patient_number: npid,
+        name:,
+        email: params[:email],
+        dob: params[:date_of_birth],
+        gender: params[:gender],
+        phone_number: params[:phone_number],
+        address: params[:address],
+        external_patient_number: ''
+      )
+    end
+    patient_obj
+  end
+
+  def self.create_order_v2(params)
+    ActiveRecord::Base.transaction do
+      params[:tests].each do |tst|
+        test_name = TestType.find_by(nlims_code: tst.dig(:test_type, :nlims_code))
+        return [false, "test name not available in nlims for #{tst.dig(:test_type, :nlims_code)}"] unless test_name.present?
+      end
+      specimen_type = SpecimenType.find_by(nlims_code: params[:order].dig(:sample_type, :nlims_code))
+      return [false, "specimen type not available in nlims for #{params[:order].dig(:sample_type, :nlims_code)}"] if specimen_type.blank?
+
+      if params[:order][:sample_status].present?
+        specimen_status = SpecimenStatus.find_by(name: params[:order][:sample_status][:name]&.gsub('-', '_'))
+        return [false, 'specimen status not available in nlims'] if specimen_status.blank?
+      end
+
+      patient = create_patient(params[:patient])
+      specimen = create_specimen(params[:order])
+      Visit.create(
+        patient_id: patient.id,
+        visit_type_id: '',
+        ward_id: Ward.get_ward_id(NameMapping.actual_name_of(params[:order][:order_location]))
+      )
+      params[:tests].each do |lab_test|
+        time_created = params[:order][:date_created] || Date.today
+        test_status_id = TestStatus.get_test_status_id('drawn')
+        created_by = params[:order][:drawn_by][:name]
+        if PanelType.find_by(name: lab_test.dig(:test_type, :name)).blank?
+          create_test(
+            patient,
+            specimen,
+            TestType.find_by(nlims_code: lab_test.dig(:test_type, :nlims_code))&.id,
+            time_created,
+            test_status_id,
+            created_by,
+            panel_id = nil
+          )
+        else
+          panel = PanelType.find_by(name: lab_test)
+          test_types = panel&.test_types || []
+          test_types.each do |test_type|
+            create_test(
+              patient,
+              specimen,
+              test_type.id,
+              time_created,
+              test_status_id,
+              created_by,
+              panel_id = panel.id
+            )
+          end
+        end
+      end
+    end
+    [true, params[:order][:tracking_number]]
+  rescue StandardError => e
+    [false, e.message]
+  end
+
+  def self.update_tests(params)
+    order, lab_test, test_status = validate_test_update_params(params)
+    return [false, lab_test] if order == false
+
+    ActiveRecord::Base.transaction do
+      params[:status_trail].each do |trail|
+        trail_status = TestStatus.find_by(name: trail[:status])
+        next unless trail_status.present?
+        next if TestStatusTrail.exists?(test_id: lab_test.id, test_status_id: trail_status.id)
+
+        TestStatusTrail.create!(
+          test_id: lab_test.id,
+          time_updated: trail[:timestamp],
+          test_status_id: trail_status.id,
+          who_updated_id: trail[:updated_by]['id'].to_s,
+          who_updated_name: "#{trail[:updated_by]['first_name']} #{trail[:updated_by]['last_name']}",
+          who_updated_phone_number: trail[:updated_by]['phone_number'].to_s
+        )
+      end
+      TestStatusUpdaterService.call(lab_test.id, test_status)
+      if params[:test_results].present? && test_status&.id == TestStatus.get_test_status_id('verified')
+        TestService.add_test_results(params, lab_test.id)
+      end
+      [true, 'test updated successfuly']
+    rescue StandardError => e
+      [false, e.message]
+    end
+  end
+
+  def self.validate_test_update_params(params)
+    return [false, 'tracking number not provided'] if params[:tracking_number].blank?
+    return [false, 'test status not provided'] if params[:test_status].blank?
+    return [false, 'test type not provided'] if params.dig(:test_type, :nlims_code).blank?
+    return [false, 'time updated not provided'] if params[:time_updated].blank?
+
+    order = OrderService.get_order_by_tracking_number_sql(params[:tracking_number], nil)
+    return [false, 'order not available'] unless order
+
+    lab_test = Test.joins(:test_type)
+                   .where(specimen_id: order.id, test_types: { nlims_code: params.dig(:test_type, :nlims_code) }).first
+    return [false, 'order with such test not available'] unless lab_test
+
+    test_status = TestStatus.find_by(name: params[:test_status])
+    unless test_status
+      return [false, "test status provided, not within scope of tests statuses available:#{TestStatus.all.pluck(:name)}"]
+    end
+
+    state, error_message = TestService.validate_time_updated(params[:time_updated], order)
+    unless state
+      failed_test_update = FailedTestUpdate.find_or_create_by(tracking_number: params[:tracking_number], test_name: params.dig(:test_type, :name), failed_step_status: test_status&.name)
+      failed_test_update.update(error_message: error_message, time_from_source: params[:time_updated])
+      return [false, error_message]
+    end
+
+    [order, lab_test, test_status]
+  end
+
   def self.nlims_local_orders(start_date, end_date, concept, sending_facility: nil)
     start_date = start_date.present? ? start_date.to_date.beginning_of_day : Date.today.beginning_of_day
     end_date = end_date.present? ? end_date.to_date.end_of_day : Date.today.end_of_day
@@ -901,6 +1109,7 @@ module OrderService
     return sp if test_type.blank?
 
     tests = Test.where(specimen_id: sp.pluck(:id), test_type_id: test_type&.ids)
+                .where.not(test_status_id: TestStatus.get_test_status_id('voided'))
     return Speciman.where(id: tests.pluck(:specimen_id)) if sending_facility.present?
 
     Speciman.where(id: tests.pluck(:specimen_id))
@@ -937,5 +1146,4 @@ module OrderService
       end
     end
   end
-
 end

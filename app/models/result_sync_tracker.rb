@@ -15,6 +15,7 @@ class ResultSyncTracker < ApplicationRecord
 
   def push_result_to_emr
     return if !Config.master_update_source?(tracking_number) && Config.same_source?(tracking_number)
+    return if Speciman.find_by(tracking_number:)&.source_system&.downcase == 'iblis'
 
     SyncWithEmrJob.perform_async({
       tracking_number:,

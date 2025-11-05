@@ -21,7 +21,9 @@ wards.each do |ward|
 end
 name_mappings = {
   'PIMA CD4' => 'CD4',
-  'Viral Load Gene X-per' => 'Viral Load',
+  'Viral Load Gene X-per' => 'HIV Viral Load',
+  'HIV viral load' => 'HIV Viral Load',
+  'CD4 Count' => 'CD4 Enumeration',
   'Cr Ag' => 'Cryptococcus Antigen Test',
   'Cd4 Count' => 'CD4',
   'Gene Xpert' => 'TB Tests',
@@ -40,7 +42,7 @@ name_mappings = {
   'ASOT' => 'Anti Streptolysis O',
   'Blood C/S' => 'Culture & Sensitivity',
   'Cryptococcal Ag' => 'Cryptococcus Antigen Test',
-  'Gene Xpert Viral' => 'Viral Load',
+  'Gene Xpert Viral' => 'HIV Viral Load',
   'I/Ink' => 'India Ink',
   'C_S' => 'Culture & Sensitivity',
   'hep' => 'Hepatitis B Test',
@@ -66,5 +68,5 @@ name_mappings = {
 }
 
 name_mappings.each do |manually_created_name, actual_name|
-  NameMapping.find_or_create_by(manually_created_name: manually_created_name.strip, actual_name: actual_name.strip)
+  NameMapping.find_or_create_by(manually_created_name: manually_created_name.strip).update!(actual_name: actual_name.strip)
 end

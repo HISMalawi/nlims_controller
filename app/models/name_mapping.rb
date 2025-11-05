@@ -7,7 +7,7 @@ class NameMapping < ApplicationRecord
 
   def self.actual_name_of(name)
     manually_created_name = filter_name(name)
-    actual_name = NameMapping.where(manually_created_name:)&.first
+    actual_name = NameMapping.where(manually_created_name: manually_created_name)&.first
     actual_name ||= NameMapping.where(manually_created_name: name&.strip&.gsub(' ', '-'))&.first
     return actual_name.actual_name unless actual_name.nil?
 

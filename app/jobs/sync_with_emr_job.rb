@@ -3,6 +3,8 @@
 # SyncWithEmrJob job that syncs to emr
 class SyncWithEmrJob
   include Sidekiq::Job
+  sidekiq_options lock: :until_executed,
+                  on_conflict: :reject
 
   def perform(params)
     tracking_number, status, test_id, action = params.values_at('tracking_number', 'status', 'test_id', 'action')

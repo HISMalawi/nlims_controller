@@ -127,7 +127,7 @@ class IntegrationStatusService
     payload = {
       start_date: Date.today - 1.day,
       end_date: Date.today,
-      concept: { name: 'Viral Load', id: 856 },
+      concept: { name: 'HIV Viral Load', id: 856 },
       include_data: include_data
     }
     response = RestClient::Request.execute(

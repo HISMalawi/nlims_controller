@@ -1,7 +1,7 @@
 module UserService
   def self.create_user(params)
     details = compute_expiry_time
-    User.create(
+    user = User.create!(
       app_name: params[:app_name],
       partner: params[:partner],
       location: params[:location],
@@ -11,7 +11,14 @@ module UserService
       app_uuid: params[:app_uuid],
       token_expiry_time: details[:expiry_time]
     )
-    { token: details[:token], expiry_time: details[:expiry_time] }
+    if params[:roles].present?
+      params[:roles].each do |role|
+        user.roles << Role.find_by(name: role)
+      end
+    else
+      user.roles << Role.find_by(name: 'system')
+    end
+    { token: details[:token], expiry_time: details[:expiry_time], roles: user.roles.pluck(:name) }
   end
 
   def self.check_account_creation_request(token)
@@ -64,7 +71,7 @@ module UserService
   def self.authenticate(username, password)
     user = User.where(username:).first
 
-    return false unless user
+    return false if user.nil?
 
     secured_pass = BCrypt::Password.new(user['password'])
     return true if secured_pass == password
@@ -107,6 +114,17 @@ module UserService
 
     secured_pass = decrypt_password(user.password)
     return false unless secured_pass == password
+
+    User.update(user.id, token:, token_expiry_time: expiry_time[:expiry_time])
+    { token:, expiry_time: expiry_time[:expiry_time] }
+  end
+
+  def self.refresh_token(app_uuid)
+    user = User.find_by(app_uuid:)
+    return false if user.nil?
+
+    token = create_token
+    expiry_time = compute_expiry_time
 
     User.update(user.id, token:, token_expiry_time: expiry_time[:expiry_time])
     { token:, expiry_time: expiry_time[:expiry_time] }

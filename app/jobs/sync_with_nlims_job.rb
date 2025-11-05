@@ -3,6 +3,8 @@
 # SyncWithNlimsJob job that syncs to local nlims
 class SyncWithNlimsJob
   include Sidekiq::Job
+  sidekiq_options lock: :until_executed,
+                  on_conflict: :reject
 
   def perform(params)
     identifier, type, action = params.values_at('identifier', 'type', 'action')
