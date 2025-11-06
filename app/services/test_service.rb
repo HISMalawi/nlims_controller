@@ -152,7 +152,7 @@ module TestService
   def self.acknowledge_test_results_receiptient(tracking_number, test_name, date, recipient_type)
     res = Test.find_by_sql("SELECT tests.id FROM tests INNER JOIN test_types ON test_types.id = tests.test_type_id
             INNER JOIN specimen ON specimen.id = tests.specimen_id
-            where specimen.tracking_number ='#{tracking_number}' AND test_types.name='#{test_name}'")
+            where specimen.tracking_number ='#{tracking_number}' AND (test_types.name='#{test_name}' OR test_types.preferred_name='#{test_name}')")
     if !res.blank?
       type = TestResultRecepientType.find_by(name: recipient_type)
       tst = Test.find_by(id: res[0]['id'])
