@@ -177,12 +177,17 @@ class IntegrationStatusService
   end
 
   def collect_outdated_sync_sites
-    report = Report.where(name: 'integration_status').where(updated_at: (Time.now - 6.hour)..Time.now).first
-    return report&.data&.select { |site| site['last_sync_date_gt_24hr'] } if report.present?
+    # report = Report.where(name: 'integration_status').where(updated_at: (Time.now - 6.hour)..Time.now).first
+    # return report&.data&.select { |site| site['last_sync_date_gt_24hr'] } if report.present?
 
-    generate_status_report
-    data = Report.where(name: 'integration_status').where(updated_at: (Time.now - 6.hour)..Time.now).first&.data
-    data&.select { |site| site['last_sync_date_gt_24hr'] } if data.present?
+    # generate_status_report
+    # data = Report.where(name: 'integration_status').where(updated_at: (Time.now - 6.hour)..Time.now).first&.data
+    # data&.select { |site| site['last_sync_date_gt_24hr'] } if data.present?
+
+    report = Report.where(name: 'integration_status').first
+    return [] unless report.present?
+
+    report&.data&.select { |site| site['last_sync_date_gt_24hr'] }
   end
 
   def generate_csv_report(site_reports)

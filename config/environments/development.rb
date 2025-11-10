@@ -38,7 +38,9 @@ Rails.application.configure do
     password: ENV['NLIMS_EMAIL_PASSWORD'],
     authentication: :login,
     enable_starttls_auto: true,
-    domain: 'pedaids.org'
+    domain: 'pedaids.org',
+    open_timeout: 30,
+    read_timeout: 60
   }
 
   # Don't care if the mailer can't send.
