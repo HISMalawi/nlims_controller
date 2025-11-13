@@ -3,7 +3,7 @@
 # Specimen model
 class Speciman < ApplicationRecord
   after_commit :push_order_to_master_nlims, on: %i[create], if: :local_nlims?
-  after_commit :push_order_update_to_master_nlims, on: %i[update], if: :local_nlims?
+  after_update :push_order_update_to_master_nlims, if: -> { local_nlims? && saved_change_to_specimen_type_id? }
 
   private
 
@@ -23,7 +23,6 @@ class Speciman < ApplicationRecord
   end
 
   def push_order_update_to_master_nlims
-    return unless saved_change_to_specimen_type_id
     return if specimen_type_id.zero?
 
     OrderSyncTracker.find_or_create_by(tracking_number:)
