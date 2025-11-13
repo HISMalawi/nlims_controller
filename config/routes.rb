@@ -4,6 +4,8 @@ require 'sidekiq/web'
 require 'sidekiq/cron/web'
 
 Rails.application.routes.draw do
+  mount Rswag::Ui::Engine => '/api-docs'
+  mount Rswag::Api::Engine => '/api-docs'
   # For details on the DSL available within this file, see http://guides.rubyonrails.org/routing.html
   mount Sidekiq::Web => '/sidekiq'
   root to: 'home#index'
@@ -38,7 +40,6 @@ Rails.application.routes.draw do
       post '/update_test' => 'test#update_test'
       post '/add_test' => 'test#add_test'
       put  '/edit_test_result' => 'test#edit_test_result'
-      get  '/retrieve_test_Catelog'	=> 'test#retrieve_test_catelog'
       get	 '/query_test_measures/:test_name'	=> 'test#query_test_measures'
       get  '/query_test_status/:tracking_number'	=> 'test#query_test_status'
       get  '/query_tests_with_no_results_by_npid/:npid'	=> 'test#test_no_results'
@@ -49,6 +50,18 @@ Rails.application.routes.draw do
       get	 '/authenticate/:username/:password'	=>	'user#authenticate_user'
       get	 '/re_authenticate/:username/:password'	=>	'user#re_authenticate'
       get	 '/check_token_validity'	=>	'user#check_token_validity'
+      post '/login' => 'user#login'
+      post '/refresh_token' => 'user#refresh_token'
+      resources :users, controller: :user, only: %i[index create show update] do
+        collection do
+          get '/check_username/:username' => 'user#check_username'
+          get '/roles/all' => 'user#roles'
+          get '/locations/all' => 'user#locations'
+        end
+        member do
+          post '/disable_enable' => 'user#disable_enable_user'
+        end
+      end
 
       # other routes
       get '/retrieve_order_location'	=> 'test#retrieve_order_location'
@@ -60,6 +73,31 @@ Rails.application.routes.draw do
       post '/check_in' => 'status#check_in'
       post '/register_order_source' => 'source_tracker#register_order_source'
       post '/update_order_source_couch_id' => 'source_tracker#update_order_source_couch_id'
+
+      resources :test_types, only: %i[index create show update destroy] do
+        collection do
+          get '/measures' => 'test_types#measures'
+          get '/measure_types' => 'test_types#measure_types'
+          post '/import' => 'test_types#import'
+        end
+      end
+
+      # test catalog routes
+      post '/approve_test_catalog' => 'test_types#approve_test_catalog'
+      post '/release_test_catalog' => 'test_types#release_version'
+      get  '/retrieve_test_catalog'	=> 'test_types#retrieve_test_catalog'
+      get '/retrieve_test_catalog_versions' => 'test_types#retrieve_test_catalog_versions'
+      get '/check_new_test_catalog_version_available' => 'test_types#new_test_catalog_version_available'
+
+      resources :drugs
+      resources :organisms
+      resources :test_statuses
+      resources :departments
+      resources :specimen_types
+      resources :lab_test_sites
+      resources :equipments
+      resources :products
+      resources :test_panels
     end
 
     namespace :v2 do
@@ -69,6 +107,10 @@ Rails.application.routes.draw do
       post '/confirm_order_request'	=> 'order#confirm_order_request'
       get  '/query_requested_order_by_npid/:npid'	=> 'order#query_requested_order_by_npid2'
       get '/query_order_by_tracking_number/:tracking_number'	=> 'order#query_order_by_tracking_number'
+      post '/create_order'	=> 'order#create_order'
+      post '/update_tests' => 'order#update_tests'
+      post '/create_order_once_off' => 'order#create_order_once_off'
+      get '/find_order_by_tracking_number' => 'order#find_order_by_tracking_number'
     end
   end
 end

@@ -1,0 +1,936 @@
+---
+openapi: 3.0.1
+info:
+  title: NLIMS API
+  version: v1
+  description: API documentation for NLIMS
+paths:
+  "/api/v1/login":
+    post:
+      summary: Authenticate a user and return a token
+      tags:
+      - Authentication
+      description: Authenticate a user and return a token
+      parameters: []
+      responses:
+        '200':
+          description: login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
+                      username:
+                        type: string
+                        example: admin
+                      app_name:
+                        type: string
+                        example: nlims
+                      app_uuid:
+                        type: string
+                        example: 99d18d28-7360-4356-b378-8ca438012be9
+                      disabled:
+                        type: boolean
+                        example: false
+                      location:
+                        type: string
+                        example: lilongwe
+                      partner:
+                        type: string
+                        example: api_admin
+                      roles:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            name:
+                              type: string
+                              example: admin
+                  data:
+                    type: object
+                    properties:
+                      token:
+                        type: string
+                        example: 193625fa-534c-4470-a557-9c60f41799a9
+                      expiry_time:
+                        type: string
+                        example: '20251105142432'
+        '401':
+          description: invalid credentials
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Wrong username or password
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - username
+              - password
+              properties:
+                username:
+                  type: string
+                  example: admin
+                password:
+                  type: string
+                  example: password123
+  "/api/v2/create_order":
+    post:
+      summary: Create a new laboratory order
+      tags:
+      - Orders
+      security:
+      - tokenAuth: []
+      description: Create a new laboratory order
+      parameters: []
+      responses:
+        '200':
+          description: order successfully created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: order successfully created
+                  data:
+                    type: object
+                    properties:
+                      tracking_number:
+                        type: string
+                        example: XTRK123495
+        '422':
+          description: 'Error: Unprocessable Entity'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: tracking number not provided
+                  data:
+                    type: object
+                    example: {}
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - order
+              - patient
+              - tests
+              properties:
+                order:
+                  type: object
+                  required:
+                  - district
+                  - sending_facility
+                  - tracking_number
+                  - requested_by
+                  - date_created
+                  - priority
+                  - target_lab
+                  - order_location
+                  - sample_type
+                  - sample_status
+                  - drawn_by
+                  properties:
+                    uuid:
+                      type: string
+                    tracking_number:
+                      type: string
+                    district:
+                      type: string
+                    sending_facility:
+                      type: string
+                    requested_by:
+                      type: string
+                    date_created:
+                      type: string
+                      format: date-time
+                    priority:
+                      type: string
+                    target_lab:
+                      type: string
+                    order_location:
+                      type: string
+                    reason_for_test:
+                      type: string
+                    art_start_date:
+                      type: string
+                    arv_number:
+                      type: string
+                    art_regimen:
+                      type: string
+                    clinical_history:
+                      type: string
+                    lab_location:
+                      type: string
+                    source_system:
+                      type: string
+                    sample_type:
+                      type: object
+                      required:
+                      - name
+                      properties:
+                        name:
+                          type: string
+                        nlims_code:
+                          type: string
+                    sample_status:
+                      type: object
+                      required:
+                      - name
+                      properties:
+                        name:
+                          type: string
+                    drawn_by:
+                      type: object
+                      required:
+                      - name
+                      properties:
+                        id:
+                          type: integer
+                        name:
+                          type: string
+                        phone_number:
+                          type: string
+                    status_trail:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          status:
+                            type: string
+                          timestamp:
+                            type: string
+                            format: date-time
+                          updated_by:
+                            type: object
+                            properties:
+                              first_name:
+                                type: string
+                              last_name:
+                                type: string
+                              id_number:
+                                type: string
+                              phone_number:
+                                type: string
+                patient:
+                  type: object
+                  required:
+                  - first_name
+                  - last_name
+                  - gender
+                  - date_of_birth
+                  properties:
+                    national_patient_id:
+                      type: string
+                    first_name:
+                      type: string
+                    last_name:
+                      type: string
+                    gender:
+                      type: string
+                    date_of_birth:
+                      type: string
+                    phone_number:
+                      type: string
+                tests:
+                  type: array
+                  description: 'Required: tests not provided'
+                  items:
+                    type: object
+                    required:
+                    - tracking_number
+                    - test_status
+                    - test_type
+                    properties:
+                      tracking_number:
+                        type: string
+                      arv_number:
+                        type: string
+                      test_status:
+                        type: string
+                      time_updated:
+                        type: string
+                        format: date-time
+                      test_type:
+                        type: object
+                        required:
+                        - name
+                        - nlims_code
+                        properties:
+                          name:
+                            type: string
+                          nlims_code:
+                            type: string
+                      test_results:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            measure:
+                              type: object
+                              required:
+                              - name
+                              - nlims_code
+                              properties:
+                                name:
+                                  type: string
+                                nlims_code:
+                                  type: string
+                            result:
+                              type: object
+                              required:
+                              - value
+                              - result_date
+                              properties:
+                                value:
+                                  type: string
+                                unit:
+                                  type: string
+                                result_date:
+                                  type: string
+                                  format: date-time
+                                platform:
+                                  type: string
+                                platformserial:
+                                  type: string
+                      status_trail:
+                        type: array
+                        items:
+                          type: object
+                          required:
+                          - status
+                          - timestamp
+                          properties:
+                            status:
+                              type: string
+                            timestamp:
+                              type: string
+                              format: date-time
+                            updated_by:
+                              type: object
+                              properties:
+                                first_name:
+                                  type: string
+                                last_name:
+                                  type: string
+                                id_number:
+                                  type: string
+                                phone_number:
+                                  type: string
+              example:
+                order:
+                  uuid: 3452b6d0-acca-4d9e-9052-7acee4f646fc
+                  tracking_number: XTRK123495
+                  sample_type:
+                    name: Plasma
+                    nlims_code: NLIMS_SP_0017_MWI
+                  sample_status:
+                    name: specimen_collected
+                  order_location: OPD
+                  date_created: '2025-09-13 02:00:00'
+                  priority: Routine
+                  reason_for_test: Invistration
+                  drawn_by:
+                    id: 1001
+                    name: John Doe
+                    phone_number: "+265999111222"
+                  target_lab: National Reference Lab
+                  sending_facility: Kamuzu Central Hospital
+                  district: Lilongwe
+                  requested_by: Dr. Banda
+                  art_start_date: '2020-05-10'
+                  arv_number: ARV-998877
+                  art_regimen: TDF/3TC/DTG
+                  clinical_history: allergic to nuts
+                  lab_location: Main Lab
+                  source_system: IBLIS
+                  status_trail:
+                  - status: specimen_collected
+                    timestamp: '2025-09-13 02:00:00'
+                    updated_by:
+                      first_name: Chikondi
+                      last_name: Banda
+                      id_number: '38'
+                      phone_number: ''
+                patient:
+                  national_patient_id: PAT-123456
+                  first_name: Mary
+                  last_name: Chirwa
+                  date_of_birth: '1992-03-21'
+                  gender: F
+                  phone_number: "+265888777666"
+                tests:
+                - tracking_number: XTRK123495
+                  arv_number: 34-4934
+                  test_status: verified
+                  time_updated: '2025-09-13 02:00:00'
+                  test_type:
+                    name: HIV Viral Load Quantitative HIV Nucleic Acid Test
+                    nlims_code: NLIMS_TT_0071_MWI
+                  test_results:
+                  - measure:
+                      name: Viral Load
+                      nlims_code: NLIMS_TI_0294_MWI
+                    result:
+                      value: '100'
+                      unit: copies/mL
+                      result_date: '2025-09-13 04:10:02'
+                      platform: Abbot
+                      platformserial: '275021258'
+                  status_trail:
+                  - status: started
+                    timestamp: '2025-09-13 02:00:00'
+                    updated_by:
+                      first_name: Chikondi
+                      last_name: Banda
+                      id_number: '38'
+                      phone_number: ''
+                  - status: completed
+                    timestamp: '2025-09-13 03:00:00'
+                    updated_by:
+                      first_name: Chikondi
+                      last_name: Banda
+                      id_number: '38'
+                      phone_number: ''
+  "/api/v2/find_order_by_tracking_number":
+    get:
+      summary: Find an order by tracking number
+      tags:
+      - Orders
+      security:
+      - tokenAuth: []
+      parameters:
+      - name: tracking_number
+        in: query
+        required: true
+        description: Tracking number of the order
+        schema:
+          type: string
+      description: Returned when the order cannot be found
+      responses:
+        '200':
+          description: Order Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: Order Found
+                  data:
+                    type: object
+                    properties:
+                      order:
+                        type: object
+                        properties:
+                          uuid:
+                            type: string
+                          tracking_number:
+                            type: string
+                          sample_type:
+                            type: object
+                            properties:
+                              id:
+                                type: integer
+                              name:
+                                type: string
+                              nlims_code:
+                                type: string
+                          sample_status:
+                            type: object
+                            properties:
+                              id:
+                                type: integer
+                              name:
+                                type: string
+                          order_location:
+                            type: string
+                          date_created:
+                            type: string
+                            format: date-time
+                          priority:
+                            type: string
+                          reason_for_test:
+                            type: string
+                          drawn_by:
+                            type: object
+                            properties:
+                              id:
+                                type: string
+                              name:
+                                type: string
+                              phone_number:
+                                type: string
+                          target_lab:
+                            type: string
+                          sending_facility:
+                            type: string
+                          district:
+                            type: string
+                          site_code_number:
+                            type: string
+                          requested_by:
+                            type: string
+                          art_start_date:
+                            type: string
+                          arv_number:
+                            type: string
+                          art_regimen:
+                            type: string
+                          clinical_history:
+                            type: string
+                          lab_location:
+                            type: string
+                          source_system:
+                            type: string
+                          status_trail:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                status_id:
+                                  type: integer
+                                status:
+                                  type: string
+                                timestamp:
+                                  type: string
+                                  format: date-time
+                                updated_by:
+                                  type: object
+                                  properties:
+                                    first_name:
+                                      type: string
+                                    last_name:
+                                      type: string
+                                    id:
+                                      type: string
+                                    phone_number:
+                                      type: string
+                      patient:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                          national_patient_id:
+                            type: string
+                          first_name:
+                            type: string
+                          last_name:
+                            type: string
+                          gender:
+                            type: string
+                          date_of_birth:
+                            type: string
+                          phone_number:
+                            type: string
+                      tests:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            tracking_number:
+                              type: string
+                            arv_number:
+                              type: string
+                            uuid:
+                              type: string
+                            test_status:
+                              type: string
+                            time_updated:
+                              type: string
+                              format: date-time
+                            test_type:
+                              type: object
+                              required:
+                              - name
+                              - nlims_code
+                              properties:
+                                name:
+                                  type: string
+                                nlims_code:
+                                  type: string
+                            status_trail:
+                              type: array
+                              items:
+                                type: object
+                                properties:
+                                  status_id:
+                                    type: integer
+                                  status:
+                                    type: string
+                                  timestamp:
+                                    type: string
+                                    format: date-time
+                                  updated_by:
+                                    type: object
+                                    properties:
+                                      first_name:
+                                        type: string
+                                      last_name:
+                                        type: string
+                                      id:
+                                        type: string
+                                      phone_number:
+                                        type: string
+                            test_results:
+                              type: array
+                              items:
+                                type: object
+                                properties:
+                                  measure:
+                                    type: object
+                                    properties:
+                                      name:
+                                        type: string
+                                      nlims_code:
+                                        type: string
+                                  result:
+                                    type: object
+                                    properties:
+                                      value:
+                                        type: string
+                                      unit:
+                                        type: string
+                                      result_date:
+                                        type: string
+                                        format: date-time
+                                      platform:
+                                        type: string
+                                      platformserial:
+                                        type: string
+        '404':
+          description: Order Not Available
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Order Not Available
+                  data:
+                    type: object
+                    example: {}
+  "/api/v1/check_new_test_catalog_version_available":
+    get:
+      summary: Check if a new test catalog version is available
+      tags:
+      - Test Catalog
+      security:
+      - tokenAuth: []
+      description: Check if a new test catalog version is available based on the current
+        version being used by the app
+      parameters:
+      - name: version
+        in: query
+        required: true
+        description: Current catalog version that is being used by the app currently,
+          e.g., v1
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Version information returned
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  is_new_version_available:
+                    type: boolean
+                    example: true
+                  version:
+                    type: string
+                    example: v1
+                  version_details:
+                    type: object
+                    example:
+                      releaseNotes:
+                      - title: Malawi Test Catalog Initial Version
+                        changeType: feature
+                        description: The Malawi Test Catalog (Initial Version) serves
+                          as the foundational reference for all laboratory tests conducted
+                          within the national health system. It defines standardized
+                          test names, methods, units of measurement, and result indicators
+                          to ensure consistency, quality, and interoperability across
+                          laboratories and electronic systems.
+  "/api/v1/retrieve_test_catalog":
+    get:
+      summary: Retrieve the full test catalog
+      tags:
+      - Test Catalog
+      security:
+      - tokenAuth: []
+      description: Retrieve the full Malawi Test Catalog including departments, test
+        types, test panels, measures, specimen types, lab test sites, and version
+        details
+      parameters:
+      - name: version
+        in: query
+        required: true
+        description: Current catalog version to fetch, e.g., v1
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Test catalog retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Invalid version parameter
+  "/api/v2/update_test":
+    post:
+      summary: Update a laboratory test
+      tags:
+      - Tests
+      security:
+      - tokenAuth: []
+      description: Update a laboratory test
+      parameters: []
+      responses:
+        '200':
+          description: test successfully updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: test successfully updated
+                  data:
+                    type: object
+        '422':
+          description: 'Error: Unprocessable Entity'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: tracking number not provided
+                  data:
+                    type: object
+                    example: {}
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - tracking_number
+              - test_status
+              - test_type
+              properties:
+                tracking_number:
+                  type: string
+                  description: Tracking number of the test
+                arv_number:
+                  type: string
+                uuid:
+                  type: string
+                  description: Unique test identifier
+                test_status:
+                  type: string
+                  description: New status of the test
+                time_updated:
+                  type: string
+                  format: date-time
+                  description: Time of update
+                test_type:
+                  type: object
+                  required:
+                  - name
+                  - nlims_code
+                  properties:
+                    name:
+                      type: string
+                    nlims_code:
+                      type: string
+                status_trail:
+                  type: array
+                  items:
+                    type: object
+                    required:
+                    - status
+                    - timestamp
+                    properties:
+                      status_id:
+                        type: integer
+                      status:
+                        type: string
+                      timestamp:
+                        type: string
+                        format: date-time
+                      updated_by:
+                        type: object
+                        properties:
+                          first_name:
+                            type: string
+                          last_name:
+                            type: string
+                          id:
+                            type: string
+                          phone_number:
+                            type: string
+                test_results:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      measure:
+                        type: object
+                        required:
+                        - name
+                        - nlims_code
+                        properties:
+                          name:
+                            type: string
+                          nlims_code:
+                            type: string
+                      result:
+                        type: object
+                        required:
+                        - value
+                        - result_date
+                        properties:
+                          value:
+                            type: string
+                          unit:
+                            type: string
+                          result_date:
+                            type: string
+                            format: date-time
+                          platform:
+                            type: string
+                          platformserial:
+                            type: string
+              example:
+                tracking_number: XKCH2500875104
+                arv_number: N/A
+                uuid: af28a817-0ae6-49ed-9cae-a93c33a5eb3a
+                test_status: voided
+                time_updated: '2025-02-24T15:19:56.000+02:00'
+                test_type:
+                  name: Full Blood Count
+                  nlims_code: NLIMS_TT_0035_MWI
+                status_trail:
+                - status_id: 2
+                  status: pending
+                  timestamp: '2025-02-24T14:29:00.000+02:00'
+                  updated_by:
+                    first_name: OCTAVIA
+                    last_name: KALULU
+                    id: '138'
+                    phone_number: ''
+                - status_id: 3
+                  status: started
+                  timestamp: '2025-02-24T14:31:42.000+02:00'
+                  updated_by:
+                    first_name: chacho
+                    last_name: namaheya
+                    id: '121'
+                    phone_number: ''
+                - status_id: 6
+                  status: voided
+                  timestamp: '2025-02-24T15:19:56.000+02:00'
+                  updated_by:
+                    first_name: chacho
+                    last_name: namaheya
+                    id: '121'
+                    phone_number: ''
+                test_results: []
+servers:
+- url: http://{defaultHost}
+  variables:
+    defaultHost:
+      default: localhost:3009
+components:
+  securitySchemes:
+    tokenAuth:
+      type: apiKey
+      in: header
+      name: token
+      description: 'Authentication token. Example: token = your_api_key_here'
+  schemas:
+    TestStatus:
+      type: string
+      description: Available statuses for a test
+      enum:
+      - not-received
+      - pending
+      - started
+      - completed
+      - verified
+      - voided
+      - not-done
+      - test-rejected
+      - drawn
+      - failed
+      - rejected
+      - test_on_repeat
+      - sample_accepted_at_hub
+      - sample_rejected_at_hub
+      - sample_intransit_to_ml
+      - sample_accepted_at_ml
+      - sample_rejected_at_ml
+    OrderStatus:
+      type: string
+      description: Available statuses for a order
+      enum:
+      - specimen_not_collected
+      - specimen_accepted
+      - specimen_rejected
+      - specimen_collected
+      - sample_accepted_at_hub
+      - sample_rejected_at_hub
+      - sample_accepted_at_ml
+      - sample_rejected_at_ml
+security:
+- tokenAuth: []

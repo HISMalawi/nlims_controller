@@ -3,6 +3,8 @@
 # NlimsSyncJob job that syncs to local nlims
 class NlimsSyncJob
   include Sidekiq::Job
+  sidekiq_options lock: :until_executed,
+                  on_conflict: :reject
 
   def perform
     SyncToNlimsService.push_order_to_nlims if Config.local_nlims?

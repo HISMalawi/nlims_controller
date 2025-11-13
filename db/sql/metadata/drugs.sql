@@ -1,0 +1,63 @@
+-- MySQL dump 10.13  Distrib 8.0.43, for Linux (x86_64)
+--
+-- Host: 127.0.0.1    Database: catalog
+-- ------------------------------------------------------
+-- Server version	8.0.43-0ubuntu0.24.04.1
+
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+/*!50503 SET NAMES utf8mb4 */;
+/*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
+/*!40103 SET TIME_ZONE='+00:00' */;
+/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
+/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
+/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
+/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
+
+--
+-- Table structure for table `drugs`
+--
+
+DROP TABLE IF EXISTS `drugs`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `drugs` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) DEFAULT NULL,
+  `description` varchar(255) DEFAULT NULL,
+  `created_at` datetime NOT NULL,
+  `updated_at` datetime NOT NULL,
+  `short_name` varchar(255) DEFAULT NULL,
+  `moh_code` varchar(255) DEFAULT NULL,
+  `nlims_code` varchar(255) DEFAULT NULL,
+  `loinc_code` varchar(255) DEFAULT NULL,
+  `preferred_name` varchar(255) DEFAULT NULL,
+  `scientific_name` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `index_drugs_on_moh_code` (`moh_code`),
+  UNIQUE KEY `index_drugs_on_nlims_code` (`nlims_code`),
+  UNIQUE KEY `index_drugs_on_loinc_code` (`loinc_code`)
+) ENGINE=InnoDB AUTO_INCREMENT=32 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `drugs`
+--
+
+LOCK TABLES `drugs` WRITE;
+/*!40000 ALTER TABLE `drugs` DISABLE KEYS */;
+INSERT INTO `drugs` VALUES (1,'Amoxicillin/Clavulanate',NULL,'2025-04-19 21:55:27','2025-04-19 21:55:27',NULL,NULL,'NLIMS_DRG_0001_MWI',NULL,'Amoxicillin/Clavulanate',NULL),(2,'Ampicillin',NULL,'2025-04-19 21:55:27','2025-04-19 21:55:27',NULL,NULL,'NLIMS_DRG_0002_MWI',NULL,'Ampicillin',NULL),(3,'Ceftriaxone',NULL,'2025-04-19 21:55:27','2025-04-19 21:55:27',NULL,NULL,'NLIMS_DRG_0003_MWI',NULL,'Ceftriaxone',NULL),(4,'Chloramphenicol',NULL,'2025-04-19 21:55:27','2025-04-19 21:55:27',NULL,NULL,'NLIMS_DRG_0004_MWI',NULL,'Chloramphenicol',NULL),(5,'Ciprofloxacin',NULL,'2025-04-19 21:55:27','2025-04-19 21:55:27',NULL,NULL,'NLIMS_DRG_0005_MWI',NULL,'Ciprofloxacin',NULL),(6,'Azithromycin',NULL,'2025-04-19 21:55:27','2025-04-19 21:55:27',NULL,NULL,'NLIMS_DRG_0006_MWI',NULL,'Azithromycin',NULL),(7,'Trimethoprim/Sulfamethoxazole',NULL,'2025-04-19 21:55:27','2025-04-19 21:55:27',NULL,NULL,'NLIMS_DRG_0007_MWI',NULL,'Trimethoprim/Sulfamethoxazole',NULL),(8,'Clindamycin',NULL,'2025-04-19 21:55:27','2025-04-19 21:55:27',NULL,NULL,'NLIMS_DRG_0008_MWI',NULL,'Clindamycin',NULL),(9,'Erythromycin',NULL,'2025-04-19 21:55:27','2025-04-19 21:55:27',NULL,NULL,'NLIMS_DRG_0009_MWI',NULL,'Erythromycin',NULL),(10,'Gentamicin',NULL,'2025-04-19 21:55:27','2025-04-19 21:55:27',NULL,NULL,'NLIMS_DRG_0010_MWI',NULL,'Gentamicin',NULL),(11,'Penicillin',NULL,'2025-04-19 21:55:27','2025-04-19 21:55:27',NULL,NULL,'NLIMS_DRG_0011_MWI',NULL,'Penicillin',NULL),(12,'Oxacillin',NULL,'2025-04-19 21:55:27','2025-04-19 21:55:27',NULL,NULL,'NLIMS_DRG_0012_MWI',NULL,'Oxacillin',NULL),(13,'Tetracycline',NULL,'2025-04-19 21:55:27','2025-04-19 21:55:27',NULL,NULL,'NLIMS_DRG_0013_MWI',NULL,'Tetracycline',NULL),(14,'Ceftazidime',NULL,'2025-04-19 21:55:27','2025-04-19 21:55:27',NULL,NULL,'NLIMS_DRG_0014_MWI',NULL,'Ceftazidime',NULL),(15,'Tigecycline',NULL,'2025-04-19 21:55:27','2025-04-19 21:55:27',NULL,NULL,'NLIMS_DRG_0015_MWI',NULL,'Tigecycline',NULL),(16,'Piperacillin/Tazobactam',NULL,'2025-04-19 21:55:27','2025-04-19 21:55:27',NULL,NULL,'NLIMS_DRG_0016_MWI',NULL,'Piperacillin/Tazobactam',NULL),(17,'Ceftriaxon',NULL,'2025-04-19 21:55:27','2025-04-19 21:55:27',NULL,NULL,'NLIMS_DRG_0017_MWI',NULL,'Ceftriaxon',NULL),(18,'Cefotaxim',NULL,'2025-04-19 21:55:27','2025-04-19 21:55:27',NULL,NULL,'NLIMS_DRG_0018_MWI',NULL,'Cefotaxim',NULL),(19,'Vancomycin',NULL,'2025-04-19 21:55:27','2025-04-19 21:55:27',NULL,NULL,'NLIMS_DRG_0019_MWI',NULL,'Vancomycin',NULL),(20,'Cefoxitin',NULL,'2025-04-19 21:55:27','2025-04-19 21:55:27',NULL,NULL,'NLIMS_DRG_0020_MWI',NULL,'Cefoxitin',NULL),(21,'Nitrofurantoin',NULL,'2025-04-19 21:55:27','2025-04-19 21:55:27',NULL,NULL,'NLIMS_DRG_0021_MWI',NULL,'Nitrofurantoin',NULL),(22,'Naladixic Acid',NULL,'2025-04-19 21:55:27','2025-04-19 21:55:27',NULL,NULL,'NLIMS_DRG_0022_MWI',NULL,'Naladixic Acid',NULL),(23,'Amikacin',NULL,'2025-04-19 21:55:27','2025-04-19 21:55:27',NULL,NULL,'NLIMS_DRG_0023_MWI',NULL,'Amikacin',NULL),(24,'Amoxicillin',NULL,'2025-04-19 21:55:27','2025-04-19 21:55:27',NULL,NULL,'NLIMS_DRG_0024_MWI',NULL,'Amoxicillin',NULL),(25,'Cefuroxime',NULL,'2025-04-19 21:55:27','2025-04-19 21:55:27',NULL,NULL,'NLIMS_DRG_0025_MWI',NULL,'Cefuroxime',NULL),(26,'Ampicillin/Sulbactam',NULL,'2025-04-19 21:55:27','2025-04-19 21:55:27',NULL,NULL,'NLIMS_DRG_0026_MWI',NULL,'Ampicillin/Sulbactam',NULL),(27,'Meropenam',NULL,'2025-04-19 21:55:27','2025-04-19 21:55:27',NULL,NULL,'NLIMS_DRG_0027_MWI',NULL,'Meropenam',NULL),(28,'Tobramycin',NULL,'2025-04-19 21:55:27','2025-04-19 21:55:27',NULL,NULL,'NLIMS_DRG_0028_MWI',NULL,'Tobramycin',NULL),(29,'Linezolid',NULL,'2025-04-19 21:55:27','2025-04-19 21:55:27',NULL,NULL,'NLIMS_DRG_0029_MWI',NULL,'Linezolid',NULL),(30,'Fuscidic acid',NULL,'2025-04-19 21:55:27','2025-04-19 21:55:27',NULL,NULL,'NLIMS_DRG_0030_MWI',NULL,'Fuscidic acid',NULL),(31,'Cefepime','','2025-08-18 11:47:12','2025-08-18 11:47:12','CFM',NULL,'NLIMS_DRG_0031_MWI',NULL,'Cefepime','Cefepime');
+/*!40000 ALTER TABLE `drugs` ENABLE KEYS */;
+UNLOCK TABLES;
+/*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
+
+/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
+/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
+/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+/*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
+
+-- Dump completed on 2025-10-31  9:23:29

@@ -2,8 +2,13 @@
 
 # SpecimenStatus
 class SpecimenStatus < ApplicationRecord
+  include Codeable
+
+  has_many :specimen, class_name: 'Speciman', dependent: :restrict_with_error
+
+  NLIMS_CODE_PREFIX = 'OS'
+
   def self.get_specimen_status_id(type)
-    res = SpecimenStatus.where(name: type)
-    return res[0]['id'] unless res.blank?
+    SpecimenStatus.find_by(name: type)&.id
   end
 end

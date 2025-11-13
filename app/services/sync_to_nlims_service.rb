@@ -8,8 +8,9 @@ module  SyncToNlimsService
         sync_status: false,
         app: 'nlims',
         created_at: (Date.today - 120)..Date.today + 1
-      ).each do |tracker|
+      ).limit(2).each do |tracker|
         nlims = NlimsSyncUtilsService.new(tracking_number(tracker&.test_id))
+        puts "Pushing status to nlims for test id: #{tracker&.test_id}"
         nlims.push_test_actions_to_nlims(test_id: tracker&.test_id, action: 'status_update')
       rescue StandardError => e
         Rails.logger.error("Failed to push test actions to NLMIS: #{e.message}")
@@ -23,6 +24,19 @@ module  SyncToNlimsService
       ).each do |tracker|
         nlims = NlimsSyncUtilsService.new(tracker&.tracking_number)
         nlims.push_order_to_master_nlims(tracker&.tracking_number)
+      rescue StandardError => e
+        Rails.logger.error("Failed to push order to NLMIS: #{e.message}")
+      end
+    end
+
+    def force_sync_order_to_nlims
+      specimen = Speciman.where.not(
+        tracking_number: OrderSyncTracker.pluck(:tracking_number)
+      )
+      specimen.each do |order|
+        OrderSyncTracker.find_or_create_by(tracking_number: order&.tracking_number)
+        nlims = NlimsSyncUtilsService.new(order&.tracking_number)
+        nlims.push_order_to_master_nlims(order&.tracking_number)
       rescue StandardError => e
         Rails.logger.error("Failed to push order to NLMIS: #{e.message}")
       end
@@ -61,6 +75,10 @@ module  SyncToNlimsService
       nlims.push_acknwoledgement_to_master_nlims
     rescue StandardError => e
       Rails.logger.error("Failed to push acknowledgement to Master NLIMS: #{e.message}")
+    end
+
+    def synchronize_test_catalog
+      ProcessTestCatalogService.synchronize_test_catalog
     end
 
     private
