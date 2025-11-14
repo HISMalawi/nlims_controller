@@ -572,11 +572,11 @@ class API::V1::OrderController < ApplicationController
           }
         }
         res.each do |test, result|
-          next unless test == 'Viral Load'
+          next unless test == 'HIV Viral Load'
 
           test_id_ = Test.find_by_sql("SELECT tests.id as test_id FROM tests INNER JOIN specimen ON specimen.id = tests.specimen_id
 											INNER JOIN test_types ON test_types.id = tests.test_type_id
-											WHERE specimen.tracking_number ='#{params[:tracking_number]}' AND test_types.name LIKE '%Viral Load%'")
+											WHERE specimen.tracking_number ='#{params[:tracking_number]}' AND test_types.name LIKE '%HIV Viral Load%'")
           next if test_id_.blank?
 
           check = ResultsAcknwoledge.find_by(tracking_number: params[:tracking_number],

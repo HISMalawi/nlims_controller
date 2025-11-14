@@ -2,6 +2,9 @@
 
 #  TestStatusTrail Model
 class TestStatusTrail < ApplicationRecord
+  belongs_to :test_status, class_name: 'TestStatus', foreign_key: 'test_status_id'
+  belongs_to :test, class_name: 'Test', foreign_key: 'test_id'
+
   after_commit :push_status_to_emr, on: %i[create update], if: :local_nlims?
   after_commit :push_status_to_local_nlims, on: %i[create], unless: :local_nlims?
   after_commit :push_status_to_master_nlims, on: %i[create], if: :local_nlims?
@@ -14,6 +17,7 @@ class TestStatusTrail < ApplicationRecord
 
   def push_status_to_emr
     return if !Config.master_update_source?(tracking_number) && Config.same_source?(tracking_number)
+    return if Speciman.find_by(tracking_number:)&.source_system&.downcase == 'iblis'
 
     status = TestStatus.find_by(id: test_status_id)&.name
     time_updated ||= updated_at

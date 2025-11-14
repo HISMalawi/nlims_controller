@@ -2,6 +2,12 @@
 
 # Specimen model
 class Speciman < ApplicationRecord
+  belongs_to :specimen_types, class_name: 'SpecimenType', foreign_key: 'specimen_type_id'
+  belongs_to :specimen_statuses, class_name: 'SpecimenStatus', foreign_key: 'specimen_status_id'
+  belongs_to :wards, class_name: 'Ward', foreign_key: 'ward_id'
+  has_many :tests, dependent: :restrict_with_error, foreign_key: 'specimen_id'
+  has_many :specimen_status_trail, class_name: 'SpecimenStatusTrail', foreign_key: 'specimen_id'
+
   after_commit :push_order_to_master_nlims, on: %i[create], if: :local_nlims?
   after_update :push_order_update_to_master_nlims, if: -> { local_nlims? && saved_change_to_specimen_type_id? }
 

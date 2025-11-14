@@ -22,7 +22,7 @@ module Nlims
     config.load_defaults 5.1
     config.load_defaults 7.1
     # Add the custom folder to the autoload paths
-    config.autoload_paths += %W[#{config.root}/app/services]
+    config.autoload_paths += %W[#{config.root}/app/]
 
     # Settings in config/environments/* take precedence over those specified here.
     # Application configuration should go into files in config/initializers

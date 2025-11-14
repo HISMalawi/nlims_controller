@@ -3,6 +3,8 @@
 # DailyIntegrationStatusEmailWorker
 class GenerateIntegrationStatusReportJob
   include Sidekiq::Job
+  sidekiq_options lock: :until_executed,
+                  on_conflict: :reject
 
   def perform
     return if Config.local_nlims?
