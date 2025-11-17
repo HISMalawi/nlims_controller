@@ -102,6 +102,12 @@ Rails.application.routes.draw do
 
     namespace :v2 do
       # order routes
+      resources :orders, controller: :orders, only: %i[index show create update] do
+        collection do
+          get '/:tracking_number/exists' => 'orders#order_exist'
+          get '/tracking_numbers/all' => 'orders#tracking_numbers'
+        end
+      end
 
       post '/request_order'	=> 'order#request_order'
       post '/confirm_order_request'	=> 'order#confirm_order_request'
