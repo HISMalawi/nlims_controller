@@ -140,6 +140,7 @@ class NlimsSyncUtilsService
   def push_order_to_master_nlims(tracking_number, once_off=false)
     order = Speciman.find_by(tracking_number:)
     return false if order.nil?
+    return false if order.specimen_type_id == SpecimenType.get_specimen_type_id('not_specified')
 
     payload = OrderSerializer.serialize(order)
     return false if payload.nil?
@@ -391,10 +392,10 @@ class NlimsSyncUtilsService
     exit
   end
 
-  def order_tracking_numbers(order_id, limit: 200_000)
+  def order_tracking_numbers(order_id, limit: 50_000)
     JSON.parse(RestClient::Request.execute(
                  method: :get,
-                 url: "#{@address}/api/v1/get_order_tracking_numbers?order_id=#{order_id}&limit=#{limit}",
+                 url: "#{@address}/api/v1/orders/tracking_numbers/all?order_id=#{order_id}&limit=#{limit}",
                  headers: { content_type: :json, accept: :json, token: @token }
                ), symbolize_names: true)
   rescue StandardError => e

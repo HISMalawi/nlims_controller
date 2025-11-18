@@ -61,7 +61,7 @@ def pull_and_process_data_master_nlims(res)
     test_id = sample[:test_id]
     couch_id = sample[:couch_id]
     begin
-      url = "#{nlims_service.address}/api/v2/find_order_by_tracking_number?tracking_number=#{tracking_number}&couch_id=#{couch_id}"
+      url = "#{nlims_service.address}/api/v2/orders/#{tracking_number}?couch_id=#{couch_id}"
       order = JSON.parse(RestClient.get(url, headers))
       next unless order['error'] == false
 
@@ -99,21 +99,13 @@ def push_acknwoledgement_to_master_nlims
   puts "Number of acknowledgements to process: #{results_acks.count}"
   results_acks.each do |results_ack|
     puts "Acknowledgement for tracking number: #{results_ack&.tracking_number}"
-    test_record = Test.find_by(id: results_ack.test_id)
-    level = TestResultRecepientType.find_by(id: results_ack&.acknowledgment_level)
-    data = {
-      tracking_number: results_ack&.tracking_number,
-      test: test_record&.test_type&.name,
-      date_acknowledged: results_ack&.acknwoledged_at,
-      recipient_type: level&.name,
-      acknwoledment_by: results_ack&.acknwoledged_by
-    }
+    data = nlims_service.buid_acknowledment_to_master_data(results_ack)
     begin
       headers = {
         content_type: 'application/json',
         token: nlims_service.token
       }
-      url = "#{nlims_service.address}/api/v1/acknowledge/test/results/recipient"
+      url = "#{nlims_service.address}/api/v2/tests/#{results_ack&.tracking_number}/acknowledge_test_results_receipt"
       begin
         order_res = JSON.parse(RestClient.post(url, data.to_json, headers))
         puts "#{order_res['message']} => master ack response"

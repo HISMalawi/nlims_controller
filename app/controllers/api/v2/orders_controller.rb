@@ -148,7 +148,11 @@ module API
       end
 
       def order
-        @order = Speciman.find_by(tracking_number: params[:id])
+        if params[:couch_id].present?
+          @order = Speciman.find_by(tracking_number: params[:id], couch_id: params[:couch_id])
+        else
+          @order = Speciman.find_by(tracking_number: params[:id])
+        end
         return render_error('order not available', :not_found) unless @order
 
         @order
