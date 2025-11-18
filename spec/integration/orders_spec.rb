@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'swagger_helper'
 
 RSpec.describe 'Orders API', type: :request do
@@ -180,64 +181,65 @@ RSpec.describe 'Orders API', type: :request do
         },
         example: {
           order: {
-            uuid: "3452b6d0-acca-4d9e-9052-7acee4f646fc",
-            tracking_number: "XTRK123495",
-            sample_type: { name: "Plasma", nlims_code: "NLIMS_SP_0017_MWI" },
-            sample_status: { name: "specimen_collected" },
-            order_location: "OPD",
-            date_created: "2025-09-13 02:00:00",
-            priority: "Routine",
-            reason_for_test: "Invistration",
-            drawn_by: { id: 1001, name: "John Doe", phone_number: "+265999111222" },
-            target_lab: "National Reference Lab",
-            sending_facility: "Kamuzu Central Hospital",
-            district: "Lilongwe",
-            requested_by: "Dr. Banda",
-            art_start_date: "2020-05-10",
-            arv_number: "ARV-998877",
-            art_regimen: "TDF/3TC/DTG",
-            clinical_history: "allergic to nuts",
-            lab_location: "Main Lab",
-            source_system: "IBLIS",
+            uuid: '3452b6d0-acca-4d9e-9052-7acee4f646fc',
+            tracking_number: 'XTRK123495',
+            sample_type: { name: 'Plasma', nlims_code: 'NLIMS_SP_0017_MWI' },
+            sample_status: { name: 'specimen_collected' },
+            order_location: 'OPD',
+            date_created: '2025-09-13 02:00:00',
+            priority: 'Routine',
+            reason_for_test: 'Invistration',
+            drawn_by: { id: 1001, name: 'John Doe', phone_number: '+265999111222' },
+            target_lab: 'National Reference Lab',
+            sending_facility: 'Kamuzu Central Hospital',
+            district: 'Lilongwe',
+            requested_by: 'Dr. Banda',
+            art_start_date: '2020-05-10',
+            arv_number: 'ARV-998877',
+            art_regimen: 'TDF/3TC/DTG',
+            clinical_history: 'allergic to nuts',
+            lab_location: 'Main Lab',
+            source_system: 'IBLIS',
             status_trail: [
               {
-                status: "specimen_collected",
-                timestamp: "2025-09-13 02:00:00",
-                updated_by: { first_name: "Chikondi", last_name: "Banda", id_number: "38", phone_number: "" }
+                status: 'specimen_collected',
+                timestamp: '2025-09-13 02:00:00',
+                updated_by: { first_name: 'Chikondi', last_name: 'Banda', id_number: '38', phone_number: '' }
               }
             ]
           },
           patient: {
-            national_patient_id: "PAT-123456",
-            first_name: "Mary",
-            last_name: "Chirwa",
-            date_of_birth: "1992-03-21",
-            gender: "F",
-            phone_number: "+265888777666"
+            national_patient_id: 'PAT-123456',
+            first_name: 'Mary',
+            last_name: 'Chirwa',
+            date_of_birth: '1992-03-21',
+            gender: 'F',
+            phone_number: '+265888777666'
           },
           tests: [
             {
-              tracking_number: "XTRK123495",
-              arv_number: "34-4934",
-              test_status: "verified",
-              time_updated: "2025-09-13 02:00:00",
-              test_type: { name: "HIV Viral Load Quantitative HIV Nucleic Acid Test", nlims_code: "NLIMS_TT_0071_MWI" },
+              tracking_number: 'XTRK123495',
+              arv_number: '34-4934',
+              test_status: 'verified',
+              time_updated: '2025-09-13 02:00:00',
+              test_type: { name: 'HIV Viral Load Quantitative HIV Nucleic Acid Test', nlims_code: 'NLIMS_TT_0071_MWI' },
               test_results: [
                 {
-                  measure: { name: "Viral Load", nlims_code: "NLIMS_TI_0294_MWI" },
-                  result: { value: "100", unit: "copies/mL", result_date: "2025-09-13 04:10:02", platform: "Abbot", platformserial: "275021258" }
+                  measure: { name: 'Viral Load', nlims_code: 'NLIMS_TI_0294_MWI' },
+                  result: { value: '100', unit: 'copies/mL', result_date: '2025-09-13 04:10:02', platform: 'Abbot',
+                            platformserial: '275021258' }
                 }
               ],
               status_trail: [
                 {
-                  status: "started",
-                  timestamp: "2025-09-13 02:00:00",
-                  updated_by: { first_name: "Chikondi", last_name: "Banda", id_number: "38", phone_number: "" }
+                  status: 'started',
+                  timestamp: '2025-09-13 02:00:00',
+                  updated_by: { first_name: 'Chikondi', last_name: 'Banda', id_number: '38', phone_number: '' }
                 },
                 {
-                  status: "completed",
-                  timestamp: "2025-09-13 03:00:00",
-                  updated_by: { first_name: "Chikondi", last_name: "Banda", id_number: "38", phone_number: "" }
+                  status: 'completed',
+                  timestamp: '2025-09-13 03:00:00',
+                  updated_by: { first_name: 'Chikondi', last_name: 'Banda', id_number: '38', phone_number: '' }
                 }
               ]
             }
@@ -276,7 +278,8 @@ RSpec.describe 'Orders API', type: :request do
       produces 'application/json'
       security [tokenAuth: []]
 
-      parameter name: :tracking_number, in: :path, type: :string, required: true, description: 'Tracking number of the order'
+      parameter name: :tracking_number, in: :path, type: :string, required: true,
+                description: 'Tracking number of the order'
 
       response '200', 'Order Found' do
         description 'Returns the order, patient, and tests data'
@@ -449,13 +452,76 @@ RSpec.describe 'Orders API', type: :request do
     end
   end
 
+  path '/api/v2/orders/{tracking_number}' do
+    put 'Update an order' do
+      tags 'Orders'
+      consumes 'application/json'
+      produces 'application/json'
+      security [tokenAuth: []]
+
+      parameter name: :tracking_number, in: :path, type: :string, required: true
+
+      parameter name: :body, in: :body, schema: {
+        type: :object,
+        required: %w[status time_updated status_trail],
+        properties: {
+          status: { type: :string },
+          time_updated: { type: :string, format: 'date-time' },
+          status_trail: {
+            type: :array,
+            items: {
+              type: :object,
+              required: %w[status timestamp updated_by],
+              properties: {
+                status: { type: :string },
+                timestamp: { type: :string, format: 'date-time' },
+                updated_by: {
+                  type: :object,
+                  required: %w[first_name last_name id],
+                  properties: {
+                    first_name: { type: :string },
+                    last_name: { type: :string },
+                    id: { type: :string },
+                    phone_number: { type: :string }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+
+      response '200', 'Order Updated' do
+        schema type: :object,
+               properties: {
+                 error: { type: :boolean, example: false },
+                 message: { type: :string, example: 'order updated successfully' },
+                 data: { type: :object, example: { tracking_number: 'XTRK123495' } }
+               }
+        run_test!
+      end
+
+      response '422', 'Unprocessable Entity' do
+        schema(
+          oneOf: [
+            schema_error('time updated or result date provided is in the past'),
+            schema_error('status trail not provided'),
+            schema_error('specimen status not available in nlims - available statuses are [specimen_not_collected, specimen_accepted, specimen_rejected, specimen_collected, sample_accepted_at_hub, sample_rejected_at_hub, sample_accepted_at_ml, sample_rejected_at_ml]')
+          ]
+        )
+        run_test!
+      end
+    end
+  end
+
   path '/api/v2/orders/{tracking_number}/exists' do
     get 'Check if an order exists' do
       tags 'Orders'
       produces 'application/json'
       security [tokenAuth: []]
 
-      parameter name: :tracking_number, in: :path, type: :string, required: true, description: 'Tracking number of the order'
+      parameter name: :tracking_number, in: :path, type: :string, required: true,
+                description: 'Tracking number of the order'
 
       response '200', 'Order Exists' do
         description 'Returns true if the order exists'
@@ -477,7 +543,8 @@ RSpec.describe 'Orders API', type: :request do
       security [tokenAuth: []]
 
       parameter name: :order_id, in: :query, type: :integer, required: true, description: 'Order ID'
-      parameter name: :limit, in: :query, type: :integer, required: false, description: 'Limit of records to return (max 50000, default 50000)'
+      parameter name: :limit, in: :query, type: :integer, required: false,
+                description: 'Limit of records to return (max 50000, default 50000)'
       parameter name: :from, in: :query, type: :string, required: false, description: 'From date'
 
       response '200', 'Tracking numbers returned' do

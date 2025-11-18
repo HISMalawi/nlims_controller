@@ -640,6 +640,122 @@ paths:
                   data:
                     type: object
                     example: {}
+    put:
+      summary: Update an order
+      tags:
+      - Orders
+      security:
+      - tokenAuth: []
+      parameters:
+      - name: tracking_number
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Order Updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: order updated successfully
+                  data:
+                    type: object
+                    example:
+                      tracking_number: XTRK123495
+        '422':
+          description: Unprocessable Entity
+          content:
+            application/json:
+              schema:
+                oneOf:
+                - type: object
+                  properties:
+                    error:
+                      type: boolean
+                      example: true
+                    message:
+                      type: string
+                      example: time updated or result date provided is in the past
+                    data:
+                      type: object
+                      example: {}
+                - type: object
+                  properties:
+                    error:
+                      type: boolean
+                      example: true
+                    message:
+                      type: string
+                      example: status trail not provided
+                    data:
+                      type: object
+                      example: {}
+                - type: object
+                  properties:
+                    error:
+                      type: boolean
+                      example: true
+                    message:
+                      type: string
+                      example: specimen status not available in nlims - available
+                        statuses are [specimen_not_collected, specimen_accepted, specimen_rejected,
+                        specimen_collected, sample_accepted_at_hub, sample_rejected_at_hub,
+                        sample_accepted_at_ml, sample_rejected_at_ml]
+                    data:
+                      type: object
+                      example: {}
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - status
+              - time_updated
+              - status_trail
+              properties:
+                status:
+                  type: string
+                time_updated:
+                  type: string
+                  format: date-time
+                status_trail:
+                  type: array
+                  items:
+                    type: object
+                    required:
+                    - status
+                    - timestamp
+                    - updated_by
+                    properties:
+                      status:
+                        type: string
+                      timestamp:
+                        type: string
+                        format: date-time
+                      updated_by:
+                        type: object
+                        required:
+                        - first_name
+                        - last_name
+                        - id
+                        properties:
+                          first_name:
+                            type: string
+                          last_name:
+                            type: string
+                          id:
+                            type: string
+                          phone_number:
+                            type: string
   "/api/v2/orders/{tracking_number}/exists":
     get:
       summary: Check if an order exists

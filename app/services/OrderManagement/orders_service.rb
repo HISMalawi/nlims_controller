@@ -73,10 +73,7 @@ module OrderManagement
 
     def self.update_order(order, params)
       specimen_status = SpecimenStatus.find_by(name: params['status'])
-      return [false, 'specimen status not available in nlims'] if specimen_status.blank?
-
-      specimen_type = SpecimenType.find_by(nlims_code: params.dig(:sample_type, :nlims_code))
-      return [false, 'specimen type not available in nlims'] unless specimen_type.present?
+      return [false, "specimen status not available in nlims - available statuses are #{SpecimenStatus.all.pluck(:name)}"] if specimen_status.blank?
 
       return [false, 'time updated not provided'] if params['time_updated'].blank?
 
