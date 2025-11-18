@@ -4,7 +4,7 @@
 module OrderManagement
   # OrderService class
   class OrdersService
-    def self.create_order(params)
+    def self.create_order(params, order_request = false)
       ActiveRecord::Base.transaction do
         params[:tests].each do |tst|
           test_name = TestType.find_by(nlims_code: tst.dig(:test_type, :nlims_code))
@@ -15,7 +15,11 @@ module OrderManagement
             ]
           end
         end
-        specimen_type = SpecimenType.find_by(nlims_code: params[:order].dig(:sample_type, :nlims_code))
+        specimen_type = if order_request
+                          SpecimenType.find_by(name: 'not_specified')
+                        else
+                          SpecimenType.find_by(nlims_code: params[:order].dig(:sample_type, :nlims_code))
+                        end
         if specimen_type.blank?
           return [
             false,
@@ -29,7 +33,7 @@ module OrderManagement
         end
 
         patient = create_patient(params[:patient])
-        specimen = create_specimen(params[:order])
+        specimen = create_specimen(params[:order], order_request)
         Visit.create(
           patient_id: patient.id,
           visit_type_id: '',
@@ -73,7 +77,10 @@ module OrderManagement
 
     def self.update_order(order, params)
       specimen_status = SpecimenStatus.find_by(name: params['status'])
-      return [false, "specimen status not available in nlims - available statuses are #{SpecimenStatus.all.pluck(:name)}"] if specimen_status.blank?
+      if specimen_status.blank?
+        return [false,
+                "specimen status not available in nlims - available statuses are #{SpecimenStatus.all.pluck(:name)}"]
+      end
 
       return [false, 'time updated not provided'] if params['time_updated'].blank?
 
@@ -128,13 +135,19 @@ module OrderManagement
       patient_obj
     end
 
-    def self.create_specimen(params)
+    def self.create_specimen(params, order_request)
       sample_status_id = SpecimenStatus.get_specimen_status_id(params[:sample_status][:name]&.gsub('-', '_'))
       order_ward = Ward.get_ward_id(NameMapping.actual_name_of(params[:order_location]))
+      if order_request
+        sample_status_id = SpecimenStatus.get_specimen_status_id('specimen_not_collected')
+        specimen_type = SpecimenType.find_by(name: 'not_specified')
+      else
+        specimen_type = SpecimenType.find_by(nlims_code: params.dig(:sample_type, :nlims_code))
+      end
       order = Speciman.create!(
         couch_id: params[:uuid] || SecureRandom.uuid,
         tracking_number: params[:tracking_number],
-        specimen_type_id: SpecimenType.find_by(nlims_code: params.dig(:sample_type, :nlims_code))&.id,
+        specimen_type_id: specimen_type&.id,
         specimen_status_id: sample_status_id,
         ward_id: order_ward,
         date_created: params[:date_created] || Date.today,
@@ -211,8 +224,23 @@ module OrderManagement
         Speciman.where(tracking_number: tracking_number).exists?
     end
 
-    def self.find_all_orders(params)
-      orders = Speciman.find_by_sql("SELECT specimen_types.name AS sample_name, specimen_types.preferred_name AS sample_preferred_name,
+    def self.confirm_order_request(params)
+      order = Speciman.find_by(tracking_number: params['tracking_number'])
+      return [false, 'order not available'] if order.blank?
+
+      specimen_type = SpecimenType.find_by(nlims_code: params.dig(:sample_type, :nlims_code))
+      return [false, "specimen type not available in nlims for #{params.dig(:sample_type, :nlims_code)}"] if specimen_type.blank?
+
+      order.update!(
+        specimen_type_id: specimen_type.id,
+        specimen_status_id: SpecimenStatus.get_specimen_status_id('specimen_collected')
+      )
+      order.update!(target_lab: params['target_lab']) if params['target_lab'].present?
+      [true, 'order confirmed successfully']
+    end
+
+    def self.find_all_orders(_params)
+      Speciman.find_by_sql("SELECT specimen_types.name AS sample_name, specimen_types.preferred_name AS sample_preferred_name,
                   specimen_types.nlims_code AS sample_nlims_code, specimen.couch_id AS uuid, specimen.tracking_number AS tracking_number,
                   specimen_statuses.name AS specimen_status,
                   wards.name AS order_location, specimen.date_created AS date_created, specimen.priority AS priority,

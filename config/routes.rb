@@ -106,6 +106,8 @@ Rails.application.routes.draw do
         collection do
           get '/:tracking_number/exists' => 'orders#order_exist'
           get '/tracking_numbers/all' => 'orders#tracking_numbers'
+          post 'requests/' => 'orders#request_order'
+          put 'requests/:tracking_number/' => 'orders#confirm_order_request'
         end
       end
 

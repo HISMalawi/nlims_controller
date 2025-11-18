@@ -30,10 +30,37 @@ module API
         status, response = OrderManagement::OrdersService.create_order(params)
         return render_error(response, :unprocessable_entity) unless status
 
-        update_tests(params[:tests]) if params[:tests].present?
-        render_success('order created successfully', { tracking_number: response }, :created)
+        @order = Speciman.find_by(tracking_number: response)
+        update_tests(@order, params[:tests]) if params[:tests].present?
+        render_success('order created successfully', { tracking_number: @order.tracking_number, uuid: @order.couch_id }, :created)
       end
       # rubocop:enable Metrics/AbcSize
+
+      def request_order
+        if (error_message = required_params).present?
+          return render_error(error_message, :unprocessable_entity)
+        end
+
+        if (specimen = Speciman.find_by(tracking_number: params.dig(:order, :tracking_number)))
+          return render_success('order already available', { tracking_number: specimen.tracking_number }, :created)
+        end
+
+        status, response = OrderManagement::OrdersService.create_order(params, true)
+        return render_error(response, :unprocessable_entity) unless status
+
+        order = Speciman.find_by(tracking_number: response)
+        render_success('order created successfully', { tracking_number: order.tracking_number, uuid: order.couch_id },
+                       :created)
+      end
+
+      def confirm_order_request
+        status, response = OrderManagement::OrdersService.confirm_order_request(params)
+        if status
+          render_success(response, { tracking_number: params['tracking_number'] })
+        else
+          render_error(response, :unprocessable_entity)
+        end
+      end
 
       def update
         update_status, message = OrderManagement::OrdersService.update_order(@order, params)
@@ -98,6 +125,8 @@ module API
           %i[order drawn_by name] => 'first name for person ordering not provided'
         }
 
+        # ❗ Remove sample_type check for /requests
+        required.delete(%i[order sample_type name]) if request.path.include?('/orders/requests')
         required.each do |path, message|
           value = params.dig(*path.map(&:to_s))
           return message if value.blank?
@@ -114,8 +143,8 @@ module API
         render json: { error: false, message: message, data: data }, status: status
       end
 
-      def update_tests(tests)
-        tests.each { |lab_test| OrderService.update_tests(lab_test) }
+      def update_tests(order, tests)
+        tests.each { |lab_test| TestManagement::TestsService.update_tests(order, lab_test) }
       end
 
       def order

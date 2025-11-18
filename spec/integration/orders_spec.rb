@@ -114,10 +114,8 @@ RSpec.describe 'Orders API', type: :request do
             description: 'Required: tests not provided',
             items: {
               type: :object,
-              required: %w[tracking_number test_status test_type],
+              required: %w[test_status test_type],
               properties: {
-                tracking_number: { type: :string },
-                arv_number: { type: :string },
                 test_status: { type: :string },
                 time_updated: { type: :string, format: 'date-time' },
                 test_type: {
@@ -193,7 +191,7 @@ RSpec.describe 'Orders API', type: :request do
             target_lab: 'National Reference Lab',
             sending_facility: 'Kamuzu Central Hospital',
             district: 'Lilongwe',
-            requested_by: 'Dr. Banda',
+            requested_by: 'Dr. Delete',
             art_start_date: '2020-05-10',
             arv_number: 'ARV-998877',
             art_regimen: 'TDF/3TC/DTG',
@@ -204,7 +202,7 @@ RSpec.describe 'Orders API', type: :request do
               {
                 status: 'specimen_collected',
                 timestamp: '2025-09-13 02:00:00',
-                updated_by: { first_name: 'Chikondi', last_name: 'Banda', id_number: '38', phone_number: '' }
+                updated_by: { first_name: 'Xmachina', last_name: 'Delete', id_number: '38', phone_number: '' }
               }
             ]
           },
@@ -218,11 +216,9 @@ RSpec.describe 'Orders API', type: :request do
           },
           tests: [
             {
-              tracking_number: 'XTRK123495',
-              arv_number: '34-4934',
               test_status: 'verified',
               time_updated: '2025-09-13 02:00:00',
-              test_type: { name: 'HIV Viral Load Quantitative HIV Nucleic Acid Test', nlims_code: 'NLIMS_TT_0071_MWI' },
+              test_type: { name: 'HIV Viral Load', nlims_code: 'NLIMS_TT_0071_MWI' },
               test_results: [
                 {
                   measure: { name: 'Viral Load', nlims_code: 'NLIMS_TI_0294_MWI' },
@@ -234,12 +230,12 @@ RSpec.describe 'Orders API', type: :request do
                 {
                   status: 'started',
                   timestamp: '2025-09-13 02:00:00',
-                  updated_by: { first_name: 'Chikondi', last_name: 'Banda', id_number: '38', phone_number: '' }
+                  updated_by: { first_name: 'Xmachina', last_name: 'Delete', id_number: '38', phone_number: '' }
                 },
                 {
                   status: 'completed',
                   timestamp: '2025-09-13 03:00:00',
-                  updated_by: { first_name: 'Chikondi', last_name: 'Banda', id_number: '38', phone_number: '' }
+                  updated_by: { first_name: 'Xmachina', last_name: 'Delete', id_number: '38', phone_number: '' }
                 }
               ]
             }
@@ -556,6 +552,175 @@ RSpec.describe 'Orders API', type: :request do
                    id: { type: :integer },
                    tracking_number: { type: :string }
                  }
+               }
+        run_test!
+      end
+    end
+  end
+
+  path '/api/v2/orders/requests' do
+    post 'Request an order' do
+      tags 'Orders'
+      consumes 'application/json'
+      produces 'application/json'
+      security [tokenAuth: []]
+
+      parameter name: :order_payload, in: :body, schema: {
+        type: :object,
+        required: %w[order patient tests],
+        properties: {
+          order: {
+            type: :object,
+            required: %w[
+              district
+              sending_facility
+              tracking_number
+              requested_by
+              date_created
+              priority
+              target_lab
+              order_location
+              sample_status
+              drawn_by
+            ],
+            properties: {
+              uuid: { type: :string },
+              tracking_number: { type: :string },
+              district: { type: :string },
+              sending_facility: { type: :string },
+              requested_by: { type: :string },
+              date_created: { type: :string, format: 'date-time' },
+              priority: { type: :string },
+              target_lab: { type: :string },
+              order_location: { type: :string },
+              reason_for_test: { type: :string },
+              art_start_date: { type: :string },
+              arv_number: { type: :string },
+              art_regimen: { type: :string },
+              clinical_history: { type: :string },
+              lab_location: { type: :string },
+              source_system: { type: :string },
+              sample_status: {
+                type: :object,
+                required: %w[name],
+                properties: {
+                  name: { type: :string }
+                }
+              },
+
+              drawn_by: {
+                type: :object,
+                required: %w[name],
+                properties: {
+                  id: { type: :integer },
+                  name: { type: :string },
+                  phone_number: { type: :string }
+                }
+              },
+
+              status_trail: {
+                type: :array,
+                items: {
+                  type: :object,
+                  properties: {
+                    status: { type: :string },
+                    timestamp: { type: :string, format: 'date-time' },
+                    updated_by: {
+                      type: :object,
+                      properties: {
+                        first_name: { type: :string },
+                        last_name: { type: :string },
+                        id_number: { type: :string },
+                        phone_number: { type: :string }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          patient: {
+            type: :object,
+            required: %w[first_name last_name gender date_of_birth],
+            properties: {
+              national_patient_id: { type: :string },
+              first_name: { type: :string },
+              last_name: { type: :string },
+              gender: { type: :string },
+              date_of_birth: { type: :string },
+              phone_number: { type: :string }
+            }
+          },
+          tests: {
+            type: :array,
+            description: 'Required: tests not provided',
+            items: {
+              type: :object,
+              required: %w[test_type],
+              properties: {
+                time_updated: { type: :string, format: 'date-time' },
+                test_type: {
+                  type: :object,
+                  required: %w[name nlims_code],
+                  properties: {
+                    name: { type: :string },
+                    nlims_code: { type: :string }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+
+      response '201', 'Order Created' do
+        schema type: :object,
+               properties: {
+                 error: { type: :boolean, example: false },
+                 message: { type: :string, example: 'order created successfully' },
+                 data: {
+                   type: :object,
+                   properties: {
+                     tracking_number: { type: :string, example: 'XTRK123495' },
+                     uuid: { type: :string, example: '1234567890' }
+                   }
+                 }
+               }
+        run_test!
+      end
+    end
+  end
+
+  path '/api/v2/orders/requests/{tracking_number}' do
+    put 'Confirm an order request' do
+      tags 'Orders'
+      consumes 'application/json'
+      produces 'application/json'
+      security [tokenAuth: []]
+
+      parameter name: :tracking_number, in: :path, type: :string, required: true
+
+      parameter name: :body, in: :body, schema: {
+        type: :object,
+        required: %w[sample_type],
+        properties: {
+          sample_type: {
+            type: :object,
+            required: %w[nlims_code],
+            properties: {
+              nlims_code: { type: :string }
+            }
+          },
+          target_lab: { type: :string }
+        }
+      }
+
+      response '200', 'Order Confirmed' do
+        schema type: :object,
+               properties: {
+                 error: { type: :boolean, example: false },
+                 message: { type: :string, example: 'order confirmed successfully' },
+                 data: { type: :object, example: { tracking_number: 'XTRK123495' } }
                }
         run_test!
       end
