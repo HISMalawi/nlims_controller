@@ -2,7 +2,7 @@
 require 'swagger_helper'
 
 RSpec.describe 'Orders API', type: :request do
-  path '/api/v2/create_order' do
+  path '/api/v2/orders' do
     post 'Create a new laboratory order' do
       tags 'Orders'
       consumes 'application/json'
@@ -270,13 +270,13 @@ RSpec.describe 'Orders API', type: :request do
       end
     end
   end
-  path '/api/v2/find_order_by_tracking_number' do
+  path '/api/v2/orders/{tracking_number}' do
     get 'Find an order by tracking number' do
       tags 'Orders'
       produces 'application/json'
       security [tokenAuth: []]
 
-      parameter name: :tracking_number, in: :query, type: :string, required: true, description: 'Tracking number of the order'
+      parameter name: :tracking_number, in: :path, type: :string, required: true, description: 'Tracking number of the order'
 
       response '200', 'Order Found' do
         description 'Returns the order, patient, and tests data'
@@ -443,6 +443,52 @@ RSpec.describe 'Orders API', type: :request do
                  error: { type: :boolean, example: true },
                  message: { type: :string, example: 'Order Not Available' },
                  data: { type: :object, example: {} }
+               }
+        run_test!
+      end
+    end
+  end
+
+  path '/api/v2/orders/{tracking_number}/exists' do
+    get 'Check if an order exists' do
+      tags 'Orders'
+      produces 'application/json'
+      security [tokenAuth: []]
+
+      parameter name: :tracking_number, in: :path, type: :string, required: true, description: 'Tracking number of the order'
+
+      response '200', 'Order Exists' do
+        description 'Returns true if the order exists'
+        schema type: :object,
+               properties: {
+                 error: { type: :boolean, example: false },
+                 message: { type: :string, example: 'Order Exists' },
+                 data: { type: :boolean, example: true }
+               }
+        run_test!
+      end
+    end
+  end
+
+  path '/api/v2/orders/tracking_numbers/all' do
+    get 'Get tracking numbers to be logged for validation of orders against master' do
+      tags 'Orders'
+      produces 'application/json'
+      security [tokenAuth: []]
+
+      parameter name: :order_id, in: :query, type: :integer, required: true, description: 'Order ID'
+      parameter name: :limit, in: :query, type: :integer, required: false, description: 'Limit of records to return (max 50000, default 50000)'
+      parameter name: :from, in: :query, type: :string, required: false, description: 'From date'
+
+      response '200', 'Tracking numbers returned' do
+        description 'Returns the tracking numbers'
+        schema type: :array,
+               items: {
+                 type: :object,
+                 properties: {
+                   id: { type: :integer },
+                   tracking_number: { type: :string }
+                 }
                }
         run_test!
       end

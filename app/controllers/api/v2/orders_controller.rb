@@ -11,7 +11,7 @@ module API
       before_action :order, only: %i[show update]
 
       def index
-        render json: Order.all
+        render json: Order.all.limit(10)
       end
 
       def show
@@ -43,12 +43,13 @@ module API
       end
 
       def order_exist
-        OrderManagement::OrdersService.order_exist?(params[:tracking_number])
+        exist = OrderManagement::OrdersService.order_exist?(params[:tracking_number])
+        render json: { data: exist, message: exist ? 'Order Exists' : 'Order Not Available', status: 200 }
       end
 
       def tracking_numbers
         render json: OrderManagement::OrdersService.order_tracking_numbers_to_logged(
-          params.require(:order_id), limit: params[:limit], from: param[:from]
+          params.require(:order_id), limit: params[:limit], from: params[:from]
         )
       end
 
@@ -118,7 +119,7 @@ module API
       end
 
       def order
-        @order = Speciman.find_by(tracking_number: params[:tracking_number])
+        @order = Speciman.find_by(tracking_number: params[:id])
         return render_error('order not available', :not_found) unless @order
 
         @order

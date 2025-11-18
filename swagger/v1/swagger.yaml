@@ -86,7 +86,7 @@ paths:
                 password:
                   type: string
                   example: password123
-  "/api/v2/create_order":
+  "/api/v2/orders":
     post:
       summary: Create a new laboratory order
       tags:
@@ -414,7 +414,7 @@ paths:
                       last_name: Banda
                       id_number: '38'
                       phone_number: ''
-  "/api/v2/find_order_by_tracking_number":
+  "/api/v2/orders/{tracking_number}":
     get:
       summary: Find an order by tracking number
       tags:
@@ -423,7 +423,7 @@ paths:
       - tokenAuth: []
       parameters:
       - name: tracking_number
-        in: query
+        in: path
         required: true
         description: Tracking number of the order
         schema:
@@ -640,6 +640,80 @@ paths:
                   data:
                     type: object
                     example: {}
+  "/api/v2/orders/{tracking_number}/exists":
+    get:
+      summary: Check if an order exists
+      tags:
+      - Orders
+      security:
+      - tokenAuth: []
+      parameters:
+      - name: tracking_number
+        in: path
+        required: true
+        description: Tracking number of the order
+        schema:
+          type: string
+      description: Returns true if the order exists
+      responses:
+        '200':
+          description: Order Exists
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: Order Exists
+                  data:
+                    type: boolean
+                    example: true
+  "/api/v2/orders/tracking_numbers/all":
+    get:
+      summary: Get tracking numbers to be logged for validation of orders against
+        master
+      tags:
+      - Orders
+      security:
+      - tokenAuth: []
+      parameters:
+      - name: order_id
+        in: query
+        required: true
+        description: Order ID
+        schema:
+          type: integer
+      - name: limit
+        in: query
+        required: false
+        description: Limit of records to return (max 50000, default 50000)
+        schema:
+          type: integer
+      - name: from
+        in: query
+        required: false
+        description: From date
+        schema:
+          type: string
+      description: Returns the tracking numbers
+      responses:
+        '200':
+          description: Tracking numbers returned
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    tracking_number:
+                      type: string
   "/api/v1/check_new_test_catalog_version_available":
     get:
       summary: Check if a new test catalog version is available
@@ -707,19 +781,6 @@ paths:
             application/json:
               schema:
                 type: object
-        '400':
-          description: Bad request
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: boolean
-                    example: true
-                  message:
-                    type: string
-                    example: Invalid version parameter
   "/api/v2/update_test":
     post:
       summary: Update a laboratory test
