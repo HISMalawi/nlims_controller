@@ -165,12 +165,14 @@ RSpec.describe 'Tests API', type: :request do
             }
           },
           date_acknowledged: { type: :string, format: 'date-time' },
-          recipient_type: { type: :string }
+          recipient_type: { type: :string },
+          acknowledged_by: { type: :string }
         },
         example: {
           test_type: { name: 'HIV Viral Load', nlims_code: 'NLIMS_TI_0294_MWI' },
           date_acknowledged: '2025-02-24T15:19:56.000+02:00',
-          recipient_type: 'test_results_delivered_to_site_electronically'
+          recipient_type: 'test_results_delivered_to_site_electronically',
+          acknowledged_by: 'emr_at_facility'
         }
       }
 

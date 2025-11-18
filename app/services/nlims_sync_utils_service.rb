@@ -25,8 +25,14 @@ class NlimsSyncUtilsService
     {
       tracking_number: order&.tracking_number,
       status: status,
-      who_updated: who_updated(order_status_trail),
-      time_updated: order_status_trail&.time_updated
+      time_updated: order_status_trail&.time_updated,
+      status_trail: order&.specimen_status_trail&.map do |trail|
+        {
+          status: trail&.specimen_status&.name,
+          timestamp: trail&.time_updated,
+          updated_by: who_updated(trail)
+        }
+      end
     }
   end
 
@@ -34,9 +40,9 @@ class NlimsSyncUtilsService
     payload = order_status_payload(order_id, status)
     return true if payload.nil?
 
-    url = "#{@address}/api/v1/update_order"
+    url = "#{@address}/api/v2/orders/#{payload[:tracking_number]}/"
     response = JSON.parse(RestClient::Request.execute(
-                            method: :post,
+                            method: :put,
                             url:,
                             timeout: 10,
                             payload: payload.to_json,
@@ -80,9 +86,9 @@ class NlimsSyncUtilsService
     payload = TestSerializer.serialize(test_record)
     return true if payload.nil?
 
-    url = "#{@address}/api/v2/update_tests"
+    url = "#{@address}/api/v2/tests/#{order&.tracking_number}/"
     response = JSON.parse(RestClient::Request.execute(
-                            method: :post,
+                            method: :put,
                             url:,
                             timeout: 10,
                             payload: payload.to_json,
@@ -126,8 +132,7 @@ class NlimsSyncUtilsService
     {
       first_name: who_updated_name[0],
       last_name: who_updated_name[1],
-      id: '',
-      id_number: test_status_trail&.who_updated_id,
+      id: test_status_trail&.who_updated_id,
       phone_number: test_status_trail&.who_updated_phone_number
     }
   end
@@ -140,7 +145,7 @@ class NlimsSyncUtilsService
     return false if payload.nil?
     return true if payload[:tests].empty?
 
-    url = once_off ? "#{@address}/api/v2/create_order_once_off/" : "#{@address}/api/v2/create_order/"
+    url = once_off ? "#{@address}/api/v2/create_order_once_off/" : "#{@address}/api/v2/orders/"
     response = JSON.parse(RestClient::Request.execute(
                             method: :post,
                             url:,
@@ -172,8 +177,8 @@ class NlimsSyncUtilsService
     false
   end
 
-  def once_off_push_orders_to_master_nlims(tracking_number, url)
-    push_order_to_master_nlims(tracking_number, url)
+  def once_off_push_orders_to_master_nlims(tracking_number, once_off: false)
+    push_order_to_master_nlims(tracking_number, once_off: once_off)
   end
 
   def push_acknwoledgement_to_master_nlims(pending_acks: nil)
@@ -182,7 +187,7 @@ class NlimsSyncUtilsService
 
     pending_acks.each do |ack|
       payload = buid_acknowledment_to_master_data(ack)
-      url = "#{@address}/api/v1/acknowledge/test/results/recipient"
+      url = "#{@address}/api/v2/tests/#{ack&.tracking_number}/acknowledge_test_results_receipt"
       response = JSON.parse(RestClient::Request.execute(
                               method: :post,
                               url:,
@@ -213,7 +218,7 @@ class NlimsSyncUtilsService
   end
 
   def buid_acknowledment_to_master_data(acknowledgement)
-    test_to_ack = TestType.find(Test.find(acknowledgement&.test_id)&.test_type_id)&.name
+    test_to_ack = TestType.find(Test.find(acknowledgement&.test_id)&.test_type_id)
     level = begin
       TestResultRecepientType.find_by(id: acknowledgement&.acknwoledment_level)
     rescue StandardError
@@ -222,10 +227,10 @@ class NlimsSyncUtilsService
     level ||= TestResultRecepientType.find_by(id: acknowledgement&.acknowledgment_level)
     {
       'tracking_number': acknowledgement&.tracking_number,
-      'test': test_to_ack,
+      'test_type': { name: test_to_ack&.name, nlims_code: test_to_ack&.nlims_code },
       'date_acknowledged': acknowledgement&.acknwoledged_at,
       'recipient_type': level&.name,
-      'acknwoledment_by': acknowledgement&.acknwoledged_by
+      'acknowledged_by': acknowledgement&.acknwoledged_by
     }
   end
 

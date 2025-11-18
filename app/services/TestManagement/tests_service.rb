@@ -161,11 +161,30 @@ module TestManagement
         return [false, 'test result already acknowledged electronically at local nlims level']
       end
 
-      lab_test.test_result_receipent_types = recipient_type.id
-      lab_test.result_given = true
-      lab_test.date_result_given = params[:date_acknowledged]
-      lab_test.save!
-      [true, 'test result acknowledged successfully']
+      ActiveRecord::Base.transaction do
+        lab_test.test_result_receipent_types = recipient_type.id
+        lab_test.result_given = true
+        lab_test.date_result_given = params[:date_acknowledged]
+        lab_test.save!
+
+        ack = ResultsAcknwoledge.find_by(
+          tracking_number: order.tracking_number,
+          test_id: lab_test.id,
+          acknwoledged_by: params[:acknowledged_by]
+        )
+        if Config.local_nlims? && ack.nil?
+          ResultsAcknwoledge.create!(
+            tracking_number: order.tracking_number,
+            test_id: lab_test.id,
+            acknwoledged_at: Time.new.strftime('%Y%m%d%H%M%S'),
+            result_date: params[:date_acknowledged],
+            acknwoledged_by: params[:acknowledged_by],
+            acknwoledged_to_nlims: false,
+            acknowledgment_level: recipient_type.id
+          )
+        end
+        [true, 'test result acknowledged successfully']
+      end
     end
   end
 end
