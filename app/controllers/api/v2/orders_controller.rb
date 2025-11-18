@@ -68,9 +68,9 @@ module API
       end
 
       def update_remote_host
-        return unless params[:tracking_number].present?
+        return unless params[:id].present?
 
-        host = TrackingNumberHost.find_by(tracking_number: params[:tracking_number])
+        host = TrackingNumberHost.find_by(tracking_number: params[:id])
         return unless host.present?
 
         host&.update(

@@ -109,6 +109,12 @@ Rails.application.routes.draw do
         end
       end
 
+      resources :tests, controller: :tests, only: %i[update] do
+        collection do
+          post ':id/acknowledge_test_results_receipt' => 'tests#acknowledge_test_results_receipt'
+        end
+      end
+
       post '/request_order'	=> 'order#request_order'
       post '/confirm_order_request'	=> 'order#confirm_order_request'
       get  '/query_requested_order_by_npid/:npid'	=> 'order#query_requested_order_by_npid2'
