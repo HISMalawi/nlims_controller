@@ -157,8 +157,9 @@ module TestManagement
 
       return [false, 'date acknowledged not provided'] if params[:date_acknowledged].blank?
 
-      if TestResultRecepientType.find_by(id: lab_test.test_result_receipent_types)&.name == 'test_results_delivered_to_site_electronically_at_local_nlims_level'
-        return [false, 'test result already acknowledged electronically at local nlims level']
+      electronically_acknowledged = TestResultRecepientType.find_by(id: lab_test.test_result_receipent_types)&.name == 'test_results_delivered_to_site_electronically'
+      if electronically_acknowledged && lab_test.result_given == true
+        return [true, 'test result already acknowledged electronically at facility']
       end
 
       ActiveRecord::Base.transaction do

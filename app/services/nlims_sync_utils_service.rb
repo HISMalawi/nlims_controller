@@ -49,7 +49,7 @@ class NlimsSyncUtilsService
                             content_type: :json,
                             headers: { content_type: :json, accept: :json, token: @token }
                           ))
-    if response['error'] == false && response['message'] == 'order updated successfuly'
+    if response['error'] == false && response['message'] == 'order updated successfully'
       puts 'Order actions pushed to Local NLIMS successfully'
       OrderStatusSyncTracker.find_by(
         tracking_number: payload[:tracking_number],
@@ -71,9 +71,9 @@ class NlimsSyncUtilsService
     )
     false
   rescue StandardError => e
-    puts "Error: #{e.message} ==> Local NLIMS Order Push"
+    puts "Error: #{JSON.parse(e.response)} ==> Local NLIMS Order Push"
     SyncUtilService.log_error(
-      error_message: e.message,
+      error_message: e.response,
       custom_message: "Failed to push order actions to Local NLIMS @ #{@address}",
       payload:
     )
@@ -95,7 +95,6 @@ class NlimsSyncUtilsService
                             content_type: :json,
                             headers: { content_type: :json, accept: :json, token: @token }
                           ))
-                          puts response
     if ['test updated successfuly', 'order already updated with such state'].include?(response['message'])
       unless action == 'status_update'
         ResultSyncTracker.find_by(tracking_number: order&.tracking_number, test_id:, app: 'nlims')&.update(sync_status: true)
@@ -111,9 +110,9 @@ class NlimsSyncUtilsService
       false
     end
   rescue StandardError => e
-    puts "Error: #{e.message} ==> NLIMS test actions Push"
+    puts "Error: #{JSON.parse(e.response)} ==> NLIMS test actions Push"
     SyncUtilService.log_error(
-      error_message: e.message,
+      error_message: e.response,
       custom_message: "Failed to push test actions to NLIMS @ #{@address}",
       payload:
     )
@@ -169,9 +168,9 @@ class NlimsSyncUtilsService
     )
     false
   rescue StandardError => e
-    puts "Error: #{e.message} ==> NLIMS Push Order to Master NLIMS"
+    puts "Error: #{JSON.parse(e.response)} ==> NLIMS Push Order to Master NLIMS"
     SyncUtilService.log_error(
-      error_message: e.message,
+      error_message: e.response,
       custom_message: "NLIMS Push Order to Master NLIMS @ #{@address}",
       payload:
     )
@@ -197,7 +196,7 @@ class NlimsSyncUtilsService
                               content_type: :json,
                               headers: { content_type: :json, accept: :json, token: @token }
                             ))
-      if response['error']
+      if response['error'] == true
         SyncUtilService.log_error(
           error_message: response['message'],
           custom_message: "NLIMS Push Acknowledgement to Master NLIMS @ #{@address}",
@@ -208,9 +207,9 @@ class NlimsSyncUtilsService
       ack.update(acknwoledged_to_nlims: true)
       puts "Pushed acknowledgments for tracking number: #{ack.tracking_number} to Master NLIMS"
     rescue StandardError => e
-      puts "Error: #{e.message} ==> NLIMS Push Acknowledgement to Master NLIMS"
+      puts "Error: #{JSON.parse(e.response)} ==> NLIMS Push Acknowledgement to Master NLIMS"
       SyncUtilService.log_error(
-        error_message: e.message,
+        error_message: e.response,
         custom_message: "NLIMS Push Acknowledgement to Master NLIMS @ #{@address}",
         payload:
       )
