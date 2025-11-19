@@ -4,7 +4,7 @@
 users = User.all
 users.each do |user|
   if user.username == 'admin'
-    user.roles << Role.find_by(name: 'admin')
+    user.roles << Role.find_by(name: 'admin') if user.roles.empty?
   elsif user.roles.empty?
     user.roles << Role.find_by(name: 'system')
   else
