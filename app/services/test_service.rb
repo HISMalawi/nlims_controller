@@ -156,6 +156,10 @@ module TestService
     if !res.blank?
       type = TestResultRecepientType.find_by(name: recipient_type)
       tst = Test.find_by(id: res[0]['id'])
+      if tst&.test_result_receipent_types&.to_s == TestResultRecepientType.find_by(name: 'test_results_delivered_to_site_electronically')&.id&.to_s
+        return true
+      end
+
       tst.test_result_receipent_types = type.id
       tst.result_given = true
       tst.date_result_given = date
