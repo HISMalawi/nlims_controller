@@ -22,4 +22,6 @@ puts 'Deleting tests'
 test_with_invalid_orders.delete_all
 puts 'Deleting orders'
 orders_with_invalid_tests.delete_all
+puts 'Fixing specimen types'
+Speciman.where(specimen_type_id: 0).update_all(specimen_type_id: SpecimenType.find_by(name: 'not_specified').id)
 puts 'All done'
