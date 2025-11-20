@@ -3,7 +3,7 @@
 require 'swagger_helper'
 
 RSpec.describe 'Test Catalog API', type: :request do
-  path '/api/v1/check_new_test_catalog_version_available' do
+  path '/api/v2/test_catalog/new_version/available' do
     get 'Check if a new test catalog version is available' do
       tags 'Test Catalog'
       produces 'application/json'
@@ -34,14 +34,14 @@ RSpec.describe 'Test Catalog API', type: :request do
       end
     end
   end
-  path '/api/v1/retrieve_test_catalog' do
+  path '/api/v2/test_catalog/{version}' do
     get 'Retrieve the full test catalog' do
       tags 'Test Catalog'
       produces 'application/json'
       security [tokenAuth: []]
       description 'Retrieve the full Malawi Test Catalog including departments, test types, test panels, measures, specimen types, lab test sites, and version details'
 
-      parameter name: :version, in: :query, type: :string, required: true,
+      parameter name: :version, in: :path, type: :string, required: true,
                 description: 'Current catalog version to fetch, e.g., v1'
 
       response '200', 'Test catalog retrieved successfully' do

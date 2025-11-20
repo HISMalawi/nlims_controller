@@ -117,6 +117,13 @@ Rails.application.routes.draw do
         end
       end
 
+      resources :test_catalog, controller: :test_catalog_version_managers, only: %i[index] do
+        collection do
+          get '/:version' => 'test_catalog_version_managers#show'
+          get '/new_version/available' => 'test_catalog_version_managers#new_version_available'
+        end
+      end
+
       post '/request_order'	=> 'order#request_order'
       post '/confirm_order_request'	=> 'order#confirm_order_request'
       get  '/query_requested_order_by_npid/:npid'	=> 'order#query_requested_order_by_npid2'

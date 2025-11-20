@@ -1039,7 +1039,7 @@ paths:
                       type: string
                 target_lab:
                   type: string
-  "/api/v1/check_new_test_catalog_version_available":
+  "/api/v2/test_catalog/new_version/available":
     get:
       summary: Check if a new test catalog version is available
       tags:
@@ -1082,7 +1082,7 @@ paths:
                           test names, methods, units of measurement, and result indicators
                           to ensure consistency, quality, and interoperability across
                           laboratories and electronic systems.
-  "/api/v1/retrieve_test_catalog":
+  "/api/v2/test_catalog/{version}":
     get:
       summary: Retrieve the full test catalog
       tags:
@@ -1094,7 +1094,7 @@ paths:
         details
       parameters:
       - name: version
-        in: query
+        in: path
         required: true
         description: Current catalog version to fetch, e.g., v1
         schema:
