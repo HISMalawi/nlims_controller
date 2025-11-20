@@ -25,8 +25,14 @@ class NlimsSyncUtilsService
     {
       tracking_number: order&.tracking_number,
       status: status,
-      who_updated: who_updated(order_status_trail),
-      time_updated: order_status_trail&.time_updated
+      time_updated: order_status_trail&.time_updated,
+      status_trail: order&.specimen_status_trail&.map do |trail|
+        {
+          status: trail&.specimen_status&.name,
+          timestamp: trail&.time_updated,
+          updated_by: who_updated(trail)
+        }
+      end
     }
   end
 
@@ -34,16 +40,16 @@ class NlimsSyncUtilsService
     payload = order_status_payload(order_id, status)
     return true if payload.nil?
 
-    url = "#{@address}/api/v1/update_order"
+    url = "#{@address}/api/v2/orders/#{payload[:tracking_number]}/"
     response = JSON.parse(RestClient::Request.execute(
-                            method: :post,
+                            method: :put,
                             url:,
                             timeout: 10,
                             payload: payload.to_json,
                             content_type: :json,
                             headers: { content_type: :json, accept: :json, token: @token }
                           ))
-    if response['error'] == false && response['message'] == 'order updated successfuly'
+    if response['error'] == false && response['message'] == 'order updated successfully'
       puts 'Order actions pushed to Local NLIMS successfully'
       OrderStatusSyncTracker.find_by(
         tracking_number: payload[:tracking_number],
@@ -65,9 +71,9 @@ class NlimsSyncUtilsService
     )
     false
   rescue StandardError => e
-    puts "Error: #{e.message} ==> Local NLIMS Order Push"
+    puts "Error: #{JSON.parse(e.response)} ==> Local NLIMS Order Push"
     SyncUtilService.log_error(
-      error_message: e.message,
+      error_message: e.response,
       custom_message: "Failed to push order actions to Local NLIMS @ #{@address}",
       payload:
     )
@@ -80,16 +86,15 @@ class NlimsSyncUtilsService
     payload = TestSerializer.serialize(test_record)
     return true if payload.nil?
 
-    url = "#{@address}/api/v2/update_tests"
+    url = "#{@address}/api/v2/tests/#{order&.tracking_number}/"
     response = JSON.parse(RestClient::Request.execute(
-                            method: :post,
+                            method: :put,
                             url:,
                             timeout: 10,
                             payload: payload.to_json,
                             content_type: :json,
                             headers: { content_type: :json, accept: :json, token: @token }
                           ))
-                          puts response
     if ['test updated successfuly', 'order already updated with such state'].include?(response['message'])
       unless action == 'status_update'
         ResultSyncTracker.find_by(tracking_number: order&.tracking_number, test_id:, app: 'nlims')&.update(sync_status: true)
@@ -105,9 +110,9 @@ class NlimsSyncUtilsService
       false
     end
   rescue StandardError => e
-    puts "Error: #{e.message} ==> NLIMS test actions Push"
+    puts "Error: #{JSON.parse(e.response)} ==> NLIMS test actions Push"
     SyncUtilService.log_error(
-      error_message: e.message,
+      error_message: e.response,
       custom_message: "Failed to push test actions to NLIMS @ #{@address}",
       payload:
     )
@@ -126,8 +131,7 @@ class NlimsSyncUtilsService
     {
       first_name: who_updated_name[0],
       last_name: who_updated_name[1],
-      id: '',
-      id_number: test_status_trail&.who_updated_id,
+      id: test_status_trail&.who_updated_id,
       phone_number: test_status_trail&.who_updated_phone_number
     }
   end
@@ -135,12 +139,13 @@ class NlimsSyncUtilsService
   def push_order_to_master_nlims(tracking_number, once_off=false)
     order = Speciman.find_by(tracking_number:)
     return false if order.nil?
+    return false if order.specimen_type_id == SpecimenType.get_specimen_type_id('not_specified')
 
     payload = OrderSerializer.serialize(order)
     return false if payload.nil?
     return true if payload[:tests].empty?
 
-    url = once_off ? "#{@address}/api/v2/create_order_once_off/" : "#{@address}/api/v2/create_order/"
+    url = once_off ? "#{@address}/api/v2/create_order_once_off/" : "#{@address}/api/v2/orders/"
     response = JSON.parse(RestClient::Request.execute(
                             method: :post,
                             url:,
@@ -149,7 +154,7 @@ class NlimsSyncUtilsService
                             content_type: :json,
                             headers: { content_type: :json, accept: :json, token: @token }
                           ))
-    if response['error'] == false && ['order created successfuly',
+    if response['error'] == false && ['order created successfully',
                                       'order already available'].include?(response['message'])
       OrderSyncTracker.find_by(tracking_number:)&.update(synced: true)
       StatusSyncTracker.where(tracking_number:)&.update(sync_status: true)
@@ -163,17 +168,17 @@ class NlimsSyncUtilsService
     )
     false
   rescue StandardError => e
-    puts "Error: #{e.message} ==> NLIMS Push Order to Master NLIMS"
+    puts "Error: #{JSON.parse(e.response)} ==> NLIMS Push Order to Master NLIMS"
     SyncUtilService.log_error(
-      error_message: e.message,
+      error_message: e.response,
       custom_message: "NLIMS Push Order to Master NLIMS @ #{@address}",
       payload:
     )
     false
   end
 
-  def once_off_push_orders_to_master_nlims(tracking_number, url)
-    push_order_to_master_nlims(tracking_number, url)
+  def once_off_push_orders_to_master_nlims(tracking_number, once_off: false)
+    push_order_to_master_nlims(tracking_number, once_off: once_off)
   end
 
   def push_acknwoledgement_to_master_nlims(pending_acks: nil)
@@ -182,7 +187,7 @@ class NlimsSyncUtilsService
 
     pending_acks.each do |ack|
       payload = buid_acknowledment_to_master_data(ack)
-      url = "#{@address}/api/v1/acknowledge/test/results/recipient"
+      url = "#{@address}/api/v2/tests/#{ack&.tracking_number}/acknowledge_test_results_receipt"
       response = JSON.parse(RestClient::Request.execute(
                               method: :post,
                               url:,
@@ -191,7 +196,7 @@ class NlimsSyncUtilsService
                               content_type: :json,
                               headers: { content_type: :json, accept: :json, token: @token }
                             ))
-      if response['error']
+      if response['error'] == true
         SyncUtilService.log_error(
           error_message: response['message'],
           custom_message: "NLIMS Push Acknowledgement to Master NLIMS @ #{@address}",
@@ -202,9 +207,9 @@ class NlimsSyncUtilsService
       ack.update(acknwoledged_to_nlims: true)
       puts "Pushed acknowledgments for tracking number: #{ack.tracking_number} to Master NLIMS"
     rescue StandardError => e
-      puts "Error: #{e.message} ==> NLIMS Push Acknowledgement to Master NLIMS"
+      puts "Error: #{JSON.parse(e.response)} ==> NLIMS Push Acknowledgement to Master NLIMS"
       SyncUtilService.log_error(
-        error_message: e.message,
+        error_message: e.response,
         custom_message: "NLIMS Push Acknowledgement to Master NLIMS @ #{@address}",
         payload:
       )
@@ -213,7 +218,7 @@ class NlimsSyncUtilsService
   end
 
   def buid_acknowledment_to_master_data(acknowledgement)
-    test_to_ack = TestType.find(Test.find(acknowledgement&.test_id)&.test_type_id)&.name
+    test_to_ack = TestType.find(Test.find(acknowledgement&.test_id)&.test_type_id)
     level = begin
       TestResultRecepientType.find_by(id: acknowledgement&.acknwoledment_level)
     rescue StandardError
@@ -222,10 +227,10 @@ class NlimsSyncUtilsService
     level ||= TestResultRecepientType.find_by(id: acknowledgement&.acknowledgment_level)
     {
       'tracking_number': acknowledgement&.tracking_number,
-      'test': test_to_ack,
+      'test_type': { name: test_to_ack&.name, nlims_code: test_to_ack&.nlims_code },
       'date_acknowledged': acknowledgement&.acknwoledged_at,
       'recipient_type': level&.name,
-      'acknwoledment_by': acknowledgement&.acknwoledged_by
+      'acknowledged_by': acknowledgement&.acknwoledged_by
     }
   end
 
@@ -386,10 +391,10 @@ class NlimsSyncUtilsService
     exit
   end
 
-  def order_tracking_numbers(order_id, limit: 200_000)
+  def order_tracking_numbers(order_id, limit: 50_000)
     JSON.parse(RestClient::Request.execute(
                  method: :get,
-                 url: "#{@address}/api/v1/get_order_tracking_numbers?order_id=#{order_id}&limit=#{limit}",
+                 url: "#{@address}/api/v1/orders/tracking_numbers/all?order_id=#{order_id}&limit=#{limit}",
                  headers: { content_type: :json, accept: :json, token: @token }
                ), symbolize_names: true)
   rescue StandardError => e

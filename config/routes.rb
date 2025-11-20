@@ -102,6 +102,27 @@ Rails.application.routes.draw do
 
     namespace :v2 do
       # order routes
+      resources :orders, controller: :orders, only: %i[index show create update] do
+        collection do
+          get '/:tracking_number/exists' => 'orders#order_exist'
+          get '/tracking_numbers/all' => 'orders#tracking_numbers'
+          post 'requests/' => 'orders#request_order'
+          put 'requests/:tracking_number/' => 'orders#confirm_order_request'
+        end
+      end
+
+      resources :tests, controller: :tests, only: %i[update] do
+        collection do
+          post ':id/acknowledge_test_results_receipt' => 'tests#acknowledge_test_results_receipt'
+        end
+      end
+
+      resources :test_catalog, controller: :test_catalog_version_managers, only: %i[index] do
+        collection do
+          get '/:version' => 'test_catalog_version_managers#show'
+          get '/new_version/available' => 'test_catalog_version_managers#new_version_available'
+        end
+      end
 
       post '/request_order'	=> 'order#request_order'
       post '/confirm_order_request'	=> 'order#confirm_order_request'

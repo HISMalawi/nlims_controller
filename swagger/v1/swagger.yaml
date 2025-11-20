@@ -86,7 +86,7 @@ paths:
                 password:
                   type: string
                   example: password123
-  "/api/v2/create_order":
+  "/api/v2/orders":
     post:
       summary: Create a new laboratory order
       tags:
@@ -260,14 +260,9 @@ paths:
                   items:
                     type: object
                     required:
-                    - tracking_number
                     - test_status
                     - test_type
                     properties:
-                      tracking_number:
-                        type: string
-                      arv_number:
-                        type: string
                       test_status:
                         type: string
                       time_updated:
@@ -359,7 +354,7 @@ paths:
                   target_lab: National Reference Lab
                   sending_facility: Kamuzu Central Hospital
                   district: Lilongwe
-                  requested_by: Dr. Banda
+                  requested_by: Dr. Delete
                   art_start_date: '2020-05-10'
                   arv_number: ARV-998877
                   art_regimen: TDF/3TC/DTG
@@ -370,8 +365,8 @@ paths:
                   - status: specimen_collected
                     timestamp: '2025-09-13 02:00:00'
                     updated_by:
-                      first_name: Chikondi
-                      last_name: Banda
+                      first_name: Xmachina
+                      last_name: Delete
                       id_number: '38'
                       phone_number: ''
                 patient:
@@ -382,12 +377,10 @@ paths:
                   gender: F
                   phone_number: "+265888777666"
                 tests:
-                - tracking_number: XTRK123495
-                  arv_number: 34-4934
-                  test_status: verified
+                - test_status: verified
                   time_updated: '2025-09-13 02:00:00'
                   test_type:
-                    name: HIV Viral Load Quantitative HIV Nucleic Acid Test
+                    name: HIV Viral Load
                     nlims_code: NLIMS_TT_0071_MWI
                   test_results:
                   - measure:
@@ -403,18 +396,18 @@ paths:
                   - status: started
                     timestamp: '2025-09-13 02:00:00'
                     updated_by:
-                      first_name: Chikondi
-                      last_name: Banda
+                      first_name: Xmachina
+                      last_name: Delete
                       id_number: '38'
                       phone_number: ''
                   - status: completed
                     timestamp: '2025-09-13 03:00:00'
                     updated_by:
-                      first_name: Chikondi
-                      last_name: Banda
+                      first_name: Xmachina
+                      last_name: Delete
                       id_number: '38'
                       phone_number: ''
-  "/api/v2/find_order_by_tracking_number":
+  "/api/v2/orders/{tracking_number}":
     get:
       summary: Find an order by tracking number
       tags:
@@ -423,7 +416,7 @@ paths:
       - tokenAuth: []
       parameters:
       - name: tracking_number
-        in: query
+        in: path
         required: true
         description: Tracking number of the order
         schema:
@@ -640,7 +633,413 @@ paths:
                   data:
                     type: object
                     example: {}
-  "/api/v1/check_new_test_catalog_version_available":
+    put:
+      summary: Update an order
+      tags:
+      - Orders
+      security:
+      - tokenAuth: []
+      parameters:
+      - name: tracking_number
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Order Updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: order updated successfully
+                  data:
+                    type: object
+                    example:
+                      tracking_number: XTRK123495
+        '422':
+          description: Unprocessable Entity
+          content:
+            application/json:
+              schema:
+                oneOf:
+                - type: object
+                  properties:
+                    error:
+                      type: boolean
+                      example: true
+                    message:
+                      type: string
+                      example: time updated or result date provided is in the past
+                    data:
+                      type: object
+                      example: {}
+                - type: object
+                  properties:
+                    error:
+                      type: boolean
+                      example: true
+                    message:
+                      type: string
+                      example: status trail not provided
+                    data:
+                      type: object
+                      example: {}
+                - type: object
+                  properties:
+                    error:
+                      type: boolean
+                      example: true
+                    message:
+                      type: string
+                      example: specimen status not available in nlims - available
+                        statuses are [specimen_not_collected, specimen_accepted, specimen_rejected,
+                        specimen_collected, sample_accepted_at_hub, sample_rejected_at_hub,
+                        sample_accepted_at_ml, sample_rejected_at_ml]
+                    data:
+                      type: object
+                      example: {}
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - status
+              - time_updated
+              - status_trail
+              properties:
+                status:
+                  type: string
+                time_updated:
+                  type: string
+                  format: date-time
+                status_trail:
+                  type: array
+                  items:
+                    type: object
+                    required:
+                    - status
+                    - timestamp
+                    - updated_by
+                    properties:
+                      status:
+                        type: string
+                      timestamp:
+                        type: string
+                        format: date-time
+                      updated_by:
+                        type: object
+                        required:
+                        - first_name
+                        - last_name
+                        - id
+                        properties:
+                          first_name:
+                            type: string
+                          last_name:
+                            type: string
+                          id:
+                            type: string
+                          phone_number:
+                            type: string
+  "/api/v2/orders/{tracking_number}/exists":
+    get:
+      summary: Check if an order exists
+      tags:
+      - Orders
+      security:
+      - tokenAuth: []
+      parameters:
+      - name: tracking_number
+        in: path
+        required: true
+        description: Tracking number of the order
+        schema:
+          type: string
+      description: Returns true if the order exists
+      responses:
+        '200':
+          description: Order Exists
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: Order Exists
+                  data:
+                    type: boolean
+                    example: true
+  "/api/v2/orders/tracking_numbers/all":
+    get:
+      summary: Get tracking numbers to be logged for validation of orders against
+        master
+      tags:
+      - Orders
+      security:
+      - tokenAuth: []
+      parameters:
+      - name: order_id
+        in: query
+        required: true
+        description: Order ID
+        schema:
+          type: integer
+      - name: limit
+        in: query
+        required: false
+        description: Limit of records to return (max 50000, default 50000)
+        schema:
+          type: integer
+      - name: from
+        in: query
+        required: false
+        description: From date
+        schema:
+          type: string
+      description: Returns the tracking numbers
+      responses:
+        '200':
+          description: Tracking numbers returned
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    tracking_number:
+                      type: string
+  "/api/v2/orders/requests":
+    post:
+      summary: Request an order
+      tags:
+      - Orders
+      security:
+      - tokenAuth: []
+      parameters: []
+      responses:
+        '201':
+          description: Order Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: order created successfully
+                  data:
+                    type: object
+                    properties:
+                      tracking_number:
+                        type: string
+                        example: XTRK123495
+                      uuid:
+                        type: string
+                        example: '1234567890'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - order
+              - patient
+              - tests
+              properties:
+                order:
+                  type: object
+                  required:
+                  - district
+                  - sending_facility
+                  - tracking_number
+                  - requested_by
+                  - date_created
+                  - priority
+                  - target_lab
+                  - order_location
+                  - sample_status
+                  - drawn_by
+                  properties:
+                    uuid:
+                      type: string
+                    tracking_number:
+                      type: string
+                    district:
+                      type: string
+                    sending_facility:
+                      type: string
+                    requested_by:
+                      type: string
+                    date_created:
+                      type: string
+                      format: date-time
+                    priority:
+                      type: string
+                    target_lab:
+                      type: string
+                    order_location:
+                      type: string
+                    reason_for_test:
+                      type: string
+                    art_start_date:
+                      type: string
+                    arv_number:
+                      type: string
+                    art_regimen:
+                      type: string
+                    clinical_history:
+                      type: string
+                    lab_location:
+                      type: string
+                    source_system:
+                      type: string
+                    sample_status:
+                      type: object
+                      required:
+                      - name
+                      properties:
+                        name:
+                          type: string
+                    drawn_by:
+                      type: object
+                      required:
+                      - name
+                      properties:
+                        id:
+                          type: integer
+                        name:
+                          type: string
+                        phone_number:
+                          type: string
+                    status_trail:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          status:
+                            type: string
+                          timestamp:
+                            type: string
+                            format: date-time
+                          updated_by:
+                            type: object
+                            properties:
+                              first_name:
+                                type: string
+                              last_name:
+                                type: string
+                              id_number:
+                                type: string
+                              phone_number:
+                                type: string
+                patient:
+                  type: object
+                  required:
+                  - first_name
+                  - last_name
+                  - gender
+                  - date_of_birth
+                  properties:
+                    national_patient_id:
+                      type: string
+                    first_name:
+                      type: string
+                    last_name:
+                      type: string
+                    gender:
+                      type: string
+                    date_of_birth:
+                      type: string
+                    phone_number:
+                      type: string
+                tests:
+                  type: array
+                  description: 'Required: tests not provided'
+                  items:
+                    type: object
+                    required:
+                    - test_type
+                    properties:
+                      time_updated:
+                        type: string
+                        format: date-time
+                      test_type:
+                        type: object
+                        required:
+                        - name
+                        - nlims_code
+                        properties:
+                          name:
+                            type: string
+                          nlims_code:
+                            type: string
+  "/api/v2/orders/requests/{tracking_number}":
+    put:
+      summary: Confirm an order request
+      tags:
+      - Orders
+      security:
+      - tokenAuth: []
+      parameters:
+      - name: tracking_number
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Order Confirmed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: order confirmed successfully
+                  data:
+                    type: object
+                    example:
+                      tracking_number: XTRK123495
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - sample_type
+              properties:
+                sample_type:
+                  type: object
+                  required:
+                  - nlims_code
+                  properties:
+                    nlims_code:
+                      type: string
+                target_lab:
+                  type: string
+  "/api/v2/test_catalog/new_version/available":
     get:
       summary: Check if a new test catalog version is available
       tags:
@@ -683,7 +1082,7 @@ paths:
                           test names, methods, units of measurement, and result indicators
                           to ensure consistency, quality, and interoperability across
                           laboratories and electronic systems.
-  "/api/v1/retrieve_test_catalog":
+  "/api/v2/test_catalog/{version}":
     get:
       summary: Retrieve the full test catalog
       tags:
@@ -695,7 +1094,7 @@ paths:
         details
       parameters:
       - name: version
-        in: query
+        in: path
         required: true
         description: Current catalog version to fetch, e.g., v1
         schema:
@@ -707,28 +1106,20 @@ paths:
             application/json:
               schema:
                 type: object
-        '400':
-          description: Bad request
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: boolean
-                    example: true
-                  message:
-                    type: string
-                    example: Invalid version parameter
-  "/api/v2/update_test":
-    post:
+  "/api/v2/tests/{tracking_number}":
+    put:
       summary: Update a laboratory test
       tags:
       - Tests
       security:
       - tokenAuth: []
       description: Update a laboratory test
-      parameters: []
+      parameters:
+      - name: tracking_number
+        in: path
+        required: true
+        schema:
+          type: string
       responses:
         '200':
           description: test successfully updated
@@ -754,7 +1145,7 @@ paths:
                     example: true
                   message:
                     type: string
-                    example: tracking number not provided
+                    example: order with such test not available
                   data:
                     type: object
                     example: {}
@@ -764,13 +1155,9 @@ paths:
             schema:
               type: object
               required:
-              - tracking_number
               - test_status
               - test_type
               properties:
-                tracking_number:
-                  type: string
-                  description: Tracking number of the test
                 arv_number:
                   type: string
                 uuid:
@@ -852,7 +1239,6 @@ paths:
                           platformserial:
                             type: string
               example:
-                tracking_number: XKCH2500875104
                 arv_number: N/A
                 uuid: af28a817-0ae6-49ed-9cae-a93c33a5eb3a
                 test_status: voided
@@ -885,7 +1271,93 @@ paths:
                     last_name: namaheya
                     id: '121'
                     phone_number: ''
-                test_results: []
+                test_results:
+                - measure:
+                    name: Viral Load
+                    nlims_code: NLIMS_TI_0294_MWI
+                  result:
+                    value: 100w00
+                    unit: copies/mL
+                    result_date: '2025-09-13 04:10:02'
+                    platform: Abbot
+                    platformserial: '275021258'
+  "/api/v2/tests/{tracking_number}/acknowledge_test_results_receipt":
+    post:
+      summary: Acknowledge test results receipt
+      tags:
+      - Tests
+      security:
+      - tokenAuth: []
+      description: Acknowledge test results receipt
+      parameters:
+      - name: tracking_number
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: test results receipt acknowledged successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: test results receipt acknowledged successfully
+                  data:
+                    type: object
+        '422':
+          description: 'Error: Unprocessable Entity'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: test results receipt already acknowledged
+                  data:
+                    type: object
+                    example: {}
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - test_type
+              - date_acknowledged
+              - recipient_type
+              properties:
+                test_type:
+                  type: object
+                  required:
+                  - name
+                  - nlims_code
+                  properties:
+                    name:
+                      type: string
+                    nlims_code:
+                      type: string
+                date_acknowledged:
+                  type: string
+                  format: date-time
+                recipient_type:
+                  type: string
+                acknowledged_by:
+                  type: string
+              example:
+                test_type:
+                  name: HIV Viral Load
+                  nlims_code: NLIMS_TI_0294_MWI
+                date_acknowledged: '2025-02-24T15:19:56.000+02:00'
+                recipient_type: test_results_delivered_to_site_electronically
+                acknowledged_by: emr_at_facility
 servers:
 - url: http://{defaultHost}
   variables:

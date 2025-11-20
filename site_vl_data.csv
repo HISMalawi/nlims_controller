@@ -1,0 +1,619 @@
+ARV#,Accession #,Status,Order Date,Result,Date received,Mode of Delivery,Test reason,TAT(Days)
+BHC-ARV-1692,L7090108,verified,1-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",37
+BHC-ARV-7655,L7089442,verified,1-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",37
+BHC-ARV-15903,L7088185,verified,1-Jul-25,417,7-Aug-25,Electronic,"Medical examination, routine",37
+BHC-ARV-15843,L7082485,verified,1-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",37
+BHC-ARV-12414,L7089172,verified,1-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",37
+BHC-ARV-15781,L7085247,verified,1-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",37
+BHC-ARV-17087,L7089215,verified,1-Jul-25,623,7-Aug-25,Electronic,"Medical examination, routine",37
+BHC-ARV-657,L7082719,pending,1-Jul-25,<470,6-Aug-25,Manual,"Medical examination, routine",36
+BHC-ARV-7284,L7083119,verified,1-Jul-25,1202,7-Aug-25,Electronic,"Medical examination, routine",37
+BHC-ARV-929,L7082692,pending,1-Jul-25,<400,6-Aug-25,Manual,"Medical examination, routine",36
+BHC-ARV-16743,L7090010,verified,1-Jul-25,,,,"Medical examination, routine",
+BHC-ARV-14808,L7073011,verified,1-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",37
+BHC-ARV-3546,L7072725,verified,1-Jul-25,<LDL,6-Aug-25,Manual,"Medical examination, routine",36
+BHC-ARV-2694,L7082493,verified,1-Jul-25,>151956,6-Aug-25,Manual,"Medical examination, routine",36
+BHC-ARV-9693,L7089102,verified,1-Jul-25,680,7-Aug-25,Electronic,"Medical examination, routine",37
+BHC-ARV-14517,L7107179,verified,1-Jul-25,<883,6-Aug-25,Manual,"Medical examination, routine",36
+BHC-ARV-3147,L7083072,verified,1-Jul-25,2310,7-Aug-25,Electronic,"Medical examination, routine",37
+BHC-ARV-16256,L7082203,verified,1-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",37
+BHC-ARV-15968,L7088162,verified,1-Jul-25,<400,7-Aug-25,Electronic,"Medical examination, routine",37
+BHC-ARV-3044,L7089078,verified,1-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",37
+BHC-ARV-17673,L7088699,verified,1-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",37
+BHC-ARV-3021,L7082668,verified,1-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",37
+BHC-ARV-14313,L7090060,verified,1-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",37
+BHC-ARV-17869,L7085292,verified,1-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",37
+BHC-ARV-2062,L7082759,verified,1-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",37
+BHC-ARV-16238,L7082471,verified,1-Jul-25,,,,"Medical examination, routine",
+BHC-ARV-10501,L7082147,verified,1-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",37
+BHC-ARV-815,L7089501,verified,1-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",37
+BHC-ARV-8285,L7089967,verified,1-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",37
+BHC-ARV-14438,L7088744,verified,1-Jul-25,79252,7-Aug-25,Electronic,"Medical examination, routine",37
+BHC-ARV-4270,L7082678,verified,2-Jul-25,<400,6-Aug-25,Manual,"Medical examination, routine",35
+BHC-ARV-18863,L7089137,pending,2-Jul-25,,,,"Medical examination, routine",
+BHC-ARV-16063,L7082742,pending,2-Jul-25,,,,"Medical examination, routine",
+BHC-ARV-8603,L7089551,verified,2-Jul-25,<400,6-Aug-25,Manual,"Medical examination, routine",35
+BHC-ARV-16717,L7085180,verified,2-Jul-25,<LDL,6-Aug-25,Manual,"Medical examination, routine",35
+BHC-ARV-12867,L7083114,verified,2-Jul-25,<400,7-Aug-25,Electronic,"Medical examination, routine",36
+BHC-ARV-234,L3095678,,2-Jul-25,,,,"Medical examination, routine",
+BHC-ARV-15246,L7082536,verified,2-Jul-25,#NAME?,7-Aug-25,Electronic,"Medical examination, routine",36
+BHC-ARV-11299,L7082361,verified,2-Jul-25,<400,7-Aug-25,Electronic,"Medical examination, routine",36
+BHC-ARV-1039,L7088190,verified,2-Jul-25,1275,7-Aug-25,Electronic,"Medical examination, routine",36
+BHC-ARV-19472,L7082512,verified,2-Jul-25,<400,7-Aug-25,Electronic,"Medical examination, routine",36
+BHC-ARV-10353,L7083041,verified,2-Jul-25,836,7-Aug-25,Electronic,"Medical examination, routine",36
+BHC-ARV-19279,L7083045,verified,2-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",36
+BHC-ARV-6014,L7089528,verified,2-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",36
+BHC-ARV-19654,L7083047,verified,2-Jul-25,16230,7-Aug-25,Electronic,"Medical examination, routine",36
+BHC-ARV-19278,L7089981,verified,2-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",36
+BHC-ARV-6306,L7089323,verified,2-Jul-25,4586,7-Aug-25,Electronic,"Medical examination, routine",36
+BHC-ARV-15135,L7083077,verified,2-Jul-25,7128,21-Aug-25,Electronic,"Medical examination, routine",50
+BHC-ARV-18786,L7088168,verified,2-Jul-25,1465,7-Aug-25,Electronic,"Medical examination, routine",36
+BHC-ARV-18787,L7089552,,2-Jul-25,,,,"Medical examination, routine",
+BHC-ARV-15136,L7082494,verified,2-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",36
+BHC-ARV-13981,L7085164,verified,2-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",36
+BHC-ARV-14263,L7090077,verified,2-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",36
+BHC-ARV-17076,L7090046,verified,2-Jul-25,1481,7-Aug-25,Electronic,"Medical examination, routine",36
+BHC-ARV-2716,L7088324,,2-Jul-25,,,,"Medical examination, routine",
+BHC-ARV-10186,L7089036,verified,2-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",36
+BHC-ARV-17010,L7089019,verified,2-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",36
+BHC-ARV-9346,L7082146,verified,2-Jul-25,<400,7-Aug-25,Electronic,"Medical examination, routine",36
+BHC-ARV-19349,L7085152,verified,2-Jul-25,1092,7-Aug-25,Electronic,"Medical examination, routine",36
+BHC-ARV-17231,L7085166,verified,2-Jul-25,<LDL,6-Aug-25,Manual,"Medical examination, routine",35
+BHC-ARV-18254,L7085170,verified,3-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",35
+BHC-ARV-15132,L7089982,verified,3-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",35
+BHC-ARV-6438,L7089015,verified,3-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",35
+BHC-ARV-7670,L7090126,completed,3-Jul-25,,,,"Medical examination, routine",
+BHC-ARV-1894,L7089061,verified,3-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",49
+BHC-ARV-3178,L7083092,verified,3-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",49
+BHC-ARV-1027,L7088348,verified,3-Jul-25,2310,7-Aug-25,Electronic,"Medical examination, routine",35
+BHC-ARV-8338,L7089109,verified,3-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",35
+BHC-ARV-17702,L7088357,verified,3-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",35
+BHC-ARV-11856,L7090118,verified,3-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",35
+BHC-ARV-8409,L7085162,verified,3-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",49
+BHC-ARV-16619,L7085274,verified,3-Jul-25,<400,7-Aug-25,Electronic,"Medical examination, routine",35
+BHC-ARV-2760,L3055065,verified,3-Jul-25,4856,7-Aug-25,Electronic,"Medical examination, routine",35
+BHC-ARV-16255,L7082197,verified,3-Jul-25,70382,21-Aug-25,Electronic,"Medical examination, routine",49
+BHC-ARV-6764,L7085186,verified,3-Jul-25,<400,7-Aug-25,Electronic,"Medical examination, routine",35
+BHC-ARV-12117,L7090130,started,3-Jul-25,,,,"Medical examination, routine",
+BHC-ARV-7359,L7082689,verified,3-Jul-25,1174,7-Aug-25,Electronic,"Medical examination, routine",35
+BHC-ARV-5922,L7089035,verified,3-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",35
+BHC-ARV-2330,L2603356,,3-Jul-25,,,,"Medical examination, routine",
+BHC-ARV-14066,L7082143,verified,3-Jul-25,<400,7-Aug-25,Electronic,"Medical examination, routine",35
+BHC-ARV-3057,L7088684,verified,3-Jul-25,#NAME?,7-Aug-25,Electronic,"Medical examination, routine",35
+BHC-ARV-11300,L7082706,verified,3-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",35
+BHC-ARV-12735,L7085246,verified,3-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",35
+BHC-ARV-19498,L7088741,verified,3-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",35
+BHC-ARV-18471,L7083087,verified,3-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",35
+BHC-ARV-7518,L7085294,verified,3-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",49
+BHC-ARV-12278,L7090107,verified,3-Jul-25,<400,7-Aug-25,Electronic,"Medical examination, routine",35
+BHC-ARV-17655,L7088333,verified,3-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",35
+BHC-ARV-5817,L7082505,verified,3-Jul-25,<LDL copies/ml,2-Sep-25,Electronic,"Medical examination, routine",61
+BHC-ARV-16326,L7085185,verified,3-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",35
+BHC-ARV-13265,L7088337,verified,3-Jul-25,<400,7-Aug-25,Electronic,"Medical examination, routine",35
+BHC-ARV-14264,L7089022,verified,3-Jul-25,<400,7-Aug-25,Electronic,"Medical examination, routine",35
+BHC-ARV-17337,L7085249,verified,3-Jul-25,814,7-Aug-25,Electronic,"Medical examination, routine",35
+BHC-ARV-5499,L7089634,verified,3-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",35
+BHC-ARV-17349,L7082671,,3-Jul-25,,,,"Medical examination, routine",
+BHC-ARV-2664,L7085189,verified,3-Jul-25,928,7-Aug-25,Electronic,"Medical examination, routine",35
+BHC-ARV-19290,L7083099,verified,3-Jul-25,<400,7-Aug-25,Electronic,"Medical examination, routine",35
+BHC-ARV-3750,L7090008,verified,4-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",34
+BHC-ARV-19263,L7083124,,4-Jul-25,,,,"Medical examination, routine",
+BHC-ARV-15294,L7085196,verified,4-Jul-25,<400,7-Aug-25,Electronic,"Medical examination, routine",34
+BHC-ARV-18378,L7089609,verified,4-Jul-25,,,,"Medical examination, routine",
+BHC-ARV-12110,L7089055,verified,4-Jul-25,3360,7-Aug-25,Electronic,"Medical examination, routine",34
+BHC-ARV-19272,L7088342,verified,4-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",34
+BHC-ARV-19259,L7090079,verified,4-Jul-25,,,,"Medical examination, routine",
+BHC-ARV-19394,L7089979,verified,4-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",34
+BHC-ARV-17362,L7088346,verified,4-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",34
+BHC-ARV-19276,L7083140,verified,4-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",34
+BHC-ARV-19318,L7083098,verified,4-Jul-25,<400,7-Aug-25,Electronic,"Medical examination, routine",34
+BHC-ARV-13693,L7090099,verified,4-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",34
+BHC-ARV-19071,L7089612,verified,4-Jul-25,<535,6-Aug-25,Manual,"Medical examination, routine",33
+BHC-ARV-8366,L7085190,verified,4-Jul-25,440,7-Aug-25,Electronic,"Medical examination, routine",34
+BHC-ARV-18656,L7083075,verified,4-Jul-25,2722,7-Aug-25,Electronic,"Medical examination, routine",34
+BHC-ARV-15107,L7089213,verified,4-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",34
+BHC-ARV-7798,L7089193,verified,4-Jul-25,1824867,7-Aug-25,Electronic,"Medical examination, routine",34
+BHC-ARV-16776,L7083064,verified,4-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",34
+BHC-ARV-18489,L7082165,verified,4-Jul-25,<400,6-Aug-25,Manual,"Medical examination, routine",33
+BHC-ARV-19240,L7088347,verified,4-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",34
+BHC-ARV-17497,L7083115,verified,4-Jul-25,2079,7-Aug-25,Electronic,"Medical examination, routine",34
+BHC-ARV-7365,L7089958,verified,4-Jul-25,<400,7-Aug-25,Electronic,"Medical examination, routine",34
+BHC-ARV-19004,L7085169,verified,4-Jul-25,1848,7-Aug-25,Electronic,"Medical examination, routine",34
+BHC-ARV-17902,L7082166,,4-Jul-25,,,,Targeted,
+BHC-ARV-14527,L7088355,verified,4-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",34
+BHC-ARV-19332,L7083022,verified,4-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",34
+BHC-ARV-19288,L7089167,verified,4-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",34
+BHC-ARV-318,L7088709,verified,4-Jul-25,<400,21-Aug-25,Electronic,"Medical examination, routine",48
+BHC-ARV-9114,L7083090,verified,5-Jul-25,,,,"Medical examination, routine",
+BHC-ARV-19493,L7089589,verified,5-Jul-25,<LDL,6-Aug-25,Manual,"Medical examination, routine",32
+BHC-ARV-17622,L7089098,verified,5-Jul-25,>2286,6-Aug-25,Manual,"Medical examination, routine",32
+BHC-ARV-11786,L7089664,verified,5-Jul-25,<561,6-Aug-25,Manual,"Medical examination, routine",32
+BHC-ARV-12067,L7090070,verified,5-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",33
+BHC-ARV-14978,L7085159,verified,5-Jul-25,881,7-Aug-25,Electronic,"Medical examination, routine",33
+BHC-ARV-17722,L7090043,verified,5-Jul-25,1532,7-Aug-25,Electronic,"Medical examination, routine",33
+BHC-ARV-8996,L7085215,verified,5-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",33
+BHC-ARV-9466,L7082563,verified,5-Jul-25,440,7-Aug-25,Electronic,"Medical examination, routine",33
+BHC-ARV-16209,L7085161,verified,5-Jul-25,#NAME?,19-Sep-25,Electronic,"Medical examination, routine",76
+BHC-ARV-15473,L7090063,verified,8-Jul-25,<LDL,6-Aug-25,Manual,"Medical examination, routine",29
+BHC-ARV-11224,L7089060,verified,8-Jul-25,<LDL,6-Aug-25,Manual,"Medical examination, routine",29
+BHC-ARV-15630,L7088336,verified,8-Jul-25,>1052,6-Aug-25,Manual,"Medical examination, routine",29
+BHC-ARV-15530,L7090035,verified,8-Jul-25,<LDL,6-Aug-25,Manual,"Medical examination, routine",29
+BHC-ARV-2772,L7090103,verified,8-Jul-25,<400,6-Aug-25,Manual,"Medical examination, routine",29
+BHC-ARV-6239,L7083073,verified,8-Jul-25,<400,6-Aug-25,Manual,"Medical examination, routine",29
+BHC-ARV-11948,L7083097,verified,8-Jul-25,<LDL,6-Aug-25,Manual,"Medical examination, routine",29
+BHC-ARV-8316,L7083112,,8-Jul-25,,,,"Medical examination, routine",
+BHC-ARV-18545,L7088736,verified,8-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",30
+BHC-ARV-14015,L7085151,verified,8-Jul-25,,,,"Medical examination, routine",
+BHC-ARV-9631,L7088183,verified,8-Jul-25,<LDL,6-Aug-25,Manual,"Medical examination, routine",29
+BHC-ARV-17838,L7085155,verified,8-Jul-25,,,,"Medical examination, routine",
+BHC-ARV-9879,L7082148,verified,8-Jul-25,,,,"Medical examination, routine",
+BHC-ARV-16307,L7083136,verified,8-Jul-25,<LDL,6-Aug-25,Manual,"Medical examination, routine",29
+BHC-ARV-10127,L7089132,verified,8-Jul-25,<400,7-Aug-25,Electronic,"Medical examination, routine",30
+BHC-ARV-16837,L7089975,,8-Jul-25,,,,"Medical examination, routine",
+BHC-ARV-18550,L7088362,verified,8-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",30
+BHC-ARV-15422,L7082156,verified,8-Jul-25,<LDL,6-Aug-25,Manual,"Medical examination, routine",29
+BHC-ARV-19305,L7088989,verified,8-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",30
+BHC-ARV-16138,L7085163,verified,8-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",30
+BHC-ARV-12844,L7088329,verified,8-Jul-25,<LDL,6-Aug-25,Manual,"Medical examination, routine",29
+BHC-ARV-13645,L7083081,verified,8-Jul-25,<LDL,6-Aug-25,Manual,"Medical examination, routine",29
+BHC-ARV-11212,L7090045,verified,8-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",30
+BHC-ARV-15298,L7090073,verified,8-Jul-25,486,7-Aug-25,Electronic,"Medical examination, routine",30
+BHC-ARV-11441,L7083131,verified,8-Jul-25,<LDL,6-Aug-25,Manual,"Medical examination, routine",29
+BHC-ARV-5212,L7085156,verified,8-Jul-25,<LDL,6-Aug-25,Manual,"Medical examination, routine",29
+BHC-ARV-17779,L2572045,,8-Jul-25,,,,"Medical examination, routine",
+BHC-ARV-2047,L3095666,verified,8-Jul-25,50,8-Jul-25,Electronic,"Medical examination, routine",0
+BHC-ARV-11781,L7088187,verified,9-Jul-25,146249,2-Sep-25,Electronic,"Medical examination, routine",55
+BHC-ARV-8028,L7083106,verified,9-Jul-25,3031,2-Sep-25,Electronic,"Medical examination, routine",55
+BHC-ARV-2056,L7088359,verified,9-Jul-25,,,,"Medical examination, routine",
+BHC-ARV-14494,L7089053,verified,9-Jul-25,<LDL copies/ml,2-Sep-25,Electronic,"Medical examination, routine",55
+BHC-ARV-13804,L7088361,verified,9-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",29
+BHC-ARV-9126,L7089131,started,9-Jul-25,26722,29-Oct-25,Manual,"Medical examination, routine",112
+BHC-ARV-8316,L7082764,verified,9-Jul-25,>3461,6-Aug-25,Manual,"Medical examination, routine",28
+BHC-ARV-17739,L7089614,verified,9-Jul-25,<LDL copies/ml,2-Sep-25,Electronic,"Medical examination, routine",55
+BHC-ARV-15145,L7088988,verified,9-Jul-25,<LDL copies/ml,2-Sep-25,Electronic,"Medical examination, routine",55
+BHC-ARV-16414,L7089058,verified,9-Jul-25,82346,2-Sep-25,Electronic,"Medical examination, routine",55
+BHC-ARV-16220,L7085270,verified,9-Jul-25,26668,2-Sep-25,Electronic,"Medical examination, routine",55
+BHC-ARV-16103,L7088328,verified,9-Jul-25,<LDL,6-Aug-25,Manual,"Medical examination, routine",28
+BHC-ARV-6934,L7085194,verified,9-Jul-25,<LDL copies/ml,4-Sep-25,Electronic,"Medical examination, routine",57
+BHC-ARV-18501,L7088242,verified,9-Jul-25,<730,6-Aug-25,Manual,"Medical examination, routine",28
+BHC-ARV-6928,L7085295,verified,9-Jul-25,<400,6-Aug-25,Manual,"Medical examination, routine",28
+BHC-ARV-13325,L7083127,,9-Jul-25,,,,"Medical examination, routine",
+BHC-ARV-15078,L7083123,verified,9-Jul-25,450,21-Aug-25,Electronic,"Medical examination, routine",43
+BHC-ARV-18902,L7088334,verified,9-Jul-25,903,2-Sep-25,Electronic,Follow up after High Viral Load,55
+BHC-ARV-15672,L7089538,verified,9-Jul-25,<LDL copies/ml,2-Sep-25,Electronic,"Medical examination, routine",55
+BHC-ARV-7202,L7090061,verified,9-Jul-25,2079,7-Aug-25,Electronic,"Medical examination, routine",29
+BHC-ARV-14121,L7088365,verified,9-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",29
+BHC-ARV-18609,L7088350,verified,9-Jul-25,5190,7-Aug-25,Electronic,"Medical examination, routine",29
+BHC-ARV-11954,L7082746,verified,10-Jul-25,<400,2-Sep-25,Electronic,"Medical examination, routine",54
+BHC-ARV-8168,L7088326,verified,10-Jul-25,705,2-Sep-25,Electronic,"Medical examination, routine",54
+BHC-ARV-5322,L7088366,verified,10-Jul-25,1091,2-Sep-25,Electronic,"Medical examination, routine",54
+BHC-ARV-9604,L7114321,verified,10-Jul-25,1773,2-Sep-25,Electronic,"Medical examination, routine",54
+BHC-ARV-17028,L7052585,verified,10-Jul-25,892,2-Sep-25,Electronic,"Medical examination, routine",54
+BHC-ARV-14098,L7114324,verified,10-Jul-25,#NAME?,2-Sep-25,Electronic,"Medical examination, routine",54
+BHC-ARV-10332,L7118461,verified,10-Jul-25,#NAME?,2-Sep-25,Electronic,"Medical examination, routine",54
+BHC-ARV-16442,L7114306,,10-Jul-25,,,,"Medical examination, routine",
+BHC-ARV-1814,L7118456,verified,10-Jul-25,15304,2-Sep-25,Electronic,"Medical examination, routine",54
+BHC-ARV-2731,L7089044,verified,10-Jul-25,<400,2-Sep-25,Electronic,"Medical examination, routine",54
+BHC-ARV-7942,L7090113,verified,10-Jul-25,1022,2-Sep-25,Electronic,"Medical examination, routine",54
+BHC-ARV-7041,L7082162,verified,10-Jul-25,3957,2-Sep-25,Electronic,"Medical examination, routine",54
+BHC-ARV-13011,L7114315,verified,10-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",28
+BHC-ARV-17687,L7114328,verified,10-Jul-25,3673,21-Aug-25,Electronic,"Medical examination, routine",42
+BHC-ARV-14599,L7052926,verified,10-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",28
+BHC-ARV-18958,L7114303,,10-Jul-25,,,,"Medical examination, routine",
+BHC-ARV-16252,L7114304,completed,10-Jul-25,,,,"Medical examination, routine",
+BHC-ARV-18221,L7114322,verified,10-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",28
+BHC-ARV-15266,L7118459,verified,10-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",28
+BHC-ARV-13992,L7052893,verified,10-Jul-25,<LDL copies/ml,2-Sep-25,Electronic,"Medical examination, routine",54
+BHC-ARV-3518,L7114308,verified,10-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",28
+BHC-ARV-18071,L7118393,verified,10-Jul-25,612,2-Sep-25,Electronic,"Medical examination, routine",54
+BHC-ARV-17654,L7052900,verified,10-Jul-25,1321,2-Sep-25,Electronic,"Medical examination, routine",54
+BHC-ARV-12014,L7114336,verified,10-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",28
+BHC-ARV-12303,L7114515,verified,10-Jul-25,<400,2-Sep-25,Electronic,"Medical examination, routine",54
+BHC-ARV-4706,L7098469,verified,10-Jul-25,<LDL copies/ml,2-Sep-25,Electronic,"Medical examination, routine",54
+BHC-ARV-19447,L7118479,,10-Jul-25,,,,"Medical examination, routine",
+BHC-ARV-14012,L7114486,verified,10-Jul-25,1700,2-Sep-25,Electronic,"Medical examination, routine",54
+BHC-ARV-15752,L7114458,verified,10-Jul-25,<LDL copies/ml,2-Sep-25,Electronic,"Medical examination, routine",54
+BHC-ARV-1083,L7114330,verified,10-Jul-25,<LDL copies/ml,2-Sep-25,Electronic,"Medical examination, routine",54
+BHC-ARV-17405,L7052505,verified,10-Jul-25,<400,2-Sep-25,Electronic,"Medical examination, routine",54
+BHC-ARV-19361,L7118472,verified,10-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",28
+BHC-ARV-10520,L7118419,verified,11-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",41
+BHC-ARV-248,L7114490,verified,11-Jul-25,1476,21-Aug-25,Electronic,"Medical examination, routine",41
+BHC-ARV-1162,L7114314,verified,11-Jul-25,<400,7-Aug-25,Electronic,"Medical examination, routine",27
+BHC-ARV-15588,L7114448,verified,11-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",41
+BHC-ARV-9863,L7118392,verified,11-Jul-25,<LDL copies/ml,2-Sep-25,Electronic,"Medical examination, routine",53
+BHC-ARV-18097,L7114911,verified,11-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,Follow up after High Viral Load,41
+BHC-ARV-1631,L7114338,verified,11-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",27
+BHC-ARV-5052,L7114462,verified,11-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",27
+BHC-ARV-3353,L7114892,verified,11-Jul-25,<LDL,17-Jul-25,Manual,"Medical examination, routine",6
+BHC-ARV-19297,L7052507,verified,11-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",27
+BHC-ARV-5358,L7114313,verified,11-Jul-25,9226,21-Aug-25,Electronic,Follow up after High Viral Load,41
+BHC-ARV-8788,L7118420,verified,11-Jul-25,#NAME?,7-Aug-25,Electronic,Follow up after High Viral Load,27
+BHC-ARV-5392,L7052881,verified,11-Jul-25,1026,7-Aug-25,Electronic,"Medical examination, routine",27
+BHC-ARV-17345,L7114300,,11-Jul-25,,,,"Medical examination, routine",
+BHC-ARV-4467,L7052918,verified,11-Jul-25,#NAME?,7-Aug-25,Electronic,"Medical examination, routine",27
+BHC-ARV-14039,L7052928,verified,11-Jul-25,3229,7-Aug-25,Electronic,Follow up after High Viral Load,27
+BHC-ARV-9950,L7052892,verified,11-Jul-25,<400,7-Aug-25,Electronic,"Medical examination, routine",27
+BHC-ARV-12272,L7052564,verified,11-Jul-25,561,7-Aug-25,Electronic,"Medical examination, routine",27
+BHC-ARV-12242,L7118394,verified,11-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",27
+BHC-ARV-15972,L7118398,verified,11-Jul-25,1231,7-Aug-25,Electronic,"Medical examination, routine",27
+BHC-ARV-11842,L7052901,verified,11-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",27
+BHC-ARV-10517,L7118446,verified,11-Jul-25,<400,21-Aug-25,Electronic,"Medical examination, routine",41
+BHC-ARV-15056,L7118401,verified,11-Jul-25,561,21-Aug-25,Electronic,"Medical examination, routine",41
+BHC-ARV-5795,L7052781,,14-Jul-25,,,,"Medical examination, routine",
+BHC-ARV-11428,L7052786,verified,14-Jul-25,<400,21-Aug-25,Electronic,"Medical examination, routine",38
+BHC-ARV-10411,L7052788,completed,14-Jul-25,,,,"Medical examination, routine",
+BHC-ARV-8140,L7052761,verified,14-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",38
+BHC-ARV-7403,L7052794,verified,14-Jul-25,2721,21-Aug-25,Electronic,"Medical examination, routine",38
+BHC-ARV-12316,L7052748,verified,14-Jul-25,1755,21-Aug-25,Electronic,"Medical examination, routine",38
+BHC-ARV-4804,L7052744,verified,14-Jul-25,724,21-Aug-25,Electronic,"Medical examination, routine",38
+BHC-ARV-9920,L7052763,verified,14-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",38
+BHC-ARV-5517,L7052798,verified,14-Jul-25,#NAME?,7-Aug-25,Electronic,"Medical examination, routine",24
+BHC-ARV-18722,L7052775,verified,14-Jul-25,<400,7-Aug-25,Electronic,"Medical examination, routine",24
+BHC-ARV-19630,L7052819,verified,14-Jul-25,1262,21-Aug-25,Electronic,"Medical examination, routine",38
+BHC-ARV-9275,L7052767,verified,14-Jul-25,795,21-Aug-25,Electronic,"Medical examination, routine",38
+BHC-ARV-13078,L7052769,verified,14-Jul-25,1111,21-Aug-25,Electronic,"Medical examination, routine",38
+BHC-ARV-9860,L7052839,verified,14-Jul-25,45448,7-Aug-25,Electronic,"Medical examination, routine",24
+BHC-ARV-9284,L7052760,,14-Jul-25,,,,"Medical examination, routine",
+BHC-ARV-19326,L7052762,verified,14-Jul-25,#NAME?,7-Aug-25,Electronic,"Medical examination, routine",24
+BHC-ARV-14993,L7052826,verified,14-Jul-25,#NAME?,7-Aug-25,Electronic,"Medical examination, routine",24
+BHC-ARV-2609,L7052822,verified,14-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",24
+BHC-ARV-7012,L7052823,verified,14-Jul-25,9308,21-Aug-25,Electronic,"Medical examination, routine",38
+BHC-ARV-4231,L7052840,verified,14-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",24
+BHC-ARV-9387,L7052815,verified,14-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",24
+BHC-ARV-1544,L7052774,verified,14-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",24
+BHC-ARV-11026,L7118462,completed,15-Jul-25,,,,"Medical examination, routine",
+BHC-ARV-4370,L7118441,verified,15-Jul-25,1694,7-Aug-25,Electronic,"Medical examination, routine",23
+BHC-ARV-13740,L7114301,verified,15-Jul-25,1675,7-Aug-25,Electronic,"Medical examination, routine",23
+BHC-ARV-18618,L7118443,verified,15-Jul-25,#NAME?,7-Aug-25,Electronic,"Medical examination, routine",23
+BHC-ARV-7233,L7114298,verified,15-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",23
+BHC-ARV-10252,L7118484,verified,15-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",23
+BHC-ARV-9054,L7052587,completed,15-Jul-25,,,,"Medical examination, routine",
+BHC-ARV-18531,L7118460,verified,15-Jul-25,#NAME?,7-Aug-25,Electronic,"Medical examination, routine",23
+BHC-ARV-17741,L7052550,verified,15-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",23
+BHC-ARV-13526,L7052938,verified,15-Jul-25,<400,7-Aug-25,Electronic,"Medical examination, routine",23
+BHC-ARV-17345,L7052915,verified,15-Jul-25,1567,7-Aug-25,Electronic,"Medical examination, routine",23
+BHC-ARV-4111,L7114694,verified,15-Jul-25,<400,7-Aug-25,Electronic,"Medical examination, routine",23
+BHC-ARV-4732,L7052787,verified,15-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",23
+BHC-ARV-7064,L7114724,verified,15-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",23
+BHC-ARV-6147,L7052777,verified,15-Jul-25,1367,7-Aug-25,Electronic,"Medical examination, routine",23
+BHC-ARV-19258,L7052791,verified,15-Jul-25,10951,7-Aug-25,Electronic,"Medical examination, routine",23
+BHC-ARV-1831,L7118445,verified,15-Jul-25,#NAME?,7-Aug-25,Electronic,"Medical examination, routine",23
+BHC-ARV-3236,L7118487,verified,15-Jul-25,680,7-Aug-25,Electronic,"Medical examination, routine",23
+BHC-ARV-18528,L7118491,verified,15-Jul-25,#NAME?,7-Aug-25,Electronic,"Medical examination, routine",23
+BHC-ARV-19675,L7118418,verified,15-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",23
+BHC-ARV-15658,L7052849,verified,15-Jul-25,#NAME?,7-Aug-25,Electronic,"Medical examination, routine",23
+BHC-ARV-9190,L7118444,verified,15-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",23
+BHC-ARV-16179,L7118489,verified,15-Jul-25,510,7-Aug-25,Electronic,"Medical examination, routine",23
+BHC-ARV-11145,L7118483,verified,15-Jul-25,<LDL,17-Jul-25,Manual,"Medical examination, routine",2
+BHC-ARV-14855,L7052580,verified,15-Jul-25,#NAME?,7-Aug-25,Electronic,"Medical examination, routine",23
+BHC-ARV-6403,L7118409,verified,15-Jul-25,11353,7-Aug-25,Electronic,"Medical examination, routine",23
+BHC-ARV-10138,L7052770,verified,15-Jul-25,<400,7-Aug-25,Electronic,"Medical examination, routine",23
+BHC-ARV-7863,L7118417,verified,16-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",22
+BHC-ARV-18530,L7118490,verified,16-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",22
+BHC-ARV-1490,L7114326,verified,16-Jul-25,1146,7-Aug-25,Electronic,"Medical examination, routine",22
+BHC-ARV-8363,L7052766,verified,16-Jul-25,<400,7-Aug-25,Electronic,"Medical examination, routine",22
+BHC-ARV-18540,L7052776,verified,16-Jul-25,2057,7-Aug-25,Electronic,"Medical examination, routine",22
+BHC-ARV-12801,L7052836,verified,16-Jul-25,<400,7-Aug-25,Electronic,"Medical examination, routine",22
+BHC-ARV-11741,L7052743,verified,16-Jul-25,440,7-Aug-25,Electronic,"Medical examination, routine",22
+BHC-ARV-19618,L7052809,verified,16-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",22
+BHC-ARV-14652,L7052753,verified,16-Jul-25,<400,7-Aug-25,Electronic,"Medical examination, routine",22
+BHC-ARV-6948,L7052785,verified,16-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",22
+BHC-ARV-8901,L7052804,verified,16-Jul-25,1639,7-Aug-25,Electronic,"Medical examination, routine",22
+BHC-ARV-9009,L7118406,verified,16-Jul-25,1868,7-Aug-25,Electronic,"Medical examination, routine",22
+BHC-ARV-10455,L7052783,verified,16-Jul-25,#NAME?,7-Aug-25,Electronic,"Medical examination, routine",22
+BHC-ARV-8892,L7052772,verified,16-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",22
+BHC-ARV-19150,L7052941,verified,16-Jul-25,<400,7-Aug-25,Electronic,"Medical examination, routine",22
+BHC-ARV-10108,L7118304,verified,16-Jul-25,928,7-Aug-25,Electronic,"Medical examination, routine",22
+BHC-ARV-8493,L7114317,verified,16-Jul-25,#NAME?,7-Aug-25,Electronic,"Medical examination, routine",22
+BHC-ARV-18790,L7118408,verified,16-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",22
+BHC-ARV-17995,L7118466,verified,16-Jul-25,<400,7-Aug-25,Electronic,"Medical examination, routine",22
+BHC-ARV-18234,L7118486,verified,16-Jul-25,<400,7-Aug-25,Electronic,"Medical examination, routine",22
+BHC-ARV-18463,L7118442,verified,16-Jul-25,<400,7-Aug-25,Electronic,"Medical examination, routine",22
+BHC-ARV-7081,L7052908,verified,16-Jul-25,#NAME?,7-Aug-25,Electronic,"Medical examination, routine",22
+BHC-ARV-6214,L7118399,verified,16-Jul-25,#NAME?,7-Aug-25,Electronic,"Medical examination, routine",22
+BHC-ARV-4849,L7118426,verified,16-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",22
+BHC-ARV-9912,L7461047,verified,16-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",22
+BHC-ARV-12262,L7455397,verified,16-Jul-25,<400,7-Aug-25,Electronic,"Medical examination, routine",22
+BHC-ARV-7762,L7447193,verified,16-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",22
+BHC-ARV-2699,L7461663,verified,16-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",22
+BHC-ARV-18718,L7118424,verified,17-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",21
+BHC-ARV-13326,L7118480,verified,17-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",21
+BHC-ARV-12938,L7455905,verified,17-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",21
+BHC-ARV-17976,L7455937,verified,17-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",21
+BHC-ARV-6238,L7450782,verified,17-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",21
+BHC-ARV-4815,L7454858,verified,17-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",21
+BHC-ARV-9988,L7449739,,17-Jul-25,,,,"Medical examination, routine",
+BHC-ARV-13625,L7447169,verified,17-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",21
+BHC-ARV-12983,L7118469,verified,17-Jul-25,750,7-Aug-25,Electronic,"Medical examination, routine",21
+BHC-ARV-16970,L7447218,verified,17-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",21
+BHC-ARV-6102,L7089033,verified,17-Jul-25,<400,7-Aug-25,Electronic,"Medical examination, routine",21
+BHC-ARV-10739,L7449716,verified,17-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",21
+BHC-ARV-9308,L7447235,verified,17-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",21
+BHC-ARV-5774,L7454992,verified,17-Jul-25,<400,7-Aug-25,Electronic,"Medical examination, routine",21
+BHC-ARV-15129,L7444075,verified,17-Jul-25,<400,7-Aug-25,Electronic,"Medical examination, routine",21
+BHC-ARV-11166,L7447164,verified,17-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",35
+BHC-ARV-14166,L7456592,verified,17-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",21
+BHC-ARV-18966,L7052546,verified,17-Jul-25,<400,7-Aug-25,Electronic,"Medical examination, routine",21
+BHC-ARV-19296,L7459882,verified,17-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",21
+BHC-ARV-2712,L7471651,verified,17-Jul-25,<400,7-Aug-25,Electronic,"Medical examination, routine",21
+BHC-ARV-9663,L7459865,verified,17-Jul-25,<LDL,17-Jul-25,Manual,"Medical examination, routine",0
+BHC-ARV-4590,L7449421,completed,17-Jul-25,<528,17-Jul-25,Manual,"Medical examination, routine",0
+BHC-ARV-17941,L7418427,verified,17-Jul-25,1432,7-Aug-25,Electronic,"Medical examination, routine",21
+BHC-ARV-13979,L7447136,verified,17-Jul-25,<LDL,17-Jul-25,Manual,"Medical examination, routine",0
+BHC-ARV-18734,L7455941,verified,17-Jul-25,2807,7-Aug-25,Electronic,"Medical examination, routine",21
+BHC-ARV-7687,L7471237,verified,17-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",21
+BHC-ARV-17926,L7461640,verified,17-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",21
+BHC-ARV-4959,L7455943,verified,17-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",21
+BHC-ARV-14133,L7446905,verified,18-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",34
+BHC-ARV-19015,L7444088,verified,18-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",34
+BHC-ARV-14608,L7455790,verified,18-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",34
+BHC-ARV-18259,L7444239,verified,18-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",34
+BHC-ARV-15697,L7471164,verified,18-Jul-25,<400,21-Aug-25,Electronic,"Medical examination, routine",34
+BHC-ARV-14624,L7461400,verified,18-Jul-25,3569,21-Aug-25,Electronic,"Medical examination, routine",34
+BHC-ARV-13949,L7455661,verified,18-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",34
+BHC-ARV-6005,L7456795,verified,18-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",34
+BHC-ARV-14646,L7447163,verified,18-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",34
+BHC-ARV-18810,L7471633,verified,18-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",34
+BHC-ARV-18065,L7471659,verified,18-Jul-25,1009,21-Aug-25,Electronic,"Medical examination, routine",34
+BHC-ARV-18309,L7461436,verified,18-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",34
+BHC-ARV-1861,L7446980,verified,18-Jul-25,<400,21-Aug-25,Electronic,"Medical examination, routine",34
+BHC-ARV-9853,L7471221,verified,18-Jul-25,630,21-Aug-25,Electronic,"Medical examination, routine",34
+BHC-ARV-245,L7431843,verified,18-Jul-25,496,21-Aug-25,Electronic,"Medical examination, routine",34
+BHC-ARV-6647,L7449465,verified,18-Jul-25,<400,21-Aug-25,Electronic,"Medical examination, routine",34
+BHC-ARV-10733,L7471653,verified,18-Jul-25,586,21-Aug-25,Electronic,"Medical examination, routine",34
+BHC-ARV-10206,L7470995,verified,18-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",34
+BHC-ARV-17646,L7444091,verified,18-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",20
+BHC-ARV-3,L7429905,verified,18-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",20
+BHC-ARV-499,L7468957,verified,18-Jul-25,<LDL copies/ml,7-Aug-25,Electronic,"Medical examination, routine",20
+BHC-ARV-19352,L7471650,verified,18-Jul-25,3924,21-Aug-25,Electronic,"Medical examination, routine",34
+BHC-ARV-13428,L7447210,verified,18-Jul-25,2750,7-Aug-25,Electronic,"Medical examination, routine",20
+BHC-ARV-7838,L7471431,verified,18-Jul-25,1366,21-Aug-25,Electronic,"Medical examination, routine",34
+BHC-ARV-15122,L7454406,verified,18-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",34
+BHC-ARV-17006,L7463373,verified,18-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",34
+BHC-ARV-16662,L7436209,verified,18-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",34
+BHC-ARV-19554,L7471077,verified,18-Jul-25,421,21-Aug-25,Electronic,"Medical examination, routine",34
+BHC-ARV-6737,XBHC257J1,,18-Jul-25,<40,18-Jul-25,Manual,"Medical examination, routine",0
+BHC-ARV-7241,L7454408,completed,19-Jul-25,,,,"Medical examination, routine",
+BHC-ARV-11742,L7460987,verified,21-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",31
+BHC-ARV-1675,L7471532,verified,21-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",31
+BHC-ARV-5371,L7471645,verified,21-Jul-25,<400,21-Aug-25,Electronic,"Medical examination, routine",31
+BHC-ARV-8025,L7460986,verified,21-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",31
+BHC-ARV-13396,L7471666,verified,21-Jul-25,<400,21-Aug-25,Electronic,"Medical examination, routine",31
+BHC-ARV-18859,L7471094,verified,21-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",31
+BHC-ARV-9372,L7471371,verified,21-Jul-25,<400,21-Aug-25,Electronic,"Medical examination, routine",31
+BHC-ARV-1799,L7460990,verified,21-Jul-25,926,21-Aug-25,Electronic,"Medical examination, routine",31
+BHC-ARV-18675,L7454356,verified,21-Jul-25,<400,21-Aug-25,Electronic,"Medical examination, routine",31
+BHC-ARV-18672,L7471093,verified,21-Jul-25,705,21-Aug-25,Electronic,"Medical examination, routine",31
+BHC-ARV-11422,L7471661,,21-Jul-25,,,,"Medical examination, routine",
+BHC-ARV-9455,L7455751,verified,21-Jul-25,552,7-Aug-25,Electronic,"Medical examination, routine",17
+BHC-ARV-18860,L7454060,verified,21-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",31
+BHC-ARV-14968,L7454359,verified,21-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",31
+BHC-ARV-16210,L7456538,verified,21-Jul-25,3851,21-Aug-25,Electronic,"Medical examination, routine",31
+BHC-ARV-10253,L7454396,verified,21-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",31
+BHC-ARV-19683,L7471654,verified,21-Jul-25,<400,21-Aug-25,Electronic,"Medical examination, routine",31
+BHC-ARV-11406,L7471660,verified,21-Jul-25,1072,21-Aug-25,Electronic,"Medical examination, routine",31
+BHC-ARV-8265,L7471247,verified,21-Jul-25,1889,21-Aug-25,Electronic,"Medical examination, routine",31
+BHC-ARV-13548,L7471640,completed,21-Jul-25,,,,"Medical examination, routine",
+BHC-ARV-2357,L7461475,verified,22-Jul-25,<400,21-Aug-25,Electronic,"Medical examination, routine",30
+BHC-ARV-16042,L7461498,verified,22-Jul-25,<400,21-Aug-25,Electronic,"Medical examination, routine",30
+BHC-ARV-1070,L7461499,verified,22-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",30
+BHC-ARV-16953,L7454565,verified,22-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",30
+BHC-ARV-12099,L7454443,verified,22-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",30
+BHC-ARV-7631,L7455408,verified,22-Jul-25,<400,21-Aug-25,Electronic,"Medical examination, routine",30
+BHC-ARV-16299,L7461001,verified,22-Jul-25,1366,21-Aug-25,Electronic,Follow up after High Viral Load,30
+BHC-ARV-19242,L7454827,verified,22-Jul-25,<400,21-Aug-25,Electronic,"Medical examination, routine",30
+BHC-ARV-15410,L7461469,verified,22-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",30
+BHC-ARV-8193,L7418774,verified,22-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",30
+BHC-ARV-13319,L7461660,verified,22-Jul-25,870,21-Aug-25,Electronic,"Medical examination, routine",30
+BHC-ARV-5099,L7418747,verified,22-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",30
+BHC-ARV-7941,L7471101,verified,22-Jul-25,<400,21-Aug-25,Electronic,"Medical examination, routine",30
+BHC-ARV-1109,L7461432,verified,22-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",30
+BHC-ARV-19531,L7471134,verified,22-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",30
+BHC-ARV-15794,L7471379,verified,22-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",30
+BHC-ARV-15793,L7455772,verified,22-Jul-25,<400,21-Aug-25,Electronic,"Medical examination, routine",30
+BHC-ARV-15792,L7435849,verified,22-Jul-25,<400,21-Aug-25,Electronic,"Medical examination, routine",30
+BHC-ARV-7952,L7471177,verified,22-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",30
+BHC-ARV-15796,L7471380,verified,22-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",30
+BHC-ARV-14598,L7459586,verified,22-Jul-25,520,21-Aug-25,Electronic,"Medical examination, routine",30
+BHC-ARV-17721,L7431934,verified,22-Jul-25,<400,21-Aug-25,Electronic,"Medical examination, routine",30
+BHC-ARV-13638,L7431856,verified,22-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",30
+BHC-ARV-10663,L7454829,verified,22-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,Missing,30
+BHC-ARV-18063,L7461056,verified,22-Jul-25,<400,21-Aug-25,Electronic,"Medical examination, routine",30
+BHC-ARV-2784,L7455784,verified,22-Jul-25,1098,21-Aug-25,Electronic,"Medical examination, routine",30
+BHC-ARV-16465,L7418780,verified,22-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",30
+BHC-ARV-14799,L7461239,verified,22-Jul-25,<400,21-Aug-25,Electronic,"Medical examination, routine",30
+BHC-ARV-16647,L7455828,verified,22-Jul-25,961,21-Aug-25,Electronic,"Medical examination, routine",30
+BHC-ARV-1922,L7461055,verified,22-Jul-25,91658,21-Aug-25,Electronic,"Medical examination, routine",30
+BHC-ARV-15888,L7418390,verified,22-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",30
+BHC-ARV-9240,L7455911,verified,22-Jul-25,1085,21-Aug-25,Electronic,"Medical examination, routine",30
+BHC-ARV-126,L7418464,verified,22-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",30
+BHC-ARV-17677,L7471656,verified,23-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",29
+BHC-ARV-10510,L7461442,verified,23-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",29
+BHC-ARV-7313,L7454346,verified,23-Jul-25,1869,21-Aug-25,Electronic,"Medical examination, routine",29
+BHC-ARV-19109,L7461438,verified,23-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",29
+BHC-ARV-278,L7454352,verified,23-Jul-25,504,21-Aug-25,Electronic,"Medical examination, routine",29
+BHC-ARV-19270,L7471414,verified,23-Jul-25,11000,21-Aug-25,Electronic,"Medical examination, routine",29
+BHC-ARV-14427,L7471398,verified,23-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",29
+BHC-ARV-7717,L7471620,verified,23-Jul-25,<400,21-Aug-25,Electronic,"Medical examination, routine",29
+BHC-ARV-5682,L7461472,started,23-Jul-25,,,,"Medical examination, routine",
+BHC-ARV-16246,L7461443,started,23-Jul-25,,,,"Medical examination, routine",
+BHC-ARV-16805,L7418444,verified,23-Jul-25,<400,21-Aug-25,Electronic,"Medical examination, routine",29
+BHC-ARV-9991,L7471413,verified,23-Jul-25,657,21-Aug-25,Electronic,"Medical examination, routine",29
+BHC-ARV-19385,L7461504,verified,23-Jul-25,407,21-Aug-25,Electronic,"Medical examination, routine",29
+BHC-ARV-19253,L7454403,verified,23-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",29
+BHC-ARV-10779,L7471658,verified,23-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",29
+BHC-ARV-16378,L7461471,verified,23-Jul-25,22696,21-Aug-25,Electronic,"Medical examination, routine",29
+BHC-ARV-17796,L7471448,verified,23-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",29
+BHC-ARV-16529,L7471652,verified,23-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",29
+BHC-ARV-12935,L7461046,verified,23-Jul-25,<400,21-Aug-25,Electronic,"Medical examination, routine",29
+BHC-ARV-457,L7454351,verified,23-Jul-25,25346,21-Aug-25,Electronic,Follow up after High Viral Load,29
+BHC-ARV-6967,L7471559,verified,23-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",29
+BHC-ARV-19177,L7471406,verified,23-Jul-25,1969,21-Aug-25,Electronic,"Medical examination, routine",29
+BHC-ARV-11871,L7436210,verified,23-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",29
+BHC-ARV-1055,L7435910,verified,23-Jul-25,3469,21-Aug-25,Electronic,"Medical examination, routine",29
+BHC-ARV-19243,L7418784,verified,23-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",29
+BHC-ARV-12642,L7471464,verified,23-Jul-25,961,21-Aug-25,Electronic,"Medical examination, routine",29
+BHC-ARV-6660,L7454683,verified,24-Jul-25,915,21-Aug-25,Electronic,"Medical examination, routine",28
+BHC-ARV-9775,L7454903,verified,24-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",28
+BHC-ARV-7462,L7471800,verified,24-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",28
+BHC-ARV-19524,L7454902,verified,24-Jul-25,4819,21-Aug-25,Electronic,"Medical examination, routine",28
+BHC-ARV-4903,L7461484,verified,24-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",28
+BHC-ARV-5577,L7470843,verified,24-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",28
+BHC-ARV-6375,L7454626,verified,24-Jul-25,734,21-Aug-25,Electronic,"Medical examination, routine",28
+BHC-ARV-12157,L7470829,verified,24-Jul-25,<400,21-Aug-25,Electronic,"Medical examination, routine",28
+BHC-ARV-15878,L7461503,verified,24-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",28
+BHC-ARV-19223,L7461009,verified,24-Jul-25,<400,21-Aug-25,Electronic,"Medical examination, routine",28
+BHC-ARV-8896,L7461002,verified,24-Jul-25,8445,21-Aug-25,Electronic,"Medical examination, routine",28
+BHC-ARV-17230,L7471467,verified,24-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",28
+BHC-ARV-16056,L7454588,verified,24-Jul-25,<400,21-Aug-25,Electronic,"Medical examination, routine",28
+BHC-ARV-7062,L7454898,verified,24-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",28
+BHC-ARV-2904,L7418425,,24-Jul-25,<400,21-Aug-25,Manual,"Medical examination, routine",28
+BHC-ARV-7436,L7418485,verified,24-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",28
+BHC-ARV-19316,L7454899,verified,24-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",28
+BHC-ARV-16951,L7471411,verified,24-Jul-25,<400,21-Aug-25,Electronic,"Medical examination, routine",28
+BHC-ARV-19530,L7461510,verified,24-Jul-25,1412,21-Aug-25,Electronic,"Medical examination, routine",28
+BHC-ARV-18478,L7454892,verified,24-Jul-25,648,21-Aug-25,Electronic,"Medical examination, routine",28
+BHC-ARV-11869,L7461054,verified,24-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",28
+BHC-ARV-10042,L7436035,verified,24-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",28
+BHC-ARV-12069,L7461485,verified,24-Jul-25,<400,21-Aug-25,Electronic,"Medical examination, routine",28
+BHC-ARV-12372,L7461506,verified,24-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",28
+BHC-ARV-18711,XBHC257P1,,24-Jul-25,#NAME?,24-Jul-25,Manual,"Medical examination, routine",0
+BHC-ARV-5203,L7461508,verified,24-Jul-25,3370,21-Aug-25,Electronic,"Medical examination, routine",28
+BHC-ARV-10682,L7435944,started,24-Jul-25,<LDL,27-Oct-25,Manual,"Medical examination, routine",95
+BHC-ARV-7399,L7461520,verified,24-Jul-25,<400,21-Aug-25,Electronic,"Medical examination, routine",28
+BHC-ARV-15910,L7471561,verified,24-Jul-25,<400,21-Aug-25,Electronic,"Medical examination, routine",28
+BHC-ARV-3883,L7471373,verified,24-Jul-25,1460,21-Aug-25,Electronic,"Medical examination, routine",28
+BHC-ARV-17101,L7471021,verified,24-Jul-25,805,21-Aug-25,Electronic,"Medical examination, routine",28
+BHC-ARV-6898,L7471507,verified,25-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",27
+BHC-ARV-5238,L7461405,verified,25-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",27
+BHC-ARV-11325,L7471557,verified,25-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",27
+BHC-ARV-10940,L7471455,verified,25-Jul-25,<883,21-Aug-25,Electronic,"Medical examination, routine",27
+BHC-ARV-18665,L7471764,verified,25-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",27
+BHC-ARV-10875,L7461502,verified,25-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",27
+BHC-ARV-15603,L7454868,verified,25-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",27
+BHC-ARV-6318,L7431985,verified,25-Jul-25,<883,21-Aug-25,Electronic,"Medical examination, routine",27
+BHC-ARV-19688,L7447211,verified,25-Jul-25,<883,21-Aug-25,Electronic,"Medical examination, routine",27
+BHC-ARV-18150,L7447221,verified,25-Jul-25,<883,21-Aug-25,Electronic,"Medical examination, routine",27
+BHC-ARV-14625,L7455795,verified,25-Jul-25,<883,21-Aug-25,Electronic,"Medical examination, routine",27
+BHC-ARV-4531,L7463524,verified,25-Jul-25,<400,21-Aug-25,Electronic,"Medical examination, routine",27
+BHC-ARV-4878,L7447185,verified,25-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",27
+BHC-ARV-13406,L7435247,verified,25-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",27
+BHC-ARV-5131,L7450745,verified,25-Jul-25,<883,21-Aug-25,Electronic,"Medical examination, routine",27
+BHC-ARV-19689,L7443984,verified,25-Jul-25,<883,21-Aug-25,Electronic,"Medical examination, routine",27
+BHC-ARV-16354,L7447160,verified,25-Jul-25,1279,21-Aug-25,Electronic,"Medical examination, routine",27
+BHC-ARV-11189,L7447162,verified,25-Jul-25,<883,21-Aug-25,Electronic,"Medical examination, routine",27
+BHC-ARV-7073,L7436095,verified,25-Jul-25,<883,21-Aug-25,Electronic,"Medical examination, routine",27
+BHC-ARV-18167,L7463298,verified,25-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",27
+BHC-ARV-4757,L7447187,verified,25-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",27
+BHC-ARV-12477,L7450784,verified,25-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",27
+BHC-ARV-8298,L7447138,verified,25-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",27
+BHC-ARV-8000,L7432318,verified,26-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",26
+BHC-ARV-17183,L7461280,verified,26-Jul-25,428,21-Aug-25,Electronic,"Medical examination, routine",26
+BHC-ARV-3011,L7454813,verified,26-Jul-25,<883,21-Aug-25,Electronic,"Medical examination, routine",26
+BHC-ARV-5336,L7418776,verified,26-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",26
+BHC-ARV-13610,L7461509,verified,26-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",26
+BHC-ARV-15032,L7461468,verified,26-Jul-25,1069,21-Aug-25,Electronic,"Medical examination, routine",26
+BHC-ARV-13178,L7418683,verified,26-Jul-25,<883,21-Aug-25,Electronic,"Medical examination, routine",26
+BHC-ARV-5118,L7461258,verified,26-Jul-25,<883,21-Aug-25,Electronic,"Medical examination, routine",26
+BHC-ARV-8376,L7418707,verified,26-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",26
+BHC-ARV-12044,L7461388,verified,26-Jul-25,<883,21-Aug-25,Electronic,"Medical examination, routine",26
+BHC-ARV-14553,L7418411,verified,26-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",26
+BHC-ARV-1227,L7461235,verified,26-Jul-25,14887,21-Aug-25,Electronic,"Medical examination, routine",26
+BHC-ARV-7120,L7447196,verified,26-Jul-25,81543,21-Aug-25,Electronic,"Medical examination, routine",26
+BHC-ARV-7910,L7459481,verified,26-Jul-25,<883,21-Aug-25,Electronic,"Medical examination, routine",26
+BHC-ARV-2146,L7453987,verified,28-Jul-25,#NAME?,25-Aug-25,Electronic,"Medical examination, routine",28
+BHC-ARV-19359,L7450759,verified,28-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",24
+BHC-ARV-10748,L7447174,verified,28-Jul-25,<883,21-Aug-25,Electronic,"Medical examination, routine",24
+BHC-ARV-3398,L7456618,verified,28-Jul-25,<883,21-Aug-25,Electronic,"Medical examination, routine",24
+BHC-ARV-19273,L7456018,verified,28-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",24
+BHC-ARV-910,L7463496,verified,28-Jul-25,<883,21-Aug-25,Electronic,"Medical examination, routine",24
+BHC-ARV-9966,L7444048,verified,28-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",24
+BHC-ARV-17304,L7447198,verified,28-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",24
+BHC-ARV-4180,L7447184,verified,28-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",24
+BHC-ARV-9883,L7447146,verified,28-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",24
+BHC-ARV-14126,L7436165,verified,28-Jul-25,#NAME?,25-Aug-25,Electronic,"Medical examination, routine",28
+BHC-ARV-19693,L7435246,verified,28-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",24
+BHC-ARV-10107,L7436092,verified,28-Jul-25,1509,21-Aug-25,Electronic,"Medical examination, routine",24
+BHC-ARV-11884,L7447234,verified,28-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",24
+BHC-ARV-18299,L7447149,verified,28-Jul-25,1929,21-Aug-25,Electronic,"Medical examination, routine",24
+BHC-ARV-855,L7460432,verified,28-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",24
+BHC-ARV-5961,L7447199,pending,28-Jul-25,,,,"Medical examination, routine",
+BHC-ARV-14488,L7463720,verified,28-Jul-25,<883,21-Aug-25,Electronic,"Medical examination, routine",24
+BHC-ARV-16070,L7459745,verified,28-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",24
+BHC-ARV-5428,L7447144,verified,28-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",24
+BHC-ARV-13456,L7463465,verified,28-Jul-25,3120,21-Aug-25,Electronic,"Medical examination, routine",24
+BHC-ARV-12941,L7444132,verified,28-Jul-25,#NAME?,25-Aug-25,Electronic,"Medical examination, routine",28
+BHC-ARV-9388,L7447209,verified,29-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",23
+BHC-ARV-6823,L7447224,verified,29-Jul-25,3743,21-Aug-25,Electronic,"Medical examination, routine",23
+BHC-ARV-1633,L7447171,pending,29-Jul-25,,,,"Medical examination, routine",
+BHC-ARV-6506,L7455459,verified,29-Jul-25,<LDL copies/ml,25-Aug-25,Electronic,"Medical examination, routine",27
+BHC-ARV-487,L7436086,verified,29-Jul-25,<400,21-Aug-25,Electronic,"Medical examination, routine",23
+BHC-ARV-18599,L7450734,verified,29-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",23
+BHC-ARV-1035,L7436145,verified,29-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",23
+BHC-ARV-11120,L7418387,verified,29-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",23
+BHC-ARV-14369,L7471513,verified,29-Jul-25,407,21-Aug-25,Electronic,"Medical examination, routine",23
+BHC-ARV-10672,L7454756,verified,29-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",23
+BHC-ARV-11062,L7459845,verified,29-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",23
+BHC-ARV-17437,L7471170,verified,29-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",23
+BHC-ARV-3316,L7471647,verified,29-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",23
+BHC-ARV-5570,L7461672,verified,29-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",23
+BHC-ARV-4989,L7461236,verified,29-Jul-25,536,21-Aug-25,Electronic,"Medical examination, routine",23
+BHC-ARV-19188,L7470988,verified,29-Jul-25,<400,21-Aug-25,Electronic,"Medical examination, routine",23
+BHC-ARV-15501,L7471279,verified,29-Jul-25,<400,21-Aug-25,Electronic,"Medical examination, routine",23
+BHC-ARV-19217,L7471472,verified,29-Jul-25,<400,21-Aug-25,Electronic,"Medical examination, routine",23
+BHC-ARV-14463,L7471769,verified,29-Jul-25,19801,21-Aug-25,Electronic,"Medical examination, routine",23
+BHC-ARV-3927,L7471804,verified,29-Jul-25,1542,21-Aug-25,Electronic,"Medical examination, routine",23
+BHC-ARV-15099,L7454828,verified,29-Jul-25,<400,21-Aug-25,Electronic,"Medical examination, routine",23
+BHC-ARV-6594,L7454319,verified,29-Jul-25,3999,21-Aug-25,Electronic,"Medical examination, routine",23
+BHC-ARV-2430,L7471368,verified,29-Jul-25,<400,21-Aug-25,Electronic,"Medical examination, routine",23
+BHC-ARV-939,L7471449,verified,29-Jul-25,926,21-Aug-25,Electronic,"Medical examination, routine",23
+BHC-ARV-13494,L7461395,verified,29-Jul-25,676,21-Aug-25,Electronic,"Medical examination, routine",23
+BHC-ARV-6306,L7052793,,29-Jul-25,,,,"Medical examination, routine",
+BHC-ARV-6523,L7052829,verified,29-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",23
+BHC-ARV-8977,L7052814,,29-Jul-25,,,,"Medical examination, routine",
+BHC-ARV-10094,L7052771,verified,29-Jul-25,<400,21-Aug-25,Electronic,"Medical examination, routine",23
+BHC-ARV-14915,L7052797,,29-Jul-25,,,,"Medical examination, routine",
+BHC-ARV-9902,L7471148,,29-Jul-25,,,,"Medical examination, routine",
+BHC-ARV-19007,L7471143,verified,29-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",23
+BHC-ARV-18408,L7471459,verified,29-Jul-25,1306,21-Aug-25,Electronic,"Medical examination, routine",23
+BHC-ARV-8811,L7455829,verified,31-Jul-25,56348,4-Sep-25,Electronic,Follow up after High Viral Load,35
+BHC-ARV-18825,L7471621,verified,31-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",21
+BHC-ARV-2843,L7454469,verified,31-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",21
+BHC-ARV-3539,L7454734,verified,31-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",21
+BHC-ARV-10565,L7454561,verified,31-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",21
+BHC-ARV-19280,L7454416,verified,31-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",21
+BHC-ARV-19291,L7471192,verified,31-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",21
+BHC-ARV-18643,L7444260,verified,31-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",21
+BHC-ARV-18182,L7435067,verified,31-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",21
+BHC-ARV-9478,L7470942,verified,31-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",21
+BHC-ARV-18445,L7471503,verified,31-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",21
+BHC-ARV-16320,L7471462,verified,31-Jul-25,2776,21-Aug-25,Electronic,Follow up after High Viral Load,21
+BHC-ARV-1018,L7454419,verified,31-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",21
+BHC-ARV-14948,L7444220,verified,31-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",21
+BHC-ARV-6257,L7454741,verified,31-Jul-25,<400,21-Aug-25,Electronic,"Medical examination, routine",21
+BHC-ARV-4818,L7461674,verified,31-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",21
+BHC-ARV-10721,L7461039,verified,31-Jul-25,3181,21-Aug-25,Electronic,"Medical examination, routine",21
+BHC-ARV-18578,L7471199,verified,31-Jul-25,1098,21-Aug-25,Electronic,"Medical examination, routine",21
+BHC-ARV-5663,L7460957,verified,31-Jul-25,1593,21-Aug-25,Electronic,"Medical examination, routine",21
+BHC-ARV-18449,L7470902,verified,31-Jul-25,<400,21-Aug-25,Electronic,"Medical examination, routine",21
+BHC-ARV-13437,L7471397,verified,31-Jul-25,<400,21-Aug-25,Electronic,Follow up after High Viral Load,21
+BHC-ARV-17375,L7461501,verified,31-Jul-25,<400,21-Aug-25,Electronic,"Medical examination, routine",21
+BHC-ARV-9902,L7418410,verified,31-Jul-25,<400,21-Aug-25,Electronic,"Medical examination, routine",21
+BHC-ARV-18577,L7418791,verified,31-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",21
+BHC-ARV-699,L7052801,verified,31-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",21
+BHC-ARV-1834,L7455827,verified,31-Jul-25,<400,21-Aug-25,Electronic,"Medical examination, routine",21
+BHC-ARV-12485,L7052764,verified,31-Jul-25,1700,21-Aug-25,Electronic,"Medical examination, routine",21
+BHC-ARV-1124,L7460997,verified,31-Jul-25,586,21-Aug-25,Electronic,"Medical examination, routine",21
+BHC-ARV-7812,L7471475,verified,31-Jul-25,<883,21-Aug-25,Electronic,"Medical examination, routine",21
+BHC-ARV-14186,L7454369,verified,31-Jul-25,1165,21-Aug-25,Electronic,"Medical examination, routine",21
+BHC-ARV-17907,L7454398,verified,31-Jul-25,<883,21-Aug-25,Electronic,"Medical examination, routine",21
+BHC-ARV-6256,L7471773,verified,31-Jul-25,<883,21-Aug-25,Electronic,"Medical examination, routine",21
+BHC-ARV-15477,L7461024,verified,31-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",21
+BHC-ARV-6150,L7471145,verified,31-Jul-25,1062,21-Aug-25,Electronic,"Medical examination, routine",21
+BHC-ARV-3499,L7461171,verified,31-Jul-25,#NAME?,25-Aug-25,Electronic,"Medical examination, routine",25
+BHC-ARV-4755,L7471146,verified,31-Jul-25,2445,21-Aug-25,Electronic,"Medical examination, routine",21
+BHC-ARV-15033,L7460967,verified,31-Jul-25,947,21-Aug-25,Electronic,"Medical examination, routine",21
+BHC-ARV-12603,L7471167,verified,31-Jul-25,#NAME?,25-Aug-25,Electronic,"Medical examination, routine",25
+BHC-ARV-5365,L7454331,verified,31-Jul-25,<LDL copies/ml,21-Aug-25,Electronic,"Medical examination, routine",21
+BHC-ARV-19400,L7471604,verified,31-Jul-25,857836,21-Aug-25,Electronic,"Medical examination, routine",21
+BHC-ARV-19236,L7454989,,18-Jul-25,<400,3-Oct-25,Manual,"Medical examination, routine",77

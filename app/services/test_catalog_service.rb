@@ -123,9 +123,11 @@ module TestCatalogService
   end
 
   def self.retrieve_test_catalog(version)
-    return TestCatalogVersion.find_by(version:) if version.present?
-
-    TestCatalogVersion.last || {}
+    if version.present?
+      TestCatalogVersion.find_by(version:)
+    else
+      TestCatalogVersion.last || {}
+    end
   end
 
   def self.test_catalog_versions
