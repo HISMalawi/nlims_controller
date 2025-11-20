@@ -181,7 +181,8 @@ module OrderService
             result_measures[result_measure] =
               { 'result': result_value, 'result_date': reslt['time_entered'] }
           end
-          result_val[t.test_name] = result_measures
+          result_val[t.preferred_name] = result_measures if t.test_name&.downcase == 'hiv viral load'
+          result_val[t.test_name] = result_measures unless t.test_name&.downcase == 'hiv viral load'
           result_measures = {}
           result_status = true
         end
