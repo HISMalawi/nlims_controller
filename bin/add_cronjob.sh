@@ -1,83 +1,120 @@
 #!/bin/bash
 
-# This script is used to add a cron job to the current user's crontab.
-# It first removes a specific cron job if it exists, and then adds a new one.
+#############################################
+#  NLIMS + EMR CRON JOB CLEANER & INSTALLER
+#############################################
 
-cron_jobs_to_remove=('0 */2 * * * export PATH="$HOME/.rbenv/bin:$PATH" && eval "$(rbenv init -)" && cd /var/www/nlims_controller && rbenv local 2.5.3 && RAILS_ENV=development bundle exec rake master_nlims:sync_data --silent >> log/pull_from_master_nlims.log 2>&1'
-"0 */2 * * * /bin/bash -l -c 'cd /var/www/nlims_controller && rbenv local 2.5.3 && RAILS_ENV=development bundle exec rake master_nlims:sync_data --silent >> log/pull_from_master_nlims.log 2>&1'"
-"*/2 * * * * /bin/bash -l -c 'cd /var/www/nlims_data_syncroniser/ && rbenv local 2.5.3 && RAILS_ENV=development bundle exec rake nlims:sync_from_couchdb_to_couchdb --silent >> log/sync_couchdb_to_couchdb.log 2>&1'"
-'0 */3 * * * /bin/bash -l -c export PATH="$HOME/.rbenv/bin:$PATH" && eval "$(rbenv init -)" && cd /var/www/nlims_controller && rbenv local 3.2.0 && RAILS_ENV=development bundle exec rake master_nlims:update_order_source_couch_id --silent >> log/update_order_source_couch_id.log 2>&1'
+echo "============================================"
+echo "  STARTING NLIMS CRON CLEANUP & INSTALLATION"
+echo "============================================"
+
+# Backup current crontab
+backup_file="$HOME/crontab_backup_$(date +%Y%m%d_%H%M%S).txt"
+crontab -l 2>/dev/null > "$backup_file"
+echo "Backup created: $backup_file"
+echo
+
+#############################################
+#  SAFELY KILL ONLY NLIMS BACKGROUND JOBS
+#############################################
+
+echo "Stopping running NLIMS background jobs..."
+
+# Only kill:
+#  - scripts under bin/
+#  - rake jobs containing master_nlims:
+#  - rails runner commands from this app
+PIDS=$(ps aux \
+  | grep -E "/var/www/nlims_controller/bin|master_nlims:" \
+  | grep -v grep \
+  | awk '{print $2}')
+
+if [ -n "$PIDS" ]; then
+  echo "Killing the following PIDs:"
+  echo "$PIDS"
+  kill -9 $PIDS
+else
+  echo "No NLIMS jobs running."
+fi
+
+echo
+
+
+#############################################
+#  REMOVE OLD VERSIONS OF NLIMS JOBS
+#############################################
+
+echo "Cleaning old NLIMS cron jobs..."
+
+patterns_to_remove=(
+"/var/www/nlims_controller"
+"/var/www/nlims_data_syncroniser"
+"/var/www/html/iBLIS"
+"master_nlims:"
 )
-latest_current_cron_jobs=$(crontab -l 2>/dev/null)
 
-for job in "${cron_jobs_to_remove[@]}"; do
-  latest_current_cron_jobs=$(echo "$latest_current_cron_jobs" | grep -Fv "$job")
+current=$(crontab -l 2>/dev/null)
+
+for pattern in "${patterns_to_remove[@]}"; do
+  current=$(echo "$current" | grep -Fv "$pattern")
 done
 
-# Install the new crontab (without the target job)
-echo "$latest_current_cron_jobs" | crontab -
-
-# Define the cron job to add
-sync_cron_job="*/5 * * * * /bin/bash -l -c 'cd /var/www/nlims_controller && ./bin/sync.sh --silent >> log/sync.log 2>&1'"
-cron_job="*/5 * * * * /bin/bash -l -c 'cd /var/www/nlims_controller && ./bin/log_tracking_numbers.sh --silent >> log/log_tracking_numbers.log 2>&1'"
-emr_cron_job="*/5 * * * * /bin/bash -l -c 'export PATH=\"\$HOME/.rbenv/bin:\$PATH\" && eval \"\$(rbenv init -)\" && cd /var/www/EMR-API && bin/rails runner -e production '\''bin/lab/sync_worker.rb'\'''"
+echo "$current" | crontab -
+echo "Old cron jobs removed."
+echo
 
 
-# Get the current list of cron jobs
-current_cron_jobs=$(crontab -l 2>/dev/null)
+#############################################
+#  DEFINE NEW CRON JOBS
+#############################################
 
-# Check if the cron job already exists
-if echo "$current_cron_jobs" | grep -F "$cron_job" >/dev/null; then
-    echo "Cron job already exists."
-else
-    # Append the new cron job if it doesn't exist
-    echo -e "$current_cron_jobs\n$cron_job" | crontab -
-    echo "Cron job added successfully!"
-fi
+LOCK_DIR="/tmp"
 
-current_cron_jobs=$(crontab -l 2>/dev/null)
-if echo "$current_cron_jobs" | grep -F "$sync_cron_job" >/dev/null; then
-    echo "Cron job already exists."
-else
-    # Append the new cron job if it doesn't exist
-    echo -e "$current_cron_jobs\n$sync_cron_job" | crontab -
-    echo "Cron job added successfully!"
-fi
+cron_log_tracking_numbers="*/5 * * * * flock -n $LOCK_DIR/log_tracking_numbers.lock /bin/bash -l -c 'cd /var/www/nlims_controller && ./bin/log_tracking_numbers.sh --silent >> log/log_tracking_numbers.log 2>&1'"
 
-current_cron_jobs=$(crontab -l 2>/dev/null)
-if echo "$current_cron_jobs" | grep -F "$emr_cron_job" >/dev/null; then
-    echo "Cron job already exists."
-else
-    # Append the new cron job if it doesn't exist
-    echo -e "$current_cron_jobs\n$emr_cron_job" | crontab -
-    echo "Cron job added successfully!"
-fi
+cron_sync_sh="*/5 * * * * flock -n $LOCK_DIR/sync_sh.lock /bin/bash -l -c 'cd /var/www/nlims_controller && ./bin/sync.sh --silent >> log/sync.log 2>&1'"
 
-current_cron_jobs=$(crontab -l 2>/dev/null)
-nlims_cron_job="0 */3 * * * /bin/bash -l -c 'export PATH=\"\$HOME/.rbenv/bin:\$PATH\" && eval \"\$(rbenv init -)\" && cd /var/www/nlims_controller && rbenv local 3.2.0 && RAILS_ENV=development bundle exec rake master_nlims:sync_data --silent >> log/pull_from_master_nlims.log 2>&1'"
-if echo "$current_cron_jobs" | grep -F "$nlims_cron_job" >/dev/null; then
-    echo "Cron job already exists."
-else
-    # Append the new cron job if it doesn't exist
-    echo -e "$current_cron_jobs\n$nlims_cron_job" | crontab -
-    echo "Cron job added successfully!"
-fi
+cron_nlims_sync_data="0 */3 * * * flock -n $LOCK_DIR/nlims_sync_data.lock /bin/bash -l -c 'export PATH=\"\$HOME/.rbenv/bin:\$PATH\" && eval \"\$(rbenv init -)\" && cd /var/www/nlims_controller && rbenv local 3.2.0 && RAILS_ENV=development bundle exec rake master_nlims:sync_data --silent >> log/pull_from_master_nlims.log 2>&1'"
 
-current_cron_jobs=$(crontab -l 2>/dev/null)
-nlims_cron_job="*/30 * * * * /bin/bash -l -c 'export PATH=\"\$HOME/.rbenv/bin:\$PATH\" && eval \"\$(rbenv init -)\" && cd /var/www/nlims_controller && rbenv local 3.2.0 && RAILS_ENV=development bundle exec rake master_nlims:sync_local_nlims_acknowledge_results --silent >> log/pull_from_master_nlims.log 2>&1'"
-if echo "$current_cron_jobs" | grep -F "$nlims_cron_job" >/dev/null; then
-    echo "Cron job already exists."
-else
-    # Append the new cron job if it doesn't exist
-    echo -e "$current_cron_jobs\n$nlims_cron_job" | crontab -
-    echo "Cron job added successfully!"
-fi
+cron_nlims_ack="*/30 * * * * flock -n $LOCK_DIR/nlims_ack.lock /bin/bash -l -c 'export PATH=\"\$HOME/.rbenv/bin:\$PATH\" && eval \"\$(rbenv init -)\" && cd /var/www/nlims_controller && rbenv local 3.2.0 && RAILS_ENV=development bundle exec rake master_nlims:sync_local_nlims_acknowledge_results --silent >> log/pull_from_master_nlims.log 2>&1'"
 
-current_cron_jobs=$(crontab -l 2>/dev/null)
-nlims_job="0 * */5 * * /bin/bash -l -c 'export PATH=\"\$HOME/.rbenv/bin:\$PATH\" && eval \"\$(rbenv init -)\" && cd /var/www/nlims_controller && rbenv local 3.2.0 && RAILS_ENV=development bundle exec rake master_nlims:update_order_source_couch_id --silent >> log/update_order_source_couch_id.log 2>&1'"
-if echo "$current_cron_jobs" | grep -F "$nlims_job" >/dev/null; then
-    echo "Cron job already exists."
-else
-    echo -e "$current_cron_jobs\n$nlims_job" | crontab -
-    echo "Cron job added successfully!"
-fi
+cron_nlims_update_couch_id="0 * */5 * * flock -n $LOCK_DIR/nlims_update_couch_id.lock /bin/bash -l -c 'export PATH=\"\$HOME/.rbenv/bin:\$PATH\" && eval \"\$(rbenv init -)\" && cd /var/www/nlims_controller && rbenv local 3.2.0 && RAILS_ENV=development bundle exec rake master_nlims:update_order_source_couch_id --silent >> log/update_order_source_couch_id.log 2>&1'"
+
+# EMR job (NO FLOCK!)
+cron_emr="*/5 * * * * /bin/bash -l -c 'export PATH=\"\$HOME/.rbenv/bin:\$PATH\" && eval \"\$(rbenv init -)\" && cd /var/www/EMR-API && bin/rails runner -e production '\''bin/lab/sync_worker.rb'\'''"
+
+
+#############################################
+#  FUNCTION TO ADD A CRON JOB SAFELY
+#############################################
+
+add_job() {
+  local job="$1"
+  local current_cron=$(crontab -l 2>/dev/null)
+
+  if echo "$current_cron" | grep -F "$job" >/dev/null; then
+    echo "Already exists: $job"
+  else
+    echo -e "$current_cron\n$job" | crontab -
+    echo "Added: $job"
+  fi
+}
+
+
+#############################################
+#  ADD NEW CRON JOBS
+#############################################
+
+echo "Adding new cron jobs..."
+
+add_job "$cron_log_tracking_numbers"
+add_job "$cron_sync_sh"
+add_job "$cron_nlims_sync_data"
+add_job "$cron_nlims_ack"
+add_job "$cron_nlims_update_couch_id"
+add_job "$cron_emr"  # Only one without flock
+
+echo
+echo "============================================"
+echo "      NLIMS CRON INSTALLATION COMPLETE"
+echo "============================================"
