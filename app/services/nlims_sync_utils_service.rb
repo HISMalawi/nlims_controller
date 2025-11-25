@@ -394,7 +394,7 @@ class NlimsSyncUtilsService
   def order_tracking_numbers(order_id, limit: 50_000)
     JSON.parse(RestClient::Request.execute(
                  method: :get,
-                 url: "#{@address}/api/v1/orders/tracking_numbers/all?order_id=#{order_id}&limit=#{limit}",
+                 url: "#{@address}/api/v2/orders/tracking_numbers/all?order_id=#{order_id}&limit=#{limit}",
                  headers: { content_type: :json, accept: :json, token: @token }
                ), symbolize_names: true)
   rescue StandardError => e
@@ -421,7 +421,7 @@ class NlimsSyncUtilsService
   def get_test_catalog(version)
     response = RestClient::Request.execute(
       method: :get,
-      url: "#{@address}/api/v1/retrieve_test_catalog?version=#{version}",
+      url: "#{@address}/api/v2/test_catalog/#{version}",
       headers: { content_type: :json, accept: :json, 'token': @token }
     )
     if response.code == 200
@@ -434,7 +434,7 @@ class NlimsSyncUtilsService
   def check_new_test_catalog_version(version)
     response = RestClient::Request.execute(
       method: :get,
-      url: "#{@address}/api/v1/check_new_test_catalog_version_available?version=#{version}",
+      url: "#{@address}/api/v2/test_catalog/new_version/available?version=#{version}",
       headers: { content_type: :json, accept: :json, 'token': @token }
     )
     JSON.parse(response.body, symbolize_names: true)
