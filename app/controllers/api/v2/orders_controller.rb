@@ -32,7 +32,8 @@ module API
 
         @order = Speciman.find_by(tracking_number: response)
         update_tests(@order, params[:tests]) if params[:tests].present?
-        render_success('order created successfully', { tracking_number: @order.tracking_number, uuid: @order.couch_id }, :created)
+        render_success('order created successfully',
+                       { tracking_number: @order.tracking_number, uuid: @order.couch_id }, :created)
       end
       # rubocop:enable Metrics/AbcSize
 
@@ -115,8 +116,9 @@ module API
           %i[patient first_name] => 'patient first name not provided',
           %i[patient last_name] => 'patient last name not provided',
           %i[patient gender] => 'patient gender not provided',
-          %i[order sample_type name] => 'sample type not provided',
-          [:tests] => 'tests not provided',
+          %i[patient date_of_birth] => 'patient date of birth not provided',
+          %i[order sample_type name] => 'sample type name not provided',
+          %i[order sample_type nlims_code] => 'sample type nlims code not provided',
           %i[order date_created] => 'date for sample drawn not provided',
           %i[order sample_status name] => 'sample status not provided',
           %i[order priority] => 'sample priority level not provided',
@@ -125,14 +127,35 @@ module API
           %i[order drawn_by name] => 'first name for person ordering not provided'
         }
 
-        # ❗ Remove sample_type check for /requests
         required.delete(%i[order sample_type name]) if request.path.include?('/orders/requests')
+
+        # Validate simple fields
         required.each do |path, message|
           value = params.dig(*path.map(&:to_s))
           return message if value.blank?
         end
 
+        # Validate tests array
+        tests = params[:tests]
+        return 'tests not provided' if tests.blank?
+
+        tests.each_with_index do |t, _i|
+          return 'test type name not provided' if t.dig('test_type', 'name').blank?
+          return 'test type nlims code not provided' if t.dig('test_type', 'nlims_code').blank?
+        end
+        dob = params.dig('patient', 'date_of_birth')
+        return 'invalid date of birth format' unless valid_date_or_datetime?(dob)
+
+        date_created = params.dig('order', 'date_created')
+        return 'invalid date_created format, should be in format YYYY-MM-DD HH:MM:SS or YYYY-MM-DD' unless valid_date_or_datetime?(date_created)
+
         nil
+      end
+
+      def valid_date_or_datetime?(str)
+        !!Time.parse(str)
+      rescue ArgumentError, TypeError
+        false
       end
 
       def render_error(message, status)
@@ -148,11 +171,11 @@ module API
       end
 
       def order
-        if params[:couch_id].present?
-          @order = Speciman.find_by(tracking_number: params[:id], couch_id: params[:couch_id])
-        else
-          @order = Speciman.find_by(tracking_number: params[:id])
-        end
+        @order = if params[:couch_id].present?
+                   Speciman.find_by(tracking_number: params[:id], couch_id: params[:couch_id])
+                 else
+                   Speciman.find_by(tracking_number: params[:id])
+                 end
         return render_error('order not available', :not_found) unless @order
 
         @order
