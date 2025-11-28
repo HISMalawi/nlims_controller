@@ -171,8 +171,8 @@
         total++;
         
         const syncStatus = row.cells[5].getAttribute('data-sync-status');
-        const appStatus = row.cells[6].innerText.trim();
-        const pingStatus = row.cells[7].innerText.trim();
+        const appStatus = row.cells[7].innerText.trim();
+        const pingStatus = row.cells[8].innerText.trim();
 
         // Count issues
         if (syncStatus === 'old') syncIssues++;
@@ -208,8 +208,8 @@
       const sendingFacility = row.cells[1].innerText.toLowerCase();
       const district = row.cells[2].innerText.toLowerCase();
       const syncStatus = row.cells[5].getAttribute('data-sync-status');
-      const appStatus = row.cells[6].innerText.trim();
-      const pingStatus = row.cells[7].innerText.trim();
+      const appStatus = row.cells[7].innerText.trim();
+      const pingStatus = row.cells[8].innerText.trim();
 
       // Check all filter conditions
       const matchesSearch = searchInput === '' || 
