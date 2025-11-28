@@ -698,6 +698,17 @@ paths:
                       example: true
                     message:
                       type: string
+                      example: specimen type not available in nlims for
+                    data:
+                      type: object
+                      example: {}
+                - type: object
+                  properties:
+                    error:
+                      type: boolean
+                      example: true
+                    message:
+                      type: string
                       example: specimen status not available in nlims - available
                         statuses are [specimen_not_collected, specimen_accepted, specimen_rejected,
                         specimen_collected, sample_accepted_at_hub, sample_rejected_at_hub,
@@ -720,6 +731,16 @@ paths:
                 time_updated:
                   type: string
                   format: date-time
+                sample_type:
+                  type: object
+                  required:
+                  - name
+                  - nlims_code
+                  properties:
+                    name:
+                      type: string
+                    nlims_code:
+                      type: string
                 status_trail:
                   type: array
                   items:

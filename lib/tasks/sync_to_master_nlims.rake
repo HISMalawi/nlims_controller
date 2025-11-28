@@ -49,7 +49,7 @@ def pull_and_process_data_master_nlims(res)
   emr_service = EmrSyncService.new(nil)
   emr_auth_status = [emr_service.token.present?, emr_service.token]
   puts "EMR authentication: #{emr_auth_status[0].present? ? 'Success' : 'Failed'}"
-  return unless emr_auth_status[0].present?
+  # return unless emr_auth_status[0].present?
 
   token = nlims_service.token
   headers = {
@@ -58,7 +58,6 @@ def pull_and_process_data_master_nlims(res)
   }
   res.each do |sample|
     tracking_number = sample[:tracking_number]
-    test_id = sample[:test_id]
     couch_id = sample[:couch_id]
     begin
       url = "#{nlims_service.address}/api/v2/orders/#{tracking_number}?couch_id=#{couch_id}"
@@ -66,21 +65,40 @@ def pull_and_process_data_master_nlims(res)
       next unless order['error'] == false
 
       tests = order.deep_symbolize_keys[:data][:tests]
+      lab_order = Speciman.find_by(tracking_number:)
       tests.each do |lab_test|
         puts "Updating test for tracking number:  #{tracking_number}"
-        status, response = OrderService.update_tests(lab_test)
+        status, response = TestManagement::TestsService.update_tests(lab_order, lab_test)
         next unless status == true
 
         puts "Test updated for tracking number:  #{tracking_number}  --- Response: #{response}"
-        next if Speciman.find_by(tracking_number:)&.source_system&.downcase == 'iblis'
+        next if lab_order&.source_system&.downcase == 'iblis'
 
-        puts "Updating EMR for tracking number: #{tracking_number}"
-        StatusSyncTracker.where(tracking_number:, test_id:, app: 'emr').each do |status_tracker|
-          emr_service.push_status_to_emr(tracking_number, status_tracker.status, status_tracker.created_at, test_id)
+        lab_test_obj = Test.joins(:test_type)
+                           .where(
+                             specimen_id: lab_order.id,
+                             test_types: { nlims_code: lab_test.dig(:test_type, :nlims_code) }
+                           ).first
+
+        puts "Updating EMR for tracking number: #{lab_order&.tracking_number}"
+        StatusSyncTracker.where(tracking_number: lab_order&.tracking_number, test_id: lab_test_obj.id,
+                                app: 'emr').each do |status_tracker|
+          emr_service.push_status_to_emr(
+            tracking_number,
+            status_tracker.status,
+            status_tracker.created_at,
+            lab_test_obj.id
+          )
         end
-        test_result = TestResult.find_by(test_id:)
-        emr_service.push_result_to_emr(tracking_number, test_id, test_result&.time_entered) if test_result.present?
-        puts "EMR updated for tracking number: #{tracking_number}"
+        test_result = TestResult.find_by(test_id: lab_test_obj.id)
+        if test_result.present?
+          emr_service.push_result_to_emr(
+            lab_order&.tracking_number,
+            lab_test_obj.id,
+            test_result&.time_entered
+          )
+        end
+        puts "EMR updated for tracking number: #{lab_order&.tracking_number}"
       end
     rescue StandardError => e
       puts "Error: #{e}"

@@ -89,8 +89,20 @@ module OrderManagement
 
       return [false, 'status trail not provided'] if params['status_trail'].blank?
 
+      if params['sample_type'].present?
+        specimen_type = SpecimenType.find_by(nlims_code: params.dig(:sample_type, :nlims_code))
+        return [false, "specimen type not available in nlims for #{params.dig(:sample_type, :nlims_code)}"] if specimen_type.blank?
+      end
+
       ActiveRecord::Base.transaction do
         OrderManagement::SpecimenStatusUpdaterService.call(order, specimen_status)
+        if params['sample_type'].present?
+          specimen_type = SpecimenType.find_by(nlims_code: params.dig(:sample_type, :nlims_code))
+          order.update!(
+            specimen_type_id: specimen_type.id,
+            specimen_status_id: specimen_status.id
+          )
+        end
         params[:status_trail].each do |trail|
           trail_status = SpecimenStatus.find_by(name: trail[:status])
           next unless trail_status.present?
