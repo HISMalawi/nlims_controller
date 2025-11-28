@@ -463,6 +463,14 @@ RSpec.describe 'Orders API', type: :request do
         properties: {
           status: { type: :string },
           time_updated: { type: :string, format: 'date-time' },
+          sample_type: {
+            type: :object,
+            required: %w[name nlims_code],
+            properties: {
+              name: { type: :string },
+              nlims_code: { type: :string }
+            }
+          },
           status_trail: {
             type: :array,
             items: {
@@ -502,6 +510,7 @@ RSpec.describe 'Orders API', type: :request do
           oneOf: [
             schema_error('time updated or result date provided is in the past'),
             schema_error('status trail not provided'),
+            schema_error('specimen type not available in nlims for'),
             schema_error('specimen status not available in nlims - available statuses are [specimen_not_collected, specimen_accepted, specimen_rejected, specimen_collected, sample_accepted_at_hub, sample_rejected_at_hub, sample_accepted_at_ml, sample_rejected_at_ml]')
           ]
         )

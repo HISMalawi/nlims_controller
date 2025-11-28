@@ -191,14 +191,11 @@ module TestService
 
   def self.vl_without_results
     last_date = (Date.today - 6.months).to_s
-    Test.find_by_sql("SELECT specimen.tracking_number as tracking_number, specimen.id as specimen_id,
-      tests.id as test_id,test_type_id as test_type_id, test_types.name as test_name, specimen.couch_id as couch_id,
-      specimen.sending_facility as sending_facility
+    Test.find_by_sql("SELECT DISTINCT specimen.couch_id, specimen.tracking_number, specimen.sending_facility
       FROM tests INNER JOIN specimen ON specimen.id = tests.specimen_id
       INNER JOIN test_types ON test_types.id = tests.test_type_id
       WHERE tests.id NOT IN (SELECT test_id FROM test_results where test_id IS NOT NULL)
-      AND DATE(specimen.date_created) > '#{last_date}' AND
-      (test_types.name LIKE '%HIV Viral Load%' OR test_types.preferred_name LIKE '%Viral Load%')")
+      AND DATE(specimen.date_created) > '#{last_date}'")
   end
 
   def self.query_test_status(tracking_number)
