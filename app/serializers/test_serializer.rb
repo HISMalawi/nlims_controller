@@ -10,7 +10,9 @@ module TestSerializer
         uuid: test&.speciman&.couch_id,
         test_status: test&.test_status&.name,
         time_updated: test&.test_status_trail&.where(test_status_id: test&.test_status_id)&.first&.time_updated || test&.updated_at,
-        test_type: test&.test_type,
+        test_type: (test&.test_type&.attributes || {}).merge(
+          method_of_testing: test&.method_of_testing
+        ),
         status_trail: test&.test_status_trail&.map do |trail|
           {
             status_id: trail&.test_status_id,

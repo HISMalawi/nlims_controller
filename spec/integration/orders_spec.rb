@@ -123,7 +123,8 @@ RSpec.describe 'Orders API', type: :request do
                   required: %w[name nlims_code],
                   properties: {
                     name: { type: :string },
-                    nlims_code: { type: :string }
+                    nlims_code: { type: :string },
+                    method_of_testing: { type: :string }
                   }
                 },
                 test_results: {
@@ -218,7 +219,7 @@ RSpec.describe 'Orders API', type: :request do
             {
               test_status: 'verified',
               time_updated: '2025-09-13 02:00:00',
-              test_type: { name: 'HIV Viral Load', nlims_code: 'NLIMS_TT_0071_MWI' },
+              test_type: { name: 'HIV Viral Load', nlims_code: 'NLIMS_TT_0071_MWI', method_of_testing: 'Microscopy' },
               test_results: [
                 {
                   measure: { name: 'Viral Load', nlims_code: 'NLIMS_TI_0294_MWI' },
@@ -378,7 +379,8 @@ RSpec.describe 'Orders API', type: :request do
                              required: %w[name nlims_code],
                              properties: {
                                name: { type: :string },
-                               nlims_code: { type: :string }
+                               nlims_code: { type: :string },
+                               method_of_testing: { type: :string }
                              }
                            },
                            status_trail: {
