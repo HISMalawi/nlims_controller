@@ -99,6 +99,8 @@ cron_nlims_update_couch_id="0 * */5 * * flock -n $LOCK_DIR/nlims_update_couch_id
 # EMR job (NO FLOCK!)
 cron_emr="*/5 * * * * /bin/bash -l -c 'export PATH=\"\$HOME/.rbenv/bin:\$PATH\" && eval \"\$(rbenv init -)\" && cd /var/www/EMR-API && bin/rails runner -e production '\''bin/lab/sync_worker.rb'\'''"
 
+cron_rm_stale_locks="0 3 * * 6 /bin/bash -l -c 'cd /var/www/nlims_controller && ./bin/clean_up_stale_lock.sh --silent >> log/clean_up_stale_lock.log 2>&1'"
+
 
 #############################################
 #  FUNCTION TO ADD A CRON JOB SAFELY
@@ -128,7 +130,8 @@ add_job "$cron_sync_sh"
 add_job "$cron_nlims_sync_data"
 add_job "$cron_nlims_ack"
 add_job "$cron_nlims_update_couch_id"
-add_job "$cron_emr"  # Only one without flock
+add_job "$cron_emr"
+add_job "$cron_rm_stale_locks"
 
 echo
 echo "============================================"
