@@ -278,6 +278,8 @@ paths:
                             type: string
                           nlims_code:
                             type: string
+                          method_of_testing:
+                            type: string
                       test_results:
                         type: array
                         items:
@@ -382,6 +384,7 @@ paths:
                   test_type:
                     name: HIV Viral Load
                     nlims_code: NLIMS_TT_0071_MWI
+                    method_of_testing: Microscopy
                   test_results:
                   - measure:
                       name: Viral Load
@@ -567,6 +570,8 @@ paths:
                                 name:
                                   type: string
                                 nlims_code:
+                                  type: string
+                                method_of_testing:
                                   type: string
                             status_trail:
                               type: array

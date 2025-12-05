@@ -51,7 +51,8 @@ module OrderManagement
               time_created,
               test_status_id,
               created_by,
-              panel_id = nil
+              panel_id = nil,
+              lab_test.dig(:test_type, :method_of_testing)
             )
           else
             panel = PanelType.find_by(name: lab_test)
@@ -64,7 +65,8 @@ module OrderManagement
                 time_created,
                 test_status_id,
                 created_by,
-                panel_id = panel.id
+                panel_id = panel.id,
+                lab_test.dig(:test_type, :method_of_testing)
               )
             end
           end
@@ -197,13 +199,14 @@ module OrderManagement
       order
     end
 
-    def self.create_test(patient, specimen, testype_id, time_created, test_status_id, created_by, panel_id = nil)
+    def self.create_test(patient, specimen, testype_id, time_created, test_status_id, created_by, panel_id = nil, method_of_testing = nil)
       Test.create!(
         specimen_id: specimen.id,
         test_type_id: testype_id,
         patient_id: patient.id,
         created_by: created_by,
         panel_id: panel_id,
+        method_of_testing: method_of_testing,
         time_created: time_created,
         test_status_id: test_status_id
       )

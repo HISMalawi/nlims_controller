@@ -63,6 +63,22 @@ echo "$current" | crontab -
 echo "Old cron jobs removed."
 echo
 
+#############################################
+#  CLEAN UP STALE LOCKS
+#############################################
+
+echo "Cleaning up stale NLIMS cron job locks in /tmp..."
+LOCK_DIR="/tmp"
+
+rm -f "$LOCK_DIR/log_tracking_numbers.lock" \
+      "$LOCK_DIR/sync_sh.lock" \
+      "$LOCK_DIR/nlims_sync_data.lock" \
+      "$LOCK_DIR/nlims_ack.lock" \
+      "$LOCK_DIR/nlims_update_couch_id.lock"
+
+echo "Stale locks removed (if they existed)."
+echo
+
 
 #############################################
 #  DEFINE NEW CRON JOBS
@@ -82,6 +98,8 @@ cron_nlims_update_couch_id="0 * */5 * * flock -n $LOCK_DIR/nlims_update_couch_id
 
 # EMR job (NO FLOCK!)
 cron_emr="*/5 * * * * /bin/bash -l -c 'export PATH=\"\$HOME/.rbenv/bin:\$PATH\" && eval \"\$(rbenv init -)\" && cd /var/www/EMR-API && bin/rails runner -e production '\''bin/lab/sync_worker.rb'\'''"
+
+cron_rm_stale_locks="0 3 * * 6 /bin/bash -l -c 'cd /var/www/nlims_controller && ./bin/clean_up_stale_lock.sh --silent >> log/clean_up_stale_lock.log 2>&1'"
 
 
 #############################################
@@ -112,7 +130,8 @@ add_job "$cron_sync_sh"
 add_job "$cron_nlims_sync_data"
 add_job "$cron_nlims_ack"
 add_job "$cron_nlims_update_couch_id"
-add_job "$cron_emr"  # Only one without flock
+add_job "$cron_emr"
+add_job "$cron_rm_stale_locks"
 
 echo
 echo "============================================"

@@ -86,7 +86,11 @@ class NlimsSyncUtilsService
     payload = TestSerializer.serialize(test_record)
     return true if payload.nil?
 
-    url = "#{@address}/api/v2/tests/#{order&.tracking_number}/"
+    url = if Config.local_nlims? || order&.couch_id.nil?
+            "#{@address}/api/v2/tests/#{order&.tracking_number}/"
+          else
+            "#{@address}/api/v2/tests/#{order&.tracking_number}?couch_id=#{order&.couch_id}"
+          end
     response = JSON.parse(RestClient::Request.execute(
                             method: :put,
                             url:,
