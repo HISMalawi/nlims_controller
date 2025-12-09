@@ -1,6 +1,6 @@
 {
-  "id": 2,
-  "version": "v2",
+  "id": 3,
+  "version": "v3",
   "catalog": {
     "drugs": [
       {
@@ -17400,6 +17400,19 @@
                 "range_lower": null,
                 "range_upper": null,
                 "interpretation": "Growth of contaminants"
+              },
+              {
+                "id": 13507,
+                "sex": "Both",
+                "value": "Mixed growth; no predominant organism",
+                "age_max": null,
+                "age_min": null,
+                "created_at": "2025-12-09T10:58:36.000+02:00",
+                "updated_at": "2025-12-09T10:58:36.000+02:00",
+                "measures_id": 55,
+                "range_lower": null,
+                "range_upper": null,
+                "interpretation": "Mixed growth; no predominant organism"
               }
             ]
           }
@@ -45189,6 +45202,19 @@
                 "range_lower": null,
                 "range_upper": null,
                 "interpretation": "Growth of contaminants"
+              },
+              {
+                "id": 13507,
+                "sex": "Both",
+                "value": "Mixed growth; no predominant organism",
+                "age_max": null,
+                "age_min": null,
+                "created_at": "2025-12-09T10:58:36.000+02:00",
+                "updated_at": "2025-12-09T10:58:36.000+02:00",
+                "measures_id": 55,
+                "range_lower": null,
+                "range_upper": null,
+                "interpretation": "Mixed growth; no predominant organism"
               }
             ]
           }
@@ -63260,6 +63286,19 @@
                 "range_lower": null,
                 "range_upper": null,
                 "interpretation": "Growth of contaminants"
+              },
+              {
+                "id": 13507,
+                "sex": "Both",
+                "value": "Mixed growth; no predominant organism",
+                "age_max": null,
+                "age_min": null,
+                "created_at": "2025-12-09T10:58:36.000+02:00",
+                "updated_at": "2025-12-09T10:58:36.000+02:00",
+                "measures_id": 55,
+                "range_lower": null,
+                "range_upper": null,
+                "interpretation": "Mixed growth; no predominant organism"
               }
             ]
           }
@@ -63502,6 +63541,19 @@
                 "range_lower": null,
                 "range_upper": null,
                 "interpretation": "Growth of contaminants"
+              },
+              {
+                "id": 13507,
+                "sex": "Both",
+                "value": "Mixed growth; no predominant organism",
+                "age_max": null,
+                "age_min": null,
+                "created_at": "2025-12-09T10:58:36.000+02:00",
+                "updated_at": "2025-12-09T10:58:36.000+02:00",
+                "measures_id": 55,
+                "range_lower": null,
+                "range_upper": null,
+                "interpretation": "Mixed growth; no predominant organism"
               }
             ]
           }
@@ -63770,6 +63822,19 @@
                 "range_lower": null,
                 "range_upper": null,
                 "interpretation": "Growth of contaminants"
+              },
+              {
+                "id": 13507,
+                "sex": "Both",
+                "value": "Mixed growth; no predominant organism",
+                "age_max": null,
+                "age_min": null,
+                "created_at": "2025-12-09T10:58:36.000+02:00",
+                "updated_at": "2025-12-09T10:58:36.000+02:00",
+                "measures_id": 55,
+                "range_lower": null,
+                "range_upper": null,
+                "interpretation": "Mixed growth; no predominant organism"
               }
             ]
           }
@@ -70701,14 +70766,14 @@
   },
   "creator": null,
   "updated_by": null,
-  "created_at": "2025-12-07T18:02:54.484+02:00",
-  "updated_at": "2025-12-07T18:02:54.484+02:00",
+  "created_at": "2025-12-09T11:01:33.043+02:00",
+  "updated_at": "2025-12-09T11:01:33.043+02:00",
   "version_details": {
     "releaseNotes": [
       {
-        "title": "Add Culture Missing Results anf HB ranges",
+        "title": "Added Mixed growth; no predominant organism to culture results",
         "changeType": "enhancement",
-        "description": "Laboratory Test Catalog Updates We have completed several updates to the laboratory test catalog to improve accuracy and organization:  1. Hematology and Core Chemistry Hemoglobin (Hb) Ranges: Updated the reference ranges for Hemoglobin to reflect current clinical guidelines.  Culture Results: Incorporated previously missing culture and sensitivity results into the appropriate microbiology panels.  2. Urine and Parasitology Consolidation Parasitology Classification: Consolidated the following urine tests under the Parasitology department/section for improved workflow and reporting consistency:  Urine Chemistry  Urine Microscopy  Urine Macroscopy"
+        "description": "Added Mixed growth; no predominant organism to culture results"
       }
     ]
   }
