@@ -221,7 +221,7 @@ RSpec.describe 'Orders API', type: :request do
               test_type: { name: 'HIV Viral Load', nlims_code: 'NLIMS_TT_0071_MWI' },
               test_results: [
                 {
-                  measure: { name: 'Viral Load', nlims_code: 'NLIMS_TI_0294_MWI' },
+                  measure: { name: 'Viral Load', nlims_code: 'NLIMS_TT_0071_MWI' },
                   result: { value: '100', unit: 'copies/mL', result_date: '2025-09-13 04:10:02', platform: 'Abbot',
                             platformserial: '275021258' }
                 }

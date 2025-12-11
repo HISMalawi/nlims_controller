@@ -44,7 +44,7 @@ module TestManagement
         next unless result_params[:value].present?
 
         # Handle special case for Viral Load to remove commas
-        result_value = if measure.nlims_code == 'NLIMS_TI_0294_MWI'
+        result_value = if measure.nlims_code == 'NLIMS_TT_0071_MWI'
                          result_params[:value].gsub(',',
                                                     '')
                        else
