@@ -1,6 +1,6 @@
 {
-  "id": 3,
-  "version": "v3",
+  "id": 4,
+  "version": "v4",
   "catalog": {
     "drugs": [
       {
@@ -20987,9 +20987,9 @@
             "moh_code": null,
             "created_at": "2021-04-14T14:13:48.000+02:00",
             "loinc_code": null,
-            "nlims_code": "NLIMS_TI_0083_MWI",
+            "nlims_code": "NLIMS_SP_0003_MWI",
             "short_name": "Blood",
-            "updated_at": "2025-05-13T11:08:55.000+02:00",
+            "updated_at": "2025-12-11T14:12:15.000+02:00",
             "description": "",
             "measure_type": {
               "id": 5,
@@ -39729,9 +39729,9 @@
             "moh_code": null,
             "created_at": "2021-04-14T14:13:49.000+02:00",
             "loinc_code": null,
-            "nlims_code": "NLIMS_TI_0294_MWI",
+            "nlims_code": "NLIMS_TT_0071_MWI",
             "short_name": "VL",
-            "updated_at": "2025-05-06T10:54:53.000+02:00",
+            "updated_at": "2025-12-11T14:10:01.000+02:00",
             "description": "",
             "measure_type": {
               "id": 2,
@@ -70766,14 +70766,14 @@
   },
   "creator": null,
   "updated_by": null,
-  "created_at": "2025-12-09T11:01:33.043+02:00",
-  "updated_at": "2025-12-09T11:01:33.043+02:00",
+  "created_at": "2025-12-11T14:21:16.893+02:00",
+  "updated_at": "2025-12-11T14:21:16.893+02:00",
   "version_details": {
     "releaseNotes": [
       {
-        "title": "Added Mixed growth; no predominant organism to culture results",
+        "title": "Added missing culture results, also changed Blood and Viral Load NLIMS CODES to be the same across measure,tests and specimen",
         "changeType": "enhancement",
-        "description": "Added Mixed growth; no predominant organism to culture results"
+        "description": " Added Mixed growth; no predominant organism to culture results Added Mixed growth; no predominant organism to culture results. changed Blood and Viral Load NLIMS CODES to be the same across measure,tests and specimen"
       }
     ]
   }
