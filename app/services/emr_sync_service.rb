@@ -33,13 +33,6 @@ class EmrSyncService
     response = post_to_emr(url, payload)
     return unless response
 
-    SyncUtilService.ack_result_at_facility_level(
-      tracking_number,
-      test_id,
-      time_entered,
-      2,
-      'emr_at_facility'
-    )
     Test.find_by(id: test_id)&.update(result_given: true, date_result_given: time_entered)
     ResultSyncTracker.find_by(tracking_number:, test_id:, app: 'emr')&.update(sync_status: true)
   end
