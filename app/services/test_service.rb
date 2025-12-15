@@ -23,7 +23,8 @@ module TestService
     time_updated = params[:time_updated].blank? ? Time.now.strftime('%Y%m%d%H%M%S') : params[:time_updated]
     state, error_message = validate_time_updated(time_updated, sql_order)
     unless state
-      failed_test_update = FailedTestUpdate.find_or_create_by(tracking_number: params[:tracking_number], test_name: test_name, failed_step_status: test_status&.name)
+      failed_test_update = FailedTestUpdate.find_or_create_by(tracking_number: params[:tracking_number],
+                                                              test_name: test_name, failed_step_status: test_status&.name)
       failed_test_update.update(error_message: error_message, time_from_source: time_updated)
       return [false, error_message]
     end
@@ -43,7 +44,8 @@ module TestService
         result_date = params[:result_date].blank? ? Time.now.strftime('%Y%m%d%H%M%S') : params[:result_date]
         state, error_message = validate_time_updated(result_date, sql_order)
         unless state
-          failed_test_update = FailedTestUpdate.find_or_create_by(tracking_number: params[:tracking_number], test_name: test_name, failed_step_status: test_status&.name)
+          failed_test_update = FailedTestUpdate.find_or_create_by(tracking_number: params[:tracking_number],
+                                                                  test_name: test_name, failed_step_status: test_status&.name)
           failed_test_update.update(error_message: error_message, time_from_source: result_date)
           return [false, error_message]
         end
@@ -93,7 +95,7 @@ module TestService
         time_updated_date = time_updated.to_s.to_date
         created_date = sql_order.date_created.to_date
         return [false, 'time updated or result date provided is in the past'] if time_updated_date < created_date
-      rescue StandardError => e
+      rescue StandardError
         # Any error (invalid date format, type mismatch, etc.) - just proceed
         [true, nil]
       end
@@ -153,10 +155,37 @@ module TestService
       tst.result_given = true
       tst.date_result_given = date
       tst.save
+      acknwoledge_result_at_emr_level(tracking_number, tst.id, date)
       true
     else
       false
     end
+  end
+
+  def self.acknwoledge_result_at_emr_level(tracking_number, test_id, result_date)
+    check = ResultsAcknwoledge.find_by(tracking_number: tracking_number, acknwoledged_by: 'emr_at_facility')
+    if check.present?
+      test_ = Test.find_by(id: test_id)
+      test_.date_result_given = check.acknwoledged_at
+      test_.test_result_receipent_types = 2
+      test_.save
+    end
+    return unless check.nil?
+
+    ResultsAcknwoledge.create(
+      tracking_number: tracking_number,
+      test_id: test_id,
+      acknwoledged_at: Time.new.strftime('%Y%m%d%H%M%S'),
+      result_date: result_date,
+      acknwoledged_by: 'emr_at_facility',
+      acknwoledged_to_nlims: false,
+      acknowledgment_level: 2
+    )
+    test_ = Test.find_by(id: test_id)
+    test_.result_given = 0
+    test_.date_result_given = Time.new.strftime('%Y%m%d%H%M%S')
+    test_.test_result_receipent_types = 2
+    test_.save
   end
 
   def self.test_no_results(npid)

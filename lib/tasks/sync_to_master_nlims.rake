@@ -93,7 +93,7 @@ def pull_and_process_data_master_nlims(res)
               next unless emr_auth_status[0] == true
 
               emr_service.push_result_to_emr(tracking_number, test_id, re_value['result_date'])
-              acknwoledge_result_at_emr_level(tracking_number, test_id, re_value['result_date'])
+              # acknwoledge_result_at_emr_level(tracking_number, test_id, re_value['result_date'])
               puts "Pushed result to emr for tracking number: #{tracking_number}"
             end
           end
