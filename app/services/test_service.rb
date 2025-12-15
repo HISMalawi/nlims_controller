@@ -151,11 +151,7 @@ module TestService
     if !res.blank?
       type = TestResultRecepientType.find_by(name: recipient_type)
       tst = Test.find_by(id: res[0]['id'])
-      tst.test_result_receipent_types = type.id
-      tst.result_given = true
-      tst.date_result_given = date
-      tst.save
-      acknwoledge_result_at_emr_level(tracking_number, tst.id, date)
+      SyncUtilService.ack_result_at_facility_level(tracking_number, tst.id, date, type.id, 'emr_at_facility')
       true
     else
       false
