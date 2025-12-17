@@ -110,14 +110,15 @@ module ProcessTestCatalogService
         end
       end
       test_indicator_ranges.map do |test_indicator_range|
-        MeasureRange.create!(
+        MeasureRange.find_or_create_by!(
           measures_id:,
           age_min: test_indicator_range[:age_min],
           age_max: test_indicator_range[:age_max],
           range_lower: test_indicator_range[:range_lower],
           range_upper: test_indicator_range[:range_upper],
           value: test_indicator_range[:value],
-          interpretation: test_indicator_range[:interpretation]
+          interpretation: test_indicator_range[:interpretation],
+          sex: test_indicator_range[:sex] || 'Both'
         )
       end
     end
