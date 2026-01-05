@@ -18,7 +18,7 @@ class Speciman < ApplicationRecord
   end
 
   def push_order_to_master_nlims
-    return if specimen_type_id.zero?
+    return if specimen_type_id == SpecimenType.get_specimen_type_id('not_specified')
 
     OrderSyncTracker.find_or_create_by(tracking_number:)
     SyncWithNlimsJob.perform_async({
@@ -29,7 +29,7 @@ class Speciman < ApplicationRecord
   end
 
   def push_order_update_to_master_nlims
-    return if specimen_type_id.zero?
+    return if specimen_type_id == SpecimenType.get_specimen_type_id('not_specified')
 
     OrderSyncTracker.find_or_create_by(tracking_number:)
     SyncWithNlimsJob.perform_async({

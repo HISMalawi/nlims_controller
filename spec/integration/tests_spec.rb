@@ -109,7 +109,7 @@ RSpec.describe 'Tests API', type: :request do
             {
               "measure": {
                 "name": 'Viral Load',
-                "nlims_code": 'NLIMS_TI_0294_MWI'
+                "nlims_code": 'NLIMS_TT_0071_MWI'
               },
               "result": {
                 "value": '100w00',
@@ -169,7 +169,7 @@ RSpec.describe 'Tests API', type: :request do
           acknowledged_by: { type: :string }
         },
         example: {
-          test_type: { name: 'HIV Viral Load', nlims_code: 'NLIMS_TI_0294_MWI' },
+          test_type: { name: 'HIV Viral Load', nlims_code: 'NLIMS_TT_0071_MWI' },
           date_acknowledged: '2025-02-24T15:19:56.000+02:00',
           recipient_type: 'test_results_delivered_to_site_electronically',
           acknowledged_by: 'emr_at_facility'
