@@ -12,5 +12,8 @@ measures_to_fix = [
 ]
 
 measures_to_fix.each do |measure|
-  Measure.where(name: measure[:names]).update_all(test_catalog_code: measure[:code])
+  puts "Fixing #{measure[:names]} to #{measure[:code]}"
+  Measure.where(name: measure[:names]).update_all(nlims_code: measure[:code])
 end
+
+puts 'Done'
