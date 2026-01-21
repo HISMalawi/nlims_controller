@@ -6,9 +6,8 @@ module  SyncToNlimsService
     def push_status_to_nlims
       StatusSyncTracker.where(
         sync_status: false,
-        app: 'nlims',
-        created_at: (Date.today - 120)..Date.today + 1
-      ).limit(2).each do |tracker|
+        app: 'nlims'
+      ).limit(1000).each do |tracker|
         nlims = NlimsSyncUtilsService.new(tracking_number(tracker&.test_id))
         puts "Pushing status to nlims for test id: #{tracker&.test_id}"
         nlims.push_test_actions_to_nlims(test_id: tracker&.test_id, action: 'status_update')
@@ -19,9 +18,8 @@ module  SyncToNlimsService
 
     def push_order_to_nlims
       OrderSyncTracker.where(
-        synced: false,
-        created_at: (Date.today - 120)..Date.today + 1
-      ).each do |tracker|
+        synced: false
+      ).limit(1000).each do |tracker|
         nlims = NlimsSyncUtilsService.new(tracker&.tracking_number)
         nlims.push_order_to_master_nlims(tracker&.tracking_number)
       rescue StandardError => e
@@ -45,9 +43,8 @@ module  SyncToNlimsService
     def push_result_to_nlims
       ResultSyncTracker.where(
         sync_status: false,
-        app: 'nlims',
-        created_at: (Date.today - 120)..Date.today + 1
-      ).each do |tracker|
+        app: 'nlims'
+      ).limit(1000).each do |tracker|
         nlims = NlimsSyncUtilsService.new(tracking_number(tracker&.test_id))
         nlims.push_test_actions_to_nlims(test_id: tracker&.test_id, action: 'result_update')
       rescue StandardError => e
@@ -55,11 +52,23 @@ module  SyncToNlimsService
       end
     end
 
+    def push_added_tests_to_nlims
+      AddedTestSyncTracker.where(
+        sync_status: false,
+        app: 'nlims'
+      ).limit(1000).each do |tracker|
+        nlims = NlimsSyncUtilsService.new(tracking_number(tracker&.test_id))
+        puts "Pushing added test to nlims for test id: #{tracker&.test_id}"
+        nlims.push_test_actions_to_nlims(test_id: tracker&.test_id, action: 'add_test')
+      rescue StandardError => e
+        Rails.logger.error("Failed to push added test to NLMIS: #{e.message}")
+      end
+    end
+
     def push_order_update_to_nlims
       OrderStatusSyncTracker.where(
-        sync_status: false,
-        created_at: (Date.today - 120)..Date.today + 1
-      ).each do |tracker|
+        sync_status: false
+      ).limit(1000).each do |tracker|
         order = Speciman.find_by(tracking_number: tracker&.tracking_number)
         begin
           nlims = NlimsSyncUtilsService.new(order&.tracking_number)

@@ -86,23 +86,37 @@ class NlimsSyncUtilsService
     payload = TestSerializer.serialize(test_record)
     return true if payload.nil?
 
+    # Determine endpoint based on action
+    endpoint = action == 'add_test' ? 'add_test_to_order' : ''
+
     url = if Config.local_nlims? || order&.couch_id.nil?
-            "#{@address}/api/v2/tests/#{order&.tracking_number}/"
+            "#{@address}/api/v2/tests/#{order&.tracking_number}/#{endpoint}"
           else
-            "#{@address}/api/v2/tests/#{order&.tracking_number}?couch_id=#{order&.couch_id}"
+            "#{@address}/api/v2/tests/#{order&.tracking_number}/#{endpoint}?couch_id=#{order&.couch_id}"
           end
+
+    method = action == 'add_test' ? :post : :put
+
     response = JSON.parse(RestClient::Request.execute(
-                            method: :put,
+                            method:,
                             url:,
                             timeout: 10,
                             payload: payload.to_json,
                             content_type: :json,
                             headers: { content_type: :json, accept: :json, token: @token }
                           ))
-    if ['test updated successfuly', 'order already updated with such state'].include?(response['message'])
-      unless action == 'status_update'
-        ResultSyncTracker.find_by(tracking_number: order&.tracking_number, test_id:, app: 'nlims')&.update(sync_status: true)
+
+    success_messages = ['test updated successfuly', 'order already updated with such state', 'test added successfully']
+
+    if success_messages.include?(response['message'])
+      if action == 'add_test'
+        AddedTestSyncTracker.find_by(tracking_number: order&.tracking_number, test_id:,
+                                     app: 'nlims')&.update(sync_status: true)
+      elsif action != 'status_update'
+        ResultSyncTracker.find_by(tracking_number: order&.tracking_number, test_id:,
+                                  app: 'nlims')&.update(sync_status: true)
       end
+
       StatusSyncTracker.find_by(
         tracking_number: order&.tracking_number,
         test_id:,
@@ -140,7 +154,7 @@ class NlimsSyncUtilsService
     }
   end
 
-  def push_order_to_master_nlims(tracking_number, once_off=false)
+  def push_order_to_master_nlims(tracking_number, once_off = false)
     order = Speciman.find_by(tracking_number:)
     return false if order.nil?
     return false if order.specimen_type_id == SpecimenType.get_specimen_type_id('not_specified')

@@ -102,7 +102,7 @@ module TestManagement
                    end
 
       ActiveRecord::Base.transaction do
-        Test.create!(
+        new_test = Test.create!(
           specimen_id: order.id,
           test_type_id: test_type.id,
           patient_id: patient_id,
@@ -111,6 +111,10 @@ module TestManagement
           time_created: Time.now,
           test_status_id: TestStatus.get_test_status_id('drawn')
         )
+
+        # Track test addition for syncing to master NLIMS
+        track_added_test(order.tracking_number, new_test.id)
+
         [true, 'test added successfully']
       end
     end
@@ -142,6 +146,15 @@ module TestManagement
 
       # Create a new ResultSyncTracker record
       ResultSyncTracker.create(tracking_number:, test_id:, app: 'nlims')
+    end
+
+    def self.track_added_test(tracking_number, test_id)
+      return unless Config.local_nlims?
+      return if Config.master_update_source?(tracking_number)
+      return if Config.same_source?(tracking_number)
+      return if AddedTestSyncTracker.exists?(tracking_number:, test_id:, app: 'nlims')
+
+      AddedTestSyncTracker.create(tracking_number:, test_id:, app: 'nlims')
     end
 
     def self.validate_test_update_params(order, params)
