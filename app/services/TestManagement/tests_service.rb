@@ -84,6 +84,37 @@ module TestManagement
       end
     end
 
+    def self.add_test_to_order(order, params)
+      test_type = TestType.find_by(nlims_code: params.dig(:test_type, :nlims_code))
+      return [false, 'test type not found'] unless test_type.present?
+
+      return [false, 'test already exists for order'] if Test.exists?(specimen_id: order.id, test_type_id: test_type.id)
+
+      patient_id = order.tests.first&.patient_id
+      return [false, 'patient not associated with order'] unless patient_id.present?
+
+      # Get created_by from pending status in status_trail
+      pending_status = params[:status_trail]&.find { |trail| trail[:status] == 'pending' }
+      created_by = if pending_status
+                     "#{pending_status[:updated_by]['first_name']} #{pending_status[:updated_by]['last_name']}"
+                   else
+                     order.tests.first&.created_by || 'system'
+                   end
+
+      ActiveRecord::Base.transaction do
+        Test.create!(
+          specimen_id: order.id,
+          test_type_id: test_type.id,
+          patient_id: patient_id,
+          created_by: created_by,
+          panel_id: nil,
+          time_created: Time.now,
+          test_status_id: TestStatus.get_test_status_id('drawn')
+        )
+        [true, 'test added successfully']
+      end
+    end
+
     def self.result_already_available?(test_id, measure_id, value)
       test_result = TestResult.find_by(test_id:, measure_id:)
       return false if test_result.blank?
