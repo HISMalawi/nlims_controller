@@ -23,7 +23,7 @@ module OrderSerializer
           sending_facility: order&.sending_facility,
           district: order&.district,
           site_code_number: Site.find_by(name: order&.sending_facility)&.site_code_number || '',
-          requested_by: order&.requested_by,
+          requested_by: order&.requested_by.present? ? order&.requested_by : order&.drawn_by_name,
           art_start_date: order&.art_start_date,
           arv_number: order&.arv_number,
           art_regimen: order&.art_regimen,
