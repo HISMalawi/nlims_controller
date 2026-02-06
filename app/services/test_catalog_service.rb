@@ -135,6 +135,14 @@ module TestCatalogService
   end
 
   def self.new_version_available?(previous_version)
+    if Config.local_nlims?
+      begin
+        puts 'Synchronizing Test Catalog'
+        SyncToNlimsService.synchronize_test_catalog if Config.local_nlims?
+      rescue StandardError => e
+        puts "Error: #{e.message} ==> Synchronize Test Catalog"
+      end
+    end
     catalog_version = TestCatalogVersion.where(status: 'approved-release')
                                         .select(:id, :version, :version_details, :created_at)
                                         .order(created_at: :desc)
