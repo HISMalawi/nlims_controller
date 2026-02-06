@@ -1,0 +1,14 @@
+/var/www/**/log/*.log {
+    daily
+    rotate 4
+    missingok
+    notifempty
+    compress
+    delaycompress
+    copytruncate
+    dateext
+    sharedscripts
+    postrotate
+        :
+    endscript
+}

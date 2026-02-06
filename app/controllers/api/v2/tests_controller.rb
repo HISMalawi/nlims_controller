@@ -7,11 +7,21 @@ module API
     # TestsController
     class TestsController < ApplicationController
       before_action :update_remote_host, only: [:update_test]
-      before_action :order, only: %i[show update acknowledge_test_results_receipt]
+      before_action :order, only: %i[show update acknowledge_test_results_receipt add_test_to_order]
 
       def update
         status, response = TestManagement::TestsService.update_tests(@order, params)
         if status == true
+          render_success(response, OrderSerializer.serialize(@order))
+        else
+          render_error(response, :unprocessable_entity)
+        end
+      end
+
+      def add_test_to_order
+        status, response = TestManagement::TestsService.add_test_to_order(@order, params)
+        if status == true
+          TestManagement::TestsService.update_tests(@order, params)
           render_success(response, OrderSerializer.serialize(@order))
         else
           render_error(response, :unprocessable_entity)

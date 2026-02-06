@@ -29,6 +29,13 @@ rescue StandardError => e
 end
 
 begin
+  puts 'Pushing Added Tests to NLIMS'
+  SyncToNlimsService.push_added_tests_to_nlims if Config.local_nlims?
+rescue StandardError => e
+  puts "Error: #{e.message} ==> Push Added Tests to Master NLIMS"
+end
+
+begin
   puts 'Pushing Status Updates to NLIMS'
   SyncToNlimsService.push_status_to_nlims
 rescue StandardError => e

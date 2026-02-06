@@ -114,6 +114,7 @@ Rails.application.routes.draw do
       resources :tests, controller: :tests, only: %i[update] do
         collection do
           post ':id/acknowledge_test_results_receipt' => 'tests#acknowledge_test_results_receipt'
+          post ':id/add_test_to_order' => 'tests#add_test_to_order'
         end
       end
 
