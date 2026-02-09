@@ -10,8 +10,9 @@ module ProcessTestCatalogService
       if new_version_available[:is_new_version_available]
         test_catalog = nlims_service.get_test_catalog(new_version_available[:version])
         ActiveRecord::Base.transaction do
-          TestCatalogVersion.create!(test_catalog)
-          process_test_catalog(test_catalog)
+          catalog = TestCatalogVersion.create!(test_catalog)
+          catalog.update!(version: test_catalog[:version], status: 'approved-release')
+          process_test_catalog(test_catalog[:catalog].deep_symbolize_keys)
         end
       else
         puts 'No new version'
