@@ -1,5 +1,7 @@
 class API::V2::OrderController < ApplicationController
   before_action :remote_host, only: %i[request_order]
+  before_action :update_sending_facility, only: %i[request_order create_order_once_off create_order]
+
   def request_order
     if !params['district']
       msg = 'district not provided'
@@ -279,5 +281,13 @@ class API::V2::OrderController < ApplicationController
     end
 
     nil
+  end
+
+  def update_sending_facility
+    return nil if request.remote_ip == '127.0.0.1' || !request.remote_ip.present?
+
+    site = Site.find_by(host_address: request.remote_ip)
+    params[:order][:sending_facility] = site&.name if params[:order].present? && site.present?
+    site
   end
 end

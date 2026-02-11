@@ -9,6 +9,7 @@ module API
       before_action :remote_host, only: %i[create]
       before_action :update_remote_host, only: %i[update]
       before_action :order, only: %i[show update]
+      before_action :update_sending_facility, only: %i[create request_order]
 
       def index
         render json: Order.all.limit(10)
@@ -179,6 +180,14 @@ module API
         return render_error('order not available', :not_found) unless @order
 
         @order
+      end
+
+      def update_sending_facility
+        return nil if request.remote_ip == '127.0.0.1' || !request.remote_ip.present?
+
+        site = Site.find_by(host_address: request.remote_ip)
+        params[:order][:sending_facility] = site&.name if params[:order].present? && site.present?
+        site
       end
     end
   end

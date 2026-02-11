@@ -5,6 +5,7 @@ require 'date'
 class API::V1::OrderController < ApplicationController
   before_action :remote_host, only: %i[create_order request_order]
   before_action :update_remote_host, only: %i[update_order]
+  before_action :update_sending_facility, only: %i[create_order request_order]
 
   def create_order
     if !params['district']
@@ -740,5 +741,14 @@ class API::V1::OrderController < ApplicationController
       update_host: request.remote_ip,
       update_app_uuid: User.find_by(token: request.headers['token'])&.app_uuid
     )
+  end
+
+  def update_sending_facility
+    return nil if request.remote_ip == '127.0.0.1' || !request.remote_ip.present?
+
+    site = Site.find_by(host_address: request.remote_ip)
+    params[:order][:sending_facility] = site&.name if params[:order].present? && site.present?
+    params[:health_facility_name] = site&.name if params[:health_facility_name].present? && site.present?
+    site
   end
 end
