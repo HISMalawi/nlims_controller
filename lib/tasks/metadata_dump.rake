@@ -11,7 +11,7 @@ namespace :db do
     db_host   = db_config['host'] || '127.0.0.1'
 
     tables = %w[
-      drugs equipments equipment_test_types lab_test_sites measure_ranges measure_types measures
+      drugs equipment equipment_test_types lab_test_sites measure_ranges measure_types measures
       organism_drugs organisms panel_types panels product_equipments products specimen_types
       test_catalog_versions test_categories specimen_types test_type_lab_test_sites test_types
       testtype_measures testtype_organisms testtype_specimentypes versions
