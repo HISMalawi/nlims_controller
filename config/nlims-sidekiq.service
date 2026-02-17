@@ -1,0 +1,43 @@
+[Unit]
+Description=Sidekiq Background Worker for NLIMS Controller
+After=network.target redis.service mysql.service
+Requires=redis.service
+
+[Service]
+Type=notify
+# If using a different user, change www-data to your user
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/nlims_controller
+
+# Environment variables
+Environment=RAILS_ENV=production
+Environment=RAILS_MAX_THREADS=5
+Environment=MALLOC_ARENA_MAX=2
+
+# Rbenv setup - adjust if using different Ruby version manager
+ExecStart=/bin/bash -lc 'export PATH="/home/www-data/.rbenv/bin:$PATH" && eval "$(rbenv init -)" && cd /var/www/nlims_controller && rbenv local 3.2.0 && bundle exec sidekiq -C config/sidekiq.yml'
+
+# Use sidekiqctl to stop gracefully
+ExecStop=/bin/bash -lc 'export PATH="/home/www-data/.rbenv/bin:$PATH" && eval "$(rbenv init -)" && cd /var/www/nlims_controller && bundle exec sidekiqctl stop tmp/pids/sidekiq.pid 60'
+
+# Restart policy
+Restart=always
+RestartSec=10
+KillMode=process
+TimeoutStopSec=90
+
+# Logging
+StandardOutput=append:/var/www/nlims_controller/log/sidekiq.log
+StandardError=append:/var/www/nlims_controller/log/sidekiq_error.log
+SyslogIdentifier=nlims-sidekiq
+
+# Process limits
+LimitNOFILE=16384
+LimitNPROC=16384
+
+# Watchdog - Sidekiq will notify systemd it's alive
+WatchdogSec=30
+
+[Install]
+WantedBy=multi-user.target

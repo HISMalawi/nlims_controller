@@ -1,0 +1,25 @@
+# Optimized Crontab Configuration for NLIMS Controller
+# This replaces all individual cronjobs with a single Sidekiq-managed approach
+
+# IMPORTANT: Ensure Redis and Sidekiq are running before enabling this crontab
+# Start Sidekiq with: bundle exec sidekiq -C config/sidekiq.yml -e production
+
+# Old cronjobs (now DEPRECATED - replaced by Sidekiq scheduled jobs):
+# */5 * * * * flock -n /tmp/log_tracking_numbers.lock /bin/bash -l -c 'cd /var/www/nlims_controller && ./bin/log_tracking_numbers.sh --silent >> log/log_tracking_numbers.log 2>&1'
+# */5 * * * * flock -n /tmp/sync_sh.lock /bin/bash -l -c 'cd /var/www/nlims_controller && ./bin/sync.sh --silent >> log/sync.log 2>&1'
+# 0 */3 * * * flock -n /tmp/nlims_sync_data.lock /bin/bash -l -c 'export PATH="$HOME/.rbenv/bin:$PATH" && eval "$(rbenv init -)" && cd /var/www/nlims_controller && rbenv local 3.2.0 && RAILS_ENV=production bundle exec rake master_nlims:sync_data --silent >> log/pull_from_master_nlims.log 2>&1'
+# */30 * * * * flock -n /tmp/nlims_ack.lock /bin/bash -l -c 'export PATH="$HOME/.rbenv/bin:$PATH" && eval "$(rbenv init -)" && cd /var/www/nlims_controller && rbenv local 3.2.0 && RAILS_ENV=production bundle exec rake master_nlims:sync_local_nlims_acknowledge_results --silent >> log/pull_from_master_nlims.log 2>&1'
+# 0 * */5 * * flock -n /tmp/nlims_update_couch_id.lock /bin/bash -l -c 'export PATH="$HOME/.rbenv/bin:$PATH" && eval "$(rbenv init -)" && cd /var/www/nlims_controller && rbenv local 3.2.0 && RAILS_ENV=production bundle exec rake master_nlims:update_order_source_couch_id --silent >> log/update_order_source_couch_id.log 2>&1'
+# 0 3 * * 6 /bin/bash -l -c 'cd /var/www/nlims_controller && ./bin/clean_up_stale_lock.sh --silent >> log/clean_up_stale_lock.log 2>&1'
+
+# NEW APPROACH: Single entry to ensure Sidekiq is running
+# All jobs are managed by Sidekiq-cron (see config/schedule.yml)
+# This cron entry just ensures Sidekiq is running in case it crashes
+@reboot /bin/bash -l -c 'export PATH="$HOME/.rbenv/bin:$PATH" && eval "$(rbenv init -)" && cd /var/www/nlims_controller && rbenv local 3.2.0 && RAILS_ENV=production bundle exec sidekiq -C config/sidekiq.yml -d -L log/sidekiq.log'
+
+# Optional: Monitor and restart Sidekiq if it's not running (every hour)
+# Uncomment the line below if you want automatic Sidekiq restart monitoring
+# 0 * * * * /bin/bash -l -c 'cd /var/www/nlims_controller && pgrep -f "sidekiq" > /dev/null || (export PATH="$HOME/.rbenv/bin:$PATH" && eval "$(rbenv init -)" && rbenv local 3.2.0 && RAILS_ENV=production bundle exec sidekiq -C config/sidekiq.yml -d -L log/sidekiq.log)'
+
+# Note: The old EMR-API sync worker remains unchanged:
+*/5 * * * * /bin/bash -l -c 'export PATH="$HOME/.rbenv/bin:$PATH" && eval "$(rbenv init -)" && cd /var/www/EMR-API && bin/rails runner -e production '\''bin/lab/sync_worker.rb'\'''

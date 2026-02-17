@@ -14,3 +14,46 @@ sync_error_log_cleanup_worker:
   name: "Sync Error Log Cleanup Worker"
   cron: "0 * * * *"
   class: "SyncErrorLogCleanupWorker"
+  queue: default
+
+log_tracking_numbers_job:
+  name: "Log Tracking Numbers from Central NLIMS"
+  cron: "*/5 * * * *"
+  class: "LogTrackingNumbersJob"
+  queue: default
+  description: "Logs tracking numbers from central NLIMS every 5 minutes"
+
+sync_to_nlims_job:
+  name: "Sync Orders, Tests, Results and Status to NLIMS"
+  cron: "*/5 * * * *"
+  class: "SyncToNlimsJob"
+  queue: critical
+  description: "Syncs all orders, tests, results and status to NLIMS every 5 minutes"
+
+pull_from_master_nlims_job:
+  name: "Pull Data from Master NLIMS"
+  cron: "0 */3 * * *"
+  class: "PullFromMasterNlimsJob"
+  queue: high_priority
+  description: "Pulls test results from master NLIMS every 3 hours"
+
+acknowledge_results_job:
+  name: "Acknowledge Results Delivered to Sites"
+  cron: "*/30 * * * *"
+  class: "AcknowledgeResultsJob"
+  queue: high_priority
+  description: "Syncs acknowledgements for results delivered to sites every 30 minutes"
+
+update_order_source_couch_id_job:
+  name: "Update Order Source Couch IDs"
+  cron: "0 * */5 * *"
+  class: "UpdateOrderSourceCouchIdJob"
+  queue: low_priority
+  description: "Updates order source couch IDs every 5 hours"
+
+cleanup_stale_lock_job:
+  name: "Clean Up Stale Lock Files"
+  cron: "0 3 * * 6"
+  class: "CleanupStaleLockJob"
+  queue: low_priority
+  description: "Cleans up stale lock files every Saturday at 3am"
