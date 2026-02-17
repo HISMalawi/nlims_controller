@@ -113,16 +113,32 @@ class NlimsSyncUtilsService
         AddedTestSyncTracker.find_by(tracking_number: order&.tracking_number, test_id:,
                                      app: 'nlims')&.update(sync_status: true)
       elsif action != 'status_update'
-        ResultSyncTracker.find_by(tracking_number: order&.tracking_number, test_id:,
-                                  app: 'nlims')&.update(sync_status: true)
+        ResultSyncTracker.where(
+          tracking_number: order&.tracking_number,
+          test_id:,
+          app: 'nlims'
+        )&.update_all(sync_status: true)
+        StatusSyncTracker.where(
+          tracking_number: order&.tracking_number,
+          test_id:,
+          app: 'nlims'
+        )&.update_all(sync_status: true)
       end
 
-      StatusSyncTracker.find_by(
-        tracking_number: order&.tracking_number,
-        test_id:,
-        status: payload[:test_status],
-        app: 'nlims'
-      )&.update(sync_status: true)
+      if payload[:test_status] == 'verified'
+        StatusSyncTracker.where(
+          tracking_number: order&.tracking_number,
+          test_id:,
+          app: 'nlims'
+        )&.update_all(sync_status: true)
+      else
+        StatusSyncTracker.where(
+          tracking_number: order&.tracking_number,
+          test_id:,
+          status: payload[:test_status],
+          app: 'nlims'
+        )&.update_all(sync_status: true)
+      end
       true
     else
       false
