@@ -109,6 +109,7 @@ class NlimsSyncUtilsService
     success_messages = ['test updated successfuly', 'order already updated with such state', 'test added successfully']
 
     if success_messages.include?(response['message'])
+      Rails.logger.info("Test actions pushed to Local NLIMS successfully for test_id: #{test_id} with action: #{action} and response message: #{response['message']}")
       if action == 'add_test'
         AddedTestSyncTracker.find_by(tracking_number: order&.tracking_number, test_id:,
                                      app: 'nlims')&.update(sync_status: true)
