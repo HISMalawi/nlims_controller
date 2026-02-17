@@ -11,7 +11,7 @@ class API::V1::StatusController < ApplicationController
     rescue StandardError
       'N/A'
     end
-    AppCheckInJob.perform_async(params[:site_id]) if Config.local_nlims?
+    AppCheckInJob.perform_async(params[:site_id]) if Config.local_nlims? && params[:site_id].present?
     version = git_describe.empty? ? "N/A (#{app_target})" : "#{git_describe} (#{app_target})"
     render json: { ping: true, time: Time.now, version: version }, status: :ok
   end
