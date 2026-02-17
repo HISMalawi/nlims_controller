@@ -27,6 +27,10 @@ module TestManagement
         if params[:test_results].present? && test_status&.id == TestStatus.get_test_status_id('verified')
           add_test_results(params, lab_test.id, order)
         end
+
+        # Broadcast status update via WebSocket
+        OrderBroadcastService.broadcast_status_update(lab_test.id)
+
         [true, 'test updated successfuly']
       rescue StandardError => e
         [false, e.message]
@@ -70,6 +74,9 @@ module TestManagement
           test_status_trail = TestStatusTrail.where(test_id: lab_test_id, test_status_id: 5).first
           test_status_trail.update!(time_updated: result_params[:result_date]) unless test_status_trail.blank?
           result_sync_tracker(order.tracking_number, lab_test_id, force_create: true)
+
+          # Broadcast result update via WebSocket
+          OrderBroadcastService.broadcast_result_update(lab_test_id)
         else
           TestResult.create!(
             measure_id: measure.id,
@@ -80,6 +87,9 @@ module TestManagement
             unit: result_params[:unit]
           )
           result_sync_tracker(order.tracking_number, lab_test_id)
+
+          # Broadcast result update via WebSocket
+          OrderBroadcastService.broadcast_result_update(lab_test_id)
         end
       end
     end

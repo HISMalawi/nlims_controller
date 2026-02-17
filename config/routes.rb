@@ -8,6 +8,8 @@ Rails.application.routes.draw do
   mount Rswag::Api::Engine => '/api-docs'
   # For details on the DSL available within this file, see http://guides.rubyonrails.org/routing.html
   mount Sidekiq::Web => '/sidekiq'
+  mount ActionCable.server => '/cable'
+
   root to: 'home#index'
   get 'latest_orders_by_site', to: 'home#latest_orders_by_site'
   get 'latest_results_by_site', to: 'home#latest_results_by_site'
