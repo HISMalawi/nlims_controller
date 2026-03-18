@@ -5,8 +5,9 @@
 The sync script creates two types of log files in the `log/` directory:
 
 ### 1. Sync Log (`log/mlab_sync.log`)
+
 - **Format**: Daily rotating log
-- **Contains**: 
+- **Contains**:
   - Sync start/end timestamps
   - Batch processing progress
   - Error messages
@@ -14,6 +15,7 @@ The sync script creates two types of log files in the `log/` directory:
   - Last processed test ID
 
 **Example log entries:**
+
 ```
 [2026-03-18 10:30:00] INFO: ================================================================================
 [2026-03-18 10:30:00] INFO: SYNC STARTED: 2026-03-18 10:30:00 +0200
@@ -26,11 +28,13 @@ The sync script creates two types of log files in the `log/` directory:
 ```
 
 ### 2. Checkpoint File (`log/mlab_sync_checkpoint.txt`)
+
 - **Format**: JSON
 - **Updated**: Every 25 records and at end of each batch
 - **Contains**: Current sync state for resuming
 
 **Example checkpoint:**
+
 ```json
 {
   "last_test_id": 98,
@@ -48,11 +52,13 @@ The sync script creates two types of log files in the `log/` directory:
 If the sync crashes or is interrupted:
 
 1. **Check the last processed test ID:**
+
    ```bash
    cat log/mlab_sync_checkpoint.txt
    ```
 
 2. **Resume from that ID:**
+
    ```bash
    bundle exec ruby bin/mlab_to_nlims_sync.rb
    # When prompted for starting test ID, enter the last_test_id from checkpoint
@@ -67,16 +73,19 @@ If the sync crashes or is interrupted:
 ## Monitoring Progress
 
 ### Real-time monitoring:
+
 ```bash
 tail -f log/mlab_sync.log
 ```
 
 ### Check current checkpoint:
+
 ```bash
 watch -n 5 'cat log/mlab_sync_checkpoint.txt | jq .'
 ```
 
 ### View sync statistics:
+
 ```bash
 grep "Progress:" log/mlab_sync.log | tail -20
 ```
@@ -84,6 +93,7 @@ grep "Progress:" log/mlab_sync.log | tail -20
 ## Log Rotation
 
 The sync log rotates daily automatically. Old logs are kept with date suffix:
+
 - `mlab_sync.log` (current)
 - `mlab_sync.log.20260317` (previous day)
 - etc.
@@ -91,21 +101,25 @@ The sync log rotates daily automatically. Old logs are kept with date suffix:
 ## Troubleshooting
 
 ### Find errors in log:
+
 ```bash
 grep "ERROR:" log/mlab_sync.log
 ```
 
 ### Find warnings:
+
 ```bash
 grep "WARNING:" log/mlab_sync.log
 ```
 
 ### Check sync duration:
+
 ```bash
 grep -E "(SYNC STARTED|SYNC COMPLETED)" log/mlab_sync.log
 ```
 
 ### View last sync summary:
+
 ```bash
 grep -A 10 "SYNC COMPLETED" log/mlab_sync.log | tail -15
 ```
