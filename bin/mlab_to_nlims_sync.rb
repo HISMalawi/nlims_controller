@@ -398,14 +398,14 @@ class MlabToNlimsSyncService
       priority: order&.mlab_priority&.name || 'Routine',
       drawn_by: {
         id: order&.creator || 1,
-        name: order&.collected_by || 'Unknown',
+        name: order&.collected_by || "#{get_user_details(order&.creator)[:first_name]} #{get_user_details(order&.creator)[:last_name]}",
         phone_number: ''
       },
       date_created: order&.created_date || mlab_test.created_date,
       sample_status: build_sample_status(order),
-      target_lab: order&.requested_by || facility_name,
-      order_location: encounter&.mlab_facility&.name || facility_name,
-      requested_by: order&.requested_by || 'Unknown',
+      target_lab: facility_name,
+      order_location: facility_name || encounter&.mlab_facility&.name,
+      requested_by: order&.requested_by,
       art_start_date: encounter&.client_history&.dig('art_start_date'),
       arv_number: encounter&.client_history&.dig('arv_number') || 'N/A',
       art_regimen: encounter&.client_history&.dig('art_regimen') || 'N/A',
@@ -441,7 +441,7 @@ class MlabToNlimsSyncService
       tracking_number: order&.tracking_number,
       test_type_nlims_code: test_type&.nlims_code,
       time_created: mlab_test.created_date,
-      drawn_by: order&.collected_by || 'Unknown',
+      drawn_by: order&.collected_by || "#{get_user_details(order&.creator)[:first_name]} #{get_user_details(order&.creator)[:last_name]}",
       method_of_testing: mlab_test.method_of_testing
     }
   end
