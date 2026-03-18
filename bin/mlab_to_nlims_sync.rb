@@ -232,6 +232,9 @@ class MlabToNlimsSyncService
   end
 
   def process_existing_order(mlab_test, existing_order, payload)
+    # Update order's sending facility and district if provided
+    update_order_facility_and_district(existing_order, payload)
+
     # Check if test exists for this order
     existing_test = Test.joins(:test_type)
                         .where(
@@ -535,6 +538,28 @@ class MlabToNlimsSyncService
     # Try to get NPID from client identifiers
     # This is a placeholder - adjust based on actual mlab structure
     client&.uuid
+  end
+
+  def update_order_facility_and_district(existing_order, payload)
+    # Update sending facility and district if they differ from sync source
+    facility_name = payload.dig(:order, :sending_facility)
+    district = payload.dig(:order, :district)
+
+    updated = false
+
+    if facility_name.present? && existing_order.sending_facility != facility_name
+      existing_order.update_column(:sending_facility, facility_name)
+      updated = true
+    end
+
+    if district.present? && existing_order.district != district
+      existing_order.update_column(:district, district)
+      updated = true
+    end
+
+    puts '    ℹ Updated order facility/district' if updated
+  rescue StandardError => e
+    puts "    ⚠ Failed to update order facility/district: #{e.message}"
   end
 
   def get_district_from_facility(_facility_name)
