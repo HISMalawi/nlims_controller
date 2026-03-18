@@ -181,8 +181,18 @@ class MlabToNlimsSyncService
     # Build the payload from mlab test data
     payload = build_payload_from_mlab_test(mlab_test)
 
-    return skip_test(mlab_test, 'Missing test type nlims_code') if payload[:test_type_nlims_code].blank?
-    return skip_test(mlab_test, 'Missing tracking number') if payload[:tracking_number].blank?
+    if payload[:test_type_nlims_code].blank?
+      return skip_test(mlab_test, 'Missing test type nlims_code',
+                       tracking_number: payload[:tracking_number],
+                       test_type_nlims_code: payload[:test_type_nlims_code],
+                       payload: payload)
+    end
+    if payload[:tracking_number].blank?
+      return skip_test(mlab_test, 'Missing tracking number',
+                       tracking_number: payload[:tracking_number],
+                       test_type_nlims_code: payload[:test_type_nlims_code],
+                       payload: payload)
+    end
 
     # Check if order already exists
     existing_order = Speciman.find_by(tracking_number: payload[:tracking_number])
@@ -253,7 +263,12 @@ class MlabToNlimsSyncService
     # Use the same service methods that the API uses
     status, response = TestManagement::TestsService.add_test_to_order(existing_order, test_data)
 
-    return skip_test(mlab_test, "Failed to add test: #{response}") unless status
+    unless status
+      return skip_test(mlab_test, "Failed to add test: #{response}",
+                       tracking_number: payload[:tracking_number],
+                       test_type_nlims_code: payload[:test_type_nlims_code],
+                       payload: payload)
+    end
 
     # Now update the test with status trail and results
     status, response = TestManagement::TestsService.update_tests(existing_order, test_data)
@@ -418,8 +433,8 @@ class MlabToNlimsSyncService
     # Use nlims_code from mlab specimen for accurate matching
     # NOTE: In mlab, specimens table = nlims specimen_types table
     {
-      nlims_code: specimen&.nlims_code || 'UNKNOWN',
-      name: specimen&.name || 'Unknown'
+      nlims_code: specimen&.nlims_code,
+      name: specimen&.name
     }
   end
 
@@ -533,10 +548,20 @@ class MlabToNlimsSyncService
     NLIMS_STATUS_MAPPING[normalized_status] || normalized_status.tr('-', '_')
   end
 
-  def skip_test(mlab_test, reason)
+  def skip_test(mlab_test, reason, tracking_number: nil, test_type_nlims_code: nil, payload: nil)
     @total_skipped += 1
     @stats_by_stage['skipped'] += 1
     puts "  → Test ID #{mlab_test.id}: Skipped - #{reason}"
+
+    # Log skipped tests as failures for investigation
+    log_failure(
+      mlab_test_id: mlab_test.id,
+      tracking_number: tracking_number,
+      test_type_nlims_code: test_type_nlims_code,
+      stage: 'skipped',
+      reason: reason,
+      payload: payload
+    )
   end
 
   def log_failure(mlab_test_id:, tracking_number:, test_type_nlims_code:, stage:, reason:, payload:)
@@ -570,9 +595,11 @@ class MlabToNlimsSyncService
     puts '=' * 80
     puts ''
 
-    return unless @total_failed > 0
+    total_issues = @total_failed + @total_skipped
+    return unless total_issues > 0
 
-    puts "⚠ There were #{@total_failed} failed records. Check the mlab_sync_failures table for details."
+    puts "⚠ There were #{@total_failed} failed and #{@total_skipped} skipped records (total: #{total_issues})."
+    puts '  All issues are logged in mlab_sync_failures table for investigation.'
     puts '  Run: SELECT * FROM mlab_sync_failures WHERE resolved = 0 ORDER BY created_at DESC;'
   end
 end
