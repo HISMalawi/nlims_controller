@@ -121,6 +121,14 @@ class MlabToNlimsSyncService
   end
 
   def fetch_tests_batch(offset)
+    # Calculate batch size based on limit
+    batch_size = if @limit
+                   # Don't fetch more than the limit allows
+                   [BATCH_SIZE, @limit - offset].min
+                 else
+                   BATCH_SIZE
+                 end
+
     # Simplified eager loading to avoid massive JOINs
     # Load only essential associations, allow some N+1 queries for better performance
     MlabTest.not_voided
@@ -138,7 +146,7 @@ class MlabToNlimsSyncService
             .where('orders.voided IS NULL OR orders.voided = 0')
             .order('tests.id ASC')
             .offset(offset)
-            .limit(BATCH_SIZE)
+            .limit(batch_size)
   end
 
   def process_batch(tests_batch)
