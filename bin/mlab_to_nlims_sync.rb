@@ -9,7 +9,7 @@ require File.expand_path('../config/environment', __dir__)
 
 # Sync service to handle mlab to nlims data migration
 class MlabToNlimsSyncService
-  BATCH_SIZE = 100  # Reduced from 1000 for better query performance
+  BATCH_SIZE = 100 # Reduced from 1000 for better query performance
   NLIMS_STATUS_MAPPING = {
     'pending' => 'pending',
     'specimen-not-collected' => 'specimen_not_collected',
@@ -39,9 +39,12 @@ class MlabToNlimsSyncService
   }.freeze
 
   def initialize(sending_facility: nil, district: nil, start_from_id: nil, limit: nil)
-    @sending_facility = sending_facility
-    @site_name = sending_facility # Store for failure tracking
-    @district = district
+    # Load mlab global settings if facility/district not provided
+    mlab_global = MlabGlobal.current
+
+    @sending_facility = sending_facility || mlab_global&.name
+    @site_name = @sending_facility # Store for failure tracking
+    @district = district || mlab_global&.district
     @start_from_id = start_from_id || 0
     @limit = limit
     @total_processed = 0
@@ -78,12 +81,12 @@ class MlabToNlimsSyncService
       fetch_start = Time.now
       tests_batch = fetch_tests_batch(offset)
       fetch_time = Time.now - fetch_start
-      
+
       break if tests_batch.empty?
-      
+
       puts "[#{Time.current.strftime('%H:%M:%S')}] Fetched #{tests_batch.size} tests in #{fetch_time.round(2)}s"
       puts "\n--- Processing Batch ##{batch_number} (Records #{offset + 1}-#{offset + tests_batch.size}) ---"
-      
+
       process_start = Time.now
       process_batch(tests_batch)
       process_time = Time.now - process_start
@@ -142,7 +145,7 @@ class MlabToNlimsSyncService
     batch_start = Time.now
     tests_batch.each_with_index do |mlab_test, index|
       @total_processed += 1
-      
+
       # Show progress every 25 tests (since batch is smaller now)
       if (index + 1) % 25 == 0
         elapsed = Time.now - batch_start
@@ -150,7 +153,7 @@ class MlabToNlimsSyncService
         remaining = (tests_batch.size - index - 1) * avg_time
         puts "  [Progress: #{index + 1}/#{tests_batch.size} tests, ~#{remaining.round(1)}s remaining]"
       end
-      
+
       process_test(mlab_test)
     rescue StandardError => e
       @total_failed += 1
@@ -203,9 +206,9 @@ class MlabToNlimsSyncService
   end
 
   def update_existing_test(mlab_test, existing_test, payload)
-    test_data = payload[:tests].first  # Get test details from tests array
+    test_data = payload[:tests].first # Get test details from tests array
 
-    puts "    Updating test using TestsService..."
+    puts '    Updating test using TestsService...'
     # Use the same service method that the API uses
     status, response = TestManagement::TestsService.update_tests(
       Speciman.find(existing_test.specimen_id),
@@ -235,20 +238,18 @@ class MlabToNlimsSyncService
 
   def add_test_to_existing_order(mlab_test, existing_order, payload)
     # Get test details from tests array
-    test_data = payload[:tests].first 
-    
-    puts "    Adding test to existing order using TestsService..."
-    
+    test_data = payload[:tests].first
+
+    puts '    Adding test to existing order using TestsService...'
+
     # Use the same service methods that the API uses
     status, response = TestManagement::TestsService.add_test_to_order(existing_order, test_data)
-    
-    unless status
-      return skip_test(mlab_test, "Failed to add test: #{response}")
-    end
-    
+
+    return skip_test(mlab_test, "Failed to add test: #{response}") unless status
+
     # Now update the test with status trail and results
     status, response = TestManagement::TestsService.update_tests(existing_order, test_data)
-    
+
     if status
       @total_created += 1
       @stats_by_stage['test_added'] += 1
@@ -290,7 +291,8 @@ class MlabToNlimsSyncService
     )
 
     if status
-      TestManagement::TestsService.update_tests(Speciman.find_by(tracking_number: payload[:tracking_number]), payload[:tests].first)
+      TestManagement::TestsService.update_tests(Speciman.find_by(tracking_number: payload[:tracking_number]),
+                                                payload[:tests].first)
       @total_created += 1
       @stats_by_stage['order_created'] += 1
       puts "  ✓ Test ID #{mlab_test.id}: Order Created (Tracking: #{response})"
@@ -317,183 +319,6 @@ class MlabToNlimsSyncService
       payload: payload
     )
     puts "  ✗ Test ID #{mlab_test.id}: Order Creation FAILED - #{e.message}"
-  end
-
-  def update_test_status(mlab_test, nlims_test, status_data)
-    test_status = TestStatus.find_by(name: map_status_name(status_data[:status]))
-    unless test_status
-      puts "    ⚠ Status '#{status_data[:status]}' not found in NLIMS"
-      return
-    end
-
-    # Check if this status already exists in trail
-    if TestStatusTrail.exists?(test_id: nlims_test.id, test_status_id: test_status.id)
-      puts "    → Status '#{status_data[:status]}' already exists in trail"
-      return
-    end
-
-    TestStatusTrail.create!(
-      test_id: nlims_test.id,
-      time_updated: status_data[:timestamp],
-      test_status_id: test_status.id,
-      who_updated_id: status_data[:updated_by]&.[]('id')&.to_s || 'mlab_sync',
-      who_updated_name: if status_data[:updated_by]
-                          "#{status_data[:updated_by]['first_name']} #{status_data[:updated_by]['last_name']}"
-                        else
-                          'MLAB Sync'
-                        end,
-      who_updated_phone_number: (status_data[:updated_by]&.[]('phone_number') || '').to_s
-    )
-    
-    puts "    ✓ Added status '#{status_data[:status]}' to trail (#{status_data[:timestamp]})"
-
-    # Update test status
-    TestManagement::TestStatusUpdaterService.call(nlims_test.id, test_status)
-  rescue StandardError => e
-    puts "    ✗ Failed to update status: #{e.message}"
-    log_failure(
-      mlab_test_id: mlab_test.id,
-      tracking_number: nlims_test.specimen&.tracking_number,
-      test_type_nlims_code: nlims_test.test_type&.nlims_code,
-      stage: 'status_update',
-      reason: e.message,
-      payload: status_data
-    )
-  end
-
-  def create_status_trail(mlab_test, nlims_test, status_trail)
-    return if status_trail.blank?
-
-    puts "    Creating status trail (#{status_trail.size} entries)..."
-    created_count = 0
-    skipped_count = 0
-
-    status_trail.each do |trail|
-      test_status = TestStatus.find_by(name: map_status_name(trail[:status]))
-      unless test_status
-        puts "      ⚠ Status '#{trail[:status]}' not found in NLIMS"
-        next
-      end
-      
-      if TestStatusTrail.exists?(test_id: nlims_test.id, test_status_id: test_status.id)
-        skipped_count += 1
-        next
-      end
-
-      TestStatusTrail.create!(
-        test_id: nlims_test.id,
-        time_updated: trail[:timestamp],
-        test_status_id: test_status.id,
-        who_updated_id: trail[:updated_by]&.[]('id')&.to_s || 'mlab_sync',
-        who_updated_name: if trail[:updated_by]
-                            "#{trail[:updated_by]['first_name']} #{trail[:updated_by]['last_name']}"
-                          else
-                            'MLAB Sync'
-                          end,
-        who_updated_phone_number: (trail[:updated_by]&.[]('phone_number') || '').to_s
-      )
-      created_count += 1
-    end
-    
-    puts "    ✓ Status trail: #{created_count} created, #{skipped_count} skipped (already exist)"
-  rescue StandardError => e
-    puts "    ✗ Failed to create status trail: #{e.message}"
-    log_failure(
-      mlab_test_id: mlab_test.id,
-      tracking_number: nil,
-      test_type_nlims_code: nil,
-      stage: 'status_trail_creation',
-      reason: e.message,
-      payload: status_trail
-    )
-  end
-
-  def update_test_results(mlab_test, nlims_test, test_results)
-    test_results.each do |result_data|
-      create_or_update_result(mlab_test, nlims_test, result_data)
-    end
-  end
-
-  def create_test_results(mlab_test, nlims_test, test_results)
-    test_results.each do |result_data|
-      create_or_update_result(mlab_test, nlims_test, result_data)
-    end
-  end
-
-  def create_or_update_result(mlab_test, nlims_test, result_data)
-    return if result_data[:result][:value].blank? || result_data[:result][:value] == 'Failed'
-
-    # Find measure by nlims_code
-    measure = Measure.find_by(nlims_code: result_data[:measure][:nlims_code])
-    unless measure
-      puts "      ⚠ Measure '#{result_data[:measure][:nlims_code]}' not found in NLIMS"
-      return
-    end
-
-    # Check if measure is associated with this test type
-    testtype_measure = TesttypeMeasure.find_by(
-      test_type_id: nlims_test.test_type_id,
-      measure_id: measure.id
-    )
-    unless testtype_measure
-      puts "      ⚠ Measure '#{result_data[:measure][:nlims_code]}' not associated with test type"
-      return
-    end
-
-    result_value = result_data[:result][:value]
-
-    # Handle Viral Load special case (remove commas)
-    result_value = result_value.gsub(',', '') if measure.nlims_code == 'NLIMS_TT_0071_MWI'
-
-    # Check if result already exists
-    existing_result = TestResult.find_by(test_id: nlims_test.id, measure_id: measure.id)
-
-    if existing_result
-      # Update if different
-      if existing_result.result != result_value
-        TestResultTrail.create!(
-          measure_id: measure.id,
-          test_id: nlims_test.id,
-          old_result: existing_result.result,
-          new_result: result_value,
-          old_device_name: existing_result.device_name,
-          new_device_name: result_data[:result][:platform] || '',
-          old_time_entered: existing_result.time_entered,
-          new_time_entered: result_data[:result][:result_date]
-        )
-
-        existing_result.update!(
-          result: result_value,
-          time_entered: result_data[:result][:result_date],
-          unit: result_data[:result][:unit],
-          device_name: result_data[:result][:platform] || ''
-        )
-        puts "      ✓ Updated result for #{result_data[:measure][:name]}: #{existing_result.result} → #{result_value}"
-      else
-        puts "      → Result for #{result_data[:measure][:name]} unchanged: #{result_value}"
-      end
-    else
-      # Create new result
-      TestResult.create!(
-        measure_id: measure.id,
-        test_id: nlims_test.id,
-        result: result_value,
-        device_name: result_data[:result][:platform] || '',
-        time_entered: result_data[:result][:result_date],
-        unit: result_data[:result][:unit]
-      )
-      puts "      ✓ Created result for #{result_data[:measure][:name]}: #{result_value} #{result_data[:result][:unit]}"
-    end
-  rescue StandardError => e
-    puts "      ✗ Failed to create/update result: #{e.message}"
-    log_failure(
-      mlab_test_id: mlab_test.id,
-      tracking_number: nlims_test.specimen&.tracking_number,
-      test_type_nlims_code: nlims_test.test_type&.nlims_code,
-      stage: 'result_update',
-      reason: e.message,
-      payload: result_data
-    )
   end
 
   def build_payload_from_mlab_test(mlab_test)
@@ -544,11 +369,11 @@ class MlabToNlimsSyncService
     # NOTE: Uses nlims_code from mlab for all lookups:
     # - test_type.nlims_code for test type matching
     # - test_indicator.nlims_code for measure/indicator matching
-    
+
     # Get the latest test status and its timestamp
     latest_status = mlab_test.mlab_test_statuses.not_voided.order(created_date: :desc).first
     status_trail = build_test_status_trail(mlab_test)
-    
+
     test_data = {
       test_type: {
         nlims_code: test_type&.nlims_code,
@@ -682,7 +507,7 @@ class MlabToNlimsSyncService
       @user_cache[user_id] = {
         first_name: person.first_name || 'MLAB',
         last_name: person.last_name || 'User',
-        phone_number: ''  # Phone number not stored in mlab people table
+        phone_number: '' # Phone number not stored in mlab people table
       }
     else
       @user_cache[user_id] = { first_name: 'MLAB', last_name: 'Sync', phone_number: '' }
@@ -749,13 +574,18 @@ if $PROGRAM_NAME == __FILE__
   puts 'MLAB to NLIMS Sync Script'
   puts ''
 
+  # Load mlab global settings to show defaults
+  mlab_global = MlabGlobal.current
+  default_facility = mlab_global&.name || 'From mlab encounter data'
+  default_district = mlab_global&.district || 'Not set'
+
   # Ask for sending facility
-  print 'Enter sending facility name (leave blank to use facility from mlab data): '
+  print "Enter sending facility name (leave blank to use global setting: #{default_facility}): "
   sending_facility = gets.chomp
   sending_facility = nil if sending_facility.empty?
 
   # Ask for district
-  print "Enter district name (leave blank to use 'Unknown District'): "
+  print "Enter district name (leave blank to use global setting: #{default_district}): "
   district = gets.chomp
   district = nil if district.empty?
 
@@ -772,8 +602,8 @@ if $PROGRAM_NAME == __FILE__
   # Confirmation
   puts ''
   puts 'Configuration:'
-  puts "  Sending Facility: #{sending_facility || 'From mlab data'}"
-  puts "  District: #{district || 'Unknown District'}"
+  puts "  Sending Facility: #{sending_facility || default_facility}"
+  puts "  District: #{district || default_district}"
   puts "  Starting from Test ID: #{start_id}"
   puts "  Limit: #{limit || 'No limit'}"
   puts ''
