@@ -23,12 +23,23 @@ development:
   <<: *default
   database: lims_db
 
+# mlab database connection (read-only for sync purposes)
+mlab_development:
+  <<: *default
+  database: mlab_db
+  # Use same credentials or different ones as needed
+  # This database should contain the mlab dump
+
 # Warning: The database defined as "test" will be erased and
 # re-generated from your development database when you run "rake".
 # Do not set this db to the same as development or production.
 test:
   <<: *default
   database: lims_test
+
+mlab_test:
+  <<: *default
+  database: mlab_test
 
 # As with config/secrets.yml, you never want to store sensitive information,
 # like your database password, in your source code. If your source code is
@@ -54,3 +65,13 @@ production:
   database: nlims_production
   username: nlims
   password: <%= ENV['NLIMS_DATABASE_PASSWORD'] %>
+
+# mlab database connection for production (read-only for sync purposes)
+mlab_production:
+  <<: *default
+  database: <%= ENV['MLAB_DATABASE_NAME'] || 'mlab_production' %>
+  username: <%= ENV['MLAB_DATABASE_USER'] || 'nlims' %>
+  password: <%= ENV['MLAB_DATABASE_PASSWORD'] %>
+  # If mlab is on a different host, override these:
+  # host: <%= ENV['MLAB_DATABASE_HOST'] || '127.0.0.1' %>
+  # port: <%= ENV['MLAB_DATABASE_PORT'] || 3306 %>
