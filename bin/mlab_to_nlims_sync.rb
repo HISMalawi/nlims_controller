@@ -6,6 +6,8 @@
 # and syncs orders, tests, statuses, and results to nlims
 
 require File.expand_path('../config/environment', __dir__)
+require 'logger'
+require 'json'
 
 # Sync service to handle mlab to nlims data migration
 class MlabToNlimsSyncService
@@ -53,6 +55,10 @@ class MlabToNlimsSyncService
     @total_skipped = 0
     @total_failed = 0
     @stats_by_stage = Hash.new(0)
+    @last_processed_test_id = @start_from_id
+
+    # Initialize file logger
+    setup_logger
   end
 
   def run
@@ -67,9 +73,17 @@ class MlabToNlimsSyncService
     puts '=' * 80
     puts ''
 
+    # Log sync start
+    log_to_file('=' * 80)
+    log_to_file("SYNC STARTED: #{Time.current}")
+    log_to_file("Facility: #{@sending_facility}, District: #{@district}")
+    log_to_file("Starting from Test ID: #{@start_from_id}, Limit: #{@limit || 'None'}")
+    log_to_file('=' * 80)
+
     # Count total tests to sync
     total_tests = count_total_tests
     puts "Total tests to sync: #{total_tests}"
+    log_to_file("Total tests to sync: #{total_tests}")
     puts ''
 
     # Process in batches
@@ -86,11 +100,13 @@ class MlabToNlimsSyncService
 
       puts "[#{Time.current.strftime('%H:%M:%S')}] Fetched #{tests_batch.size} tests in #{fetch_time.round(2)}s"
       puts "\n--- Processing Batch ##{batch_number} (Records #{offset + 1}-#{offset + tests_batch.size}) ---"
+      log_to_file("Batch ##{batch_number}: Processing #{tests_batch.size} tests (offset #{offset})")
 
       process_start = Time.now
       process_batch(tests_batch)
       process_time = Time.now - process_start
       puts "[#{Time.current.strftime('%H:%M:%S')}] Processed batch in #{process_time.round(2)}s"
+      log_to_file("Batch ##{batch_number}: Completed in #{process_time.round(2)}s")
 
       offset += BATCH_SIZE
       batch_number += 1
@@ -153,6 +169,7 @@ class MlabToNlimsSyncService
     batch_start = Time.now
     tests_batch.each_with_index do |mlab_test, index|
       @total_processed += 1
+      @last_processed_test_id = mlab_test.id
 
       # Show progress every 25 tests (since batch is smaller now)
       if (index + 1) % 25 == 0
@@ -160,11 +177,16 @@ class MlabToNlimsSyncService
         avg_time = elapsed / (index + 1)
         remaining = (tests_batch.size - index - 1) * avg_time
         puts "  [Progress: #{index + 1}/#{tests_batch.size} tests, ~#{remaining.round(1)}s remaining]"
+
+        # Log progress
+        log_to_file("Progress: Last Test ID #{@last_processed_test_id}, Total: #{@total_processed}, Created: #{@total_created}, Updated: #{@total_updated}, Skipped: #{@total_skipped}, Failed: #{@total_failed}")
+        log_progress
       end
 
       process_test(mlab_test)
     rescue StandardError => e
       @total_failed += 1
+      log_to_file("ERROR: Test ID #{mlab_test.id} - #{e.message}")
       log_failure(
         mlab_test_id: mlab_test.id,
         tracking_number: mlab_test.mlab_order&.tracking_number,
@@ -175,6 +197,9 @@ class MlabToNlimsSyncService
       )
       puts "  ✗ Test ID #{mlab_test.id}: FAILED - #{e.message}"
     end
+
+    # Log progress at end of batch
+    log_progress
   end
 
   def process_test(mlab_test)
@@ -576,6 +601,35 @@ class MlabToNlimsSyncService
     )
   end
 
+  def setup_logger
+    log_dir = Rails.root.join('log')
+    log_file = log_dir.join('mlab_sync.log')
+
+    @logger = Logger.new(log_file, 'daily')
+    @logger.level = Logger::INFO
+    @logger.formatter = proc do |severity, datetime, _progname, msg|
+      "[#{datetime.strftime('%Y-%m-%d %H:%M:%S')}] #{severity}: #{msg}\n"
+    end
+  end
+
+  def log_to_file(message)
+    @logger&.info(message)
+  end
+
+  def log_progress
+    # Write current progress to a checkpoint file
+    checkpoint_file = Rails.root.join('log', 'mlab_sync_checkpoint.txt')
+    File.write(checkpoint_file, {
+      last_test_id: @last_processed_test_id,
+      total_processed: @total_processed,
+      total_created: @total_created,
+      total_updated: @total_updated,
+      total_skipped: @total_skipped,
+      total_failed: @total_failed,
+      timestamp: Time.current.to_s
+    }.to_json)
+  end
+
   def print_summary
     puts "\n"
     puts '=' * 80
@@ -595,12 +649,22 @@ class MlabToNlimsSyncService
     puts '=' * 80
     puts ''
 
+    # Log final summary
+    log_to_file('=' * 80)
+    log_to_file("SYNC COMPLETED: #{Time.current}")
+    log_to_file("Last Test ID Processed: #{@last_processed_test_id}")
+    log_to_file("Total Processed: #{@total_processed}")
+    log_to_file("Created: #{@total_created}, Updated: #{@total_updated}, Skipped: #{@total_skipped}, Failed: #{@total_failed}")
+    log_to_file('=' * 80)
+    log_progress # Final checkpoint
+
     total_issues = @total_failed + @total_skipped
     return unless total_issues > 0
 
     puts "⚠ There were #{@total_failed} failed and #{@total_skipped} skipped records (total: #{total_issues})."
     puts '  All issues are logged in mlab_sync_failures table for investigation.'
     puts '  Run: SELECT * FROM mlab_sync_failures WHERE resolved = 0 ORDER BY created_at DESC;'
+    log_to_file("WARNING: #{total_issues} total issues (#{@total_failed} failed, #{@total_skipped} skipped)")
   end
 end
 
