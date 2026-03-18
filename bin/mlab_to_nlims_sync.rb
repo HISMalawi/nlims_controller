@@ -413,7 +413,8 @@ class MlabToNlimsSyncService
       arv_number: encounter&.client_history&.dig('arv_number') || 'N/A',
       art_regimen: encounter&.client_history&.dig('art_regimen') || 'N/A',
       clinical_history: encounter&.client_history&.to_json,
-      status_trail: build_order_status_trail(order)
+      status_trail: build_order_status_trail(order),
+      source_system: 'IBLIS'
     }
 
     # Build test data
