@@ -1,16 +1,18 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-# Script to efficiently process sync status records up to a certain date
+# Script to efficiently process sync status records and clear Sidekiq queues
 # Actions:
 #   - Sync trackers: Marks as synced (preserves data for auditing)
 #   - Error logs: Deletes permanently (no need for long-term storage)
+#   - Sidekiq queues: Clears all queues (scheduled, retry, dead, enqueued, stats)
 # Usage: ruby bin/clear_sync_statuses.rb [end_date] [batch_size]
 # Example: ruby bin/clear_sync_statuses.rb 2024-12-31 10000
 # Example: ruby bin/clear_sync_statuses.rb "3 months ago" 5000
 
 require 'fileutils'
 require File.expand_path('../config/environment', __dir__)
+require 'sidekiq/api'
 
 # Parse command line arguments
 end_date_input = ARGV[0] || '3 months ago'
@@ -160,6 +162,75 @@ rescue StandardError => e
   0
 end
 
+# Method to clear Sidekiq queues
+def clear_sidekiq_queues
+  puts "\n" + '=' * 80
+  puts 'CLEARING SIDEKIQ QUEUES'
+  puts '=' * 80
+  puts
+
+  cleared_counts = {}
+
+  begin
+    # Clear scheduled jobs
+    scheduled = Sidekiq::ScheduledSet.new
+    scheduled_count = scheduled.size
+    scheduled.clear
+    cleared_counts[:scheduled] = scheduled_count
+    puts "  ✓ Cleared scheduled queue: #{scheduled_count} jobs"
+
+    # Clear retry set
+    retries = Sidekiq::RetrySet.new
+    retry_count = retries.size
+    retries.clear
+    cleared_counts[:retries] = retry_count
+    puts "  ✓ Cleared retry queue: #{retry_count} jobs"
+
+    # Clear dead set
+    dead = Sidekiq::DeadSet.new
+    dead_count = dead.size
+    dead.clear
+    cleared_counts[:dead] = dead_count
+    puts "  ✓ Cleared dead queue: #{dead_count} jobs"
+
+    # Clear all queues (includes enqueued jobs)
+    Sidekiq::Queue.all.each do |queue|
+      queue_size = queue.size
+      queue.clear
+      cleared_counts[queue.name.to_sym] = queue_size
+      puts "  ✓ Cleared '#{queue.name}' queue: #{queue_size} jobs"
+    end
+
+    # Clear stats (processed and failed counts)
+    stats = Sidekiq::Stats.new
+    processed_count = stats.processed
+    failed_count = stats.failed
+
+    # Reset stats by accessing Redis directly
+    Sidekiq.redis do |conn|
+      conn.del('stat:processed')
+      conn.del('stat:failed')
+    end
+    cleared_counts[:processed_stats] = processed_count
+    cleared_counts[:failed_stats] = failed_count
+    puts "  ✓ Reset processed count: #{processed_count}"
+    puts "  ✓ Reset failed count: #{failed_count}"
+
+    # NOTE: 'busy' jobs are currently being processed and cannot be cleared
+    busy_count = Sidekiq::Workers.new.size
+    puts "  ℹ️  Currently busy jobs (cannot be cleared): #{busy_count}"
+    cleared_counts[:busy_active] = busy_count
+
+    puts
+    puts 'Sidekiq queues cleared successfully!'
+    cleared_counts
+  rescue StandardError => e
+    puts "  ✗ Error clearing Sidekiq queues: #{e.message}"
+    puts "  Backtrace: #{e.backtrace.first(5).join("\n  ")}"
+    {}
+  end
+end
+
 # Main execution
 puts "Starting sync status marking process...\n\n"
 
@@ -215,3 +286,22 @@ puts '=' * 80
 
 puts "\nℹ️  Sync tracker records are marked as synced (preserved for auditing)"
 puts "ℹ️  Sync error logs are deleted (older than #{end_date.to_date})"
+
+# Clear Sidekiq queues
+sidekiq_cleared = clear_sidekiq_queues
+
+# Final summary
+puts "\n" + '=' * 80
+puts 'FINAL SUMMARY'
+puts '=' * 80
+puts 'Sync Processing:'
+puts "  - Records marked as synced: #{total_updated}"
+puts "  - Records deleted: #{total_deleted}"
+puts "  - Duration: #{duration} seconds"
+puts
+puts 'Sidekiq Queues Cleared:'
+sidekiq_cleared.each do |queue_name, count|
+  puts "  - #{queue_name}: #{count} jobs"
+end
+puts '=' * 80
+puts "\n✅ All operations completed successfully!"

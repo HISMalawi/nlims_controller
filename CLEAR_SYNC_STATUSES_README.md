@@ -1,12 +1,14 @@
-# Process Sync Statuses Script
+# Process Sync Statuses & Clear Sidekiq Queues Script
 
 ## Overview
 
-This script efficiently processes sync status records up to a specified date with two different strategies:
+This script efficiently processes sync status records up to a specified date and clears Sidekiq job queues. It performs three main operations:
 
 **1. Mark as Synced (For sync trackers)** - Sets sync flags to true, preserving all data for auditing while preventing re-processing by sync jobs.
 
 **2. Delete (For error logs)** - Permanently removes old error logs that don't need long-term storage.
+
+**3. Clear Sidekiq Queues** - Clears all Sidekiq job queues including scheduled, retries, dead, enqueued, and resets processed/failed stats.
 
 ### Benefits of This Approach
 
@@ -23,11 +25,14 @@ For error logs:
 - ✅ Reduces database bloat from temporary error records
 - ✅ Improves query performance
 - ✅ Error logs typically have limited long-term value
-- ✅ Data is preserved for auditing and troubleshooting
-- ✅ Recoverable if something goes wrong
-- ✅ No data loss risk
-- ✅ Maintains complete historical records
-- ✅ Can still be deleted later if needed
+
+For Sidekiq queues:
+
+- ✅ Removes stale/stuck jobs from all queues
+- ✅ Clears scheduled, retry, and dead job sets
+- ✅ Resets processed and failed statistics
+- ✅ Prevents re-execution of old sync jobs
+- ⚠️ **Note**: Active (busy) jobs cannot be cleared while processing
 
 ## How It Works
 
@@ -46,6 +51,17 @@ Updates the following fields to mark records as processed:
 ### Deleting Records (Removes Data)
 
 6. **sync_error_logs** → Deleted permanently (error logs don't need preservation)
+
+### Clearing Sidekiq Queues (After Processing)
+
+After processing sync records, the script automatically clears all Sidekiq queues:
+
+1. **Scheduled jobs** → All scheduled jobs cleared
+2. **Retry set** → Failed jobs pending retry cleared
+3. **Dead set** → Dead jobs that exceeded retry limit cleared
+4. **All queues** → All enqueued jobs in every queue cleared
+5. **Statistics** → Processed and failed counters reset to 0
+6. **Busy jobs** → Cannot be cleared (currently being processed by workers)
 
 ## Affected Tables
 
@@ -284,6 +300,7 @@ The script outputs:
 - Progress updates during marking/deletion
 - Total records marked as synced per table
 - Total records deleted
+- Sidekiq queues cleared (with counts)
 - Overall summary with timing
 - Reminder about data preservation vs deletion
 
@@ -330,6 +347,44 @@ Completed at: 2025-01-15 14:30:00 +0000
 
 ℹ️  Sync tracker records are marked as synced (preserved for auditing)
 ℹ️  Sync error logs are deleted (older than 2024-12-31)
+
+================================================================================
+CLEARING SIDEKIQ QUEUES
+================================================================================
+
+  ✓ Cleared scheduled queue: 1523 jobs
+  ✓ Cleared retry queue: 342 jobs
+  ✓ Cleared dead queue: 89 jobs
+  ✓ Cleared 'default' queue: 456 jobs
+  ✓ Cleared 'sync' queue: 2341 jobs
+  ✓ Cleared 'mailers' queue: 12 jobs
+  ✓ Reset processed count: 1234567
+  ✓ Reset failed count: 8901
+  ℹ️  Currently busy jobs (cannot be cleared): 3
+
+Sidekiq queues cleared successfully!
+
+================================================================================
+FINAL SUMMARY
+================================================================================
+Sync Processing:
+  - Records marked as synced: 233000
+  - Records deleted: 12000
+  - Duration: 42.18 seconds
+
+Sidekiq Queues Cleared:
+  - scheduled: 1523 jobs
+  - retries: 342 jobs
+  - dead: 89 jobs
+  - default: 456 jobs
+  - sync: 2341 jobs
+  - mailers: 12 jobs
+  - processed_stats: 1234567
+  - failed_stats: 8901
+  - busy_active: 3
+================================================================================
+
+✅ All operations completed successfully!
 ```
 
 ## Scheduling with Cron
@@ -389,6 +444,7 @@ crontab -e
 
 ✅ **Sync Trackers: SAFE and REVERSIBLE!** Records are marked, not deleted.
 ⚠️ **Error Logs: PERMANENT DELETION!** Cannot be recovered unless you have backups.
+❌ **Sidekiq Queues: PERMANENT DELETION!** All queued jobs will be lost and cannot be recovered.
 
 ### Key Benefits:
 
@@ -397,15 +453,28 @@ crontab -e
 3. **Space optimization** - Error logs are deleted to reduce bloat
 4. **Performance** - Sync jobs skip already processed records
 5. **Flexibility** - Can delete marked sync records later if space is needed
+6. **Clean slate** - Sidekiq queues are cleared to prevent old jobs from running
+
+### Critical Warnings:
+
+⚠️ **Sidekiq Queue Clearing**:
+
+- **ALL queued jobs will be permanently lost** (scheduled, retry, dead, enqueued)
+- Jobs cannot be recovered after clearing
+- Only run during maintenance windows when job loss is acceptable
+- Active/busy jobs cannot be cleared but will complete
+- Consider the impact on system operations before running
 
 ### Recommendations:
 
 1. **Backup before running in production** (especially for error log deletion)
 2. **Test in development/staging first** to verify behavior
-3. **Run during low-traffic periods** for optimal performance
-4. **Monitor sync job behavior** after marking to ensure correct operation
-5. **Keep marked records** for at least 30-90 days before deletion
-6. **Retain recent error logs** - only delete logs older than necessary (e.g., 3-6 months)
+3. **Run during low-traffic/maintenance periods** for optimal performance
+4. **Stop Sidekiq workers** before running if you want to avoid busy jobs
+5. **Monitor sync job behavior** after marking to ensure correct operation
+6. **Keep marked records** for at least 30-90 days before deletion
+7. **Retain recent error logs** - only delete logs older than necessary (e.g., 3-6 months)
+8. **Verify no critical jobs are queued** before clearing Sidekiq
 
 ## Support
 

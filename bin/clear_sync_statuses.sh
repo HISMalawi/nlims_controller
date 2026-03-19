@@ -1,5 +1,5 @@
 #!/bin/bash
-# Shell wrapper for marking sync statuses as synced
+# Shell wrapper for processing sync statuses and clearing Sidekiq queues
 # Usage: ./bin/clear_sync_statuses.sh [end_date] [batch_size]
 # Example: ./bin/clear_sync_statuses.sh "2024-12-31" 10000
 # Example: ./bin/clear_sync_statuses.sh "3 months ago" 5000
@@ -13,20 +13,24 @@ cd "$PROJECT_DIR" || exit 1
 RAILS_ENV="${RAILS_ENV:-production}"
 
 echo "==================================================================="
-echo "Mark Sync Statuses as Synced Script"
+echo "Process Sync Statuses & Clear Sidekiq Queues"
 echo "==================================================================="
 echo "Environment: $RAILS_ENV"
 echo "Project Directory: $PROJECT_DIR"
 echo "Arguments: $*"
-echo "Action: Marking sync trackers as synced, deleting error logs"
+echo "Actions:"
+echo "  - Mark sync trackers as synced"
+echo "  - Delete old error logs"
+echo "  - Clear all Sidekiq queues"
 echo "==================================================================="
 echo
 
 # Confirmation prompt for production
 if [ "$RAILS_ENV" = "production" ]; then
-  echo "INFO: This script will process sync records in PRODUCTION:"
+  echo "WARNING: This script will make changes in PRODUCTION:"
   echo "      - Sync trackers: marked as synced (preserved for auditing)"
   echo "      - Error logs: deleted permanently"
+  echo "      - Sidekiq queues: ALL queues will be cleared (jobs lost)"
   echo
   read -p "Are you sure you want to continue? (yes/no): " -r
   echo
@@ -43,10 +47,12 @@ exit_code=$?
 
 if [ $exit_code -eq 0 ]; then
   echo
-  echo "✓ Processing completed successfully"
+  echo "✅ All operations completed successfully"
   echo
-  echo "INFO: Sync trackers are marked as synced (preserved for auditing)"
-  echo "      Error logs are deleted permanently"
+  echo "Summary:"
+  echo "  ✓ Sync trackers marked as synced (data preserved)"
+  echo "  ✓ Error logs deleted"
+  echo "  ✓ Sidekiq queues cleared"
   echo
 else
   echo
