@@ -24,14 +24,19 @@ class API::V1::TestController < ApplicationController
                      status: 200,
                      error: false,
                      message: 'test updated successfuly',
-                     data: {}
+                     data: {
+                      tracking_number: update_details['tracking_number']
+                     }
                    }
                  else
                    {
                      status: 401,
                      error: true,
                      message: stat[1],
-                     data: {}
+                     data: {
+                      tracking_number: update_details['tracking_number'],
+                      payload: params.except(:controller, :action).to_unsafe_h
+                     }
                    }
 
                  end
@@ -40,7 +45,10 @@ class API::V1::TestController < ApplicationController
         status: 401,
         error: true,
         message: 'update details not provided',
-        data: {}
+        data: {
+                tracking_number: update_details['tracking_number'],
+                payload: params.except(:controller, :action).to_unsafe_h
+              }
       }
     end
     render(plain: response.to_json) && return
