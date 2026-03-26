@@ -155,7 +155,8 @@ class MlabToNlimsSyncService
               :mlab_status,
               mlab_order: [
                 :mlab_status,
-                { mlab_encounter: { mlab_client: :mlab_person } }
+                { mlab_encounter: { mlab_client: [:mlab_person,
+                                                  { mlab_client_identifiers: :mlab_client_identifier_type }] } }
               ]
             )
             .where('tests.id > ?', @start_from_id)
@@ -392,6 +393,9 @@ class MlabToNlimsSyncService
     # Build order data
     facility_name = @sending_facility || encounter&.mlab_facility&.name
 
+    # Get clinical data from client identifiers
+    clinical_data = get_clinical_data_from_identifiers(client)
+
     order_data = {
       uuid: SecureRandom.uuid,
       tracking_number: order&.tracking_number,
@@ -409,10 +413,10 @@ class MlabToNlimsSyncService
       target_lab: facility_name,
       order_location: facility_name || encounter&.mlab_facility&.name,
       requested_by: order&.requested_by,
-      art_start_date: encounter&.client_history&.dig('art_start_date'),
-      arv_number: encounter&.client_history&.dig('arv_number') || 'N/A',
-      art_regimen: encounter&.client_history&.dig('art_regimen') || 'N/A',
-      clinical_history: encounter&.client_history&.to_json,
+      art_start_date: clinical_data['art_start_date'],
+      arv_number: clinical_data['arv_number'] || 'N/A',
+      art_regimen: clinical_data['art_regimen'] || 'N/A',
+      clinical_history: clinical_data.to_json,
       status_trail: build_order_status_trail(order),
       source_system: 'IBLIS'
     }
@@ -597,6 +601,37 @@ class MlabToNlimsSyncService
     # The actual validation happens when we look up the status in NLIMS database
     normalized_status = mlab_status.downcase.strip
     NLIMS_STATUS_MAPPING[normalized_status] || normalized_status.tr('-', '_')
+  end
+
+  def get_clinical_data_from_identifiers(client)
+    return {} unless client
+
+    # Cache to avoid repeated queries
+    @identifier_cache ||= {}
+    cache_key = "client_#{client.id}"
+    return @identifier_cache[cache_key] if @identifier_cache.key?(cache_key)
+
+    # Load all identifiers for this client with their types
+    identifiers = client.mlab_client_identifiers
+                        .not_voided
+                        .includes(:mlab_client_identifier_type)
+
+    # Build a hash of identifier_type_name => value
+    identifier_data = {}
+    identifiers.each do |identifier|
+      type_name = identifier.mlab_client_identifier_type&.name
+      identifier_data[type_name] = identifier.value if type_name
+    end
+
+    # Extract clinical data
+    clinical_data = {
+      'art_start_date' => identifier_data['art_start_date'],
+      'arv_number' => identifier_data['art_number'],
+      'art_regimen' => identifier_data['art_regimen']
+    }
+
+    @identifier_cache[cache_key] = clinical_data
+    clinical_data
   end
 
   def skip_test(mlab_test, reason, tracking_number: nil, test_type_nlims_code: nil, payload: nil)

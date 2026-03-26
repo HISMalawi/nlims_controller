@@ -4,6 +4,7 @@
 # Helper script to investigate and manage mlab sync failures
 
 require File.expand_path('../config/environment', __dir__)
+require_relative 'mlab_to_nlims_sync'
 
 class MlabSyncFailureManager
   def self.run
@@ -311,7 +312,10 @@ class MlabSyncFailureManager
     puts "Order: #{test.mlab_order&.tracking_number}"
     puts ''
 
-    print 'Override sending facility (leave blank to use from data): '
+    # Get default facility from MlabGlobal
+    default_facility = MlabGlobal.current&.name
+
+    print "Override sending facility [default: #{default_facility || 'from order data'}]: "
     facility = gets.chomp
     facility = nil if facility.empty?
 
