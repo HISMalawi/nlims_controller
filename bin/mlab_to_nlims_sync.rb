@@ -61,6 +61,40 @@ class MlabToNlimsSyncService
     setup_logger
   end
 
+  # Quick retry method for single test without full sync overhead
+  # Returns: [:success/:failure/:skipped, message]
+  def self.quick_retry_test(mlab_test_id, sending_facility: nil)
+    # Create a minimal instance without logger overhead
+    service = new(sending_facility: sending_facility, start_from_id: 0, limit: 1)
+    service.instance_variable_set(:@logger, nil) # Disable file logging for speed
+
+    # Load the test with necessary associations
+    mlab_test = MlabTest.not_voided
+                        .includes(
+                          :mlab_test_type,
+                          :mlab_specimen,
+                          :mlab_status,
+                          :mlab_test_statuses,
+                          :mlab_test_results,
+                          mlab_order: [
+                            :mlab_status,
+                            :mlab_order_statuses,
+                            { mlab_encounter: { mlab_client: [:mlab_person,
+                                                              { mlab_client_identifiers: :mlab_client_identifier_type }] } }
+                          ]
+                        )
+                        .find_by(id: mlab_test_id)
+
+    return [:skipped, 'Test not found in mlab database'] unless mlab_test
+
+    # Process the test directly, capturing result
+    begin
+      service.send(:process_test_for_retry, mlab_test)
+    rescue StandardError => e
+      [:failure, "Error: #{e.message}"]
+    end
+  end
+
   def run
     puts '=' * 80
     puts 'MLAB TO NLIMS DATA SYNC'
@@ -229,6 +263,89 @@ class MlabToNlimsSyncService
     else
       # Create new order with test
       create_new_order_with_test(mlab_test, payload)
+    end
+  end
+
+  # Lightweight version of process_test that returns status instead of tracking stats
+  # Returns: [:success/:failure/:skipped, message]
+  def process_test_for_retry(mlab_test)
+    # Build the payload from mlab test data
+    payload = build_payload_from_mlab_test(mlab_test)
+
+    return [:skipped, 'Missing test type nlims_code'] if payload[:test_type_nlims_code].blank?
+    return [:skipped, 'Missing tracking number'] if payload[:tracking_number].blank?
+
+    # Check if order already exists
+    existing_order = Speciman.find_by(tracking_number: payload[:tracking_number])
+
+    if existing_order
+      # Order exists, check if test exists
+      process_existing_order_for_retry(mlab_test, existing_order, payload)
+
+    else
+      # Create new order with test
+      create_new_order_with_test_for_retry(mlab_test, payload)
+
+    end
+  rescue StandardError => e
+    [:failure, e.message]
+  end
+
+  def process_existing_order_for_retry(_mlab_test, existing_order, payload)
+    # Update order's sending facility and district if provided
+    update_order_facility_and_district(existing_order, payload)
+
+    # Check if test exists for this order
+    existing_test = Test.joins(:test_type)
+                        .where(
+                          specimen_id: existing_order.id,
+                          test_types: { nlims_code: payload[:test_type_nlims_code] }
+                        ).first
+
+    if existing_test
+      # Test exists, update status and results if needed
+      test_data = payload[:tests].first
+      status, response = TestManagement::TestsService.update_tests(
+        Speciman.find(existing_test.specimen_id),
+        test_data
+      )
+
+      if status
+        [:success, "Updated existing test (NLIMS ID: #{existing_test.id})"]
+      else
+        [:skipped, "Update skipped: #{response}"]
+      end
+    else
+      # Test doesn't exist, add it to the order
+      test_data = payload[:tests].first
+      status, response = TestManagement::TestsService.add_test_to_order(existing_order, test_data)
+
+      return [:failure, "Failed to add test: #{response}"] unless status
+
+      status, response = TestManagement::TestsService.update_tests(existing_order, test_data)
+
+      if status
+        [:success, 'Test added to existing order']
+      else
+        [:failure, "Test creation failed: #{response}"]
+      end
+    end
+  end
+
+  def create_new_order_with_test_for_retry(_mlab_test, payload)
+    status, response = OrderManagement::OrdersService.create_order(
+      build_order_params(payload),
+      false
+    )
+
+    if status
+      TestManagement::TestsService.update_tests(
+        Speciman.find_by(tracking_number: payload[:tracking_number]),
+        payload[:tests].first
+      )
+      [:success, "Order created (Tracking: #{response})"]
+    else
+      [:failure, "Order creation failed: #{response}"]
     end
   end
 

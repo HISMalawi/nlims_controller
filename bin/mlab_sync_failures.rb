@@ -30,6 +30,8 @@ class MlabSyncFailureManager
       when '8'
         retry_specific_test
       when '9'
+        retry_failures_by_site
+      when '10'
         puts 'Exiting...'
         break
       else
@@ -55,7 +57,8 @@ class MlabSyncFailureManager
     puts '6. Mark Failures as Resolved'
     puts '7. Export Failed Test IDs'
     puts '8. Retry Specific Test'
-    puts '9. Exit'
+    puts '9. Retry All Failures by Site'
+    puts '10. Exit'
     puts ''
     print 'Choose an option: '
   end
@@ -339,6 +342,141 @@ class MlabSyncFailureManager
     else
       puts "\nCancelled"
     end
+  end
+
+  def self.retry_failures_by_site
+    puts "\n" + '=' * 80
+    puts 'RETRY FAILURES BY SITE'
+    puts '=' * 80
+
+    # Get all sites with unresolved failures
+    sites = MlabSyncFailure.unresolved
+                           .group(:site_name)
+                           .count
+                           .sort_by { |_, count| -count }
+
+    if sites.empty?
+      puts "\nNo unresolved failures found!"
+      return
+    end
+
+    puts "\nSites with unresolved failures:"
+    puts format('%-5s %-40s %s', '#', 'Site Name', 'Count')
+    puts '-' * 60
+    sites.each_with_index do |(site, count), index|
+      puts format('%-5d %-40s %d', index + 1, site || 'Unknown', count)
+    end
+
+    print "\nEnter site number (or 'all' for all sites): "
+    choice = gets.chomp
+
+    selected_sites = if choice.downcase == 'all'
+                       sites.map { |site, _| site }
+                     else
+                       site_index = choice.to_i - 1
+                       if site_index < 0 || site_index >= sites.length
+                         puts "\nInvalid choice!"
+                         return
+                       end
+                       [sites.to_a[site_index][0]]
+                     end
+
+    # Get default facility from MlabGlobal
+    default_facility = MlabGlobal.current&.name
+
+    print "\nOverride sending facility [default: #{default_facility || 'from order data'}]: "
+    facility = gets.chomp
+    facility = nil if facility.empty?
+
+    # Confirm before proceeding
+    total_failures = MlabSyncFailure.unresolved.where(site_name: selected_sites).count
+    puts "\nThis will retry #{total_failures} failure(s) from #{selected_sites.length} site(s)"
+    print 'Continue? (yes/no): '
+    confirm = gets.chomp.downcase
+
+    unless %w[yes y].include?(confirm)
+      puts "\nCancelled"
+      return
+    end
+
+    # Process each site
+    selected_sites.each do |site_name|
+      retry_site_failures(site_name, facility)
+    end
+  end
+
+  def self.retry_site_failures(site_name, facility_override = nil)
+    puts "\n" + '=' * 80
+    puts "RETRYING FAILURES FOR: #{site_name || 'Unknown'}"
+    puts '=' * 80
+
+    failures = MlabSyncFailure.unresolved.where(site_name: site_name).order(:mlab_test_id)
+
+    total = failures.count
+    success_count = 0
+    failure_count = 0
+    skipped_count = 0
+
+    puts "\nFound #{total} unresolved failure(s) to retry\n"
+
+    failures.each_with_index do |failure, index|
+      puts "\n[#{index + 1}/#{total}] Processing Test ID #{failure.mlab_test_id}..."
+
+      # Check if test still exists
+      test = MlabTest.find_by(id: failure.mlab_test_id)
+      unless test
+        puts '  ⊘ Test not found in mlab database - skipping'
+        skipped_count += 1
+        next
+      end
+
+      puts "  Test Type: #{test.mlab_test_type&.name} (#{test.mlab_test_type&.nlims_code})"
+      puts "  Tracking: #{test.mlab_order&.tracking_number}"
+      puts "  Previous failure: #{failure.failure_stage} - #{failure.failure_reason.truncate(60)}"
+      puts '  Retrying...'
+
+      begin
+        # Use quick retry method for better performance
+        status, message = MlabToNlimsSyncService.quick_retry_test(
+          failure.mlab_test_id,
+          sending_facility: facility_override
+        )
+
+        case status
+        when :success
+          puts "  ✓ #{message}"
+          failure.mark_resolved!('system', 'Successfully retried via bulk site retry')
+          success_count += 1
+        when :skipped
+          puts "  → Skipped: #{message}"
+          skipped_count += 1
+        when :failure
+          puts "  ✗ Failed: #{message}"
+          failure.increment!(:retry_count)
+          failure.update(last_retry_at: Time.current)
+          failure_count += 1
+        end
+      rescue StandardError => e
+        puts "  ✗ Error: #{e.message}"
+        failure.increment!(:retry_count)
+        failure.update(last_retry_at: Time.current)
+        failure_count += 1
+      end
+
+      # Brief pause to avoid overwhelming the database
+      sleep(0.05) # Reduced from 0.1 since we're faster now
+    end
+
+    # Print summary for this site
+    puts "\n" + '=' * 80
+    puts "SUMMARY FOR #{site_name || 'Unknown'}"
+    puts '=' * 80
+    puts "Total Processed: #{total}"
+    puts "Successes: #{success_count}"
+    puts "Still Failing: #{failure_count}"
+    puts "Skipped: #{skipped_count}"
+    puts "Success Rate: #{total > 0 ? ((success_count.to_f / total) * 100).round(2) : 0}%"
+    puts '=' * 80
   end
 end
 
