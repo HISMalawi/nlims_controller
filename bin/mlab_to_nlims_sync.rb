@@ -11,7 +11,7 @@ require 'json'
 
 # Sync service to handle mlab to nlims data migration
 class MlabToNlimsSyncService
-  BATCH_SIZE = 100 # Reduced from 1000 for better query performance
+  BATCH_SIZE = 500 # Reduced from 1000 for better query performance
   NLIMS_STATUS_MAPPING = {
     'pending' => 'pending',
     'specimen-not-collected' => 'specimen_not_collected',
