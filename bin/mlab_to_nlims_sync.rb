@@ -40,7 +40,7 @@ class MlabToNlimsSyncService
     'started' => 'started'
   }.freeze
 
-  def initialize(sending_facility: nil, district: nil, start_from_id: nil, limit: nil)
+  def initialize(sending_facility: nil, district: nil, start_from_id: nil, limit: nil, auto_adjust_timestamps: false)
     # Load mlab global settings if facility/district not provided
     mlab_global = MlabGlobal.current
 
@@ -49,6 +49,7 @@ class MlabToNlimsSyncService
     @district = district || mlab_global&.district
     @start_from_id = start_from_id || 0
     @limit = limit
+    @auto_adjust_timestamps = auto_adjust_timestamps
     @total_processed = 0
     @total_created = 0
     @total_updated = 0
@@ -63,9 +64,10 @@ class MlabToNlimsSyncService
 
   # Quick retry method for single test without full sync overhead
   # Returns: [:success/:failure/:skipped, message]
-  def self.quick_retry_test(mlab_test_id, sending_facility: nil)
+  def self.quick_retry_test(mlab_test_id, sending_facility: nil, auto_adjust_timestamps: false)
     # Create a minimal instance without logger overhead
-    service = new(sending_facility: sending_facility, start_from_id: 0, limit: 1)
+    service = new(sending_facility: sending_facility, start_from_id: 0, limit: 1,
+                  auto_adjust_timestamps: auto_adjust_timestamps)
     service.instance_variable_set(:@logger, nil) # Disable file logging for speed
 
     # Load the test with necessary associations
@@ -513,6 +515,8 @@ class MlabToNlimsSyncService
     # Get clinical data from client identifiers
     clinical_data = get_clinical_data_from_identifiers(client)
 
+    order_created_date = order&.created_date || mlab_test.created_date
+
     order_data = {
       uuid: SecureRandom.uuid,
       tracking_number: order&.tracking_number,
@@ -525,7 +529,7 @@ class MlabToNlimsSyncService
         name: order&.collected_by || "#{get_user_details(order&.creator)[:first_name]} #{get_user_details(order&.creator)[:last_name]}",
         phone_number: ''
       },
-      date_created: order&.created_date || mlab_test.created_date,
+      date_created: order_created_date,
       sample_status: build_sample_status(order),
       target_lab: facility_name,
       order_location: facility_name || encounter&.mlab_facility&.name,
@@ -534,7 +538,7 @@ class MlabToNlimsSyncService
       arv_number: clinical_data['arv_number'] || 'N/A',
       art_regimen: clinical_data['art_regimen'] || 'N/A',
       clinical_history: clinical_data.to_json,
-      status_trail: build_order_status_trail(order),
+      status_trail: build_order_status_trail(order, order_created_date),
       source_system: 'IBLIS'
     }
 
@@ -545,7 +549,17 @@ class MlabToNlimsSyncService
 
     # Get the latest test status and its timestamp
     latest_status = mlab_test.mlab_test_statuses.not_voided.order(created_date: :desc).first
-    status_trail = build_test_status_trail(mlab_test)
+    status_trail = build_test_status_trail(mlab_test, order_created_date)
+
+    # Adjust time_updated only if it's in the past (less than order creation + 1 hour)
+    time_updated_value = latest_status&.created_date || mlab_test.created_date
+
+    if @auto_adjust_timestamps && order_created_date
+      # Time updated should be at least 1 hour after order creation
+      min_time_updated = order_created_date + 1.hour
+      # Only adjust if current time_updated is less than minimum
+      time_updated_value = min_time_updated if time_updated_value < min_time_updated
+    end
 
     test_data = {
       test_type: {
@@ -554,7 +568,7 @@ class MlabToNlimsSyncService
         method_of_testing: mlab_test.method_of_testing
       },
       test_status: get_latest_test_status(mlab_test),
-      time_updated: latest_status&.created_date || mlab_test.created_date,
+      time_updated: time_updated_value,
       status_trail: status_trail,
       test_results: build_test_results(mlab_test)
     }
@@ -597,14 +611,30 @@ class MlabToNlimsSyncService
     }
   end
 
-  def build_order_status_trail(order)
+  def build_order_status_trail(order, order_created_date = nil)
     return [] unless order
 
-    order.mlab_order_statuses.not_voided.order(:created_date).map do |status|
+    statuses = order.mlab_order_statuses.not_voided.order(:created_date)
+
+    # Track minimum timestamp only if auto-adjusting
+    min_timestamp = @auto_adjust_timestamps && order_created_date ? order_created_date : nil
+
+    statuses.map do |status|
       user_details = get_user_details(status.creator)
+      timestamp = status.created_date
+
+      # Only adjust timestamp if it's in the past (less than minimum)
+      if min_timestamp && timestamp < min_timestamp
+        timestamp = min_timestamp
+        min_timestamp += 30.seconds # Next status must be at least 30 seconds later
+      elsif min_timestamp && timestamp >= min_timestamp
+        # Timestamp is valid, update min for next iteration
+        min_timestamp = timestamp + 30.seconds
+      end
+
       {
         status: map_status_name(status.mlab_status&.name),
-        timestamp: status.created_date,
+        timestamp: timestamp,
         updated_by: {
           'id' => status.creator,
           'first_name' => user_details[:first_name],
@@ -615,12 +645,28 @@ class MlabToNlimsSyncService
     end
   end
 
-  def build_test_status_trail(mlab_test)
-    mlab_test.mlab_test_statuses.not_voided.order(:created_date).map do |status|
+  def build_test_status_trail(mlab_test, order_created_date = nil)
+    statuses = mlab_test.mlab_test_statuses.not_voided.order(:created_date)
+
+    # Track minimum timestamp only if auto-adjusting (1 hour after order creation)
+    min_timestamp = @auto_adjust_timestamps && order_created_date ? order_created_date + 1.hour : nil
+
+    statuses.map do |status|
       user_details = get_user_details(status.creator)
+      timestamp = status.created_date
+
+      # Only adjust timestamp if it's in the past (less than minimum)
+      if min_timestamp && timestamp < min_timestamp
+        timestamp = min_timestamp
+        min_timestamp += 1.minute # Next status must be at least 1 minute later
+      elsif min_timestamp && timestamp >= min_timestamp
+        # Timestamp is valid, update min for next iteration
+        min_timestamp = timestamp + 1.minute
+      end
+
       {
         status: map_status_name(status.mlab_status&.name),
-        timestamp: status.created_date,
+        timestamp: timestamp,
         updated_by: {
           'id' => status.creator,
           'first_name' => user_details[:first_name],
@@ -876,6 +922,15 @@ if $PROGRAM_NAME == __FILE__
   limit = gets.chomp
   limit = limit.empty? ? nil : limit.to_i
 
+  # Ask about timestamp adjustment
+  puts ''
+  puts '⚠ Some failures may be due to "time update is in the past" errors.'
+  puts 'Would you like to auto-adjust timestamps to fix these errors?'
+  puts '(This will set test time_updated to be 1 hour after order creation date)'
+  print 'Auto-adjust timestamps? (yes/no): '
+  auto_adjust = gets.chomp.downcase
+  auto_adjust_timestamps = %w[yes y].include?(auto_adjust)
+
   # Confirmation
   puts ''
   puts 'Configuration:'
@@ -883,6 +938,7 @@ if $PROGRAM_NAME == __FILE__
   puts "  District: #{district || default_district}"
   puts "  Starting from Test ID: #{start_id}"
   puts "  Limit: #{limit || 'No limit'}"
+  puts "  Auto-adjust timestamps: #{auto_adjust_timestamps ? 'ENABLED' : 'DISABLED'}"
   puts ''
   print 'Proceed with sync? (yes/no): '
   confirmation = gets.chomp.downcase
@@ -892,7 +948,8 @@ if $PROGRAM_NAME == __FILE__
       sending_facility: sending_facility,
       district: district,
       start_from_id: start_id,
-      limit: limit
+      limit: limit,
+      auto_adjust_timestamps: auto_adjust_timestamps
     )
     sync_service.run
   else

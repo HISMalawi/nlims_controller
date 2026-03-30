@@ -322,6 +322,12 @@ class MlabSyncFailureManager
     facility = gets.chomp
     facility = nil if facility.empty?
 
+    # Ask about timestamp adjustment
+    puts "\n⚠ Some failures may be due to 'time update is in the past' errors."
+    print 'Auto-adjust timestamps? (yes/no): '
+    auto_adjust = gets.chomp.downcase
+    auto_adjust_timestamps = %w[yes y].include?(auto_adjust)
+
     print 'Retry this test? (yes/no): '
     confirm = gets.chomp.downcase
 
@@ -329,12 +335,20 @@ class MlabSyncFailureManager
       puts "\nRetrying..."
 
       begin
-        sync_service = MlabToNlimsSyncService.new(
+        status, message = MlabToNlimsSyncService.quick_retry_test(
+          test_id,
           sending_facility: facility,
-          start_from_id: test_id - 1,
-          limit: 1
+          auto_adjust_timestamps: auto_adjust_timestamps
         )
-        sync_service.run
+
+        case status
+        when :success
+          puts "✓ Success! #{message}"
+        when :skipped
+          puts "→ Skipped: #{message}"
+        when :failure
+          puts "✗ Failed: #{message}"
+        end
       rescue StandardError => e
         puts "Error: #{e.message}"
         puts e.backtrace.first(10)
@@ -388,9 +402,18 @@ class MlabSyncFailureManager
     facility = gets.chomp
     facility = nil if facility.empty?
 
+    # Ask about timestamp adjustment
+    puts "\n⚠ Some failures may be due to 'time update is in the past' errors."
+    puts 'Would you like to auto-adjust timestamps to fix these errors?'
+    puts '(This will set test time_updated to be 1 hour after order creation date)'
+    print 'Auto-adjust timestamps? (yes/no): '
+    auto_adjust = gets.chomp.downcase
+    auto_adjust_timestamps = %w[yes y].include?(auto_adjust)
+
     # Confirm before proceeding
     total_failures = MlabSyncFailure.unresolved.where(site_name: selected_sites).count
     puts "\nThis will retry #{total_failures} failure(s) from #{selected_sites.length} site(s)"
+    puts "Timestamp adjustment: #{auto_adjust_timestamps ? 'ENABLED' : 'DISABLED'}"
     print 'Continue? (yes/no): '
     confirm = gets.chomp.downcase
 
@@ -401,11 +424,11 @@ class MlabSyncFailureManager
 
     # Process each site
     selected_sites.each do |site_name|
-      retry_site_failures(site_name, facility)
+      retry_site_failures(site_name, facility, auto_adjust_timestamps)
     end
   end
 
-  def self.retry_site_failures(site_name, facility_override = nil)
+  def self.retry_site_failures(site_name, facility_override = nil, auto_adjust_timestamps = false)
     puts "\n" + '=' * 80
     puts "RETRYING FAILURES FOR: #{site_name || 'Unknown'}"
     puts '=' * 80
@@ -439,7 +462,8 @@ class MlabSyncFailureManager
         # Use quick retry method for better performance
         status, message = MlabToNlimsSyncService.quick_retry_test(
           failure.mlab_test_id,
-          sending_facility: facility_override
+          sending_facility: facility_override,
+          auto_adjust_timestamps: auto_adjust_timestamps
         )
 
         case status
