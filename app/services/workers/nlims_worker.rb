@@ -7,7 +7,7 @@ require 'logger'
 # Manages multiple background workers for synchronization tasks
 module NlimsWorker
   LOG_FILES_TO_KEEP = 5
-  LOG_FILE_SIZE = 500.megabytes
+  LOG_FILE_SIZE = 100.megabytes
   LOG_DIR = Rails.root.join('log', 'workers')
 
   def self.start(_start_date: nil)
