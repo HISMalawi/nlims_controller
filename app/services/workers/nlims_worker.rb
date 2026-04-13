@@ -22,8 +22,8 @@ module NlimsWorker
     fork { start_test_catalog_sync_worker }
     fork { start_push_orders_worker }
     fork { start_push_results_worker }
-    fork { start_master_nlims_sync_data_worker }
     fork { start_push_acknowledgements_worker }
+    # NOTE: master_nlims_sync_data_worker runs separately every 2 hours (see cron schedule)
 
     # Wait for all child processes
     Process.waitall

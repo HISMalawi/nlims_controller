@@ -87,7 +87,10 @@ echo
 
 # New unified worker system - runs every 5 minutes
 # All NLIMS sync tasks are handled by workers that run in parallel with file-based locking
-cron_nlims_worker="*/5 * * * * /bin/bash -l -c 'export PATH=\"\$HOME/.rbenv/bin:\$PATH\" && eval \"\$(rbenv init -)\" && cd /var/www/nlims_controller && rbenv local 3.2.0 && RAILS_ENV=development bin/rails runner bin/worker.rb >> log/workers/nlims_worker.log 2>&1'"
+cron_nlims_worker="*/15 * * * * /bin/bash -l -c 'export PATH=\"\$HOME/.rbenv/bin:\$PATH\" && eval \"\$(rbenv init -)\" && cd /var/www/nlims_controller && rbenv local 3.2.0 && RAILS_ENV=development bin/rails runner bin/worker.rb >> log/nlims_worker.log 2>&1'"
+
+# Master NLIMS sync data worker - runs every 2 hours (heavier operation)
+cron_master_nlims_sync="0 */2 * * * /bin/bash -l -c 'export PATH=\"\$HOME/.rbenv/bin:\$PATH\" && eval \"\$(rbenv init -)\" && cd /var/www/nlims_controller && rbenv local 3.2.0 && RAILS_ENV=development bin/rails runner bin/master_nlims_sync_worker.rb >> log/workers/master_nlims_sync_data_worker.log 2>&1'"
 
 # Note: Update order source couch ID job moved to config/schedule.yml (Sidekiq Cron)
 # Runs weekly on Friday at 3pm via Sidekiq scheduler
@@ -123,6 +126,7 @@ add_job() {
 echo "Adding new cron jobs..."
 
 add_job "$cron_nlims_worker"
+add_job "$cron_master_nlims_sync"
 add_job "$cron_emr"
 add_job "$cron_rm_stale_locks"
 
