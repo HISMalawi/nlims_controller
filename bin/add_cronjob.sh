@@ -64,42 +64,39 @@ echo "Old cron jobs removed."
 echo
 
 #############################################
-#  CLEAN UP STALE LOCKS
+#  CLEAN UP OLD LOCKS
 #############################################
 
-echo "Cleaning up stale NLIMS cron job locks in /tmp..."
+echo "Cleaning up old NLIMS cron job locks in /tmp..."
 LOCK_DIR="/tmp"
 
+# Remove old flock-based locks (no longer used)
 rm -f "$LOCK_DIR/log_tracking_numbers.lock" \
       "$LOCK_DIR/sync_sh.lock" \
       "$LOCK_DIR/nlims_sync_data.lock" \
       "$LOCK_DIR/nlims_ack.lock" \
       "$LOCK_DIR/nlims_update_couch_id.lock"
 
-echo "Stale locks removed (if they existed)."
+echo "Old locks removed (if they existed)."
 echo
 
 
 #############################################
-#  DEFINE NEW CRON JOBS
+#  DEFINE NEW CRON JOBS (WORKER-BASED)
 #############################################
 
-LOCK_DIR="/tmp"
+# New unified worker system - runs every 5 minutes
+# All NLIMS sync tasks are handled by workers that run in parallel with file-based locking
+cron_nlims_worker="*/5 * * * * /bin/bash -l -c 'export PATH=\"\$HOME/.rbenv/bin:\$PATH\" && eval \"\$(rbenv init -)\" && cd /var/www/nlims_controller && rbenv local 3.2.0 && RAILS_ENV=development bin/rails runner bin/worker.rb >> log/workers/nlims_worker.log 2>&1'"
 
-cron_log_tracking_numbers="*/5 * * * * flock -n $LOCK_DIR/log_tracking_numbers.lock /bin/bash -l -c 'cd /var/www/nlims_controller && ./bin/log_tracking_numbers.sh --silent >> log/log_tracking_numbers.log 2>&1'"
+# Note: Update order source couch ID job moved to config/schedule.yml (Sidekiq Cron)
+# Runs weekly on Friday at 3pm via Sidekiq scheduler
 
-cron_sync_sh="*/5 * * * * flock -n $LOCK_DIR/sync_sh.lock /bin/bash -l -c 'cd /var/www/nlims_controller && ./bin/sync.sh --silent >> log/sync.log 2>&1'"
-
-cron_nlims_sync_data="0 */3 * * * flock -n $LOCK_DIR/nlims_sync_data.lock /bin/bash -l -c 'export PATH=\"\$HOME/.rbenv/bin:\$PATH\" && eval \"\$(rbenv init -)\" && cd /var/www/nlims_controller && rbenv local 3.2.0 && RAILS_ENV=development bundle exec rake master_nlims:sync_data --silent >> log/pull_from_master_nlims.log 2>&1'"
-
-cron_nlims_ack="*/30 * * * * flock -n $LOCK_DIR/nlims_ack.lock /bin/bash -l -c 'export PATH=\"\$HOME/.rbenv/bin:\$PATH\" && eval \"\$(rbenv init -)\" && cd /var/www/nlims_controller && rbenv local 3.2.0 && RAILS_ENV=development bundle exec rake master_nlims:sync_local_nlims_acknowledge_results --silent >> log/pull_from_master_nlims.log 2>&1'"
-
-cron_nlims_update_couch_id="0 * */5 * * flock -n $LOCK_DIR/nlims_update_couch_id.lock /bin/bash -l -c 'export PATH=\"\$HOME/.rbenv/bin:\$PATH\" && eval \"\$(rbenv init -)\" && cd /var/www/nlims_controller && rbenv local 3.2.0 && RAILS_ENV=development bundle exec rake master_nlims:update_order_source_couch_id --silent >> log/update_order_source_couch_id.log 2>&1'"
-
-# EMR job (NO FLOCK!)
+# EMR job (runs independently)
 cron_emr="*/5 * * * * /bin/bash -l -c 'export PATH=\"\$HOME/.rbenv/bin:\$PATH\" && eval \"\$(rbenv init -)\" && cd /var/www/EMR-API && bin/rails runner -e production '\''bin/lab/sync_worker.rb'\'''"
 
-cron_rm_stale_locks="0 3 * * 6 /bin/bash -l -c 'cd /var/www/nlims_controller && ./bin/clean_up_stale_lock.sh --silent >> log/clean_up_stale_lock.log 2>&1'"
+# Clean up stale worker locks weekly
+cron_rm_stale_locks="0 3 * * 6 /bin/bash -l -c 'cd /var/www/nlims_controller && ./bin/clean_up_worker_locks.sh >> log/clean_up_worker_locks.log 2>&1'"
 
 
 #############################################
@@ -125,14 +122,12 @@ add_job() {
 
 echo "Adding new cron jobs..."
 
-add_job "$cron_log_tracking_numbers"
-add_job "$cron_sync_sh"
-add_job "$cron_nlims_sync_data"
-add_job "$cron_nlims_ack"
-add_job "$cron_nlims_update_couch_id"
+add_job "$cron_nlims_worker"
 add_job "$cron_emr"
 add_job "$cron_rm_stale_locks"
 
+echo
+echo "Note: UpdateOrderSourceCouchIdJob is scheduled via Sidekiq Cron (config/schedule.yml)"
 echo
 echo "============================================"
 echo "      NLIMS CRON INSTALLATION COMPLETE"
