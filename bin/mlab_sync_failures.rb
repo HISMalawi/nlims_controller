@@ -362,19 +362,43 @@ class MlabSyncFailureManager
   end
 
   def self.retry_multiple_tests
-    puts "\nEnter mlab test IDs to retry (space-separated, e.g., '123 456 789'):"
-    print '> '
-    input = gets.chomp
+    puts "\nRetry Multiple Tests"
+    puts '=' * 80
+    puts 'Choose input method:'
+    puts '1. Enter IDs manually (space-separated, limit ~150 IDs)'
+    puts '2. Read from file (recommended for large batches)'
+    print 'Choose (1/2): '
+    input_method = gets.chomp
 
-    # Parse the space-separated IDs
-    test_ids = input.split.map(&:strip).map(&:to_i).reject(&:zero?)
+    test_ids = case input_method
+               when '1'
+                 puts "\nEnter mlab test IDs (space-separated, e.g., '123 456 789'):"
+                 print '> '
+                 input = gets.chomp
+                 input.split.map(&:strip).map(&:to_i).reject(&:zero?)
+               when '2'
+                 print "\nEnter file path (one ID per line or space-separated): "
+                 file_path = gets.chomp
+                 
+                 unless File.exist?(file_path)
+                   puts "\nFile not found: #{file_path}"
+                   return
+                 end
+
+                 # Read all IDs from file (handles both one-per-line and space-separated)
+                 File.read(file_path).split(/\s+/).map(&:strip).map(&:to_i).reject(&:zero?)
+               else
+                 puts "\nInvalid choice!"
+                 return
+               end
 
     if test_ids.empty?
       puts "\nNo valid test IDs provided!"
       return
     end
 
-    puts "\nFound #{test_ids.count} test ID(s) to retry: #{test_ids.join(', ')}"
+    puts "\nFound #{test_ids.count} test ID(s) to retry"
+    puts "First 10 IDs: #{test_ids.first(10).join(', ')}#{'...' if test_ids.count > 10}"
 
     # Get default facility from MlabGlobal
     default_facility = MlabGlobal.current&.name
