@@ -30,8 +30,10 @@ class MlabSyncFailureManager
       when '8'
         retry_specific_test
       when '9'
-        retry_failures_by_site
+        retry_multiple_tests
       when '10'
+        retry_failures_by_site
+      when '11'
         puts 'Exiting...'
         break
       else
@@ -57,8 +59,9 @@ class MlabSyncFailureManager
     puts '6. Mark Failures as Resolved'
     puts '7. Export Failed Test IDs'
     puts '8. Retry Specific Test'
-    puts '9. Retry All Failures by Site'
-    puts '10. Exit'
+    puts '9. Retry Multiple Tests (Space-separated IDs)'
+    puts '10. Retry All Failures by Site'
+    puts '11. Exit'
     puts ''
     print 'Choose an option: '
   end
@@ -356,6 +359,111 @@ class MlabSyncFailureManager
     else
       puts "\nCancelled"
     end
+  end
+
+  def self.retry_multiple_tests
+    puts "\nEnter mlab test IDs to retry (space-separated, e.g., '123 456 789'):"
+    print '> '
+    input = gets.chomp
+
+    # Parse the space-separated IDs
+    test_ids = input.split.map(&:strip).map(&:to_i).reject(&:zero?)
+
+    if test_ids.empty?
+      puts "\nNo valid test IDs provided!"
+      return
+    end
+
+    puts "\nFound #{test_ids.count} test ID(s) to retry: #{test_ids.join(', ')}"
+
+    # Get default facility from MlabGlobal
+    default_facility = MlabGlobal.current&.name
+
+    print "\nOverride sending facility [default: #{default_facility || 'from order data'}]: "
+    facility = gets.chomp
+    facility = nil if facility.empty?
+
+    # Ask about timestamp adjustment
+    puts "\n⚠ Some failures may be due to 'time update is in the past' errors."
+    print 'Auto-adjust timestamps? (yes/no): '
+    auto_adjust = gets.chomp.downcase
+    auto_adjust_timestamps = %w[yes y].include?(auto_adjust)
+
+    print "\nRetry all #{test_ids.count} test(s)? (yes/no): "
+    confirm = gets.chomp.downcase
+
+    unless %w[yes y].include?(confirm)
+      puts "\nCancelled"
+      return
+    end
+
+    # Initialize counters
+    success_count = 0
+    failure_count = 0
+    not_found_count = 0
+    skipped_count = 0
+
+    puts "\nProcessing #{test_ids.count} test(s)..."
+    puts '=' * 80
+
+    test_ids.each_with_index do |test_id, index|
+      puts "\n[#{index + 1}/#{test_ids.count}] Processing Test ID #{test_id}..."
+
+      # Check if test exists in mlab
+      test = MlabTest.find_by(id: test_id)
+
+      if test.nil?
+        puts '  ⊘ Test not found in mlab database!'
+        not_found_count += 1
+        next
+      end
+
+      puts "  Test Type: #{test.mlab_test_type&.name} (#{test.mlab_test_type&.nlims_code})"
+      puts "  Order: #{test.mlab_order&.tracking_number}"
+      puts '  Retrying...'
+
+      begin
+        status, message = MlabToNlimsSyncService.quick_retry_test(
+          test_id,
+          sending_facility: facility,
+          auto_adjust_timestamps: auto_adjust_timestamps
+        )
+
+        case status
+        when :success
+          puts "  ✓ Success! #{message}"
+          success_count += 1
+        when :skipped
+          puts "  → Skipped: #{message}"
+          skipped_count += 1
+        when :failure
+          puts "  ✗ Failed: #{message}"
+          failure_count += 1
+        end
+      rescue StandardError => e
+        puts "  ✗ Error: #{e.message}"
+        puts "  #{e.backtrace.first}" if e.backtrace
+        failure_count += 1
+      end
+
+      # Brief pause between tests to avoid overwhelming the system
+      sleep(0.1) unless index == test_ids.count - 1
+    end
+
+    # Print summary
+    puts "\n" + '=' * 80
+    puts 'RETRY SUMMARY'
+    puts '=' * 80
+    puts "Total Requested: #{test_ids.count}"
+    puts "Successes: #{success_count}"
+    puts "Failures: #{failure_count}"
+    puts "Not Found: #{not_found_count}"
+    puts "Skipped: #{skipped_count}"
+    if (success_count + failure_count + skipped_count) > 0
+      success_rate = ((success_count.to_f / (success_count + failure_count + skipped_count)) * 100).round(2)
+      puts "Success Rate: #{success_rate}%"
+    end
+    puts '=' * 80
   end
 
   def self.retry_failures_by_site
