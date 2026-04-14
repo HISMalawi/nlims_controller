@@ -519,7 +519,7 @@ class MlabToNlimsSyncService
 
     order_data = {
       uuid: SecureRandom.uuid,
-      tracking_number: order&.tracking_number,
+      tracking_number: order&.tracking_number.present? ? order&.tracking_number : order&.accession_number,
       district: get_district_from_facility(facility_name),
       sending_facility: facility_name,
       sample_type: build_sample_type(specimen),
@@ -556,7 +556,7 @@ class MlabToNlimsSyncService
 
     if @auto_adjust_timestamps && order_created_date
       # Time updated should be at least 1 hour after order creation
-      min_time_updated = order_created_date + 1.hour
+      min_time_updated = order_created_date + 2.days
       # Only adjust if current time_updated is less than minimum
       time_updated_value = min_time_updated if time_updated_value < min_time_updated
     end
