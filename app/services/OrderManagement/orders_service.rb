@@ -52,7 +52,8 @@ module OrderManagement
               test_status_id,
               created_by,
               panel_id = nil,
-              lab_test.dig(:test_type, :method_of_testing)
+              lab_test.dig(:test_type, :method_of_testing),
+              lab_test[:test_uuid]
             )
           else
             panel = PanelType.find_by(name: lab_test)
@@ -66,7 +67,8 @@ module OrderManagement
                 test_status_id,
                 created_by,
                 panel_id = panel.id,
-                lab_test.dig(:test_type, :method_of_testing)
+                lab_test.dig(:test_type, :method_of_testing),
+                lab_test[:test_uuid]
               )
             end
           end
@@ -112,6 +114,8 @@ module OrderManagement
 
           SpecimenStatusTrail.create!(
             specimen_id: order.id,
+            order_uuid: order.couch_id,
+            uuid: trail[:trail_uuid],
             time_updated: trail[:timestamp],
             specimen_status_id: trail_status.id,
             who_updated_id: trail[:updated_by]['id'].to_s,
@@ -159,7 +163,7 @@ module OrderManagement
         specimen_type = SpecimenType.find_by(nlims_code: params.dig(:sample_type, :nlims_code))
       end
       order = Speciman.create!(
-        couch_id: params[:uuid] || SecureRandom.uuid,
+        couch_id: params[:uuid] || params[:order_uuid] || SecureRandom.uuid,
         tracking_number: params[:tracking_number],
         specimen_type_id: specimen_type&.id,
         specimen_status_id: sample_status_id,
@@ -199,9 +203,11 @@ module OrderManagement
       order
     end
 
-    def self.create_test(patient, specimen, testype_id, time_created, test_status_id, created_by, panel_id = nil, method_of_testing = nil)
+    def self.create_test(patient, specimen, testype_id, time_created, test_status_id, created_by, panel_id = nil, method_of_testing = nil, uuid = nil)
       Test.create!(
+        uuid: uuid,
         specimen_id: specimen.id,
+        order_uuid: specimen.couch_id,
         test_type_id: testype_id,
         patient_id: patient.id,
         created_by: created_by,
