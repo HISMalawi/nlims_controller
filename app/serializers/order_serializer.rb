@@ -33,6 +33,8 @@ module OrderSerializer
           status_trail: order&.specimen_status_trail&.map do |trail|
             {
               status_id: trail&.specimen_status_id,
+              trail_uuid: trail&.uuid,
+              order_uuid: trail&.order_uuid,
               status: trail&.specimen_status&.name,
               timestamp: trail&.time_updated,
               updated_by: {
