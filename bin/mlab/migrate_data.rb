@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-orders = MlabBase.all
+# orders = MlabBase.all
 VL_TEST_TYPE = TestType.find_by(nlims_code: 'NLIMS_TT_0071_MWI')
 
-orders.each do |order|
-  is_already_available = Speciman.find_by(tracking_number: order.tracking_number)
-end
+# orders.each do |order|
+#   is_already_available = Speciman.find_by(tracking_number: order.tracking_number)
+# end
 
 # IBLIS METHODS
 def iblis_order(order)
@@ -186,7 +186,7 @@ def iblis_test_results_for_tests(iblis_test)
     WHERE tr.test_id = #{iblis_test[:id]}
   SQL
 
-  test_results.map do |test_result|
+  results = test_results.map do |test_result|
     {
       id: test_result.id,
       uuid: test_result.uuid,
@@ -206,6 +206,7 @@ def iblis_test_results_for_tests(iblis_test)
       }
     }
   end
+  results.uniq { |result| result[:measure][:nlims_code] }
 end
 
 def iblis_test_status_trail_for_tests(iblis_test)
@@ -281,32 +282,39 @@ end
 
 # NLIMS METHODS
 def migrate_iblis_order_to_nlims(iblis_order)
-  nlims_order = Speciman.find_by(tracking_number: iblis_order[:order][:tracking_number])
-  if nlims_order.present?
-    puts "Order with tracking number #{iblis_order[:order][:tracking_number]} already exists. Updating existing order before migration."
-    update_existing_order(nlims_order, iblis_order)
-    puts "Deleting existing order status trail for order with tracking number #{iblis_order[:order][:tracking_number]} before migration."
-    delete_and_create_order_status_trail(nlims_order, iblis_order)
-    tests_other_than_vl = tests_other_than_vl_for_order(nlims_order)
-    if tests_other_than_vl.any?
+  ActiveRecord::Base.transaction do
+    nlims_order = Speciman.find_by(tracking_number: iblis_order[:order][:tracking_number])
+    if nlims_order.present?
+      patient_id = nlims_order.tests.first&.patient_id
+      puts "Order with tracking number #{iblis_order[:order][:tracking_number]} already exists. Updating existing order before migration."
+      update_existing_order(nlims_order, iblis_order)
+      puts "Deleting existing order status trail for order with tracking number #{iblis_order[:order][:tracking_number]} before migration."
+      delete_and_create_order_status_trail(nlims_order, iblis_order)
+      tests_other_than_vl = tests_other_than_vl_for_order(nlims_order)
       puts "Deleting #{tests_other_than_vl.count} existing tests + test status trails + results other than VL for order with tracking number #{iblis_order[:order][:tracking_number]} before migration."
       delete_test_result_for_tests(tests_other_than_vl)
       delete_test_status_trail_for_tests(tests_other_than_vl)
       delete_tests_for_order_except_vl(tests_other_than_vl)
+      iblis_order[:tests].each do |iblis_test|
+        create_nlims_test_for_iblis_test(patient_id, nlims_order, iblis_test)
+      end
     end
   end
 end
 
 def update_existing_order(nlims_order, iblis_order)
   specimen_status = SpecimenStatus.find_by(name: iblis_order[:order][:sample_status])&.id
+  specimen_type = SpecimenType.find_by(nlims_code: iblis_order[:order][:sample_type][:nlims_code])&.id
   update_parameters = {
     couch_id: iblis_order[:order][:order_uuid],
     date_created: iblis_order[:order][:date_created],
     target_lab: iblis_order[:order][:target_lab],
     sending_facility: iblis_order[:order][:sending_facility],
-    district: iblis_order[:order][:district]
+    district: iblis_order[:order][:district],
+    lab_location: iblis_order[:order][:lab_location]
   }
   update_parameters[:specimen_status_id] = specimen_status if specimen_status.present?
+  update_parameters[:specimen_type_id] = specimen_type if specimen_type.present?
   puts "Updating order with tracking number #{iblis_order[:order][:tracking_number]} with parameters: #{update_parameters}"
   nlims_order.update(update_parameters)
 end
@@ -374,17 +382,38 @@ def create_test_results(nlims_test, iblis_test)
       uuid: test_result[:uuid],
       test_id: nlims_test.id,
       test_uuid: test_result[:test_uuid],
-      value: test_result[:result][:value],
+      result: test_result[:result][:value],
       unit: test_result[:result][:unit],
-      platform: test_result[:result][:platform],
-      result_date: test_result[:result][:result_date],
-      platformserial: test_result[:result][:platformserial],
-      measure_name: test_result[:measure][:name],
-      measure_nlims_code: test_result[:measure][:nlims_code],
-      measure_preferred_name: test_result[:measure][:preferred_name],
-      measure_type: test_result[:measure][:measure_type]
+      time_entered: test_result[:result][:result_date],
+      device_name: test_result[:result][:platform]
     }
+    measures = Measure.where(name: test_result[:measure][:name], nlims_code: test_result[:measure][:nlims_code])
+    measures ||= Measure.where(nlims_code: test_result[:measure][:nlims_code])
+    measure = TesttypeMeasure.where(test_type_id: nlims_test.test_type_id, measure_id: measures&.ids)&.first&.measure
+    next unless measure.present?
+
+    create_parameters[:measure_id] = measure.id
     puts "Creating test result for test with uuid #{nlims_test.uuid} with parameters: #{create_parameters}"
     TestResult.create!(create_parameters)
   end
+end
+
+def create_nlims_test_for_iblis_test(patient_id, nlims_order, iblis_test)
+  test_status = TestStatus.find_by(name: iblis_test[:test_status])&.id
+  test_type = TestType.find_by(nlims_code: iblis_test[:test_type][:nlims_code])
+  return false unless test_type.present?
+
+  create_parameters = {
+    uuid: iblis_test[:test_uuid],
+    specimen_id: nlims_order.id,
+    order_uuid: iblis_test[:order_uuid],
+    test_type_id: test_type.id,
+    test_status_id: test_status,
+    time_created: iblis_test[:time_created],
+    patient_id: patient_id
+  }
+  puts "Creating test for order with tracking number #{iblis_test[:tracking_number]} with parameters: #{create_parameters}"
+  nlims_test = Test.create!(create_parameters)
+  create_test_status_trail(nlims_test, iblis_test)
+  create_test_results(nlims_test, iblis_test)
 end
