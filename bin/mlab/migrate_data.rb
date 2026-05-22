@@ -1,12 +1,6 @@
 # frozen_string_literal: true
 
-# orders = MlabBase.all
 VL_TEST_TYPE = TestType.find_by(nlims_code: 'NLIMS_TT_0071_MWI')
-
-# orders.each do |order|
-#   is_already_available = Speciman.find_by(tracking_number: order.tracking_number)
-# end
-
 # IBLIS METHODS
 def iblis_order(order)
   order_creator = updated_by_for_status_trail(order[:creator])
