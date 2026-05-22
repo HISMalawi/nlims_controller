@@ -310,7 +310,8 @@ def migrate_iblis_order_to_nlims(iblis_order)
       puts "Order with tracking number #{iblis_order[:order][:tracking_number]} does not exist. Creating new order and associated tests."
       patient, nlims_order = create_nlims_order(iblis_order)
       if nlims_order.nil? || patient.nil?
-        log_failed_test(iblis_order, iblis_order[:tests].first, 'Failed to create order or patient in Nlims', 'Creating Order')
+        log_failed_test(iblis_order, iblis_order[:tests].first, 'Failed to create order or patient in Nlims',
+                        'Creating Order')
         raise "Failed to create order or patient for order with tracking number #{iblis_order[:order][:tracking_number]}"
       end
 
@@ -521,14 +522,70 @@ def log_failed_test(iblis_order, iblis_test, reason, stage)
 end
 
 def main
-  orders = MlabBase.all.limit(100)
-  orders.each do |order|
-    puts "Migrating order with tracking number #{order.tracking_number}"
-    iblis_order_data = iblis_order(order)
-    migrate_iblis_order_to_nlims(iblis_order_data)
-    puts "Finished migrating order with tracking number #{order.tracking_number}"
-    puts "\n\n\n\n\n\n\n\n\n\n"
+  # Get orders that have tests where voided = 1
+  orders_query = MlabBase.find_by_sql <<~SQL
+    SELECT DISTINCT o.*
+    FROM orders o
+    INNER JOIN tests t ON t.order_id = o.id
+    WHERE t.voided = 0
+  SQL
+  total_orders = orders_query.count
+
+  puts '=' * 80
+  puts "Starting migration of #{total_orders} orders in batches of 10,000"
+  puts '=' * 80
+  puts ''
+
+  processed_count = 0
+  success_count = 0
+  failure_count = 0
+
+  orders_query.each_slice(10_000) do |batch|
+    batch.each do |order|
+      processed_count += 1
+      progress_percentage = ((processed_count.to_f / total_orders) * 100).round(2)
+
+      puts '=' * 80
+      puts "Progress: #{progress_percentage}% (#{processed_count}/#{total_orders})"
+      puts "Migrating order with tracking number #{order.tracking_number}"
+      puts '-' * 80
+
+      iblis_order_data = iblis_order(order)
+      result = migrate_iblis_order_to_nlims(iblis_order_data)
+
+      if result
+        success_count += 1
+        puts "✓ Successfully migrated order #{order.tracking_number}"
+      else
+        failure_count += 1
+        puts "✗ Failed to migrate order #{order.tracking_number}"
+      end
+
+      puts "Success: #{success_count} | Failures: #{failure_count}"
+      puts '=' * 80
+      puts "\n"
+    end
+
+    # Print batch completion summary
+    puts ''
+    puts '=' * 80
+    puts "Batch completed. Progress: #{((processed_count.to_f / total_orders) * 100).round(2)}%"
+    puts "Total Processed: #{processed_count}/#{total_orders}"
+    puts "Successful: #{success_count} | Failed: #{failure_count}"
+    puts '=' * 80
+    puts "\n\n"
   end
+
+  # Final summary
+  puts ''
+  puts '=' * 80
+  puts 'MIGRATION COMPLETED'
+  puts '=' * 80
+  puts "Total Orders: #{total_orders}"
+  puts "Successfully Migrated: #{success_count}"
+  puts "Failed: #{failure_count}"
+  puts "Success Rate: #{total_orders > 0 ? ((success_count.to_f / total_orders) * 100).round(2) : 0}%"
+  puts '=' * 80
 end
 
 main
