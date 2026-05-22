@@ -40,7 +40,7 @@ def iblis_order(order)
       status_trail: iblis_order_status_trail_for_order(order)
     },
     patient: iblis_patient(encounter[:client_id]),
-    tests: tests,
+    tests: tests
   }
 end
 
@@ -269,7 +269,10 @@ def updated_by_for_status_trail(status_trail_creator)
     FROM users u
     INNER JOIN people p ON p.id = u.person_id AND u.id = #{status_trail_creator}
   SQL
-  return { id: nil, first_name: 'Unknown', last_name: 'User', phone_number: nil, full_name: 'Unknown User' } if user.empty?
+  if user.empty?
+    return { id: nil, first_name: 'Unknown', last_name: 'User', phone_number: nil,
+             full_name: 'Unknown User' }
+  end
 
   {
     id: user.first&.id,
@@ -296,9 +299,22 @@ def migrate_iblis_order_to_nlims(iblis_order)
       delete_test_status_trail_for_tests(tests_other_than_vl)
       delete_tests_for_order_except_vl(tests_other_than_vl)
       iblis_order[:tests].each do |iblis_test|
-        create_nlims_test_for_iblis_test(patient_id, nlims_order, iblis_test)
+        is_nlims_test_created = create_nlims_test_for_iblis_test(patient_id, nlims_order, iblis_test)
+      end
+    else
+      puts "Order with tracking number #{iblis_order[:order][:tracking_number]} does not exist. Creating new order and associated tests."
+      patient, nlims_order = create_nlims_order(iblis_order)
+      raise 'Failed to create order or patient' if nlims_order.nil? || patient.nil?
+
+      iblis_order[:tests].each do |iblis_test|
+        is_nlims_test_created = create_nlims_test_for_iblis_test(patient.id, nlims_order, iblis_test)
       end
     end
+    puts "Successfully migrated order with tracking number #{iblis_order[:order][:tracking_number]}"
+    return true
+  rescue StandardError => e
+    puts "Error migrating order with tracking number #{iblis_order[:order][:tracking_number]}: #{e.message}"
+    return false
   end
 end
 
@@ -416,4 +432,68 @@ def create_nlims_test_for_iblis_test(patient_id, nlims_order, iblis_test)
   nlims_test = Test.create!(create_parameters)
   create_test_status_trail(nlims_test, iblis_test)
   create_test_results(nlims_test, iblis_test)
+  true
+end
+
+def create_patient(params)
+  npid = params[:national_patient_id]
+  name = "#{params[:first_name]} #{params[:last_name]}"
+  patient_obj = Patient.find_by(patient_number: npid)
+  if patient_obj.present?
+    patient_obj.dob = params[:date_of_birth]
+    patient_obj.update!(name:)
+    patient_obj.save!
+  else
+    patient_obj = Patient.create!(
+      patient_number: npid,
+      name:,
+      email: params[:email],
+      dob: params[:date_of_birth],
+      gender: params[:gender],
+      phone_number: params[:phone_number],
+      address: params[:address],
+      external_patient_number: ''
+    )
+  end
+  patient_obj
+end
+
+def create_nlims_order(iblis_order)
+  patient = create_patient(iblis_order[:patient])
+  params = iblis_order[:order]
+  order_ward = Ward.get_ward_id(NameMapping.actual_name_of(params[:order_location]))
+  specimen_status = SpecimenStatus.find_by(name: iblis_order[:order][:sample_status])&.id
+  specimen_type = SpecimenType.find_by(nlims_code: iblis_order[:order][:sample_type][:nlims_code])&.id
+  return [nil, nil] unless order_ward.present? && specimen_status.present? && specimen_type.present?
+
+  create_parameters = {
+    couch_id: params[:order_uuid],
+    tracking_number: params[:tracking_number],
+    specimen_type_id: specimen_type,
+    specimen_status_id: specimen_status,
+    ward_id: order_ward,
+    date_created: params[:date_created],
+    priority: params[:priority],
+    drawn_by_id: params[:drawn_by][:id],
+    drawn_by_name: params[:drawn_by][:name],
+    drawn_by_phone_number: params[:drawn_by][:phone_number],
+    target_lab: params[:target_lab],
+    sending_facility: params[:sending_facility],
+    district: params[:district],
+    requested_by: params[:requested_by],
+    art_start_date: params[:art_start_date],
+    arv_number: params[:arv_number] || 'N/A',
+    art_regimen: params[:art_regimen] || 'N/A',
+    clinical_history: params[:clinical_history],
+    lab_location: params[:lab_location],
+    source_system: params[:source_system]
+  }
+  puts "Creating order with tracking number #{iblis_order[:order][:tracking_number]} with parameters: #{create_parameters}"
+  order = Speciman.create!(create_parameters)
+  [patient, order]
+end
+
+def log_failed_test(iblis_order)
+  puts "Failed to create test for order with tracking number #{iblis_order[:order][:tracking_number]}. Order details: #{iblis_order}"
+  
 end
