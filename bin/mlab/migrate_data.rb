@@ -289,12 +289,12 @@ def migrate_iblis_order_to_nlims(iblis_order)
     nlims_order = Speciman.find_by(tracking_number: iblis_order[:order][:tracking_number])
     if nlims_order.present?
       patient_id = nlims_order.tests.first&.patient_id
-      puts "Order with tracking number #{iblis_order[:order][:tracking_number]} already exists. Updating existing order before migration."
+      # puts "Order with tracking number #{iblis_order[:order][:tracking_number]} already exists. Updating existing order before migration."
       update_existing_order(nlims_order, iblis_order)
-      puts "Deleting existing order status trail for order with tracking number #{iblis_order[:order][:tracking_number]} before migration."
+      # puts "Deleting existing order status trail for order with tracking number #{iblis_order[:order][:tracking_number]} before migration."
       delete_and_create_order_status_trail(nlims_order, iblis_order)
       tests_other_than_vl = tests_other_than_vl_for_order(nlims_order)
-      puts "Deleting #{tests_other_than_vl.count} existing tests + test status trails + results other than VL for order with tracking number #{iblis_order[:order][:tracking_number]} before migration."
+      # puts "Deleting #{tests_other_than_vl.count} existing tests + test status trails + results other than VL for order with tracking number #{iblis_order[:order][:tracking_number]} before migration."
       delete_test_result_for_tests(tests_other_than_vl)
       delete_test_status_trail_for_tests(tests_other_than_vl)
       delete_tests_for_order_except_vl(tests_other_than_vl)
@@ -307,7 +307,7 @@ def migrate_iblis_order_to_nlims(iblis_order)
         set_test_to_voided_to_mark_as_synced_to_nlims(iblis_test) if is_nlims_test_created
       end
     else
-      puts "Order with tracking number #{iblis_order[:order][:tracking_number]} does not exist. Creating new order and associated tests."
+      # puts "Order with tracking number #{iblis_order[:order][:tracking_number]} does not exist. Creating new order and associated tests."
       patient, nlims_order = create_nlims_order(iblis_order)
       if nlims_order.nil? || patient.nil?
         log_failed_test(iblis_order, iblis_order[:tests].first, 'Failed to create order or patient in Nlims',
@@ -345,7 +345,7 @@ def update_existing_order(nlims_order, iblis_order)
   }
   update_parameters[:specimen_status_id] = specimen_status if specimen_status.present?
   update_parameters[:specimen_type_id] = specimen_type if specimen_type.present?
-  puts "Updating order with tracking number #{iblis_order[:order][:tracking_number]} with parameters: #{update_parameters}"
+  # puts "Updating order with tracking number #{iblis_order[:order][:tracking_number]} with parameters: #{update_parameters}"
   nlims_order.update(update_parameters)
 end
 
@@ -363,7 +363,7 @@ def delete_and_create_order_status_trail(nlims_order, iblis_order)
       who_updated_name: status_trail[:updated_by][:full_name],
       who_updated_phone_number: status_trail[:updated_by][:phone_number]
     }
-    puts "Creating order status trail for order with tracking number #{iblis_order[:order][:tracking_number]} with parameters: #{create_parameters}"
+    # puts "Creating order status trail for order with tracking number #{iblis_order[:order][:tracking_number]} with parameters: #{create_parameters}"
     SpecimenStatusTrail.create!(create_parameters)
   end
 end
@@ -401,7 +401,7 @@ def create_test_status_trail(nlims_test, iblis_test)
       who_updated_name: status_trail[:updated_by][:full_name],
       who_updated_phone_number: status_trail[:updated_by][:phone_number]
     }
-    puts "Creating test status trail for test with uuid #{nlims_test.uuid} with parameters: #{create_parameters}"
+    # puts "Creating test status trail for test with uuid #{nlims_test.uuid} with parameters: #{create_parameters}"
     TestStatusTrail.create!(create_parameters)
   end
 end
@@ -423,7 +423,7 @@ def create_test_results(nlims_test, iblis_test)
     next unless measure.present?
 
     create_parameters[:measure_id] = measure.id
-    puts "Creating test result for test with uuid #{nlims_test.uuid} with parameters: #{create_parameters}"
+    # puts "Creating test result for test with uuid #{nlims_test.uuid} with parameters: #{create_parameters}"
     TestResult.create!(create_parameters)
   end
 end
@@ -442,7 +442,7 @@ def create_nlims_test_for_iblis_test(patient_id, nlims_order, iblis_test)
     time_created: iblis_test[:time_created],
     patient_id: patient_id
   }
-  puts "Creating test for order with tracking number #{iblis_test[:tracking_number]} with parameters: #{create_parameters}"
+  # puts "Creating test for order with tracking number #{iblis_test[:tracking_number]} with parameters: #{create_parameters}"
   nlims_test = Test.create!(create_parameters)
   create_test_status_trail(nlims_test, iblis_test)
   create_test_results(nlims_test, iblis_test)
@@ -502,7 +502,7 @@ def create_nlims_order(iblis_order)
     lab_location: params[:lab_location],
     source_system: params[:source_system]
   }
-  puts "Creating order with tracking number #{iblis_order[:order][:tracking_number]} with parameters: #{create_parameters}"
+  # puts "Creating order with tracking number #{iblis_order[:order][:tracking_number]} with parameters: #{create_parameters}"
   order = Speciman.create!(create_parameters)
   [patient, order]
 end
