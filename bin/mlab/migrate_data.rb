@@ -277,6 +277,12 @@ def updated_by_for_status_trail(status_trail_creator)
   }
 end
 
+def set_test_to_voided_to_mark_as_synced_to_nlims(iblis_test)
+  MlabBase.connection.execute <<~SQL
+    UPDATE tests SET voided = 1 WHERE id = #{iblis_test[:id]}
+  SQL
+end
+
 # NLIMS METHODS
 def migrate_iblis_order_to_nlims(iblis_order)
   ActiveRecord::Base.transaction do
@@ -294,14 +300,27 @@ def migrate_iblis_order_to_nlims(iblis_order)
       delete_tests_for_order_except_vl(tests_other_than_vl)
       iblis_order[:tests].each do |iblis_test|
         is_nlims_test_created = create_nlims_test_for_iblis_test(patient_id, nlims_order, iblis_test)
+        unless is_nlims_test_created
+          log_failed_test(iblis_order, iblis_test, 'Failed to create test in Nlims', 'Creating Test')
+          raise "Failed to create test with uuid #{iblis_test[:test_uuid]} for order with tracking number #{iblis_order[:order][:tracking_number]}"
+        end
+        set_test_to_voided_to_mark_as_synced_to_nlims(iblis_test) if is_nlims_test_created
       end
     else
       puts "Order with tracking number #{iblis_order[:order][:tracking_number]} does not exist. Creating new order and associated tests."
       patient, nlims_order = create_nlims_order(iblis_order)
-      raise 'Failed to create order or patient' if nlims_order.nil? || patient.nil?
+      if nlims_order.nil? || patient.nil?
+        log_failed_test(iblis_order, iblis_order[:tests].first, 'Failed to create order or patient in Nlims', 'Creating Order')
+        raise "Failed to create order or patient for order with tracking number #{iblis_order[:order][:tracking_number]}"
+      end
 
       iblis_order[:tests].each do |iblis_test|
         is_nlims_test_created = create_nlims_test_for_iblis_test(patient.id, nlims_order, iblis_test)
+        unless is_nlims_test_created
+          log_failed_test(iblis_order, iblis_test, 'Failed to create test in Nlims', 'Creating Test')
+          raise "Failed to create test with uuid #{iblis_test[:test_uuid]} for order with tracking number #{iblis_order[:order][:tracking_number]}"
+        end
+        set_test_to_voided_to_mark_as_synced_to_nlims(iblis_test) if is_nlims_test_created
       end
     end
     puts "Successfully migrated order with tracking number #{iblis_order[:order][:tracking_number]}"
@@ -487,7 +506,29 @@ def create_nlims_order(iblis_order)
   [patient, order]
 end
 
-def log_failed_test(iblis_order)
+def log_failed_test(iblis_order, iblis_test, reason, stage)
   puts "Failed to create test for order with tracking number #{iblis_order[:order][:tracking_number]}. Order details: #{iblis_order}"
-  
+  MlabSyncFailure.create!(
+    tracking_number: iblis_order[:order][:tracking_number],
+    mlab_test_id: iblis_test[:id],
+    test_type_nlims_code: iblis_test[:test_type][:nlims_code],
+    site_name: iblis_order[:order][:sending_facility],
+    failure_reason: reason,
+    failure_stage: stage,
+    payload_snapshot: iblis_test.to_json,
+    resolved: false
+  )
 end
+
+def main
+  orders = MlabBase.all.limit(100)
+  orders.each do |order|
+    puts "Migrating order with tracking number #{order.tracking_number}"
+    iblis_order_data = iblis_order(order)
+    migrate_iblis_order_to_nlims(iblis_order_data)
+    puts "Finished migrating order with tracking number #{order.tracking_number}"
+    puts "\n\n\n\n\n\n\n\n\n\n"
+  end
+end
+
+main
