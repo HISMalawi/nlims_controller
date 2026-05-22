@@ -508,7 +508,7 @@ def create_nlims_order(iblis_order)
 end
 
 def log_failed_test(iblis_order, iblis_test, reason, stage)
-  puts "Failed to create test for order with tracking number #{iblis_order[:order][:tracking_number]}. Order details: #{iblis_order}"
+  puts "Failed to migrate order with tracking number #{iblis_order[:order][:tracking_number]}"
   MlabSyncFailure.create!(
     tracking_number: iblis_order[:order][:tracking_number],
     mlab_test_id: iblis_test[:id],
@@ -521,8 +521,10 @@ def log_failed_test(iblis_order, iblis_test, reason, stage)
   )
 end
 
-def main
-  # Get orders that have tests where voided = 1
+def main(prep: false)
+  MlabSyncFailure.delete_all if prep
+  # Get orders that have tests where voided = 0 to ensure we only migrate orders that haven't been marked as migrated before. This also allows us to reprocess orders that failed migration in previous runs by not marking them as voided.
+  puts 'Fetching orders to migrate...'
   orders_query = MlabBase.find_by_sql <<~SQL
     SELECT DISTINCT o.*
     FROM orders o
@@ -588,4 +590,13 @@ def main
   puts '=' * 80
 end
 
-main
+# Prompt user for prep option
+puts ''
+puts '=' * 80
+print 'Clear mlab sync failure table before starting? (y/N): '
+user_input = gets.chomp.downcase
+prep_option = %w[y yes].include?(user_input)
+puts '=' * 80
+puts ''
+
+main(prep: prep_option)
