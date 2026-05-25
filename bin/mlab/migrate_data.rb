@@ -302,7 +302,6 @@ def migrate_iblis_order_to_nlims(iblis_order)
         is_nlims_test_created = create_nlims_test_for_iblis_test(patient_id, nlims_order, iblis_test)
         unless is_nlims_test_created
           log_failed_test(iblis_order, iblis_test, 'Failed to create test in Nlims', 'Creating Test')
-          raise "Failed to create test with uuid #{iblis_test[:test_uuid]} for order with tracking number #{iblis_order[:order][:tracking_number]}"
         end
         set_test_to_voided_to_mark_as_synced_to_nlims(iblis_test) if is_nlims_test_created
       end
@@ -310,8 +309,9 @@ def migrate_iblis_order_to_nlims(iblis_order)
       # puts "Order with tracking number #{iblis_order[:order][:tracking_number]} does not exist. Creating new order and associated tests."
       patient, nlims_order = create_nlims_order(iblis_order)
       if nlims_order.nil? || patient.nil?
-        log_failed_test(iblis_order, iblis_order[:tests].first, 'Failed to create order or patient in Nlims',
-                        'Creating Order')
+        iblis_order[:tests].each do |iblis_test|
+          log_failed_test(iblis_order, iblis_test, 'Failed to create order or patient in Nlims', 'Creating Order')
+        end
         raise "Failed to create order or patient for order with tracking number #{iblis_order[:order][:tracking_number]}"
       end
 
@@ -319,7 +319,6 @@ def migrate_iblis_order_to_nlims(iblis_order)
         is_nlims_test_created = create_nlims_test_for_iblis_test(patient.id, nlims_order, iblis_test)
         unless is_nlims_test_created
           log_failed_test(iblis_order, iblis_test, 'Failed to create test in Nlims', 'Creating Test')
-          raise "Failed to create test with uuid #{iblis_test[:test_uuid]} for order with tracking number #{iblis_order[:order][:tracking_number]}"
         end
         set_test_to_voided_to_mark_as_synced_to_nlims(iblis_test) if is_nlims_test_created
       end
