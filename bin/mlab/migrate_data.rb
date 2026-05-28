@@ -565,6 +565,10 @@ def main(prep: false)
       puts "Success: #{success_count} | Failures: #{failure_count}"
       puts '=' * 80
       puts "\n"
+    rescue StandardError => e
+      failure_count += 1
+      puts "✗ Exception while processing order #{order.tracking_number}: #{e.message}"
+      puts e.backtrace.first(5).join("\n")
     end
 
     # Print batch completion summary
