@@ -264,6 +264,9 @@ module OrderService
     site_code_number = ''
     return site_code_number if site_code_alpha.blank?
 
+    site_code_number = site_code_number_by_facility(site_code_alpha)
+    return site_code_number if site_code_number.present?
+
     if site_code_alpha[0..0].upcase == 'L' || site_code_alpha[0..0] == '0'
       site_code_number = site_code_number_by_facility(site_code_alpha)
     else

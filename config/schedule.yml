@@ -8,9 +8,16 @@ generate_integration_status_report_job:
   name: "Generate Integration Status Report Every 5 hours"
   cron: "0 */5 * * *"
   class: "GenerateIntegrationStatusReportJob"
-  queue: default
+  queue: critical
 
 sync_error_log_cleanup_worker:
   name: "Sync Error Log Cleanup Worker"
   cron: "0 * * * *"
   class: "SyncErrorLogCleanupWorker"
+  queue: low_priority
+
+update_order_source_couch_id_job:
+  name: "Update Order Source Couch ID - Weekly Friday at 3pm"
+  cron: "0 15 * * 5"
+  class: "UpdateOrderSourceCouchIdJob"
+  queue: default

@@ -216,8 +216,9 @@ class NlimsSyncUtilsService
     push_order_to_master_nlims(tracking_number, once_off: once_off)
   end
 
-  def push_acknwoledgement_to_master_nlims(pending_acks: nil)
+  def push_acknwoledgement_to_master_nlims(pending_acks: nil, created_at_cutoff: 30.days.ago)
     pending_acks ||= ResultsAcknwoledge.where(acknwoledged_to_nlims: false)
+                                       .where('created_at >= ?', created_at_cutoff)
     return if pending_acks.empty?
 
     pending_acks.each do |ack|
@@ -243,11 +244,6 @@ class NlimsSyncUtilsService
       puts "Pushed acknowledgments for tracking number: #{ack.tracking_number} to Master NLIMS"
     rescue StandardError => e
       puts "Error: #{JSON.parse(e.response)} ==> NLIMS Push Acknowledgement to Master NLIMS"
-      SyncUtilService.log_error(
-        error_message: e.response,
-        custom_message: "NLIMS Push Acknowledgement to Master NLIMS @ #{@address}",
-        payload:
-      )
       next
     end
   end
