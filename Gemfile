@@ -25,6 +25,8 @@ gem 'puma', '>= 3.7'
 # Use ActiveModel has_secure_password
 gem 'apipie-rails'
 gem 'bcrypt', '>= 3.1.7'
+# Use Redis adapter to run Action Cable with Redis
+gem 'redis', '~> 5.0'
 
 gem 'net-ping'
 # Use Capistrano for deployment

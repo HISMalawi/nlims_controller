@@ -216,6 +216,8 @@ GEM
       ffi (~> 1.0)
     rdoc (6.13.1)
       psych (>= 4.0.0)
+    redis (5.4.1)
+      redis-client (>= 0.22.0)
     redis-client (0.24.0)
       connection_pool
     reline (0.6.1)
@@ -315,6 +317,7 @@ DEPENDENCIES
   puma (>= 3.7)
   rack-cors
   rails (~> 7.1.0)
+  redis (~> 5.0)
   rest-client (~> 2.1)
   roo (~> 2.10.0)
   rspec-rails

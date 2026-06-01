@@ -93,7 +93,11 @@ module OrderManagement
 
       if params['sample_type'].present?
         specimen_type = SpecimenType.find_by(nlims_code: params.dig(:sample_type, :nlims_code))
-        return [false, "specimen type not available in nlims for #{params.dig(:sample_type, :nlims_code)}"] if specimen_type.blank?
+        if specimen_type.blank?
+          return [false,
+                  "specimen type not available in nlims for #{params.dig(:sample_type,
+                                                                         :nlims_code)}"]
+        end
       end
 
       ActiveRecord::Base.transaction do
@@ -119,6 +123,10 @@ module OrderManagement
             who_updated_phone_number: trail[:updated_by]['phone_number'].to_s
           )
         end
+
+        # Broadcast order status update via WebSocket
+        OrderBroadcastService.broadcast_order_status_update(order.id)
+
         [true, '']
       rescue StandardError => e
         Rails.logger.error("Update order failed: #{e.message}")
@@ -244,7 +252,11 @@ module OrderManagement
       return [false, 'order not available'] if order.blank?
 
       specimen_type = SpecimenType.find_by(nlims_code: params.dig(:sample_type, :nlims_code))
-      return [false, "specimen type not available in nlims for #{params.dig(:sample_type, :nlims_code)}"] if specimen_type.blank?
+      if specimen_type.blank?
+        return [false,
+                "specimen type not available in nlims for #{params.dig(:sample_type,
+                                                                       :nlims_code)}"]
+      end
 
       order.update!(
         specimen_type_id: specimen_type.id,
