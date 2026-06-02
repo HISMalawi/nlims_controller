@@ -6,8 +6,9 @@ module TestSerializer
     def serialize(test)
       {
         tracking_number: test&.speciman&.tracking_number,
+        order_uuid: test&.speciman&.couch_id,
+        test_uuid: test&.uuid,
         arv_number:test&.speciman&.arv_number,
-        uuid: test&.speciman&.couch_id,
         test_status: test&.test_status&.name,
         time_updated: test&.test_status_trail&.where(test_status_id: test&.test_status_id)&.first&.time_updated || test&.updated_at,
         test_type: (test&.test_type&.attributes || {}).merge(
@@ -16,6 +17,8 @@ module TestSerializer
         status_trail: test&.test_status_trail&.map do |trail|
           {
             status_id: trail&.test_status_id,
+            trail_uuid: trail&.uuid,
+            test_uuid: trail&.test_uuid,
             status: trail&.test_status&.name,
             timestamp: trail&.time_updated,
             updated_by: {
@@ -28,6 +31,8 @@ module TestSerializer
         end,
         test_results: test&.test_results&.where&.not(result: '')&.where&.not(result: nil)&.map do |result|
           {
+            uuid: result&.uuid,
+            test_uuid: result&.test_uuid,
             measure: {
               name: result&.measure&.name,
               nlims_code: result&.measure&.nlims_code,
