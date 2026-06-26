@@ -7,17 +7,19 @@
 puts 'Clearing sync trackers for all users...'
 puts 'This may take a while...'
 puts 'Loading orders and tests to clear sync trackers for...'
-VL_TEST_TYPE_NLIMS_CODE = 'NLIMS_TT_0071_MWI'
-test_type = TestType.find_by(nlims_code: VL_TEST_TYPE_NLIMS_CODE)
-tests = Test.where.not(test_type: test_type)
-orders = Speciman.where(id: tests.pluck(:specimen_id))
+if Config.local_nlims?
+  VL_TEST_TYPE_NLIMS_CODE = 'NLIMS_TT_0071_MWI'
+  test_type = TestType.find_by(nlims_code: VL_TEST_TYPE_NLIMS_CODE)
+  tests = Test.where.not(test_type: test_type)
+  orders = Speciman.where(id: tests.pluck(:specimen_id))
 
-puts "Found #{orders.count} orders to clear sync trackers for."
-puts 'Clearing sync trackers...'
-OrderSyncTracker.where(tracking_number: orders.pluck(:tracking_number)).update_all(synced: true)
-OrderStatusSyncTracker.where(tracking_number: orders.pluck(:tracking_number)).update_all(sync_status: true)
-StatusSyncTracker.where(tracking_number: orders.pluck(:tracking_number)).update_all(sync_status: true)
-ResultSyncTracker.where(tracking_number: orders.pluck(:tracking_number)).update_all(sync_status: true)
+  puts "Found #{orders.count} orders to clear sync trackers for."
+  puts 'Clearing sync trackers...'
+  OrderSyncTracker.where(tracking_number: orders.pluck(:tracking_number)).update_all(synced: true)
+  OrderStatusSyncTracker.where(tracking_number: orders.pluck(:tracking_number)).update_all(sync_status: true)
+  StatusSyncTracker.where(tracking_number: orders.pluck(:tracking_number)).update_all(sync_status: true)
+  ResultSyncTracker.where(tracking_number: orders.pluck(:tracking_number)).update_all(sync_status: true)
+end
 puts 'Sync trackers cleared for all users.'
 puts 'Done.'
 
