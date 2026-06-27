@@ -1,6 +1,39 @@
 # frozen_string_literal: true
 
+GLOBAL_FACILITY = begin
+  MlabBase.find_by_sql('SELECT name, district FROM globals WHERE retired = 0').first
+rescue StandardError
+  nil
+end
 VL_TEST_TYPE = TestType.find_by(nlims_code: 'NLIMS_TT_0071_MWI')
+
+USER_CACHE = Hash.new do |h, creator_id|
+  h[creator_id] = begin
+    if creator_id.nil?
+      return { id: nil, first_name: 'Unknown', last_name: 'User', phone_number: nil, full_name: 'Unknown User' }
+    end
+
+    user = MlabBase.find_by_sql(<<~SQL, [creator_id]).first
+      SELECT u.id, p.first_name, p.last_name
+      FROM users u
+      INNER JOIN people p ON p.id = u.person_id
+      WHERE u.id = ?
+    SQL
+
+    if user
+      {
+        id: user.id,
+        first_name: user.first_name,
+        last_name: user.last_name,
+        phone_number: nil,
+        full_name: "#{user.first_name} #{user.last_name}"
+      }
+    else
+      { id: nil, first_name: 'Unknown', last_name: 'User', phone_number: nil, full_name: 'Unknown User' }
+    end
+  end
+end
+
 # IBLIS METHODS
 def iblis_order(order)
   order_creator = updated_by_for_status_trail(order[:creator])
@@ -21,9 +54,9 @@ def iblis_order(order)
         name: order_creator[:full_name],
         phone_number: ''
       },
-      target_lab: iblis_global_facility[:name],
-      sending_facility: iblis_global_facility[:name],
-      district: iblis_global_facility[:district],
+      target_lab: GLOBAL_FACILITY&.name,
+      sending_facility: GLOBAL_FACILITY&.name,
+      district: GLOBAL_FACILITY&.district,
       requested_by: order&.requested_by,
       art_start_date: nil,
       arv_number: nil,
@@ -255,26 +288,7 @@ def iblis_order_status_trail_for_order(iblis_order)
 end
 
 def updated_by_for_status_trail(status_trail_creator)
-  user = MlabBase.find_by_sql <<~SQL
-    SELECT
-      u.id,
-      p.first_name,
-      p.last_name
-    FROM users u
-    INNER JOIN people p ON p.id = u.person_id AND u.id = #{status_trail_creator}
-  SQL
-  if user.empty?
-    return { id: nil, first_name: 'Unknown', last_name: 'User', phone_number: nil,
-             full_name: 'Unknown User' }
-  end
-
-  {
-    id: user.first&.id,
-    first_name: user.first&.first_name,
-    last_name: user.first&.last_name,
-    phone_number: nil,
-    full_name: "#{user.first&.first_name} #{user.first&.last_name}"
-  }
+  USER_CACHE[status_trail_creator]
 end
 
 def set_test_to_voided_to_mark_as_synced_to_nlims(iblis_test)
@@ -307,10 +321,11 @@ def migrate_iblis_order_to_nlims(iblis_order)
       end
     else
       # puts "Order with tracking number #{iblis_order[:order][:tracking_number]} does not exist. Creating new order and associated tests."
-      patient, nlims_order = create_nlims_order(iblis_order)
+      patient, nlims_order, error_reason = create_nlims_order(iblis_order)
       if nlims_order.nil? || patient.nil?
         iblis_order[:tests].each do |iblis_test|
-          log_failed_test(iblis_order, iblis_test, 'Failed to create order or patient in Nlims', 'Creating Order')
+          log_failed_test(iblis_order, iblis_test, "Failed to create order or patient in Nlims due to #{error_reason}",
+                          'Creating Order')
         end
         raise "Failed to create order or patient for order with tracking number #{iblis_order[:order][:tracking_number]}"
       end
@@ -419,7 +434,10 @@ def create_test_results(nlims_test, iblis_test)
     measures = Measure.where(name: test_result[:measure][:name], nlims_code: test_result[:measure][:nlims_code])
     measures ||= Measure.where(nlims_code: test_result[:measure][:nlims_code])
     measure = TesttypeMeasure.where(test_type_id: nlims_test.test_type_id, measure_id: measures&.ids)&.first&.measure
-    next unless measure.present?
+    unless measure.present?
+      Rails.logger.warn "No measure found for nlims_code=#{test_result[:measure][:nlims_code]} test_id=#{nlims_test.id}"
+      next
+    end
 
     create_parameters[:measure_id] = measure.id
     # puts "Creating test result for test with uuid #{nlims_test.uuid} with parameters: #{create_parameters}"
@@ -431,6 +449,7 @@ def create_nlims_test_for_iblis_test(patient_id, nlims_order, iblis_test)
   test_status = TestStatus.find_by(name: iblis_test[:test_status])&.id
   test_type = TestType.find_by(nlims_code: iblis_test[:test_type][:nlims_code])
   return false unless test_type.present?
+  return false unless test_status.present?
 
   create_parameters = {
     uuid: iblis_test[:test_uuid],
@@ -477,7 +496,9 @@ def create_nlims_order(iblis_order)
   order_ward = Ward.get_ward_id(NameMapping.actual_name_of(params[:order_location]))
   specimen_status = SpecimenStatus.find_by(name: iblis_order[:order][:sample_status])&.id
   specimen_type = SpecimenType.find_by(nlims_code: iblis_order[:order][:sample_type][:nlims_code])&.id
-  return [nil, nil] unless order_ward.present? && specimen_status.present? && specimen_type.present?
+  return [nil, nil, :missing_ward]   unless order_ward.present?
+  return [nil, nil, :missing_status] unless specimen_status.present?
+  return [nil, nil, :missing_type]   unless specimen_type.present?
 
   create_parameters = {
     couch_id: params[:order_uuid],
@@ -524,16 +545,11 @@ def main(prep: false)
   MlabSyncFailure.delete_all if prep
   # Get orders that have tests where voided = 0 to ensure we only migrate orders that haven't been marked as migrated before. This also allows us to reprocess orders that failed migration in previous runs by not marking them as voided.
   puts 'Fetching orders to migrate...'
-  orders_query = MlabBase.find_by_sql <<~SQL
-    SELECT DISTINCT o.*
-    FROM orders o
-    INNER JOIN tests t ON t.order_id = o.id
-    WHERE t.voided = 0
-  SQL
-  total_orders = orders_query.count
+  orders_relation = MlabBase.joins('INNER JOIN tests t ON t.order_id = orders.id').where('t.voided = 0').distinct
+  total_orders = orders_relation.count
 
   puts '=' * 80
-  puts "Starting migration of #{total_orders} orders in batches of 10,000"
+  puts "Starting migration of #{total_orders} orders in batches of 500"
   puts '=' * 80
   puts ''
 
@@ -541,7 +557,7 @@ def main(prep: false)
   success_count = 0
   failure_count = 0
 
-  orders_query.each_slice(10_000) do |batch|
+  orders_relation.find_in_batches(batch_size: 500) do |batch|
     batch.each do |order|
       processed_count += 1
       progress_percentage = ((processed_count.to_f / total_orders) * 100).round(2)
