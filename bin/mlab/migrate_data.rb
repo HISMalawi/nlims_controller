@@ -7,6 +7,14 @@ rescue StandardError
 end
 VL_TEST_TYPE = TestType.find_by(nlims_code: 'NLIMS_TT_0071_MWI')
 
+# Reference data caches - load once, use many times
+SPECIMEN_STATUS_CACHE = SpecimenStatus.all.index_by(&:name)
+SPECIMEN_TYPE_CACHE = SpecimenType.all.index_by(&:nlims_code)
+TEST_TYPE_CACHE = TestType.all.index_by(&:nlims_code)
+TEST_STATUS_CACHE = TestStatus.all.index_by(&:name)
+MEASURE_CACHE = Measure.all.group_by(&:nlims_code)
+TESTTYPE_MEASURE_CACHE = TesttypeMeasure.all.group_by(&:test_type_id)
+
 USER_CACHE = Hash.new do |h, creator_id|
   h[creator_id] = begin
     if creator_id.nil?
@@ -167,6 +175,13 @@ def iblis_tests_for_order(order)
     WHERE order_id = #{order.id}
   SQL
 
+  return [] if tests.empty?
+
+  # Load all status trails and results for all tests at once (avoid N+1)
+  test_ids = tests.map(&:id)
+  status_trails_by_test = iblis_test_status_trails_bulk(test_ids)
+  results_by_test = iblis_test_results_bulk(test_ids, tests)
+
   tests.map do |test|
     {
       id: test&.id,
@@ -187,15 +202,21 @@ def iblis_tests_for_order(order)
         name: test&.test_type_name,
         nlims_code: test&.test_type_nlims_code
       },
-      status_trail: iblis_test_status_trail_for_tests(test),
-      test_results: iblis_test_results_for_tests(test)
+      status_trail: status_trails_by_test[test.id] || [],
+      test_results: results_by_test[test.id] || []
     }
   end
 end
 
-def iblis_test_results_for_tests(iblis_test)
+def iblis_test_results_bulk(test_ids, tests)
+  return {} if test_ids.empty?
+
+  # Build a test_id to test_type_id map
+  test_type_map = tests.each_with_object({}) { |t, h| h[t.id] = t.test_type_id }
+
   test_results = MlabBase.find_by_sql <<~SQL
     SELECT
+      tr.test_id,
       tr.id,
       tr.uuid,
       tr.value,
@@ -203,21 +224,27 @@ def iblis_test_results_for_tests(iblis_test)
       tr.machine_name AS platform,
       ttim.unit,
       ttim.test_indicator_type AS measure_type,
+      ttim.test_types_id,
       ti.name AS test_indicator_name,
       ti.nlims_code AS test_indicator_nlims_code,
       ti.preferred_name AS test_indicator_preferred_name
     FROM test_results tr
-    INNER JOIN test_type_indicator_mappings ttim ON ttim.test_indicators_id = tr.test_indicator_id AND
-      ttim.test_types_id = #{iblis_test[:test_type_id]}
+    INNER JOIN test_type_indicator_mappings ttim ON ttim.test_indicators_id = tr.test_indicator_id
     INNER JOIN test_indicators ti ON ti.id = tr.test_indicator_id
-    WHERE tr.test_id = #{iblis_test[:id]}
+    WHERE tr.test_id IN (#{test_ids.join(',')})
   SQL
 
-  results = test_results.map do |test_result|
-    {
+  # Group by test_id and filter by correct test_type
+  results_by_test = {}
+  test_results.each do |test_result|
+    test_id = test_result.test_id
+    next unless test_type_map[test_id] == test_result.test_types_id
+
+    results_by_test[test_id] ||= []
+    results_by_test[test_id] << {
       id: test_result.id,
       uuid: test_result.uuid,
-      test_uuid: iblis_test[:test_uuid],
+      test_uuid: tests.find { |t| t.id == test_id }&.test_uuid,
       measure: {
         name: test_result.test_indicator_name,
         nlims_code: test_result.test_indicator_nlims_code,
@@ -233,12 +260,17 @@ def iblis_test_results_for_tests(iblis_test)
       }
     }
   end
-  results.uniq { |result| result[:measure][:nlims_code] }
+
+  # Remove duplicates based on nlims_code
+  results_by_test.transform_values { |results| results.uniq { |r| r[:measure][:nlims_code] } }
 end
 
-def iblis_test_status_trail_for_tests(iblis_test)
+def iblis_test_status_trails_bulk(test_ids)
+  return {} if test_ids.empty?
+
   status_trails = MlabBase.find_by_sql <<~SQL
     SELECT
+      tst.test_id,
       tst.id,
       tst.uuid,
       tst.test_uuid,
@@ -247,19 +279,25 @@ def iblis_test_status_trail_for_tests(iblis_test)
       tst.creator
     FROM test_statuses tst
     INNER JOIN statuses s ON s.id = tst.status_id
-    WHERE tst.test_id = #{iblis_test[:id]}
+    WHERE tst.test_id IN (#{test_ids.join(',')})
   SQL
-  map_trails = status_trails.map do |status_trail|
-    {
+
+  trails_by_test = {}
+  status_trails.each do |status_trail|
+    test_id = status_trail.test_id
+    trails_by_test[test_id] ||= []
+    trails_by_test[test_id] << {
       id: status_trail.id,
       trail_uuid: status_trail.uuid,
       test_uuid: status_trail.test_uuid,
       status: status_trail.status_name,
       timestamp: status_trail.created_date,
-      updated_by: updated_by_for_status_trail(status_trail[:creator])
+      updated_by: updated_by_for_status_trail(status_trail.creator)
     }
   end
-  map_trails.sort_by { |trail| trail[:timestamp] }
+
+  # Sort each test's trails by timestamp
+  trails_by_test.transform_values { |trails| trails.sort_by { |t| t[:timestamp] } }
 end
 
 def iblis_order_status_trail_for_order(iblis_order)
@@ -338,7 +376,6 @@ def migrate_iblis_order_to_nlims(iblis_order)
         set_test_to_voided_to_mark_as_synced_to_nlims(iblis_test) if is_nlims_test_created
       end
     end
-    puts "Successfully migrated order with tracking number #{iblis_order[:order][:tracking_number]}"
     return true
   rescue StandardError => e
     puts "Error migrating order with tracking number #{iblis_order[:order][:tracking_number]}: #{e.message}"
@@ -347,8 +384,8 @@ def migrate_iblis_order_to_nlims(iblis_order)
 end
 
 def update_existing_order(nlims_order, iblis_order)
-  specimen_status = SpecimenStatus.find_by(name: iblis_order[:order][:sample_status])&.id
-  specimen_type = SpecimenType.find_by(nlims_code: iblis_order[:order][:sample_type][:nlims_code])&.id
+  specimen_status = SPECIMEN_STATUS_CACHE[iblis_order[:order][:sample_status]]&.id
+  specimen_type = SPECIMEN_TYPE_CACHE[iblis_order[:order][:sample_type][:nlims_code]]&.id
   update_parameters = {
     couch_id: iblis_order[:order][:order_uuid],
     date_created: iblis_order[:order][:date_created],
@@ -359,27 +396,28 @@ def update_existing_order(nlims_order, iblis_order)
   }
   update_parameters[:specimen_status_id] = specimen_status if specimen_status.present?
   update_parameters[:specimen_type_id] = specimen_type if specimen_type.present?
-  # puts "Updating order with tracking number #{iblis_order[:order][:tracking_number]} with parameters: #{update_parameters}"
   nlims_order.update(update_parameters)
 end
 
 def delete_and_create_order_status_trail(nlims_order, iblis_order)
   delete_order_status_trail_for_order(nlims_order)
-  iblis_order[:order][:status_trail].each do |status_trail|
-    specimen_status = SpecimenStatus.find_by(name: status_trail[:status])&.id
-    create_parameters = {
+
+  status_trail_records = iblis_order[:order][:status_trail].map do |status_trail|
+    {
       uuid: status_trail[:trail_uuid],
       specimen_id: nlims_order.id,
       order_uuid: status_trail[:order_uuid],
-      specimen_status_id: specimen_status,
+      specimen_status_id: SPECIMEN_STATUS_CACHE[status_trail[:status]]&.id,
       time_updated: status_trail[:timestamp],
       who_updated_id: status_trail[:updated_by][:id],
       who_updated_name: status_trail[:updated_by][:full_name],
-      who_updated_phone_number: status_trail[:updated_by][:phone_number]
+      who_updated_phone_number: status_trail[:updated_by][:phone_number],
+      created_at: Time.current,
+      updated_at: Time.current
     }
-    # puts "Creating order status trail for order with tracking number #{iblis_order[:order][:tracking_number]} with parameters: #{create_parameters}"
-    SpecimenStatusTrail.create!(create_parameters)
   end
+
+  SpecimenStatusTrail.insert_all(status_trail_records) if status_trail_records.any?
 end
 
 def tests_other_than_vl_for_order(nlims_order)
@@ -403,9 +441,10 @@ def delete_test_status_trail_for_tests(tests_other_than_vl_for_order)
 end
 
 def create_test_status_trail(nlims_test, iblis_test)
-  iblis_test[:status_trail].each do |status_trail|
-    test_status = TestStatus.find_by(name: status_trail[:status])&.id
-    create_parameters = {
+  # Bulk insert all test status trails at once
+  status_trail_records = iblis_test[:status_trail].map do |status_trail|
+    test_status = TEST_STATUS_CACHE[status_trail[:status]]&.id
+    {
       uuid: status_trail[:trail_uuid],
       test_id: nlims_test.id,
       test_uuid: status_trail[:test_uuid],
@@ -413,41 +452,51 @@ def create_test_status_trail(nlims_test, iblis_test)
       time_updated: status_trail[:timestamp],
       who_updated_id: status_trail[:updated_by][:id],
       who_updated_name: status_trail[:updated_by][:full_name],
-      who_updated_phone_number: status_trail[:updated_by][:phone_number]
+      who_updated_phone_number: status_trail[:updated_by][:phone_number],
+      created_at: Time.current,
+      updated_at: Time.current
     }
-    # puts "Creating test status trail for test with uuid #{nlims_test.uuid} with parameters: #{create_parameters}"
-    TestStatusTrail.create!(create_parameters)
   end
+
+  TestStatusTrail.insert_all(status_trail_records) if status_trail_records.any?
 end
 
 def create_test_results(nlims_test, iblis_test)
-  iblis_test[:test_results].each do |test_result|
-    create_parameters = {
+  # Bulk insert all test results at once
+  test_result_records = iblis_test[:test_results].filter_map do |test_result|
+    # Use cached measures
+    measures = MEASURE_CACHE[test_result[:measure][:nlims_code]]
+    next unless measures&.any?
+
+    # Use cached testtype_measures
+    testtype_measures = TESTTYPE_MEASURE_CACHE[nlims_test.test_type_id]
+    measure = testtype_measures&.find { |tm| measures.map(&:id).include?(tm.measure_id) }&.measure
+
+    unless measure.present?
+      Rails.logger.warn "No measure found for nlims_code=#{test_result[:measure][:nlims_code]} test_id=#{nlims_test.id}"
+      next
+    end
+
+    {
       uuid: test_result[:uuid],
       test_id: nlims_test.id,
       test_uuid: test_result[:test_uuid],
       result: test_result[:result][:value],
       unit: test_result[:result][:unit],
       time_entered: test_result[:result][:result_date],
-      device_name: test_result[:result][:platform]
+      device_name: test_result[:result][:platform],
+      measure_id: measure.id,
+      created_at: Time.current,
+      updated_at: Time.current
     }
-    measures = Measure.where(name: test_result[:measure][:name], nlims_code: test_result[:measure][:nlims_code])
-    measures ||= Measure.where(nlims_code: test_result[:measure][:nlims_code])
-    measure = TesttypeMeasure.where(test_type_id: nlims_test.test_type_id, measure_id: measures&.ids)&.first&.measure
-    unless measure.present?
-      Rails.logger.warn "No measure found for nlims_code=#{test_result[:measure][:nlims_code]} test_id=#{nlims_test.id}"
-      next
-    end
-
-    create_parameters[:measure_id] = measure.id
-    # puts "Creating test result for test with uuid #{nlims_test.uuid} with parameters: #{create_parameters}"
-    TestResult.create!(create_parameters)
   end
+
+  TestResult.insert_all(test_result_records) if test_result_records.any?
 end
 
 def create_nlims_test_for_iblis_test(patient_id, nlims_order, iblis_test)
-  test_status = TestStatus.find_by(name: iblis_test[:test_status])&.id
-  test_type = TestType.find_by(nlims_code: iblis_test[:test_type][:nlims_code])
+  test_status = TEST_STATUS_CACHE[iblis_test[:test_status]]&.id
+  test_type = TEST_TYPE_CACHE[iblis_test[:test_type][:nlims_code]]
   return false unless test_type.present?
   return false unless test_status.present?
 
@@ -460,7 +509,6 @@ def create_nlims_test_for_iblis_test(patient_id, nlims_order, iblis_test)
     time_created: iblis_test[:time_created],
     patient_id: patient_id
   }
-  # puts "Creating test for order with tracking number #{iblis_test[:tracking_number]} with parameters: #{create_parameters}"
   nlims_test = Test.create!(create_parameters)
   create_test_status_trail(nlims_test, iblis_test)
   create_test_results(nlims_test, iblis_test)
@@ -494,8 +542,8 @@ def create_nlims_order(iblis_order)
   patient = create_patient(iblis_order[:patient])
   params = iblis_order[:order]
   order_ward = Ward.get_ward_id(NameMapping.actual_name_of(params[:order_location]))
-  specimen_status = SpecimenStatus.find_by(name: iblis_order[:order][:sample_status])&.id
-  specimen_type = SpecimenType.find_by(nlims_code: iblis_order[:order][:sample_type][:nlims_code])&.id
+  specimen_status = SPECIMEN_STATUS_CACHE[iblis_order[:order][:sample_status]]&.id
+  specimen_type = SPECIMEN_TYPE_CACHE[iblis_order[:order][:sample_type][:nlims_code]]&.id
   return [nil, nil, :missing_ward]   unless order_ward.present?
   return [nil, nil, :missing_status] unless specimen_status.present?
   return [nil, nil, :missing_type]   unless specimen_type.present?
@@ -522,7 +570,6 @@ def create_nlims_order(iblis_order)
     lab_location: params[:lab_location],
     source_system: params[:source_system]
   }
-  # puts "Creating order with tracking number #{iblis_order[:order][:tracking_number]} with parameters: #{create_parameters}"
   order = Speciman.create!(create_parameters)
   [patient, order]
 end
@@ -562,25 +609,31 @@ def main(prep: false)
       processed_count += 1
       progress_percentage = ((processed_count.to_f / total_orders) * 100).round(2)
 
-      puts '=' * 80
-      puts "Progress: #{progress_percentage}% (#{processed_count}/#{total_orders})"
-      puts "Migrating order with tracking number #{order.tracking_number}"
-      puts '-' * 80
+      show_detailed_output = (processed_count % 10 == 0) || (processed_count == total_orders)
+
+      if show_detailed_output
+        puts '=' * 80
+        puts "Progress: #{progress_percentage}% (#{processed_count}/#{total_orders})"
+        puts "Migrating order with tracking number #{order.tracking_number}"
+        puts '-' * 80
+      end
 
       iblis_order_data = iblis_order(order)
       result = migrate_iblis_order_to_nlims(iblis_order_data)
 
       if result
         success_count += 1
-        puts "✓ Successfully migrated order #{order.tracking_number}"
+        puts "✓ Successfully migrated order #{order.tracking_number}" if show_detailed_output
       else
         failure_count += 1
         puts "✗ Failed to migrate order #{order.tracking_number}"
       end
 
-      puts "Success: #{success_count} | Failures: #{failure_count}"
-      puts '=' * 80
-      puts "\n"
+      if show_detailed_output
+        puts "Success: #{success_count} | Failures: #{failure_count}"
+        puts '=' * 80
+        puts "\n"
+      end
     rescue StandardError => e
       failure_count += 1
       puts "✗ Exception while processing order #{order.tracking_number}: #{e.message}"
