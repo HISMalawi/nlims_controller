@@ -601,7 +601,7 @@ def format_duration(seconds)
   hours = (seconds / 3600).to_i
   minutes = ((seconds % 3600) / 60).to_i
   secs = (seconds % 60).to_i
-  
+
   if hours > 0
     "#{hours}h #{minutes}m #{secs}s"
   elsif minutes > 0
@@ -686,7 +686,7 @@ def main(prep: false, start_datetime: nil, end_datetime: nil, skip_count: false)
     batch.each do |order|
       # Format order created date early for use in all log messages
       order_created_date = order.created_date ? order.created_date.strftime('%Y-%m-%d %H:%M:%S') : 'unknown date'
-      
+
       processed_count += 1
       progress_percentage = total_orders ? ((processed_count.to_f / total_orders) * 100).round(2) : nil
 
@@ -696,7 +696,7 @@ def main(prep: false, start_datetime: nil, end_datetime: nil, skip_count: false)
         current_time = Time.now
         elapsed_since_last = current_time - last_checkpoint_time
         total_elapsed = current_time - migration_start_time
-        
+
         puts '=' * 80
         if total_orders
           puts "Progress: #{progress_percentage}% (#{processed_count}/#{total_orders})"
@@ -706,7 +706,7 @@ def main(prep: false, start_datetime: nil, end_datetime: nil, skip_count: false)
         puts "Migrating order with tracking number #{order.tracking_number}"
         puts "Time since last checkpoint: #{elapsed_since_last.round(2)}s | Total elapsed: #{format_duration(total_elapsed)}"
         puts '-' * 80
-        
+
         last_checkpoint_time = current_time
       end
 
@@ -715,7 +715,9 @@ def main(prep: false, start_datetime: nil, end_datetime: nil, skip_count: false)
 
       if result
         success_count += 1
-        puts "✓ Successfully migrated order #{order.tracking_number} (created on #{order_created_date})" if show_detailed_output
+        if show_detailed_output
+          puts "✓ Successfully migrated order #{order.tracking_number} (created on #{order_created_date})"
+        end
       else
         failure_count += 1
         puts "✗ Failed to migrate order #{order.tracking_number} (created on #{order_created_date})"
@@ -750,7 +752,7 @@ def main(prep: false, start_datetime: nil, end_datetime: nil, skip_count: false)
   migration_end_time = Time.now
   total_duration = migration_end_time - migration_start_time
   processing_rate = processed_count > 0 ? (processed_count.to_f / total_duration).round(2) : 0
-  
+
   puts ''
   puts '=' * 80
   puts 'MIGRATION COMPLETED'
