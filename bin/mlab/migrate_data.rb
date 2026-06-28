@@ -597,6 +597,20 @@ def create_nlims_order(iblis_order)
   [patient, order]
 end
 
+def format_duration(seconds)
+  hours = (seconds / 3600).to_i
+  minutes = ((seconds % 3600) / 60).to_i
+  secs = (seconds % 60).to_i
+  
+  if hours > 0
+    "#{hours}h #{minutes}m #{secs}s"
+  elsif minutes > 0
+    "#{minutes}m #{secs}s"
+  else
+    "#{secs}s"
+  end
+end
+
 def log_failed_test(iblis_order, iblis_test, reason, stage)
   puts "Failed to migrate order with tracking number #{iblis_order[:order][:tracking_number]}"
   MlabSyncFailure.create!(
@@ -658,18 +672,31 @@ def main(prep: false, start_datetime: nil, end_datetime: nil, skip_count: false)
   puts '=' * 80
   puts ''
 
+  # Track timing
+  migration_start_time = Time.now
+  last_checkpoint_time = migration_start_time
+  puts "Migration started at: #{migration_start_time.strftime('%Y-%m-%d %H:%M:%S')}"
+  puts ''
+
   processed_count = 0
   success_count = 0
   failure_count = 0
 
   orders_relation.find_in_batches(batch_size: 500) do |batch|
     batch.each do |order|
+      # Format order created date early for use in all log messages
+      order_created_date = order.created_date ? order.created_date.strftime('%Y-%m-%d %H:%M:%S') : 'unknown date'
+      
       processed_count += 1
       progress_percentage = total_orders ? ((processed_count.to_f / total_orders) * 100).round(2) : nil
 
       show_detailed_output = (processed_count % 10 == 0) || (total_orders && processed_count == total_orders)
 
       if show_detailed_output
+        current_time = Time.now
+        elapsed_since_last = current_time - last_checkpoint_time
+        total_elapsed = current_time - migration_start_time
+        
         puts '=' * 80
         if total_orders
           puts "Progress: #{progress_percentage}% (#{processed_count}/#{total_orders})"
@@ -677,7 +704,10 @@ def main(prep: false, start_datetime: nil, end_datetime: nil, skip_count: false)
           puts "Progress: #{processed_count} orders processed"
         end
         puts "Migrating order with tracking number #{order.tracking_number}"
+        puts "Time since last checkpoint: #{elapsed_since_last.round(2)}s | Total elapsed: #{format_duration(total_elapsed)}"
         puts '-' * 80
+        
+        last_checkpoint_time = current_time
       end
 
       iblis_order_data = iblis_order(order)
@@ -685,10 +715,10 @@ def main(prep: false, start_datetime: nil, end_datetime: nil, skip_count: false)
 
       if result
         success_count += 1
-        puts "✓ Successfully migrated order #{order.tracking_number}" if show_detailed_output
+        puts "✓ Successfully migrated order #{order.tracking_number} (created on #{order_created_date})" if show_detailed_output
       else
         failure_count += 1
-        puts "✗ Failed to migrate order #{order.tracking_number}"
+        puts "✗ Failed to migrate order #{order.tracking_number} (created on #{order_created_date})"
       end
 
       if show_detailed_output
@@ -698,7 +728,7 @@ def main(prep: false, start_datetime: nil, end_datetime: nil, skip_count: false)
       end
     rescue StandardError => e
       failure_count += 1
-      puts "✗ Exception while processing order #{order.tracking_number}: #{e.message}"
+      puts "✗ Exception while processing order #{order.tracking_number} (created on #{order_created_date}): #{e.message}"
       puts e.backtrace.first(5).join("\n")
     end
 
@@ -717,10 +747,19 @@ def main(prep: false, start_datetime: nil, end_datetime: nil, skip_count: false)
   end
 
   # Final summary
+  migration_end_time = Time.now
+  total_duration = migration_end_time - migration_start_time
+  processing_rate = processed_count > 0 ? (processed_count.to_f / total_duration).round(2) : 0
+  
   puts ''
   puts '=' * 80
   puts 'MIGRATION COMPLETED'
   puts '=' * 80
+  puts "Started at:  #{migration_start_time.strftime('%Y-%m-%d %H:%M:%S')}"
+  puts "Completed at: #{migration_end_time.strftime('%Y-%m-%d %H:%M:%S')}"
+  puts "Total Duration: #{format_duration(total_duration)}"
+  puts "Processing Rate: #{processing_rate} orders/second"
+  puts '-' * 80
   if total_orders
     puts "Total Orders: #{total_orders}"
     puts "Successfully Migrated: #{success_count}"
