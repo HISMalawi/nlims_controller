@@ -631,19 +631,19 @@ def main(prep: false, start_datetime: nil, end_datetime: nil, skip_count: false)
   end
 
   orders_relation = orders_relation.distinct
-  
+
   # Count total orders (can be slow on large datasets)
   total_orders = if skip_count
-    puts 'Skipping count for faster startup...'
-    nil
-  else
-    puts 'Counting total orders (this may take a moment for large date ranges)...'
-    count_start_time = Time.now
-    count_result = orders_relation.count
-    count_duration = Time.now - count_start_time
-    puts "Count completed in #{count_duration.round(2)} seconds"
-    count_result
-  end
+                   puts 'Skipping count for faster startup...'
+                   nil
+                 else
+                   puts 'Counting total orders (this may take a moment for large date ranges)...'
+                   count_start_time = Time.now
+                   count_result = orders_relation.count
+                   count_duration = Time.now - count_start_time
+                   puts "Count completed in #{count_duration.round(2)} seconds"
+                   count_result
+                 end
 
   puts '=' * 80
   datetime_range_info = if [start_datetime, end_datetime].compact.any?
@@ -653,7 +653,7 @@ def main(prep: false, start_datetime: nil, end_datetime: nil, skip_count: false)
                         else
                           ''
                         end
-  order_count_msg = total_orders ? "#{total_orders} orders" : "orders (count skipped)"
+  order_count_msg = total_orders ? "#{total_orders} orders" : 'orders (count skipped)'
   puts "Starting migration of #{order_count_msg} in batches of 500#{datetime_range_info}"
   puts '=' * 80
   puts ''
