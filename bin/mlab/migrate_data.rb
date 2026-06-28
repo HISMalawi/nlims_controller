@@ -1,5 +1,27 @@
 # frozen_string_literal: true
 
+# MIGRATION SCRIPT - IBLIS to NLIMS Data Migration
+#
+# USAGE:
+#   ruby bin/mlab/migrate_data.rb
+#
+# PARALLEL PROCESSING (recommended for large datasets):
+#   To speed up migration, run multiple instances in different terminals with datetime ranges:
+#
+#   Terminal 1: 2024-01-01 00:00:00 to 2024-03-31 23:59:59 (Q1)
+#   Terminal 2: 2024-04-01 00:00:00 to 2024-06-30 23:59:59 (Q2)
+#   Terminal 3: 2024-07-01 00:00:00 to 2024-09-30 23:59:59 (Q3)
+#   Terminal 4: 2024-10-01 00:00:00 to 2024-12-31 23:59:59 (Q4)
+#
+#   Or split by hours within a single day:
+#   Terminal 1: 2024-01-15 00:00:00 to 2024-01-15 05:59:59
+#   Terminal 2: 2024-01-15 06:00:00 to 2024-01-15 11:59:59
+#   Terminal 3: 2024-01-15 12:00:00 to 2024-01-15 17:59:59
+#   Terminal 4: 2024-01-15 18:00:00 to 2024-01-15 23:59:59
+#
+#   Each instance will process its own datetime range independently.
+#   Make sure datetime ranges don't overlap to avoid race conditions.
+
 GLOBAL_FACILITY = begin
   MlabBase.find_by_sql('SELECT name, district FROM globals WHERE retired = 0').first
 rescue StandardError
@@ -21,11 +43,12 @@ USER_CACHE = Hash.new do |h, creator_id|
       return { id: nil, first_name: 'Unknown', last_name: 'User', phone_number: nil, full_name: 'Unknown User' }
     end
 
-    user = MlabBase.find_by_sql(<<~SQL, [creator_id]).first
+    # Use string interpolation with sanitized ID (integer is safe from SQL injection)
+    user = MlabBase.find_by_sql(<<~SQL).first
       SELECT u.id, p.first_name, p.last_name
       FROM users u
       INNER JOIN people p ON p.id = u.person_id
-      WHERE u.id = ?
+      WHERE u.id = #{creator_id.to_i}
     SQL
 
     if user
@@ -588,15 +611,50 @@ def log_failed_test(iblis_order, iblis_test, reason, stage)
   )
 end
 
-def main(prep: false)
+def main(prep: false, start_datetime: nil, end_datetime: nil, skip_count: false)
   MlabSyncFailure.delete_all if prep
   # Get orders that have tests where voided = 0 to ensure we only migrate orders that haven't been marked as migrated before. This also allows us to reprocess orders that failed migration in previous runs by not marking them as voided.
   puts 'Fetching orders to migrate...'
-  orders_relation = MlabBase.joins('INNER JOIN tests t ON t.order_id = orders.id').where('t.voided = 0').distinct
-  total_orders = orders_relation.count
+
+  # Build base query
+  orders_relation = MlabBase.joins('INNER JOIN tests t ON t.order_id = orders.id').where('t.voided = 0')
+
+  # Apply datetime filters if provided
+  if start_datetime.present?
+    orders_relation = orders_relation.where('orders.created_date >= ?', start_datetime)
+    puts "Filtering orders from: #{start_datetime.strftime('%Y-%m-%d %H:%M:%S')}"
+  end
+
+  if end_datetime.present?
+    orders_relation = orders_relation.where('orders.created_date <= ?', end_datetime)
+    puts "Filtering orders until: #{end_datetime.strftime('%Y-%m-%d %H:%M:%S')}"
+  end
+
+  orders_relation = orders_relation.distinct
+  
+  # Count total orders (can be slow on large datasets)
+  total_orders = if skip_count
+    puts 'Skipping count for faster startup...'
+    nil
+  else
+    puts 'Counting total orders (this may take a moment for large date ranges)...'
+    count_start_time = Time.now
+    count_result = orders_relation.count
+    count_duration = Time.now - count_start_time
+    puts "Count completed in #{count_duration.round(2)} seconds"
+    count_result
+  end
 
   puts '=' * 80
-  puts "Starting migration of #{total_orders} orders in batches of 500"
+  datetime_range_info = if [start_datetime, end_datetime].compact.any?
+                          start_str = start_datetime ? start_datetime.strftime('%Y-%m-%d %H:%M:%S') : 'beginning'
+                          end_str = end_datetime ? end_datetime.strftime('%Y-%m-%d %H:%M:%S') : 'now'
+                          " (DateTime Range: #{start_str} to #{end_str})"
+                        else
+                          ''
+                        end
+  order_count_msg = total_orders ? "#{total_orders} orders" : "orders (count skipped)"
+  puts "Starting migration of #{order_count_msg} in batches of 500#{datetime_range_info}"
   puts '=' * 80
   puts ''
 
@@ -607,13 +665,17 @@ def main(prep: false)
   orders_relation.find_in_batches(batch_size: 500) do |batch|
     batch.each do |order|
       processed_count += 1
-      progress_percentage = ((processed_count.to_f / total_orders) * 100).round(2)
+      progress_percentage = total_orders ? ((processed_count.to_f / total_orders) * 100).round(2) : nil
 
-      show_detailed_output = (processed_count % 10 == 0) || (processed_count == total_orders)
+      show_detailed_output = (processed_count % 10 == 0) || (total_orders && processed_count == total_orders)
 
       if show_detailed_output
         puts '=' * 80
-        puts "Progress: #{progress_percentage}% (#{processed_count}/#{total_orders})"
+        if total_orders
+          puts "Progress: #{progress_percentage}% (#{processed_count}/#{total_orders})"
+        else
+          puts "Progress: #{processed_count} orders processed"
+        end
         puts "Migrating order with tracking number #{order.tracking_number}"
         puts '-' * 80
       end
@@ -643,8 +705,12 @@ def main(prep: false)
     # Print batch completion summary
     puts ''
     puts '=' * 80
-    puts "Batch completed. Progress: #{((processed_count.to_f / total_orders) * 100).round(2)}%"
-    puts "Total Processed: #{processed_count}/#{total_orders}"
+    if total_orders
+      puts "Batch completed. Progress: #{((processed_count.to_f / total_orders) * 100).round(2)}%"
+      puts "Total Processed: #{processed_count}/#{total_orders}"
+    else
+      puts "Batch completed. Total Processed: #{processed_count}"
+    end
     puts "Successful: #{success_count} | Failed: #{failure_count}"
     puts '=' * 80
     puts "\n\n"
@@ -655,20 +721,81 @@ def main(prep: false)
   puts '=' * 80
   puts 'MIGRATION COMPLETED'
   puts '=' * 80
-  puts "Total Orders: #{total_orders}"
-  puts "Successfully Migrated: #{success_count}"
-  puts "Failed: #{failure_count}"
-  puts "Success Rate: #{total_orders > 0 ? ((success_count.to_f / total_orders) * 100).round(2) : 0}%"
+  if total_orders
+    puts "Total Orders: #{total_orders}"
+    puts "Successfully Migrated: #{success_count}"
+    puts "Failed: #{failure_count}"
+    puts "Success Rate: #{((success_count.to_f / total_orders) * 100).round(2)}%"
+  else
+    puts "Total Orders Processed: #{processed_count}"
+    puts "Successfully Migrated: #{success_count}"
+    puts "Failed: #{failure_count}"
+    puts "Success Rate: #{processed_count > 0 ? ((success_count.to_f / processed_count) * 100).round(2) : 0}%"
+  end
   puts '=' * 80
 end
 
-# Prompt user for prep option
+# Prompt user for options
 puts ''
 puts '=' * 80
-print 'Clear mlab sync failure table before starting? (y/N): '
-user_input = gets.chomp.downcase
-prep_option = %w[y yes].include?(user_input)
+puts 'MIGRATION CONFIGURATION'
 puts '=' * 80
 puts ''
 
-main(prep: prep_option)
+print 'Clear mlab sync failure table before starting? (y/N): '
+user_input = gets.chomp.downcase
+prep_option = %w[y yes].include?(user_input)
+
+puts ''
+puts 'Start DateTime Filter (optional)'
+puts 'Format: YYYY-MM-DD HH:MM:SS or YYYY-MM-DD (defaults to 00:00:00)'
+print 'Leave blank to process from beginning: '
+start_datetime_input = gets.chomp.strip
+start_datetime = if start_datetime_input.empty?
+                   nil
+                 else
+                   begin
+                     # Check if input includes time component (contains colon)
+                     if start_datetime_input.include?(':')
+                       Time.parse(start_datetime_input)
+                     else
+                       # Date only - default to beginning of day
+                       Date.parse(start_datetime_input).to_time
+                     end
+                   rescue ArgumentError
+                     puts 'Invalid datetime format. Ignoring start filter.'
+                     nil
+                   end
+                 end
+
+puts ''
+puts 'End DateTime Filter (optional)'
+puts 'Format: YYYY-MM-DD HH:MM:SS or YYYY-MM-DD (defaults to 23:59:59)'
+print 'Leave blank to process until now: '
+end_datetime_input = gets.chomp.strip
+end_datetime = if end_datetime_input.empty?
+                 nil
+               else
+                 begin
+                   # Check if input includes time component (contains colon)
+                   if end_datetime_input.include?(':')
+                     Time.parse(end_datetime_input)
+                   else
+                     # Date only - default to end of day (23:59:59)
+                     Date.parse(end_datetime_input).end_of_day
+                   end
+                 rescue ArgumentError
+                   puts 'Invalid datetime format. Ignoring end filter.'
+                   nil
+                 end
+               end
+
+puts ''
+print 'Skip counting total orders for faster startup? (y/N): '
+skip_count_input = gets.chomp.downcase
+skip_count_option = %w[y yes].include?(skip_count_input)
+
+puts '=' * 80
+puts ''
+
+main(prep: prep_option, start_datetime: start_datetime, end_datetime: end_datetime, skip_count: skip_count_option)
