@@ -22,6 +22,7 @@
 #   Each instance will process its own datetime range independently.
 #   Make sure datetime ranges don't overlap to avoid race conditions.
 
+TRANSACTION_BATCH_SIZE = 50  # Commit every 50 orders instead of every order
 GLOBAL_FACILITY = begin
   MlabBase.find_by_sql('SELECT name, district FROM globals WHERE retired = 0').first
 rescue StandardError
@@ -195,7 +196,7 @@ def iblis_tests_for_order(order)
     INNER JOIN test_types tt ON tt.id = t.test_type_id
     INNER JOIN specimen s ON s.id = t.specimen_id
     LEFT JOIN lab_locations ll ON ll.id = t.lab_location_id
-    WHERE order_id = #{order.id}
+    WHERE order_id = #{order.id} and t.voided = 0
   SQL
 
   return [] if tests.empty?
@@ -254,7 +255,7 @@ def iblis_test_results_bulk(test_ids, tests)
     FROM test_results tr
     INNER JOIN test_type_indicator_mappings ttim ON ttim.test_indicators_id = tr.test_indicator_id
     INNER JOIN test_indicators ti ON ti.id = tr.test_indicator_id
-    WHERE tr.test_id IN (#{test_ids.join(',')})
+    WHERE tr.test_id IN (#{test_ids.join(',')}) AND tr.voided = 0
   SQL
 
   # Group by test_id and filter by correct test_type
@@ -302,7 +303,7 @@ def iblis_test_status_trails_bulk(test_ids)
       tst.creator
     FROM test_statuses tst
     INNER JOIN statuses s ON s.id = tst.status_id
-    WHERE tst.test_id IN (#{test_ids.join(',')})
+    WHERE tst.test_id IN (#{test_ids.join(',')}) AND tst.voided = 0
   SQL
 
   trails_by_test = {}
@@ -360,50 +361,49 @@ end
 
 # NLIMS METHODS
 def migrate_iblis_order_to_nlims(iblis_order)
-  ActiveRecord::Base.transaction do
-    nlims_order = Speciman.find_by(tracking_number: iblis_order[:order][:tracking_number])
-    if nlims_order.present?
-      patient_id = nlims_order.tests.first&.patient_id
-      # puts "Order with tracking number #{iblis_order[:order][:tracking_number]} already exists. Updating existing order before migration."
-      update_existing_order(nlims_order, iblis_order)
-      # puts "Deleting existing order status trail for order with tracking number #{iblis_order[:order][:tracking_number]} before migration."
-      delete_and_create_order_status_trail(nlims_order, iblis_order)
-      tests_other_than_vl = tests_other_than_vl_for_order(nlims_order)
-      # puts "Deleting #{tests_other_than_vl.count} existing tests + test status trails + results other than VL for order with tracking number #{iblis_order[:order][:tracking_number]} before migration."
-      delete_test_result_for_tests(tests_other_than_vl)
-      delete_test_status_trail_for_tests(tests_other_than_vl)
-      delete_tests_for_order_except_vl(tests_other_than_vl)
-      iblis_order[:tests].each do |iblis_test|
-        is_nlims_test_created = create_nlims_test_for_iblis_test(patient_id, nlims_order, iblis_test)
-        unless is_nlims_test_created
-          log_failed_test(iblis_order, iblis_test, 'Failed to create test in Nlims', 'Creating Test')
-        end
-        set_test_to_voided_to_mark_as_synced_to_nlims(iblis_test) if is_nlims_test_created
+  # Transaction wrapper removed - now handled at batch level for better performance
+  nlims_order = Speciman.find_by(tracking_number: iblis_order[:order][:tracking_number])
+  if nlims_order.present?
+    patient_id = nlims_order.tests.first&.patient_id
+    # puts "Order with tracking number #{iblis_order[:order][:tracking_number]} already exists. Updating existing order before migration."
+    update_existing_order(nlims_order, iblis_order)
+    # puts "Deleting existing order status trail for order with tracking number #{iblis_order[:order][:tracking_number]} before migration."
+    delete_and_create_order_status_trail(nlims_order, iblis_order)
+    tests_other_than_vl = tests_other_than_vl_for_order(nlims_order)
+    # puts "Deleting #{tests_other_than_vl.count} existing tests + test status trails + results other than VL for order with tracking number #{iblis_order[:order][:tracking_number]} before migration."
+    delete_test_result_for_tests(tests_other_than_vl)
+    delete_test_status_trail_for_tests(tests_other_than_vl)
+    delete_tests_for_order_except_vl(tests_other_than_vl)
+    iblis_order[:tests].each do |iblis_test|
+      is_nlims_test_created = create_nlims_test_for_iblis_test(patient_id, nlims_order, iblis_test)
+      unless is_nlims_test_created
+        log_failed_test(iblis_order, iblis_test, 'Failed to create test in Nlims', 'Creating Test')
       end
-    else
-      # puts "Order with tracking number #{iblis_order[:order][:tracking_number]} does not exist. Creating new order and associated tests."
-      patient, nlims_order, error_reason = create_nlims_order(iblis_order)
-      if nlims_order.nil? || patient.nil?
-        iblis_order[:tests].each do |iblis_test|
-          log_failed_test(iblis_order, iblis_test, "Failed to create order or patient in Nlims due to #{error_reason}",
-                          'Creating Order')
-        end
-        raise "Failed to create order or patient for order with tracking number #{iblis_order[:order][:tracking_number]}"
-      end
-
-      iblis_order[:tests].each do |iblis_test|
-        is_nlims_test_created = create_nlims_test_for_iblis_test(patient.id, nlims_order, iblis_test)
-        unless is_nlims_test_created
-          log_failed_test(iblis_order, iblis_test, 'Failed to create test in Nlims', 'Creating Test')
-        end
-        set_test_to_voided_to_mark_as_synced_to_nlims(iblis_test) if is_nlims_test_created
-      end
+      set_test_to_voided_to_mark_as_synced_to_nlims(iblis_test) if is_nlims_test_created
     end
-    return true
-  rescue StandardError => e
-    puts "Error migrating order with tracking number #{iblis_order[:order][:tracking_number]}: #{e.message}"
-    return false
+  else
+    # puts "Order with tracking number #{iblis_order[:order][:tracking_number]} does not exist. Creating new order and associated tests."
+    patient, nlims_order, error_reason = create_nlims_order(iblis_order)
+    if nlims_order.nil? || patient.nil?
+      iblis_order[:tests].each do |iblis_test|
+        log_failed_test(iblis_order, iblis_test, "Failed to create order or patient in Nlims due to #{error_reason}",
+                        'Creating Order')
+      end
+      raise "Failed to create order or patient for order with tracking number #{iblis_order[:order][:tracking_number]}"
+    end
+
+    iblis_order[:tests].each do |iblis_test|
+      is_nlims_test_created = create_nlims_test_for_iblis_test(patient.id, nlims_order, iblis_test)
+      unless is_nlims_test_created
+        log_failed_test(iblis_order, iblis_test, 'Failed to create test in Nlims', 'Creating Test')
+      end
+      set_test_to_voided_to_mark_as_synced_to_nlims(iblis_test) if is_nlims_test_created
+    end
   end
+  return true
+rescue StandardError => e
+  puts "Error migrating order with tracking number #{iblis_order[:order][:tracking_number]}: #{e.message}"
+  return false
 end
 
 def update_existing_order(nlims_order, iblis_order)
@@ -681,8 +681,9 @@ def main(prep: false, start_datetime: nil, end_datetime: nil, skip_count: false)
   processed_count = 0
   success_count = 0
   failure_count = 0
+  orders_in_transaction = 0
 
-  orders_relation.find_in_batches(batch_size: 500) do |batch|
+  orders_relation.find_in_batches(batch_size: 2000) do |batch|
     batch.each do |order|
       # Format order created date early for use in all log messages
       order_created_date = order.created_date ? order.created_date.strftime('%Y-%m-%d %H:%M:%S') : 'unknown date'
@@ -710,17 +711,29 @@ def main(prep: false, start_datetime: nil, end_datetime: nil, skip_count: false)
         last_checkpoint_time = current_time
       end
 
+      # Start new transaction batch if needed
+      if orders_in_transaction == 0
+        ActiveRecord::Base.connection.begin_db_transaction
+      end
+
       iblis_order_data = iblis_order(order)
       result = migrate_iblis_order_to_nlims(iblis_order_data)
 
       if result
         success_count += 1
+        orders_in_transaction += 1
         if show_detailed_output
           puts "✓ Successfully migrated order #{order.tracking_number} (created on #{order_created_date})"
         end
       else
         failure_count += 1
         puts "✗ Failed to migrate order #{order.tracking_number} (created on #{order_created_date})"
+      end
+
+      # Commit transaction batch when we reach the batch size
+      if orders_in_transaction >= TRANSACTION_BATCH_SIZE
+        ActiveRecord::Base.connection.commit_db_transaction
+        orders_in_transaction = 0
       end
 
       if show_detailed_output
@@ -730,8 +743,19 @@ def main(prep: false, start_datetime: nil, end_datetime: nil, skip_count: false)
       end
     rescue StandardError => e
       failure_count += 1
+      # Rollback current transaction batch on error
+      if orders_in_transaction > 0
+        ActiveRecord::Base.connection.rollback_db_transaction
+        orders_in_transaction = 0
+      end
       puts "✗ Exception while processing order #{order.tracking_number} (created on #{order_created_date}): #{e.message}"
       puts e.backtrace.first(5).join("\n")
+    end
+
+    # Commit any remaining orders in the transaction batch at end of batch
+    if orders_in_transaction > 0
+      ActiveRecord::Base.connection.commit_db_transaction
+      orders_in_transaction = 0
     end
 
     # Print batch completion summary
