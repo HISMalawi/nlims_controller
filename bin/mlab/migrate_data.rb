@@ -22,7 +22,7 @@
 #   Each instance will process its own datetime range independently.
 #   Make sure datetime ranges don't overlap to avoid race conditions.
 
-TRANSACTION_BATCH_SIZE = 50  # Commit every 50 orders instead of every order
+TRANSACTION_BATCH_SIZE = 50 # Commit every 50 orders instead of every order
 GLOBAL_FACILITY = begin
   MlabBase.find_by_sql('SELECT name, district FROM globals WHERE retired = 0').first
 rescue StandardError
@@ -353,6 +353,22 @@ def updated_by_for_status_trail(status_trail_creator)
   USER_CACHE[status_trail_creator]
 end
 
+def sanitize_unit_for_latin1(unit)
+  return nil if unit.nil?
+
+  # Convert common scientific notation characters that aren't latin1 compatible
+  # μ (Greek mu) -> u
+  # ° (degree symbol) is fine in latin1
+  unit.to_s
+      .gsub('μ', 'u')       # Greek mu to u (microliters μl -> ul)
+      .gsub('²', '2')       # Superscript 2
+      .gsub('³', '3')       # Superscript 3
+      .encode('ISO-8859-1', invalid: :replace, undef: :replace, replace: '?')
+rescue Encoding::UndefinedConversionError
+  # If conversion still fails, return safe fallback
+  unit.to_s.gsub(/[^\x00-\x7F]/, '?')
+end
+
 def set_test_to_voided_to_mark_as_synced_to_nlims(iblis_test)
   MlabBase.connection.execute <<~SQL
     UPDATE tests SET voided = 1 WHERE id = #{iblis_test[:id]}
@@ -400,10 +416,10 @@ def migrate_iblis_order_to_nlims(iblis_order)
       set_test_to_voided_to_mark_as_synced_to_nlims(iblis_test) if is_nlims_test_created
     end
   end
-  return true
+  true
 rescue StandardError => e
   puts "Error migrating order with tracking number #{iblis_order[:order][:tracking_number]}: #{e.message}"
-  return false
+  false
 end
 
 def update_existing_order(nlims_order, iblis_order)
@@ -505,7 +521,7 @@ def create_test_results(nlims_test, iblis_test)
       test_id: nlims_test.id,
       test_uuid: test_result[:test_uuid],
       result: test_result[:result][:value],
-      unit: test_result[:result][:unit],
+      unit: sanitize_unit_for_latin1(test_result[:result][:unit]),
       time_entered: test_result[:result][:result_date],
       device_name: test_result[:result][:platform],
       measure_id: measure.id,
@@ -712,9 +728,7 @@ def main(prep: false, start_datetime: nil, end_datetime: nil, skip_count: false)
       end
 
       # Start new transaction batch if needed
-      if orders_in_transaction == 0
-        ActiveRecord::Base.connection.begin_db_transaction
-      end
+      ActiveRecord::Base.connection.begin_db_transaction if orders_in_transaction == 0
 
       iblis_order_data = iblis_order(order)
       result = migrate_iblis_order_to_nlims(iblis_order_data)
