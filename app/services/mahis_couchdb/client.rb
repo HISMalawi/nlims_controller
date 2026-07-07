@@ -35,8 +35,21 @@ module MahisCouchdb
       put(encoded_doc_id(doc['_id']), doc)
     end
 
-    def find(selector, limit: 1)
-      post('_find', { selector:, limit: })
+    def find(selector, limit: 1, bookmark: nil, fields: nil)
+      payload = { selector:, limit: }
+      payload[:bookmark] = bookmark if bookmark.present?
+      payload[:fields] = fields if fields.present?
+      post('_find', payload)
+    end
+
+    def create_index(fields:, name:, ddoc: nil)
+      payload = {
+        index: { fields: },
+        name:,
+        type: 'json'
+      }
+      payload[:ddoc] = ddoc if ddoc.present?
+      post('_index', payload)
     end
 
     def changes_feed_url(query = {})

@@ -16,6 +16,12 @@ sync_error_log_cleanup_worker:
   class: "SyncErrorLogCleanupWorker"
   queue: low_priority
 
+mahis_couchdb_order_backfill_job:
+  name: "Retry Failed MaHIS CouchDB Order Imports Every 5 Minutes"
+  cron: "*/5 * * * *"
+  class: "MahisCouchdbOrderBackfillJob"
+  queue: default
+
 update_order_source_couch_id_job:
   name: "Update Order Source Couch ID - Weekly Friday at 3pm"
   cron: "0 15 * * 5"

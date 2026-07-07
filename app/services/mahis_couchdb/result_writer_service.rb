@@ -5,6 +5,8 @@ require 'digest'
 module MahisCouchdb
   # Writes verified NLiMS results back to the matching MaHIS patient CouchDB doc.
   class ResultWriterService
+    include ActivityLogger
+
     SOURCE_SYSTEM = 'mahis_couchdb'
 
     attr_reader :client, :indicator_client
@@ -21,21 +23,31 @@ module MahisCouchdb
 
     def call(tracking_number:, test_id: nil)
       attempts = 0
-      return false unless client.enabled?
+      unless client.enabled?
+        log_warn('[MaHIS CouchDB Results] Write-back skipped because MaHIS CouchDB integration is disabled')
+        return false
+      end
 
       specimen = Speciman.find_by(tracking_number:)
       return false unless self.class.mahis_couchdb_order?(specimen)
 
       doc = find_patient_doc(specimen)
-      return false unless doc
+      unless doc
+        log_warn("[MaHIS CouchDB Results] Patient doc not found for accession=#{tracking_number} test_id=#{test_id}")
+        return false
+      end
 
       changed = apply_results!(doc, specimen, test_id)
-      return false unless changed
+      unless changed
+        log_warn("[MaHIS CouchDB Results] No result changes found for accession=#{tracking_number} test_id=#{test_id}")
+        return false
+      end
 
       doc['sync_status'] = 'unsynced'
       doc['processed_by_listener'] = false
       doc['nlims_result_synced_at'] = Time.current.iso8601
       client.put_doc(doc)
+      log_info("[MaHIS CouchDB Results] Pushed results accession=#{tracking_number} test_id=#{test_id} patient_doc=#{doc['_id']}")
       true
     rescue RestClient::Conflict
       attempts += 1
@@ -68,7 +80,7 @@ module MahisCouchdb
       }
       client.find(selector, limit: 1).fetch('docs', []).first
     rescue StandardError => e
-      Rails.logger.warn("Unable to find MaHIS CouchDB patient doc for accession #{tracking_number}: #{e.message}")
+      log_warn("[MaHIS CouchDB Results] Unable to find patient doc for accession=#{tracking_number}: #{e.message}")
       nil
     end
 
@@ -176,7 +188,7 @@ module MahisCouchdb
         docs = indicator_client.find(selector, limit: 10).fetch('docs', [])
         docs.find { |doc| doc['concept_set'].to_s == test_concept_id.to_s } || docs.first || {}
       rescue StandardError => e
-        Rails.logger.warn("Unable to map MaHIS indicator for NLIMS code #{nlims_code}: #{e.message}")
+        log_warn("[MaHIS CouchDB Results] Unable to map indicator for nlims_code=#{nlims_code}: #{e.message}")
         {}
       end
     end
@@ -256,7 +268,7 @@ module MahisCouchdb
     end
 
     def log_error(message, error, tracking_number, test_id)
-      Rails.logger.warn("#{message}: #{error}")
+      log_warn("[MaHIS CouchDB Results] #{message}: #{error}")
       SyncErrorLog.create!(
         error_message: error,
         error_details: {
@@ -266,7 +278,7 @@ module MahisCouchdb
         }
       )
     rescue StandardError => e
-      Rails.logger.warn("Unable to log MaHIS CouchDB result error: #{e.message}")
+      log_warn("[MaHIS CouchDB Results] Unable to log result error: #{e.message}")
     end
   end
 end

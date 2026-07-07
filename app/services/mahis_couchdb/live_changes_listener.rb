@@ -7,6 +7,8 @@ require 'uri'
 module MahisCouchdb
   # Permanent listener for CouchDB's continuous _changes feed.
   class LiveChangesListener
+    include ActivityLogger
+
     attr_reader :client, :changes_service
 
     def initialize(client = Client.new, changes_service = nil)
@@ -17,17 +19,19 @@ module MahisCouchdb
 
     def start
       unless client.enabled?
-        Rails.logger.warn('[MaHIS CouchDB Listener] Disabled. Set mahis_couchdb.enabled=true to start listening.')
+        log_warn('[MaHIS CouchDB Listener] Disabled. Set mahis_couchdb.enabled=true to start listening.')
         return false
       end
 
-      Rails.logger.info("[MaHIS CouchDB Listener] Starting live listener for #{client.config.database}")
+      log_info("[MaHIS CouchDB Listener] Starting live listener for #{client.config.database}")
+      log_info('[MaHIS CouchDB Listener] Processing pending NLiMS lab orders before live feed')
+      changes_service.process_all_pending_documents if changes_service.respond_to?(:process_all_pending_documents)
       listen_forever
     end
 
     def stop
       request_stop
-      Rails.logger.info('[MaHIS CouchDB Listener] Stop requested')
+      log_info('[MaHIS CouchDB Listener] Stop requested')
     end
 
     def request_stop
@@ -37,20 +41,28 @@ module MahisCouchdb
     private
 
     def listen_forever
+      live_feed_started = false
+
       while @running
         begin
+          if live_feed_started && changes_service.respond_to?(:process_all_pending_documents)
+            log_info('[MaHIS CouchDB Listener] Catching up pending NLiMS lab orders before reconnecting')
+            changes_service.process_all_pending_documents
+          end
+
+          live_feed_started = true
           listen_once
         rescue Interrupt
           request_stop
         rescue StandardError => e
-          Rails.logger.error("[MaHIS CouchDB Listener] Stream failed: #{e.class} - #{e.message}")
+          log_error("[MaHIS CouchDB Listener] Stream failed: #{e.class} - #{e.message}")
           sleep client.config.reconnect_delay if @running
         end
       end
     end
 
     def listen_once
-      since = SyncState.last_sequence || client.config.initial_since
+      since = 'now'
       uri = URI(client.changes_feed_url(
                   since:,
                   feed: 'continuous',
@@ -58,7 +70,7 @@ module MahisCouchdb
                   heartbeat: client.config.heartbeat
                 ))
 
-      Rails.logger.info("[MaHIS CouchDB Listener] Connecting to #{uri} from sequence #{since}")
+      log_info("[MaHIS CouchDB Listener] Connecting to #{uri} from sequence #{since}")
       Net::HTTP.start(
         uri.host,
         uri.port,
@@ -103,12 +115,11 @@ module MahisCouchdb
 
       change = JSON.parse(line)
       imported = changes_service.process_change(change)
-      SyncState.update_last_sequence!(change['seq'])
-      Rails.logger.info("[MaHIS CouchDB Listener] Imported #{imported} lab order(s) from #{change['id']}") if imported.positive?
+      log_info("[MaHIS CouchDB Listener] Processed change id=#{change['id']} seq=#{change['seq']} imported_orders=#{imported}")
     rescue JSON::ParserError => e
-      Rails.logger.warn("[MaHIS CouchDB Listener] Ignored malformed change line: #{e.message}")
+      log_warn("[MaHIS CouchDB Listener] Ignored malformed change line: #{e.message}")
     rescue StandardError => e
-      Rails.logger.error("[MaHIS CouchDB Listener] Failed to process change: #{e.class} - #{e.message}")
+      log_error("[MaHIS CouchDB Listener] Failed to process change: #{e.class} - #{e.message}")
     end
   end
 end
