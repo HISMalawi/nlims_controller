@@ -372,19 +372,19 @@ def tests_other_than_vl_for_order(nlims_order)
 end
 
 def delete_tests_for_order_except_vl(tests_other_than_vl_for_order)
-  tests_other_than_vl_for_order.destroy_all
+  tests_other_than_vl_for_order.delete_all
 end
 
 def delete_test_result_for_tests(tests_other_than_vl_for_order)
-  TestResult.where(test_id: tests_other_than_vl_for_order.pluck(:id)).destroy_all
+  TestResult.where(test_id: tests_other_than_vl_for_order.pluck(:id)).delete_all
 end
 
 def delete_order_status_trail_for_order(nlims_order)
-  SpecimenStatusTrail.where(specimen_id: nlims_order.id).destroy_all
+  SpecimenStatusTrail.where(specimen_id: nlims_order.id).delete_all
 end
 
 def delete_test_status_trail_for_tests(tests_other_than_vl_for_order)
-  TestStatusTrail.where(test_id: tests_other_than_vl_for_order.pluck(:id)).destroy_all
+  TestStatusTrail.where(test_id: tests_other_than_vl_for_order.pluck(:id)).delete_all
 end
 
 def create_test_status_trail(nlims_test, iblis_test)
@@ -431,6 +431,7 @@ def create_nlims_test_for_iblis_test(patient_id, nlims_order, iblis_test)
   test_status = TestStatus.find_by(name: iblis_test[:test_status])&.id
   test_type = TestType.find_by(nlims_code: iblis_test[:test_type][:nlims_code])
   return false unless test_type.present?
+  return false unless test_status.present?
 
   create_parameters = {
     uuid: iblis_test[:test_uuid],
