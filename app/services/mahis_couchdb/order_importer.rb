@@ -48,9 +48,15 @@ module MahisCouchdb
 
     private
 
+    # Return the order hashes stored inside patient_doc directly, NOT copies.
+    # Deep-copying here (the previous `.with_indifferent_access`) meant every
+    # status mark from mark_order_processed/mark_order_failed was written to a
+    # throwaway copy and never persisted, so the order stayed perpetually
+    # "pending" and persist_status_changes rewrote the doc on every pass —
+    # spinning CouchDB's continuous _changes feed in an endless loop.
     def lab_orders(patient_doc)
-      lab_orders = (patient_doc['labOrders'] || patient_doc[:labOrders] || {}).with_indifferent_access
-      Array.wrap(lab_orders[:unsaved]) + Array.wrap(lab_orders[:saved])
+      lab_orders = patient_doc['labOrders'] || patient_doc[:labOrders] || {}
+      Array.wrap(lab_orders['unsaved'] || lab_orders[:unsaved]) + Array.wrap(lab_orders['saved'] || lab_orders[:saved])
     end
 
     def processable_order?(order)
