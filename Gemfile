@@ -50,7 +50,8 @@ group :development, :test do
   gem 'byebug', platforms: %i[mri mingw x64_mingw]
   gem 'rspec-rails'
   gem 'rswag-specs'
-  gem 'rubocop', require: false
+  gem 'rubocop'
+  gem 'ruby-lsp'
 end
 
 group :development do
