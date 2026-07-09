@@ -16,6 +16,14 @@ module API
       end
 
       def show
+        # If order not found locally and this is a local NLIMS, try fetching from master
+        if @order.nil? && Config.local_nlims?
+          @order = fetch_and_create_from_master
+          return render_error('order not available', :not_found) if @order.nil?
+        elsif @order.nil?
+          return render_error('order not available', :not_found)
+        end
+
         render_success('Order Found', OrderSerializer.serialize(@order))
       end
 
@@ -177,9 +185,38 @@ module API
                  else
                    Speciman.find_by(tracking_number: params[:id])
                  end
+        # Don't render error here - let the show action handle master NLIMS fallback
+        return @order if action_name == 'show'
         return render_error('order not available', :not_found) unless @order
 
         @order
+      end
+
+      def fetch_and_create_from_master
+        return nil unless Config.local_nlims?
+
+        begin
+          # Initialize NLIMS service for master communication
+          nlims_service = NlimsSyncUtilsService.new(params[:id])
+          return nil unless nlims_service.token.present?
+
+          # Fetch order from master with timeout
+          order_data = nlims_service.fetch_order_from_master(
+            params[:id],
+            couch_id: params[:couch_id]
+          )
+          return nil if order_data.blank?
+
+          # Create order locally from master data
+          success, order = nlims_service.create_order_from_master_data(order_data.deep_symbolize_keys)
+          return nil unless success
+
+          Rails.logger.info("Successfully fetched and created order #{params[:id]} from master NLIMS")
+          order
+        rescue StandardError => e
+          Rails.logger.error("Failed to fetch order from master NLIMS: #{e.message}")
+          nil
+        end
       end
 
       def update_sending_facility
