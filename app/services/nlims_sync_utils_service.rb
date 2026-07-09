@@ -297,10 +297,33 @@ class NlimsSyncUtilsService
 
     # Fetch the created order
     order = Speciman.find_by(tracking_number: response)
+    return [false, nil] unless order
+
+    # Update tests with their status trails and results from master
+    update_tests_from_master(order, order_data[:tests])
+
     [true, order]
   rescue StandardError => e
     Rails.logger.error("Error creating order from master data: #{e.message}")
     [false, nil]
+  end
+
+  ##
+  # Updates tests with status trails and results from master NLIMS data
+  def update_tests_from_master(order, tests_data)
+    return if tests_data.blank?
+
+    tests_data.each do |test_data|
+      # Skip if no status trail or results to update
+      next if test_data[:status_trail].blank? && test_data[:test_results].blank?
+
+      # Update test with status trails and results
+      TestManagement::TestsService.update_tests(order, test_data)
+    rescue StandardError => e
+      Rails.logger.error("Error updating test from master data: #{e.message}")
+      # Continue with other tests even if one fails
+      next
+    end
   end
 
   def buid_acknowledment_to_master_data(acknowledgement)
