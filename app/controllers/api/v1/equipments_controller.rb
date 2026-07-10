@@ -33,7 +33,7 @@ module API
           update_equipment_products
           render json: @equipment, status: :created
         else
-          render json: @equipment.errors, status: :unprocessable_entity
+          render json: @equipment.errors, status: :unprocessable_content
         end
       end
 
@@ -43,7 +43,7 @@ module API
           update_equipment_products
           render json: @equipment
         else
-          render json: @equipment.errors, status: :unprocessable_entity
+          render json: @equipment.errors, status: :unprocessable_content
         end
       end
 

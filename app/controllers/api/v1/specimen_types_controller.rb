@@ -47,7 +47,7 @@ module API
 
         render json: specimen_type, status: :created
       rescue StandardError => e
-        render json: { error: e.message }, status: :unprocessable_entity
+        render json: { error: e.message }, status: :unprocessable_content
       end
 
       def update
@@ -56,7 +56,7 @@ module API
 
         render json: specimen_type
       rescue StandardError => e
-        render json: { error: e.message }, status: :unprocessable_entity
+        render json: { error: e.message }, status: :unprocessable_content
       end
 
       def destroy
@@ -65,7 +65,7 @@ module API
 
         head :no_content
       rescue StandardError => e
-        render json: { error: e.message }, status: :unprocessable_entity
+        render json: { error: e.message }, status: :unprocessable_content
       end
 
       private
