@@ -53,3 +53,18 @@ end
 
 # Allow puma to be restarted by `rails restart` command.
 plugin :tmp_restart
+
+# Puma Worker Killer
+before_fork do
+  require 'puma_worker_killer'
+
+  PumaWorkerKiller.config do |config|
+    config.ram           = 10000 # mb
+    config.frequency     = 60    # seconds
+    config.percent_usage = 0.95
+    config.rolling_restart_frequency = 12.hours # 12 hours in seconds, or 12.hours if using Rails
+    config.reaper_status_logs = true # setting this to false will not log lines like:
+    # PumaWorkerKiller: Consuming 54.34765625 mb with master and 2 workers.
+  end
+  PumaWorkerKiller.start
+end
