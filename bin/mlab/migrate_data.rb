@@ -378,6 +378,9 @@ end
 # NLIMS METHODS
 def migrate_iblis_order_to_nlims(iblis_order)
   # Transaction wrapper removed - now handled at batch level for better performance
+  # Track successfully created tests - only mark as voided if ENTIRE order succeeds
+  successfully_created_tests = []
+
   nlims_order = Speciman.find_by(tracking_number: iblis_order[:order][:tracking_number])
   if nlims_order.present?
     patient_id = nlims_order.tests.first&.patient_id
@@ -395,7 +398,7 @@ def migrate_iblis_order_to_nlims(iblis_order)
       unless is_nlims_test_created
         log_failed_test(iblis_order, iblis_test, 'Failed to create test in Nlims', 'Creating Test')
       end
-      set_test_to_voided_to_mark_as_synced_to_nlims(iblis_test) if is_nlims_test_created
+      successfully_created_tests << iblis_test if is_nlims_test_created
     end
   else
     # puts "Order with tracking number #{iblis_order[:order][:tracking_number]} does not exist. Creating new order and associated tests."
@@ -413,9 +416,15 @@ def migrate_iblis_order_to_nlims(iblis_order)
       unless is_nlims_test_created
         log_failed_test(iblis_order, iblis_test, 'Failed to create test in Nlims', 'Creating Test')
       end
-      set_test_to_voided_to_mark_as_synced_to_nlims(iblis_test) if is_nlims_test_created
+      successfully_created_tests << iblis_test if is_nlims_test_created
     end
   end
+
+  # ✅ ONLY mark tests as voided AFTER entire order migration succeeds
+  successfully_created_tests.each do |iblis_test|
+    set_test_to_voided_to_mark_as_synced_to_nlims(iblis_test)
+  end
+
   true
 rescue StandardError => e
   puts "Error migrating order with tracking number #{iblis_order[:order][:tracking_number]}: #{e.message}"
