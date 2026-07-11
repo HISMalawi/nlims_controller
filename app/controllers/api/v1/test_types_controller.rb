@@ -126,7 +126,7 @@ module API
 
         render json: test_type, status: :created
       rescue StandardError => e
-        render json: { error: e.message }, status: :unprocessable_entity
+        render json: { error: e.message }, status: :unprocessable_content
       end
 
       # PATCH/PUT /api/v1/test_catalogs/:catalog_id/test_types/:nlims_code
@@ -136,7 +136,7 @@ module API
 
         render json: test_type
       rescue StandardError => e
-        render json: { error: e.message }, status: :unprocessable_entity
+        render json: { error: e.message }, status: :unprocessable_content
       end
 
       # DELETE /api/v1/test_catalogs/:catalog_id/test_types/:nlims_code
@@ -146,7 +146,7 @@ module API
 
         head :no_content
       rescue StandardError => e
-        render json: { error: e.message }, status: :unprocessable_entity
+        render json: { error: e.message }, status: :unprocessable_content
       end
 
       def measure_types
@@ -184,7 +184,7 @@ module API
 
       def import
         if params[:file].nil?
-          render json: { success: false, error: 'No file uploaded' }, status: :unprocessable_entity
+          render json: { success: false, error: 'No file uploaded' }, status: :unprocessable_content
           return
         end
 
@@ -227,7 +227,7 @@ module API
                 content_type: content_type,
                 extension: file_ext
               }
-            }, status: :unprocessable_entity
+            }, status: :unprocessable_content
             return
           end
 
@@ -279,7 +279,7 @@ module API
             if result[:success]
               render json: result, status: :ok
             else
-              render json: result, status: :unprocessable_entity
+              render json: result, status: :unprocessable_content
             end
           ensure
             begin
@@ -309,7 +309,7 @@ module API
             success: false,
             error: error_message,
             details: e.backtrace.first(5)
-          }, status: :unprocessable_entity
+          }, status: :unprocessable_content
         end
       end
 

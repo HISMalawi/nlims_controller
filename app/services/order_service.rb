@@ -415,84 +415,110 @@ module OrderService
 
   def self.retrieve_undispatched_samples(facilities)
     master_facility = {}
-    facility_samples = []
-    facilities.each do |facility|
-      res = Site.find_by_sql("SELECT name AS site_name, district FROM sites WHERE id='#{facility}'")
-      unless res.blank?
-        ActiveRecord::Base.connection.execute("SET SESSION sql_mode = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION'")
-        res_ = Speciman.find_by_sql("SELECT specimen.tracking_number AS tracking_number,
-																		specimen_types.name AS sample_type, specimen_types.preferred_name AS sample_type_preferred_name, specimen_statuses.name AS specimen_status,
-																		wards.name AS order_location, specimen.date_created AS date_created,
-																		specimen.priority AS priority,
-																		specimen.drawn_by_id AS drawer_id, specimen.drawn_by_name AS drawer_name,
-																		specimen.drawn_by_phone_number AS drawe_number, specimen.target_lab AS target_lab,
-																		specimen.sending_facility AS health_facility, specimen.requested_by AS requested_by,
-																		specimen.date_created AS date_drawn,
-																		patients.patient_number AS pat_id, patients.name AS pat_name,
-																		patients.dob AS dob, patients.gender AS sex,
-                                    specimen.arv_number AS arv_number
-																		FROM specimen INNER JOIN specimen_statuses ON specimen_statuses.id = specimen.specimen_status_id
-																		LEFT JOIN specimen_types ON specimen_types.id = specimen.specimen_type_id
-																		INNER JOIN tests ON tests.specimen_id = specimen.id
-																		INNER JOIN patients ON patients.id = tests.patient_id
-																		LEFT JOIN wards ON specimen.ward_id = wards.id
-						      									WHERE specimen.sending_facility ='#{res[0]['site_name'].gsub("'", "\\\\'")}'
-																		AND specimen.tracking_number NOT IN (SELECT tracking_number FROM specimen_dispatches)
-																		GROUP BY specimen.id ORDER BY specimen.id DESC limit 500")
+    return [true, master_facility] if facilities.blank?
+
+    ActiveRecord::Base.connection.execute(
+      "SET SESSION sql_mode = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION'"
+    )
+
+    site_rows = Site.find_by_sql(
+      ["SELECT id, name AS site_name, district FROM sites WHERE id IN (?)", facilities]
+    )
+    site_by_facility_id = site_rows.index_by { |s| s.id.to_s }
+
+    valid_facilities = facilities.select { |f| site_by_facility_id.key?(f.to_s) }
+    return [true, master_facility] if valid_facilities.empty?
+
+    site_names = site_by_facility_id.values.map(&:site_name).uniq
+
+    cutoff_date = 6.months.ago.beginning_of_day
+
+    specimen_rows = Speciman.find_by_sql(
+      ["SELECT specimen.tracking_number AS tracking_number,
+              specimen_types.name AS sample_type, specimen_types.preferred_name AS sample_type_preferred_name,
+              specimen_statuses.name AS specimen_status,
+              wards.name AS order_location, specimen.date_created AS date_created,
+              specimen.priority AS priority,
+              specimen.drawn_by_id AS drawer_id, specimen.drawn_by_name AS drawer_name,
+              specimen.drawn_by_phone_number AS drawe_number, specimen.target_lab AS target_lab,
+              specimen.sending_facility AS health_facility, specimen.requested_by AS requested_by,
+              specimen.date_created AS date_drawn,
+              patients.patient_number AS pat_id, patients.name AS pat_name,
+              patients.dob AS dob, patients.gender AS sex,
+              specimen.arv_number AS arv_number
+        FROM specimen
+        INNER JOIN specimen_statuses ON specimen_statuses.id = specimen.specimen_status_id
+        LEFT JOIN specimen_types ON specimen_types.id = specimen.specimen_type_id
+        INNER JOIN tests ON tests.specimen_id = specimen.id
+        INNER JOIN patients ON patients.id = tests.patient_id
+        LEFT JOIN wards ON specimen.ward_id = wards.id
+        WHERE specimen.sending_facility IN (?)
+        AND specimen.date_created >= ?
+        AND specimen.tracking_number NOT IN (SELECT tracking_number FROM specimen_dispatches)
+        GROUP BY specimen.id ORDER BY specimen.id DESC", site_names, cutoff_date]
+    )
+
+    specimens_by_site_name = Hash.new { |h, k| h[k] = [] }
+    specimen_rows.each do |row|
+      list = specimens_by_site_name[row.health_facility]
+      list << row if list.size < 500
+    end
+
+    tracking_numbers = specimen_rows.map(&:tracking_number).uniq
+    tests_by_tracking_number = Hash.new { |h, k| h[k] = [] }
+    if tracking_numbers.any?
+      Test.find_by_sql(
+        ["SELECT specimen.tracking_number AS tracking_number,
+                test_types.name AS test_name, test_types.preferred_name, test_statuses.name AS test_status
+          FROM tests
+          INNER JOIN specimen ON specimen.id = tests.specimen_id
+          INNER JOIN test_types ON test_types.id = tests.test_type_id
+          INNER JOIN test_statuses ON test_statuses.id = tests.test_status_id
+          WHERE specimen.tracking_number IN (?)", tracking_numbers]
+      ).each { |t| tests_by_tracking_number[t.tracking_number] << t }
+    end
+
+    valid_facilities.each do |facility|
+      site = site_by_facility_id[facility.to_s]
+      rows = specimens_by_site_name[site.site_name] || []
+
+      facility_samples = rows.map do |ress|
         tsts = {}
-        if !res_.empty?
-          res_.each do |ress|
-            tst = Test.find_by_sql("SELECT test_types.name AS test_name,test_types.preferred_name, test_statuses.name AS test_status
-																	FROM tests
-																	INNER JOIN specimen ON specimen.id = tests.specimen_id
-																	INNER JOIN test_types ON test_types.id = tests.test_type_id
-																	INNER JOIN test_statuses ON test_statuses.id = tests.test_status_id
-																	WHERE specimen.tracking_number ='#{ress.tracking_number}'")
-            unless tst.empty?
-              tst.each do |t|
-                tsts[t.preferred_name] = t['test_status'] if t.test_name&.downcase == 'hiv viral load'
-                tsts[t.test_name] = t['test_status'] unless t.test_name&.downcase == 'hiv viral load'
-              end
-            end
-            facility_samples.push(
-              {
-                tracking_number: ress.tracking_number,
-                sample_type: ress.sample_type == "Venous Whole Blood" ? ress.sample_type_preferred_name : ress.sample_type,
-                specimen_status: ress.specimen_status,
-                order_location: ress.order_location,
-                date_created: ress.date_created,
-                priority: ress.priority,
-                receiving_lab: ress.target_lab,
-                sending_lab: ress.health_facility,
-                requested_by: ress.requested_by,
-                sample_created_by: {
-                  id: ress.drawe_number,
-                  name: ress.drawer_name,
-                  phone: ress.drawe_number
-                },
-                patient: {
-                  id: ress.pat_id,
-                  name: ress.pat_name,
-                  gender: ress.sex,
-                  dob: ress.dob,
-                  arv_number: ress.arv_number,
-                  site_code_number: get_site_code_number(ress.tracking_number)
-                },
-
-                tests: tsts
-              }
-            )
-            tsts = {}
-          end
-
-        else
-          facility_samples.push()
+        tests_by_tracking_number[ress.tracking_number].each do |t|
+          tsts[t.preferred_name] = t['test_status'] if t.test_name&.downcase == 'hiv viral load'
+          tsts[t.test_name] = t['test_status'] unless t.test_name&.downcase == 'hiv viral load'
         end
 
+        {
+          tracking_number: ress.tracking_number,
+          sample_type: ress.sample_type == "Venous Whole Blood" ? ress.sample_type_preferred_name : ress.sample_type,
+          specimen_status: ress.specimen_status,
+          order_location: ress.order_location,
+          date_created: ress.date_created,
+          priority: ress.priority,
+          receiving_lab: ress.target_lab,
+          sending_lab: ress.health_facility,
+          requested_by: ress.requested_by,
+          sample_created_by: {
+            id: ress.drawe_number,
+            name: ress.drawer_name,
+            phone: ress.drawe_number
+          },
+          patient: {
+            id: ress.pat_id,
+            name: ress.pat_name,
+            gender: ress.sex,
+            dob: ress.dob,
+            arv_number: ress.arv_number,
+            site_code_number: get_site_code_number(ress.tracking_number)
+          },
+          tests: tsts
+        }
       end
+
       master_facility[facility.to_s] = facility_samples
-      facility_samples = []
     end
+
     [true, master_facility]
   end
 

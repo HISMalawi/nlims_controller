@@ -37,3 +37,4 @@ db/schema.rb
 public/tracker.json
 
 /config/master.key
+credentials.yml.enc

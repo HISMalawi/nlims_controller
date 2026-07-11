@@ -14,7 +14,7 @@ module API
         if status == true
           render_success(response, OrderSerializer.serialize(@order))
         else
-          render_error(response, :unprocessable_entity)
+          render_error(response, :unprocessable_content)
         end
       end
 
@@ -24,7 +24,7 @@ module API
           TestManagement::TestsService.update_tests(@order, params)
           render_success(response, OrderSerializer.serialize(@order))
         else
-          render_error(response, :unprocessable_entity)
+          render_error(response, :unprocessable_content)
         end
       end
 
@@ -33,7 +33,7 @@ module API
         if status == true
           render_success(response)
         else
-          render_error(response, :unprocessable_entity)
+          render_error(response, :unprocessable_content)
         end
       end
 
