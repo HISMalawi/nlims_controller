@@ -638,6 +638,9 @@ end
 
 def log_failed_test(iblis_order, iblis_test, reason, stage)
   puts "Failed to migrate order with tracking number #{iblis_order[:order][:tracking_number]}"
+  return if MlabSyncFailure.exists?(tracking_number: iblis_order[:order][:tracking_number],
+                                    mlab_test_id: iblis_test[:id])
+
   MlabSyncFailure.create!(
     tracking_number: iblis_order[:order][:tracking_number],
     mlab_test_id: iblis_test[:id],
