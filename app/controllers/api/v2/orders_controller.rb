@@ -30,14 +30,14 @@ module API
       # rubocop:disable Metrics/AbcSize
       def create
         if (error_message = required_params).present?
-          return render_error(error_message, :unprocessable_entity)
+          return render_error(error_message, :unprocessable_content)
         end
         if (specimen = Speciman.find_by(tracking_number: params.dig(:order, :tracking_number)))
           return render_success('order already available', { tracking_number: specimen.tracking_number }, :created)
         end
 
         status, response = OrderManagement::OrdersService.create_order(params)
-        return render_error(response, :unprocessable_entity) unless status
+        return render_error(response, :unprocessable_content) unless status
 
         @order = Speciman.find_by(tracking_number: response)
         update_tests(@order, params[:tests]) if params[:tests].present?
@@ -48,7 +48,7 @@ module API
 
       def request_order
         if (error_message = required_params).present?
-          return render_error(error_message, :unprocessable_entity)
+          return render_error(error_message, :unprocessable_content)
         end
 
         if (specimen = Speciman.find_by(tracking_number: params.dig(:order, :tracking_number)))
@@ -56,7 +56,7 @@ module API
         end
 
         status, response = OrderManagement::OrdersService.create_order(params, true)
-        return render_error(response, :unprocessable_entity) unless status
+        return render_error(response, :unprocessable_content) unless status
 
         order = Speciman.find_by(tracking_number: response)
         render_success('order created successfully', { tracking_number: order.tracking_number, uuid: order.couch_id },
@@ -68,13 +68,13 @@ module API
         if status
           render_success(response, { tracking_number: params['tracking_number'] })
         else
-          render_error(response, :unprocessable_entity)
+          render_error(response, :unprocessable_content)
         end
       end
 
       def update
         update_status, message = OrderManagement::OrdersService.update_order(@order, params)
-        return render_error(message, :unprocessable_entity) unless update_status
+        return render_error(message, :unprocessable_content) unless update_status
 
         render_success('order updated successfully', { tracking_number: @order.tracking_number })
       end
