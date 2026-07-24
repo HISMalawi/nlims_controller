@@ -1,3 +1,19 @@
 district: Mzimba
 facility_name: Macro Health Center
 facility_code: MCRM
+
+# MaHIS CouchDB patient-record integration.
+# It is safe to leave disabled until CouchDB credentials are configured.
+mahis_couchdb:
+  enabled: false
+  protocol: http
+  host: localhost
+  port: 5984
+  path:
+  database: patients_records
+  username:
+  password:
+  initial_since: "0"
+  changes_limit: 100
+  heartbeat: 10000
+  reconnect_delay: 5
