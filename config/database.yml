@@ -11,6 +11,17 @@ default: &default
   password: <%= ENV.fetch("DATABASE_PASSWORD", "") %>
   variables:
     sql_mode: STRICT_ALL_TABLES
+    # READ COMMITTED, not the MySQL default of REPEATABLE READ.
+    #
+    # The replication cursor is ordered by a row lock held until commit, which
+    # works at any isolation level. Repeatable reads buy this application
+    # nothing and cost it portability: MariaDB 11.6+ turns on
+    # innodb_snapshot_isolation by default, and a locking read of a row that
+    # moved since the snapshot then fails outright instead of reading the
+    # current version the way MySQL does. Under READ COMMITTED both engines
+    # behave the same, and a reader polling for changes wants the latest
+    # committed rows anyway.
+    transaction_isolation: READ-COMMITTED
 
 development:
   <<: *default
