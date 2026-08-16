@@ -1,63 +1,42 @@
-source 'https://rubygems.org'
+source "https://rubygems.org"
 
-git_source(:github) do |repo_name|
-  repo_name = "#{repo_name}/#{repo_name}" unless repo_name.include?('/')
-  "https://github.com/#{repo_name}.git"
-end
+gem "rails", "~> 8.1.3", ">= 8.1.3.1"
 
-ruby '3.2.0'
+# Database and cache
+gem "mysql2", "~> 0.5"
+gem "redis", ">= 5.0"
 
-# Bundle edge Rails instead: gem 'rails', github: 'rails/rails'
-gem 'rails', '~> 7.1.0'
+# Web
+gem "propshaft"
+gem "puma", ">= 5.0"
+gem "rack-cors"
 
-gem 'mime-types', '~> 3.3'
-gem 'paper_trail', '~> 16.0'
-gem 'parallel'
-gem 'ruby-progressbar'
-# Use mysql as the database for Active Record
-gem 'mysql2', '>= 0.3.18'
-# Use Puma as the app server
-gem 'puma', '>= 3.7'
-# Build JSON APIs with ease. Read more: https://github.com/rails/jbuilder
-# gem 'jbuilder', '~> 2.5'
-# Use Redis adapter to run Action Cable in production
-# gem 'redis', '~> 4.0'
-# Use ActiveModel has_secure_password
-gem 'apipie-rails'
-gem 'bcrypt', '>= 3.1.7'
+# Hotwire + Tailwind
+gem "importmap-rails"
+gem "stimulus-rails"
+gem "tailwindcss-rails"
+gem "turbo-rails"
 
-gem 'net-ping'
-# Use Capistrano for deployment
-# gem 'capistrano-rails', group: :development
+# Background work
+gem "sidekiq", "~> 7.3"
+gem "sidekiq-cron", "~> 2.0"
 
-# Use Rack CORS for handling Cross-Origin Resource Sharing (CORS), making cross-origin AJAX possible
-gem 'rack-cors'
-gem 'sidekiq'
-gem 'sidekiq-cron'
-gem 'sidekiq-unique-jobs'
+# Configuration
+gem "dotenv-rails"
 
-gem 'passenger'
-gem 'rest-client', '~> 2.1'
-gem 'roo', '~> 2.10.0'
-gem 'sucker_punch'
+gem "bootsnap", require: false
+gem "tzinfo-data", platforms: %i[windows jruby]
 
-# Swagger
-gem 'rswag'
-gem 'rswag-api'
-gem 'rswag-ui'
 group :development, :test do
-  # Call 'byebug' anywhere in the code to stop execution and get a debugger console
-  gem 'byebug', platforms: %i[mri mingw x64_mingw]
-  gem 'rspec-rails'
-  gem 'rswag-specs'
+  gem "brakeman", require: false
+  gem "bundler-audit", require: false
+  gem "debug", platforms: %i[mri windows], require: "debug/prelude"
+  gem "factory_bot_rails"
+  gem "rspec-rails", "~> 8.0"
+  gem "rubocop-rails-omakase", require: false
+  gem "rubocop-rspec", require: false
 end
 
 group :development do
-  gem 'listen', '>= 3.0.5'
-  # Spring speeds up development by keeping your application running in the background. Read more: https://github.com/rails/spring
-  gem 'spring'
-  gem 'spring-watcher-listen', '>= 2.0.0'
+  gem "web-console"
 end
-
-# Windows does not include zoneinfo files, so bundle the tzinfo-data gem
-gem 'tzinfo-data', platforms: %i[mingw mswin x64_mingw jruby]

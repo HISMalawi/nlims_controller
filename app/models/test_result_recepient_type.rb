@@ -1,2 +1,0 @@
-class TestResultRecepientType < ApplicationRecord
-end

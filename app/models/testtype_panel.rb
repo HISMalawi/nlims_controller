@@ -1,2 +1,0 @@
-class TesttypePanel < ApplicationRecord
-end

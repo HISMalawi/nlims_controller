@@ -1,2 +1,0 @@
-class Visit < ApplicationRecord
-end
