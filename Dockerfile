@@ -33,7 +33,10 @@ FROM base AS development
 
 ENV RAILS_ENV="development" \
     BUNDLE_DEPLOYMENT="0" \
-    BUNDLE_WITHOUT=""
+    BUNDLE_WITHOUT="" \
+    # The working tree is mounted over /rails, and with it any .bundle/config a
+    # developer has locally. Pin bundler's config to the image's own.
+    BUNDLE_APP_CONFIG="/usr/local/bundle"
 
 RUN apt-get update -qq && \
     apt-get install --no-install-recommends -y build-essential default-libmysqlclient-dev git libyaml-dev pkg-config && \

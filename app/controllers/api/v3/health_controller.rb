@@ -3,8 +3,13 @@
 module Api
   module V3
     # Unauthenticated: it is how an operator, a client system or a container
-    # health check finds out which node it is talking to.
+    # health check finds out which node it is talking to. Not audited either —
+    # a probe every ten seconds is noise, not evidence.
     class HealthController < Api::BaseController
+      skip_around_action :audit_request
+      skip_before_action :authenticate_api_client!
+      skip_before_action :enforce_rate_limit!
+
       def show
         render_data({
                       mode: SislabSync.mode,

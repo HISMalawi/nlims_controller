@@ -6,6 +6,7 @@ Rails.application.routes.draw do
   namespace :api do
     namespace :v3 do
       get "health", to: "health#show"
+      get "me", to: "me#show"
 
       # Endpoints the EMR and the SISLAB call. A national node has no clients of
       # this kind, so the routes simply do not exist there.

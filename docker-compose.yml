@@ -17,9 +17,11 @@ x-app: &app
   environment:
     DATABASE_HOST: mysql
     REDIS_URL: redis://redis:6379/0
+  # Only the code is mounted. Gems stay in the image: a named volume for them
+  # keeps whatever was installed the first time, so adding a gem to the Gemfile
+  # would fail at boot with the rebuild looking successful.
   volumes:
     - .:/rails
-    - bundle:/usr/local/bundle
   depends_on:
     mysql:
       condition: service_healthy
@@ -70,4 +72,4 @@ services:
 volumes:
   mysql:
   redis:
-  bundle:
+
