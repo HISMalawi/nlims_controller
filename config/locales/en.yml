@@ -15,9 +15,15 @@ en:
         local: Local mode
         national: National mode
 
-  errors:
-    unauthenticated: Missing or invalid API key
-    insufficient_scope: This key is not allowed to perform this operation
-    facility_mismatch: This key does not belong to this facility
-    rate_limited: Too many requests
-    not_found: Resource not found
+  api:
+    errors:
+      unauthenticated: Missing or invalid API key
+      insufficient_scope: This key is not allowed to perform this operation
+      facility_mismatch: This key does not belong to this facility
+      lab_mismatch: This key does not belong to this laboratory
+      idempotency_key_required: An Idempotency-Key header is required on this request
+      idempotency_key_reused: This Idempotency-Key was already used with a different body
+      rate_limited: Too many requests
+      not_found: Resource not found
+      conflict: The resource was already created or claimed
+      unprocessable: Invalid request

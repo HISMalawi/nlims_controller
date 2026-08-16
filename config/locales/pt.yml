@@ -15,9 +15,15 @@ pt:
         local: Modo local
         national: Modo nacional
 
-  errors:
-    unauthenticated: Chave de API em falta ou inválida
-    insufficient_scope: A chave não tem permissão para esta operação
-    facility_mismatch: A chave não pertence a esta unidade sanitária
-    rate_limited: Demasiados pedidos
-    not_found: Recurso não encontrado
+  api:
+    errors:
+      unauthenticated: Chave de API em falta ou inválida
+      insufficient_scope: A chave não tem permissão para esta operação
+      facility_mismatch: A chave não pertence a esta unidade sanitária
+      lab_mismatch: A chave não pertence a este laboratório
+      idempotency_key_required: O cabeçalho Idempotency-Key é obrigatório neste pedido
+      idempotency_key_reused: Esta Idempotency-Key já foi usada com um conteúdo diferente
+      rate_limited: Demasiados pedidos
+      not_found: Recurso não encontrado
+      conflict: O recurso já foi criado ou reclamado
+      unprocessable: Pedido inválido
