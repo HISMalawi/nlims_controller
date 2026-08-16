@@ -20,24 +20,7 @@ module OrderService
       return [false, 'specimen status not available in nlims'] if spc.blank?
 
       npid = params[:national_patient_id]
-      patient_obj = Patient.where(patient_number: npid)
-      patient_obj = patient_obj.first unless patient_obj.blank?
-      if patient_obj.blank?
-        patient_obj = patient_obj.create(
-          patient_number: npid,
-          name: "#{params[:first_name]} #{params[:last_name]}",
-          email: '',
-          dob: params[:date_of_birth],
-          gender: params[:gender],
-          phone_number: params[:phone_number],
-          address: '',
-          external_patient_number: ''
-        )
-      else
-        patient_obj.dob = params[:date_of_birth]
-        patient_obj.update(name: "#{params[:first_name]} #{params[:last_name]}")
-        patient_obj.save
-      end
+      patient_obj = find_or_create_patient(params)
       time = params[:date_sample_drawn].blank? ? Date.today : params[:date_sample_drawn]
 
       sample_type_id = SpecimenType.get_specimen_type_id(params[:sample_type])
@@ -108,6 +91,34 @@ module OrderService
     end
 
     [true, tracking_number]
+  end
+
+  # Resolves the patient an order belongs to, creating the record when it is not on file yet.
+  #
+  # A blank national patient id identifies nobody, so it must not be used to look a patient up:
+  # every order that arrives without one would otherwise latch onto the same record and overwrite
+  # its name. Those orders get a record of their own instead.
+  def self.find_or_create_patient(params)
+    npid = params[:national_patient_id]
+    name = "#{params[:first_name]} #{params[:last_name]}"
+    patient = Patient.find_by(patient_number: npid) if npid.present?
+
+    if patient.blank?
+      Patient.create(
+        patient_number: npid,
+        name:,
+        email: '',
+        dob: params[:date_of_birth],
+        gender: params[:gender],
+        phone_number: params[:phone_number],
+        address: '',
+        external_patient_number: ''
+      )
+    else
+      patient.dob = params[:date_of_birth]
+      patient.update(name:)
+      patient
+    end
   end
 
   def self.v1_allowed_tests
@@ -596,25 +607,7 @@ module OrderService
   def self.request_order(params, tracking_number)
     ActiveRecord::Base.transaction do
       npid = params[:national_patient_id]
-      patient_obj = Patient.where(patient_number: npid)
-      patient_obj = patient_obj.first unless patient_obj.blank?
-      if patient_obj.blank?
-        patient_obj = patient_obj.create(
-          patient_number: npid,
-          name: "#{params[:first_name]} #{params[:last_name]}",
-          email: '',
-          dob: params[:date_of_birth],
-          gender: params[:gender],
-          phone_number: params[:phone_number],
-          address: '',
-          external_patient_number: ''
-        )
-
-      else
-        patient_obj.dob = params[:date_of_birth]
-        patient_obj.name = "#{params[:first_name]} #{params[:last_name]}"
-        patient_obj.save
-      end
+      patient_obj = find_or_create_patient(params)
       time = params[:date_sample_drawn].blank? ? Date.today : params[:date_sample_drawn]
       sample_status_id = SpecimenStatus.get_specimen_status_id('specimen_not_collected')
       sp_obj = Speciman.create(

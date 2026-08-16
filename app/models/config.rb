@@ -4,6 +4,14 @@
 class Config < ApplicationRecord
   validates :config_type, presence: true, uniqueness: true
 
+  def configs
+    raw = super
+    return nil unless raw
+    raw.is_a?(String) ? JSON.parse(raw) : raw
+  rescue JSON::ParserError
+    raw
+  end
+
   def self.local_nlims?
     find_by(config_type: 'nlims_host')&.configs&.dig('local_nlims')
   end

@@ -129,7 +129,9 @@ module OrderManagement
     def self.create_patient(params)
       npid = params[:national_patient_id]
       name = "#{params[:first_name]} #{params[:last_name]}"
-      patient_obj = Patient.find_by(patient_number: npid)
+      # A blank npid identifies nobody, so it must not be looked up: every order without one would
+      # latch onto the same record and overwrite its name.
+      patient_obj = Patient.find_by(patient_number: npid) if npid.present?
       if patient_obj.present?
         patient_obj.dob = params[:date_of_birth]
         patient_obj.update!(name:)

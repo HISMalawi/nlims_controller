@@ -296,13 +296,13 @@ echo "--------------------------------------------------------------------"
 echo "Configuration Complete! Passwords can be found in the config/settings.yml"
 echo "Usernames and passwords saved in users_credentials.txt."
 
-echo "--------------------------------------------------------------------"
-echo "Creating user in emr"
-bundle exec rake emr:create_user
+# echo "--------------------------------------------------------------------"
+# echo "Creating user in emr"
+# bundle exec rake emr:create_user
 
-echo "--------------------------------------------------------------------"
-echo "Creating user in master NLIMS"
-bundle exec rake master_nlims:create_account
+# echo "--------------------------------------------------------------------"
+# echo "Creating user in master NLIMS"
+# bundle exec rake master_nlims:create_account
 }
 
 master_setup(){
