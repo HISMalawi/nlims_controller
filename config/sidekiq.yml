@@ -1,7 +1,6 @@
-:concurrency: 5
+:concurrency: <%= ENV.fetch("SIDEKIQ_CONCURRENCY", 5) %>
 :queues:
-  - critical
-  - default
-  - high_priority
-  - low_priority
-:namespace: "nlims_controller"
+  - [critical, 4]
+  - [default, 2]
+  - [sync, 2]
+  - [low, 1]

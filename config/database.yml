@@ -1,0 +1,25 @@
+# Every setting comes from the environment so the same image can be a local
+# node or the national one with nothing but a different .env file.
+default: &default
+  adapter: mysql2
+  encoding: utf8mb4
+  collation: utf8mb4_unicode_ci
+  pool: <%= ENV.fetch("RAILS_MAX_THREADS", 5) %>
+  host: <%= ENV.fetch("DATABASE_HOST", "127.0.0.1") %>
+  port: <%= ENV.fetch("DATABASE_PORT", 3306) %>
+  username: <%= ENV.fetch("DATABASE_USER", "root") %>
+  password: <%= ENV.fetch("DATABASE_PASSWORD", "") %>
+  variables:
+    sql_mode: STRICT_ALL_TABLES
+
+development:
+  <<: *default
+  database: <%= ENV.fetch("DATABASE_NAME", "sislab_sync_development") %>
+
+test:
+  <<: *default
+  database: <%= ENV.fetch("DATABASE_NAME", "sislab_sync_test") %>
+
+production:
+  <<: *default
+  database: <%= ENV.fetch("DATABASE_NAME", "sislab_sync_production") %>

@@ -1,33 +1,23 @@
-# Files in the config/locales directory are used for internationalization
-# and are automatically loaded by Rails. If you want to use locales other
-# than English, add the necessary files in this directory.
-#
-# To use the locales, use `I18n.t`:
-#
-#     I18n.t 'hello'
-#
-# In views, this is aliased to just `t`:
-#
-#     <%= t('hello') %>
-#
-# To use a different locale, set it with `I18n.locale`:
-#
-#     I18n.locale = :es
-#
-# This would use the information in config/locales/es.yml.
-#
-# The following keys must be escaped otherwise they will not be retrieved by
-# the default I18n backend:
-#
-# true, false, on, off, yes, no
-#
-# Instead, surround them with single quotes.
-#
-# en:
-#   'true': 'foo'
-#
-# To learn more, please read the Rails Internationalization guide
-# available at http://guides.rubyonrails.org/i18n.html.
-
 en:
-  hello: "Hello world"
+  app_name: SISLAB Sync
+
+  dashboard:
+    show:
+      title: Node dashboard
+      lede: >-
+        This node is running and configured. The operating screens — orders, referred
+        samples, dictionary, API keys and the sync queue — arrive in step S11.
+      node_code: Node code
+      version: Version
+      environment: Environment
+      pending: Operator dashboard still to be built (S11).
+      mode:
+        local: Local mode
+        national: National mode
+
+  errors:
+    unauthenticated: Missing or invalid API key
+    insufficient_scope: This key is not allowed to perform this operation
+    facility_mismatch: This key does not belong to this facility
+    rate_limited: Too many requests
+    not_found: Resource not found

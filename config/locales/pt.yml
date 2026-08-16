@@ -1,0 +1,23 @@
+pt:
+  app_name: SISLAB Sync
+
+  dashboard:
+    show:
+      title: Painel do nó
+      lede: >-
+        Este nó está a correr e configurado. Os ecrãs de operação — pedidos, amostras
+        referidas, dicionário, chaves de API e fila de sincronização — entram no passo S11.
+      node_code: Código do nó
+      version: Versão
+      environment: Ambiente
+      pending: Painel de operação por construir (S11).
+      mode:
+        local: Modo local
+        national: Modo nacional
+
+  errors:
+    unauthenticated: Chave de API em falta ou inválida
+    insufficient_scope: A chave não tem permissão para esta operação
+    facility_mismatch: A chave não pertence a esta unidade sanitária
+    rate_limited: Demasiados pedidos
+    not_found: Recurso não encontrado
