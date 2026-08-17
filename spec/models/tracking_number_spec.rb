@@ -50,6 +50,7 @@ RSpec.describe TrackingNumber do
     self.use_transactional_tests = false
 
     after do
+      OutboxEvent.delete_all
       StatusEvent.delete_all
       Order.delete_all
       Patient.delete_all

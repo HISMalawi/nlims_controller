@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_17_040100) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_17_050000) do
   create_table "api_clients", charset: "utf8mb4", collation: "utf8mb4_unicode_ci", force: :cascade do |t|
     t.boolean "active", default: true, null: false
     t.datetime "created_at", null: false
@@ -354,6 +354,25 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_17_040100) do
     t.datetime "updated_at", null: false
     t.bigint "value", default: 0, null: false
     t.index ["name"], name: "index_sync_cursors_on_name", unique: true
+  end
+
+  create_table "sync_outbox", charset: "utf8mb4", collation: "utf8mb4_unicode_ci", force: :cascade do |t|
+    t.string "aggregate_uuid", limit: 36, null: false
+    t.integer "attempts", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "delivered_at"
+    t.string "event_uuid", limit: 36, null: false
+    t.string "last_error", limit: 1000
+    t.datetime "next_attempt_at"
+    t.datetime "occurred_at", null: false
+    t.text "payload", null: false
+    t.bigint "sequence", null: false
+    t.string "type", limit: 32, null: false
+    t.datetime "updated_at", null: false
+    t.index ["aggregate_uuid", "sequence"], name: "index_sync_outbox_on_aggregate_uuid_and_sequence", unique: true
+    t.index ["delivered_at", "next_attempt_at"], name: "index_sync_outbox_on_delivered_at_and_next_attempt_at"
+    t.index ["event_uuid"], name: "index_sync_outbox_on_event_uuid", unique: true
+    t.index ["type"], name: "index_sync_outbox_on_type"
   end
 
   create_table "test_panel_test_types", charset: "utf8mb4", collation: "utf8mb4_unicode_ci", force: :cascade do |t|

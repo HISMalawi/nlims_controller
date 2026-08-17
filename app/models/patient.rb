@@ -19,6 +19,11 @@ class Patient < ApplicationRecord
 
   normalizes :national_id, with: ->(value) { value.strip.upcase.presence }
 
+  # Only when something a reader would notice has moved. A patient is touched by
+  # every order raised for them, and an event per touch would fill the queue
+  # with rows saying nothing changed.
+  after_save :publish_to_outbox, if: :demographics_changed?
+
   scope :identified, -> { where.not(national_id: nil) }
 
   def identified?
@@ -49,6 +54,24 @@ class Patient < ApplicationRecord
   end
 
   private
+
+  DEMOGRAPHICS = %w[national_id name sex birthdate phone].freeze
+
+  def demographics_changed?
+    previously_new_record? || saved_changes.keys.intersect?(DEMOGRAPHICS)
+  end
+
+  # A patient created here is also carried inside order.created, so the national
+  # node can apply an order for someone it has never heard of. This event is
+  # what carries a later correction — a name spelled properly, an identifier
+  # filled in afterwards.
+  def publish_to_outbox
+    OutboxEvent.record!(
+      type: OutboxEvent::PATIENT_UPSERTED,
+      aggregate_uuid: uuid,
+      payload: PatientSerializer.call(self)
+    )
+  end
 
   def birthdate_is_not_in_the_future
     return if birthdate.blank? || birthdate <= Date.current

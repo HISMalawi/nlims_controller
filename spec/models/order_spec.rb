@@ -143,6 +143,7 @@ RSpec.describe Order do
       self.use_transactional_tests = false
 
       after do
+        OutboxEvent.delete_all
         StatusEvent.delete_all
         OrderTest.delete_all
         described_class.delete_all

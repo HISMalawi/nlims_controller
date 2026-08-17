@@ -28,6 +28,7 @@ class TestResult < ApplicationRecord
   validate :recorded_readings_are_never_rewritten
 
   before_save :assign_revision
+  after_create :publish_to_outbox
 
   scope :current, -> { where(replaced_by_uuid: nil) }
   scope :replaced, -> { where.not(replaced_by_uuid: nil) }
@@ -110,6 +111,20 @@ class TestResult < ApplicationRecord
   end
 
   private
+
+  # Written in the transaction that wrote the reading. A correction names the
+  # readings it supersedes: they were marked before this row was created, so the
+  # list is already there to be read.
+  def publish_to_outbox
+    OutboxEvent.record!(
+      type: OutboxEvent::TEST_RESULT_RECORDED,
+      aggregate_uuid: order_test.order.uuid,
+      payload: TestResultSerializer.call(self, context: true).merge(
+        replaces: self.class.where(replaced_by_uuid: uuid).pluck(:uuid)
+      ),
+      occurred_at: recorded_at
+    )
+  end
 
   # Takes the sequence lock, which MySQL holds until this transaction commits.
   # That is what makes revision order and commit order the same order, and it is
