@@ -25,6 +25,10 @@ module DictionaryEntry
 
     class_attribute :national_code_prefix, instance_writer: false
 
+    # Who is publishing this, and why. Travels with the record so the callback
+    # that writes the history does not have to read ambient state.
+    attr_accessor :status_actor, :status_reason
+
     validates :name, presence: true
     validates :status, inclusion: { in: STATUSES }
     validate :publication_is_not_withdrawn
@@ -32,6 +36,7 @@ module DictionaryEntry
     before_save :assign_national_code
     before_save :assign_revision
     before_save :stamp_retirement
+    after_save :record_status_change, if: :status_worth_recording?
 
     scope :published, -> { where(status: PUBLISHED_STATUSES) }
     scope :drafts, -> { where(status: DRAFT) }
@@ -56,14 +61,14 @@ module DictionaryEntry
   def retired?  = status == RETIRED
   def published? = PUBLISHED_STATUSES.include?(status)
 
-  def activate!
-    update!(status: ACTIVE)
+  def activate!(actor: nil, reason: nil)
+    change_status!(ACTIVE, actor: actor, reason: reason)
   end
 
   # Nothing is deleted once it has been published: a local node holding the old
   # copy has to be told it is gone, and a delete leaves nothing to tell it with.
-  def retire!
-    update!(status: RETIRED)
+  def retire!(actor: nil, reason: nil)
+    change_status!(RETIRED, actor: actor, reason: reason)
   end
 
   # For a change that lives outside this row — a specimen type linked to a test
@@ -101,6 +106,30 @@ module DictionaryEntry
 
   def stamp_retirement
     self.deleted_at = retired? ? (deleted_at || Time.current) : nil
+  end
+
+  def change_status!(status, actor:, reason:)
+    self.status_actor = actor
+    self.status_reason = reason
+    update!(status: status)
+  end
+
+  # Creation counts. A new entry's status usually equals the column default, so
+  # Active Record sees no change to report — the history would then start at the
+  # first promotion and show nothing about where the entry came from.
+  def status_worth_recording?
+    previously_new_record? || saved_change_to_status?
+  end
+
+  # There are no published versions to point at, so this history is the only
+  # record of how the dictionary reached its current state.
+  def record_status_change
+    DictionaryStatusChange.record!(
+      self,
+      from: saved_change_to_status&.first,
+      actor: status_actor,
+      reason: status_reason
+    )
   end
 
   # Un-publishing would strand every node that already has the record: they

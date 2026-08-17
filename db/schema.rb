@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_16_230300) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_17_000000) do
   create_table "api_clients", charset: "utf8mb4", collation: "utf8mb4_unicode_ci", force: :cascade do |t|
     t.boolean "active", default: true, null: false
     t.datetime "created_at", null: false
@@ -62,6 +62,21 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_16_230300) do
     t.index ["revision"], name: "index_departments_on_revision"
     t.index ["status", "revision"], name: "index_departments_on_status_and_revision"
     t.index ["uuid"], name: "index_departments_on_uuid", unique: true
+  end
+
+  create_table "dictionary_status_changes", charset: "utf8mb4", collation: "utf8mb4_unicode_ci", force: :cascade do |t|
+    t.string "actor"
+    t.datetime "created_at", null: false
+    t.string "entity_type", limit: 32, null: false
+    t.string "entity_uuid", limit: 36, null: false
+    t.string "from_status", limit: 12
+    t.string "national_code", limit: 32, null: false
+    t.string "reason"
+    t.bigint "revision"
+    t.string "to_status", limit: 12, null: false
+    t.index ["created_at"], name: "index_dictionary_status_changes_on_created_at"
+    t.index ["entity_type", "to_status"], name: "index_dictionary_status_changes_on_entity_type_and_to_status"
+    t.index ["entity_uuid"], name: "index_dictionary_status_changes_on_entity_uuid"
   end
 
   create_table "drugs", charset: "utf8mb4", collation: "utf8mb4_unicode_ci", force: :cascade do |t|
