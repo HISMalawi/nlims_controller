@@ -34,6 +34,19 @@ class SpecProbeController < Api::BaseController
   def boom
     raise ActiveRecord::RecordNotFound
   end
+
+  # The endpoints that move an order arrive in S7 and S8. This is here so the
+  # rule S6 owns — an illegal transition is refused with 422 instead of being
+  # written — is proved through a real request now, on the same BaseController
+  # those endpoints will inherit.
+  def transition
+    return unless authorize_scope!("results:write")
+
+    order = Order.find_by!(tracking_number: params[:tracking_number])
+    order.transition_to!(params[:status], actor: Current.api_client.name, reason: params[:reason])
+
+    render_data(OrderSerializer.call(order, history: true))
+  end
 end
 
 RSpec.configure do |config|
@@ -47,6 +60,7 @@ RSpec.configure do |config|
         get "/facility/:facility_code", action: :facility
         get "/lab/:lab_code", action: :lab
         get "/boom", action: :boom
+        patch "/orders/:tracking_number", action: :transition
       end
     end
 
