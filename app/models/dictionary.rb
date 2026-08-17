@@ -51,6 +51,10 @@ module Dictionary
     # replaces accepted the name it was given, and the test quietly became
     # something nobody could report on.
     def entry!(entity_type, reference, field:)
+      # Permitted here rather than at each call site. A reference is always the
+      # same two keys, and a controller that forgets to permit them gets a 500
+      # from deep inside this method — which has now happened three times.
+      reference = reference.permit(:national_code, :uuid) if reference.respond_to?(:permit)
       reference = (reference || {}).to_h.symbolize_keys
       model = model_for!(entity_type)
       code = reference[:national_code].presence

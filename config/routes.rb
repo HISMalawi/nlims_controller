@@ -30,6 +30,9 @@ Rails.application.routes.draw do
           post "orders/:tracking_number/results", to: "orders#results", as: :order_results
           post "orders/:tracking_number/tests", to: "orders#tests", as: :order_tests
           post "orders/:tracking_number/reject", to: "orders#reject", as: :reject_order
+
+          post "referrals", to: "referrals#create"
+          patch "referrals/:uuid", to: "referrals#update", as: :referral
         end
       end
 

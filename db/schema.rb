@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_17_050200) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_17_060000) do
   create_table "api_clients", charset: "utf8mb4", collation: "utf8mb4_unicode_ci", force: :cascade do |t|
     t.boolean "active", default: true, null: false
     t.datetime "created_at", null: false
@@ -299,6 +299,31 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_17_050200) do
     t.index ["uuid"], name: "index_patients_on_uuid", unique: true
   end
 
+  create_table "referrals", charset: "utf8mb4", collation: "utf8mb4_unicode_ci", force: :cascade do |t|
+    t.string "courier"
+    t.datetime "created_at", null: false
+    t.datetime "dispatched_at", null: false
+    t.string "from_facility_code", limit: 16, null: false
+    t.string "from_lab_code", limit: 24
+    t.bigint "order_id", null: false
+    t.datetime "received_at"
+    t.datetime "rejected_at"
+    t.bigint "rejection_reason_id"
+    t.text "remarks"
+    t.string "state", limit: 12, default: "dispatched", null: false
+    t.string "to_facility_code", limit: 16, null: false
+    t.string "to_lab_code", limit: 24, null: false
+    t.string "tracking_number", limit: 32, null: false
+    t.datetime "updated_at", null: false
+    t.string "uuid", limit: 36, null: false
+    t.index ["from_facility_code", "dispatched_at"], name: "index_referrals_on_from_facility_code_and_dispatched_at"
+    t.index ["order_id"], name: "index_referrals_on_order_id"
+    t.index ["rejection_reason_id"], name: "index_referrals_on_rejection_reason_id"
+    t.index ["to_facility_code", "state"], name: "index_referrals_on_to_facility_code_and_state"
+    t.index ["tracking_number"], name: "index_referrals_on_tracking_number"
+    t.index ["uuid"], name: "index_referrals_on_uuid", unique: true
+  end
+
   create_table "rejection_reasons", charset: "utf8mb4", collation: "utf8mb4_unicode_ci", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "deleted_at"
@@ -529,6 +554,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_17_050200) do
   add_foreign_key "orders", "specimen_types"
   add_foreign_key "organism_drugs", "drugs"
   add_foreign_key "organism_drugs", "organisms"
+  add_foreign_key "referrals", "orders"
+  add_foreign_key "referrals", "rejection_reasons"
   add_foreign_key "request_audits", "api_clients"
   add_foreign_key "request_audits", "api_keys"
   add_foreign_key "test_panel_test_types", "test_panels"

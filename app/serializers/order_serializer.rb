@@ -42,6 +42,10 @@ class OrderSerializer
       clinical_history: @order.clinical_history,
       source_system: @order.source_system,
       patient: PatientSerializer.call(@order.patient),
+      # The parcel this sample is travelling on, if it is. A laboratory looking
+      # at a referred sample needs to know where it came from without being told
+      # to go and ask.
+      referral: ReferralSerializer.call(@order.referrals.max_by(&:dispatched_at)),
       created_at: @order.created_at&.iso8601,
       updated_at: @order.updated_at&.iso8601
     }

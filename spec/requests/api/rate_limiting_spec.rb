@@ -3,11 +3,14 @@
 require "rails_helper"
 
 RSpec.describe "Rate limiting", type: :request do
+  # Time is held still: the window is bucketed by wall clock, so an example that
+  # happened to straddle a minute boundary would see the counter reset and fail
+  # for a reason that has nothing to do with rate limiting.
   around do |example|
     original = ENV.fetch("API_RATE_LIMIT_PER_MINUTE", nil)
     ENV["API_RATE_LIMIT_PER_MINUTE"] = "3"
     Rails.cache.clear
-    example.run
+    freeze_time { example.run }
     ENV["API_RATE_LIMIT_PER_MINUTE"] = original
     Rails.cache.clear
   end

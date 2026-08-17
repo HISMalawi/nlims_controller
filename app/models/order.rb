@@ -10,13 +10,18 @@ class Order < ApplicationRecord
   SPECIMEN_COLLECTED = "specimen_collected"
   IN_PROGRESS = "in_progress"
   REFERRED_OUT = "referred_out"
+  REFERRED_IN = "referred_in"
   COMPLETED = "completed"
   REJECTED = "rejected"
   CANCELLED = "cancelled"
 
   # referred_out leads to completed because the result comes back under this
-  # same tracking number, whichever laboratory produced it. Receiving a referral
-  # — referred_in — arrives with the rest of the referral machinery in S9.
+  # same tracking number, whichever laboratory produced it — and to rejected,
+  # because the laboratory it was sent to may refuse the sample.
+  #
+  # referred_in is where a sample begins on the node that receives it. Nothing
+  # transitions into it: the order is born that way, out of the referral its
+  # origin dispatched.
   self.status_machine = StatusMachine.new(
     initial: REQUESTED,
     transitions: {
@@ -24,7 +29,8 @@ class Order < ApplicationRecord
       ACCEPTED => [ SPECIMEN_COLLECTED, REJECTED ],
       SPECIMEN_COLLECTED => [ IN_PROGRESS ],
       IN_PROGRESS => [ COMPLETED, REFERRED_OUT ],
-      REFERRED_OUT => [ COMPLETED ]
+      REFERRED_OUT => [ COMPLETED, REJECTED ],
+      REFERRED_IN => [ ACCEPTED, REJECTED ]
     }
   )
 
@@ -39,6 +45,7 @@ class Order < ApplicationRecord
 
   has_many :order_tests, dependent: :destroy
   has_many :test_results, through: :order_tests
+  has_many :referrals, dependent: :destroy
 
   validates :tracking_number, presence: true
   validates :sending_facility_code, presence: true

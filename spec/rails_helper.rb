@@ -23,5 +23,10 @@ RSpec.configure do |config|
   # For the specs that have to let an hour pass — backoff, staleness, an outage.
   config.include ActiveSupport::Testing::TimeHelpers
 
+  # Belt and braces: a spec that travels without a block would otherwise leave
+  # every spec after it running at the wrong time, and the failure would appear
+  # somewhere else entirely.
+  config.after { travel_back }
+
   config.filter_rails_from_backtrace!
 end
