@@ -21,6 +21,7 @@ class Sequence < ApplicationRecord
   # publishing results all afternoon would otherwise block every dictionary
   # change behind it, and neither cursor means anything to the other.
   RESULT_REVISION = "result_revision"
+  ORDER_REVISION = "order_revision"
 
   def self.next!(name)
     unless connection.transaction_open?
@@ -47,6 +48,10 @@ class Sequence < ApplicationRecord
 
   def self.next_result_revision!
     next!(RESULT_REVISION)
+  end
+
+  def self.next_order_revision!
+    next!(ORDER_REVISION)
   end
 
   def self.current(name)

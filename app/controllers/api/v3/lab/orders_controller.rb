@@ -1,0 +1,91 @@
+# frozen_string_literal: true
+
+module Api
+  module V3
+    module Lab
+      # What a SISLAB installation pulls and takes.
+      #
+      # The laboratory polls; the node never calls the laboratory. That is what
+      # lets a SISLAB sit behind a router nobody administers, which is where
+      # most of them sit.
+      class OrdersController < Api::BaseController
+        MAX_LIMIT = 500
+        DEFAULT_LIMIT = 100
+
+        # Everything for this laboratory that changed since the cursor — not
+        # only what is still open. An order cancelled at the clinic after the
+        # laboratory took it is exactly what that laboratory has to be told
+        # about, and a feed that hid it would leave a sample being worked on
+        # that nobody wants.
+        def pending
+          return unless authorize_scope!("orders:read")
+          return unless lab_code
+          return unless authorize_lab!(lab_code)
+
+          orders = feed.limit(limit).to_a
+          next_cursor = orders.last&.revision || cursor
+
+          render_data(
+            orders.map { |order| OrderSerializer.call(order) },
+            meta: { cursor: cursor, next_cursor: next_cursor,
+                    lab_code: lab_code, has_more: more_after?(next_cursor, orders) }
+          )
+        end
+
+        def claim
+          return unless authorize_scope!("orders:read")
+          return unless load_order
+
+          @order.claim!(lab_code: @order.receiving_lab_code, actor: Current.api_client.name)
+
+          render_data(OrderSerializer.call(@order))
+        rescue Order::AlreadyClaimed => e
+          render_api_error(Errors::CONFLICT, message: e.message)
+        end
+
+        private
+
+        def load_order
+          @order = Order.find_by_tracking_number!(params[:tracking_number])
+
+          authorize_lab!(@order.receiving_lab_code)
+        end
+
+        def feed
+          Order.changed_since(cursor)
+               .for_lab(lab_code)
+               .includes(:patient, :specimen_type, order_tests: %i[test_type test_panel])
+        end
+
+        def more_after?(next_cursor, orders)
+          return false if orders.length < limit
+
+          feed.unscope(:includes).where(revision: ((next_cursor + 1)..)).exists?
+        end
+
+        # The key knows which laboratory it speaks for, so the parameter is only
+        # there for a client that speaks for several — and it still has to
+        # match the key.
+        def lab_code
+          return @lab_code if defined?(@lab_code)
+
+          @lab_code = params[:lab_code].presence || Current.api_client.lab_code
+          return @lab_code if @lab_code.present?
+
+          render_api_error(Errors::UNPROCESSABLE,
+                           message: "esta chave não está associada a um laboratório; indique lab_code",
+                           field: "lab_code")
+          nil
+        end
+
+        def cursor
+          @cursor ||= params[:since].to_i.clamp(0, Float::INFINITY).to_i
+        end
+
+        def limit
+          @limit ||= (params[:limit].presence || DEFAULT_LIMIT).to_i.clamp(1, MAX_LIMIT)
+        end
+      end
+    end
+  end
+end

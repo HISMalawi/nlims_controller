@@ -30,6 +30,8 @@ class Order < ApplicationRecord
 
   PRIORITIES = %w[routine urgent stat].freeze
 
+  class AlreadyClaimed < StandardError; end
+
   belongs_to :patient
   belongs_to :specimen_type, optional: true
   belongs_to :source_client, class_name: "ApiClient", optional: true
@@ -46,12 +48,60 @@ class Order < ApplicationRecord
   # what the sequence needs: the counter's lock has to be held until the row
   # that uses the number is committed.
   before_validation :assign_tracking_number, on: :create
+  before_save :assign_revision
 
   scope :for_lab, ->(lab_code) { where(receiving_lab_code: lab_code) }
   scope :open, -> { where.not(status: [ COMPLETED, REJECTED, CANCELLED ]) }
+  scope :unclaimed, -> { where(claimed_at: nil) }
+
+  # What a laboratory polls for. Everything that changed, not only what is still
+  # open: an order cancelled at the clinic after the laboratory took it is
+  # precisely what that laboratory has to be told about.
+  scope :changed_since, lambda { |cursor|
+    where(revision: ((cursor.to_i + 1)..)).order(:revision, :id)
+  }
 
   def self.find_by_tracking_number!(tracking_number)
     find_by!(tracking_number: tracking_number)
+  end
+
+  # Where a laboratory that has seen everything would leave its cursor.
+  def self.cursor
+    Sequence.current(Sequence::ORDER_REVISION)
+  end
+
+  def claimed?
+    claimed_at.present?
+  end
+
+  # One laboratory takes the sample, and the second one to ask is told so.
+  #
+  # The conditional update is the whole mechanism: reading the column and then
+  # writing it lets two laboratories both find it empty and both claim. MySQL
+  # holds the row lock until this transaction commits, so the loser's update
+  # matches no rows and it learns it lost rather than quietly overwriting.
+  #
+  # Taking the work is also accepting it, so the claim moves the status too, and
+  # the history gets the entry an operator would look for.
+  def claim!(lab_code:, actor: nil)
+    self.class.transaction do
+      taken = self.class.unclaimed.where(id: id)
+                  .update_all(claimed_at: Time.current, claimed_by_lab_code: lab_code)
+
+      raise AlreadyClaimed, "#{tracking_number} já foi reclamado por #{reload.claimed_by_lab_code}" if taken.zero?
+
+      reload
+      transition_to!(ACCEPTED, actor: actor, reason: "reclamado por #{lab_code}")
+    end
+
+    self
+  end
+
+  # For a change that lives outside this row — a test added at the laboratory.
+  # The feed ships the order with its tests, so the order has to move for the
+  # change to reach anyone.
+  def touch_revision!
+    self.class.transaction { update_column(:revision, Sequence.next_order_revision!) }
   end
 
   # Everything that happened under this tracking number, the order's own
@@ -79,5 +129,13 @@ class Order < ApplicationRecord
     return if sending_facility_code.blank?
 
     self.tracking_number = TrackingNumber.generate(facility_code: sending_facility_code)
+  end
+
+  # Takes the sequence lock, which MySQL holds until this transaction commits,
+  # so revision order and commit order are the same order.
+  def assign_revision
+    return unless new_record? || (changed - %w[revision updated_at]).any?
+
+    self.revision = Sequence.next_order_revision!
   end
 end

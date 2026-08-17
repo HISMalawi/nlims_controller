@@ -26,9 +26,12 @@ class OrderSerializer
   def base
     {
       uuid: @order.uuid,
+      revision: @order.revision,
       tracking_number: @order.tracking_number,
       status: @order.status,
       priority: @order.priority,
+      claimed_at: @order.claimed_at&.iso8601,
+      claimed_by_lab_code: @order.claimed_by_lab_code,
       sending_facility_code: @order.sending_facility_code,
       receiving_lab_code: @order.receiving_lab_code,
       lab_code: @order.lab_code,

@@ -135,6 +135,44 @@ RSpec.describe Order do
     end
   end
 
+  describe "claiming" do
+    # Reading the column and then writing it lets two laboratories both find it
+    # empty and both claim. These need real concurrent connections, so they run
+    # outside the surrounding test transaction and clean up after themselves.
+    describe "when two laboratories ask at the same moment" do
+      self.use_transactional_tests = false
+
+      after do
+        StatusEvent.delete_all
+        OrderTest.delete_all
+        described_class.delete_all
+        Patient.delete_all
+        SpecimenType.delete_all
+        Sequence.where("name LIKE 'tracking:%'").delete_all
+        Sequence.update_all(value: 0)
+      end
+
+      it "gives the sample to exactly one of them" do
+        order = create(:order, receiving_lab_code: "HCM-LAB")
+
+        outcomes = Array.new(3) do |n|
+          Thread.new do
+            ActiveRecord::Base.connection_pool.with_connection do
+              described_class.find(order.id).claim!(lab_code: "LAB-#{n}")
+              :claimed
+            rescue described_class::AlreadyClaimed
+              :refused
+            end
+          end
+        end.map(&:value)
+
+        expect(outcomes.count(:claimed)).to eq(1)
+        expect(outcomes.count(:refused)).to eq(2)
+        expect(order.reload.claimed_by_lab_code).to match(/\ALAB-\d\z/)
+      end
+    end
+  end
+
   describe "scopes" do
     it "counts as open until it reaches a state nothing leaves" do
       order = create(:order)

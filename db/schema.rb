@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_17_030000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_17_040000) do
   create_table "api_clients", charset: "utf8mb4", collation: "utf8mb4_unicode_ci", force: :cascade do |t|
     t.boolean "active", default: true, null: false
     t.datetime "created_at", null: false
@@ -187,6 +187,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_17_030000) do
   end
 
   create_table "orders", charset: "utf8mb4", collation: "utf8mb4_unicode_ci", force: :cascade do |t|
+    t.datetime "claimed_at"
+    t.string "claimed_by_lab_code", limit: 24
     t.text "clinical_history"
     t.datetime "collected_at"
     t.datetime "created_at", null: false
@@ -196,6 +198,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_17_030000) do
     t.string "priority", limit: 12, default: "routine", null: false
     t.string "receiving_lab_code", limit: 24, null: false
     t.string "requested_by"
+    t.bigint "revision", default: 0, null: false
     t.string "sending_facility_code", limit: 16, null: false
     t.bigint "source_client_id"
     t.string "source_system", limit: 16
@@ -205,7 +208,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_17_030000) do
     t.datetime "updated_at", null: false
     t.string "uuid", limit: 36, null: false
     t.index ["patient_id"], name: "index_orders_on_patient_id"
+    t.index ["receiving_lab_code", "revision"], name: "index_orders_on_receiving_lab_code_and_revision"
     t.index ["receiving_lab_code", "status"], name: "index_orders_on_receiving_lab_code_and_status"
+    t.index ["revision"], name: "index_orders_on_revision"
     t.index ["sending_facility_code", "created_at"], name: "index_orders_on_sending_facility_code_and_created_at"
     t.index ["source_client_id"], name: "index_orders_on_source_client_id"
     t.index ["specimen_type_id"], name: "index_orders_on_specimen_type_id"

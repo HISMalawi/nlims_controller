@@ -22,7 +22,11 @@ Rails.application.routes.draw do
         get "results", to: "results#index"
         post "results/:uuid/acknowledge", to: "results#acknowledge", as: :acknowledge_result
 
-        # S8 — SISLAB: lab/pending-orders, lab/orders/:tn/*, lab/referrals
+        # The laboratory polls and publishes; the node never calls it.
+        namespace :lab do
+          get "pending-orders", to: "orders#pending"
+          post "orders/:tracking_number/claim", to: "orders#claim", as: :claim_order
+        end
       end
 
       # Endpoints only the national node answers.
