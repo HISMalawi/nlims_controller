@@ -13,7 +13,14 @@ Rails.application.routes.draw do
       if SislabSync.local?
         post "order-requests", to: "order_requests#create"
 
-        # S7 — EMR: orders, results
+        # The tracking number is the identifier here, not an id: it is what the
+        # EMR was given, what is written on the tube, and what an operator has
+        # in front of them when they telephone.
+        get "orders/:tracking_number", to: "orders#show", as: :order
+        get "orders/:tracking_number/results", to: "orders#results", as: :order_results
+
+        get "results", to: "results#index"
+
         # S8 — SISLAB: lab/pending-orders, lab/orders/:tn/*, lab/referrals
       end
 

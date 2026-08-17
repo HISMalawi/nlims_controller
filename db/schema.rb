@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_17_020400) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_17_030000) do
   create_table "api_clients", charset: "utf8mb4", collation: "utf8mb4_unicode_ci", force: :cascade do |t|
     t.boolean "active", default: true, null: false
     t.datetime "created_at", null: false
@@ -360,12 +360,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_17_020400) do
   end
 
   create_table "test_results", charset: "utf8mb4", collation: "utf8mb4_unicode_ci", force: :cascade do |t|
+    t.datetime "acknowledged_at"
+    t.string "acknowledged_by"
     t.datetime "created_at", null: false
     t.bigint "indicator_id", null: false
     t.bigint "order_test_id", null: false
     t.datetime "recorded_at", null: false
     t.string "recorded_by"
     t.string "replaced_by_uuid", limit: 36
+    t.bigint "revision", default: 0, null: false
     t.string "unit", limit: 32
     t.datetime "updated_at", null: false
     t.string "uuid", limit: 36, null: false
@@ -375,6 +378,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_17_020400) do
     t.index ["order_test_id"], name: "index_test_results_on_order_test_id"
     t.index ["recorded_at"], name: "index_test_results_on_recorded_at"
     t.index ["replaced_by_uuid"], name: "index_test_results_on_replaced_by_uuid"
+    t.index ["revision"], name: "index_test_results_on_revision"
     t.index ["uuid"], name: "index_test_results_on_uuid", unique: true
   end
 

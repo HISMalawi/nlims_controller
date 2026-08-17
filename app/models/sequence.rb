@@ -17,6 +17,11 @@ class Sequence < ApplicationRecord
 
   DICTIONARY_REVISION = "dictionary_revision"
 
+  # A counter of its own rather than a share of the dictionary's: a laboratory
+  # publishing results all afternoon would otherwise block every dictionary
+  # change behind it, and neither cursor means anything to the other.
+  RESULT_REVISION = "result_revision"
+
   def self.next!(name)
     unless connection.transaction_open?
       raise NotInTransaction,
@@ -38,6 +43,10 @@ class Sequence < ApplicationRecord
 
   def self.next_revision!
     next!(DICTIONARY_REVISION)
+  end
+
+  def self.next_result_revision!
+    next!(RESULT_REVISION)
   end
 
   def self.current(name)

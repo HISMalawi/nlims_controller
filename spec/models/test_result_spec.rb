@@ -63,6 +63,35 @@ RSpec.describe TestResult do
     end
   end
 
+  describe "the cursor a client polls with" do
+    it "numbers every reading, in the order they were committed" do
+      first = record("12.4")
+      second = described_class.record!(order_test: order_test, indicator: create(:indicator), value: "5.1")
+
+      expect(second.revision).to be > first.revision
+      expect(described_class.changed_since(first.revision).to_a).to eq([ second ])
+    end
+
+    # The notice is written before the correction, so a client reading in
+    # revision order learns that what it holds is superseded before it is handed
+    # the reading that superseded it.
+    it "moves the reading that was superseded, ahead of the one replacing it" do
+      wrong = record("12.4")
+      cursor = described_class.cursor
+      right = record("14.2")
+
+      expect(described_class.changed_since(cursor).to_a).to eq([ wrong, right ])
+      expect(wrong.reload.replaced_by_uuid).to eq(right.uuid)
+    end
+
+    it "reports where a client that has seen everything would be" do
+      record("12.4")
+
+      expect(described_class.cursor).to eq(described_class.maximum(:revision))
+      expect(described_class.changed_since(described_class.cursor)).to be_empty
+    end
+  end
+
   describe "immutability" do
     it "refuses to have a recorded reading edited" do
       result = record("12.4")
