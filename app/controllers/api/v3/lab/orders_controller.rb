@@ -63,6 +63,20 @@ module Api
           render_data(OrderSerializer.call(@order, results: true))
         end
 
+        # A test the clinician did not ask for but the laboratory ran anyway —
+        # a confirmation, a reflex test, something the first result made
+        # necessary. It goes on the sample that was already taken, under the
+        # tracking number the clinic is already waiting on, rather than becoming
+        # a second order nobody at the clinic recognises.
+        def tests
+          return unless authorize_scope!("results:write")
+          return unless load_order
+
+          added = AddedTests.new(@order, tests_params, actor: actor).add!
+
+          render_data(OrderSerializer.call(@order), meta: { added: added.length }, status: :created)
+        end
+
         def reject
           return unless authorize_scope!("results:write")
           return unless load_order
@@ -80,6 +94,10 @@ module Api
         # installation, not the person who read the slide.
         def actor
           params[:actor].presence || Current.api_client.name
+        end
+
+        def tests_params
+          params.permit(tests: [ :method_of_testing, { test_type: %i[national_code uuid] } ])
         end
 
         def rejection_params
