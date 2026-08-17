@@ -36,9 +36,18 @@ class Referral < ApplicationRecord
   scope :outstanding, -> { where(state: DISPATCHED) }
   scope :for_node, ->(facility_code) { where(to_facility_code: facility_code) }
 
+  # The sample leaves first and the parcel is announced second, and the order
+  # matters: until the referral exists the sample concerns nobody but this
+  # facility, so the move to referred_out is nobody else's business. Announced
+  # the other way round, the receiving laboratory would be told the sample had
+  # arrived and then told it was on its way out again — its own copy overwritten
+  # by the origin's view of it.
   def self.dispatch!(order:, to_facility_code:, to_lab_code:, courier: nil, remarks: nil, actor: nil)
     transaction do
-      referral = create!(
+      order.transition_to!(Order::REFERRED_OUT, actor: actor,
+                                                reason: "referida para #{to_lab_code} (#{to_facility_code})")
+
+      create!(
         order: order,
         tracking_number: order.tracking_number,
         from_facility_code: order.sending_facility_code,
@@ -49,11 +58,6 @@ class Referral < ApplicationRecord
         remarks: remarks,
         dispatched_at: Time.current
       )
-
-      order.transition_to!(Order::REFERRED_OUT, actor: actor,
-                                                reason: "referida para #{to_lab_code} (#{to_facility_code})")
-
-      referral
     end
   end
 

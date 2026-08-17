@@ -20,25 +20,39 @@ module Sync
       end
     end
 
-    def initialize(node_code:, events:)
+    # `sequenced` is how the sender's stream is known to be complete.
+    #
+    # A node pushing its outbox sends everything it ever produced for a sample,
+    # so a missing sequence means an event in flight and the rest must wait. The
+    # capital's inbound feed is the opposite: it is a cursor, already complete
+    # and already in order, and the events in it deliberately begin in the
+    # middle — a laboratory that joins a sample when it is referred to it will
+    # never be sent what happened before that, because none of it was ever
+    # addressed to it. Waiting for sequence 1 there would wait for ever.
+    def initialize(node_code:, events:, sequenced: true)
       @node_code = node_code.to_s
       @events = Array(events).map { |event| event.to_h.stringify_keys }
+      @sequenced = sequenced
       @accepted = []
       @rejected = []
     end
 
     def call
-      streams = @events.filter_map { |event| store(event) }.uniq
+      stored = @events.filter_map { |event| store(event) }
 
-      streams.each { |aggregate_uuid| drain(aggregate_uuid) }
+      if @sequenced
+        stored.map(&:aggregate_uuid).uniq.each { |aggregate_uuid| drain(aggregate_uuid) }
+      else
+        stored.each { |event| apply(event) }
+      end
 
       Result.new(accepted: @accepted, rejected: @rejected)
     end
 
     private
 
-    # Returns the aggregate whose stream now has something to drain, or nil if
-    # there is nothing to do for this event.
+    # Returns the stored event when there is something to apply, or nil when
+    # there is nothing left to do for it.
     def store(event)
       missing = REQUIRED.select { |key| event[key].blank? }
       return refuse(event["event_uuid"], Rejected::MALFORMED, "faltam campos: #{missing.join(', ')}") if missing.any?
@@ -59,7 +73,7 @@ module Sync
       )
 
       @accepted << record.event_uuid
-      record.aggregate_uuid
+      record
     rescue ActiveRecord::RecordNotUnique
       # Two copies of the batch arrived at once. Whichever lost the race is
       # looking at the row the winner wrote, which is the answer it wanted.
@@ -76,7 +90,7 @@ module Sync
       end
 
       @accepted << existing.event_uuid
-      existing.pending? ? existing.aggregate_uuid : nil
+      existing.pending? ? existing : nil
     end
 
     def refuse(event_uuid, code, message)

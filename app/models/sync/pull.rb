@@ -67,7 +67,7 @@ module Sync
     def ingest(events)
       replicating do
         events.group_by { |event| event["node_code"] }.each do |origin, batch|
-          result = Ingest.new(node_code: origin, events: batch).call
+          result = Ingest.new(node_code: origin, events: batch, sequenced: false).call
 
           @applied += result.accepted.length
           @rejected += result.rejected.length
