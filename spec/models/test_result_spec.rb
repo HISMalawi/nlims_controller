@@ -90,6 +90,15 @@ RSpec.describe TestResult do
       expect(described_class.cursor).to eq(described_class.maximum(:revision))
       expect(described_class.changed_since(described_class.cursor)).to be_empty
     end
+
+    # Otherwise an EMR would be handed its own confirmation on the next poll,
+    # and confirm it again, and so on.
+    it "does not move for an acknowledgement" do
+      result = record("12.4")
+
+      expect { result.acknowledge!(by: "emr-hcm") }.not_to change { result.reload.revision }
+      expect(result).to be_acknowledged
+    end
   end
 
   describe "immutability" do

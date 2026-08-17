@@ -128,4 +128,62 @@ RSpec.describe "GET /api/v3/results", mode: :local, type: :request do
       expect(response).to have_http_status(:unauthorized)
     end
   end
+
+  describe "POST /api/v3/results/{uuid}/acknowledge" do
+    def acknowledge(uuid, bearer: token)
+      post "/api/v3/results/#{uuid}/acknowledge", headers: auth_headers(bearer)
+    end
+
+    it "records that the EMR has filed the reading" do
+      result = record_result
+
+      acknowledge(result.uuid)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body.dig("data", "acknowledged_at")).to be_present
+      expect(result.reload).to be_acknowledged
+      expect(result.acknowledged_by).to eq(api_client.name)
+    end
+
+    # Confirming a reading must not move the cursor, or the EMR would be handed
+    # its own confirmation on the next poll and confirm it again, for ever.
+    it "does not move the cursor" do
+      result = record_result
+
+      expect { acknowledge(result.uuid) }.not_to change { result.reload.revision }
+
+      get_results(since: result.revision)
+      expect(response.parsed_body["data"]).to be_empty
+    end
+
+    # Filing a reading that has since been corrected is the mistake the whole
+    # design exists to prevent.
+    it "answers 409 for a reading that has been superseded" do
+      order_test = create(:order_test, order: create(:order, sending_facility_code: "HCM"))
+      wrong = TestResult.record!(order_test: order_test, indicator: indicator, value: "12.4")
+      right = TestResult.record!(order_test: order_test, indicator: indicator, value: "14.2")
+
+      acknowledge(wrong.uuid)
+
+      expect(response).to have_http_status(:conflict)
+      expect(response.parsed_body.dig("errors", 0, "code")).to eq("conflict")
+      expect(response.parsed_body.dig("errors", 0, "message")).to include(right.uuid)
+      expect(wrong.reload).not_to be_acknowledged
+    end
+
+    it "answers 404 for a reading this node does not have" do
+      acknowledge(SecureRandom.uuid)
+
+      expect(response).to have_http_status(:not_found)
+    end
+
+    it "answers 403 for a reading belonging to another facility" do
+      result = record_result(order: create(:order, sending_facility_code: "XAI"))
+
+      acknowledge(result.uuid)
+
+      expect(response).to have_http_status(:forbidden)
+      expect(response.parsed_body.dig("errors", 0, "code")).to eq("facility_mismatch")
+    end
+  end
 end

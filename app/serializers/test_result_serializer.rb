@@ -36,7 +36,8 @@ class TestResultSerializer
       unit: @result.unit,
       recorded_at: @result.recorded_at&.iso8601,
       recorded_by: @result.recorded_by,
-      replaced_by_uuid: @result.replaced_by_uuid
+      replaced_by_uuid: @result.replaced_by_uuid,
+      acknowledged_at: @result.acknowledged_at&.iso8601
     }
   end
 end

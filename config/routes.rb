@@ -20,6 +20,7 @@ Rails.application.routes.draw do
         get "orders/:tracking_number/results", to: "orders#results", as: :order_results
 
         get "results", to: "results#index"
+        post "results/:uuid/acknowledge", to: "results#acknowledge", as: :acknowledge_result
 
         # S8 — SISLAB: lab/pending-orders, lab/orders/:tn/*, lab/referrals
       end

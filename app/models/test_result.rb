@@ -31,6 +31,8 @@ class TestResult < ApplicationRecord
 
   scope :current, -> { where(replaced_by_uuid: nil) }
   scope :replaced, -> { where.not(replaced_by_uuid: nil) }
+  scope :acknowledged, -> { where.not(acknowledged_at: nil) }
+  scope :unacknowledged, -> { where(acknowledged_at: nil) }
   scope :recorded_since, ->(time) { where(recorded_at: (time..)).order(:recorded_at, :id) }
 
   # What a client that polls with a cursor asks for. Corrections travel too: an
@@ -83,6 +85,14 @@ class TestResult < ApplicationRecord
   # Where a client that has seen everything would leave its cursor.
   def self.cursor
     Sequence.current(Sequence::RESULT_REVISION)
+  end
+
+  def acknowledge!(by:)
+    update!(acknowledged_at: Time.current, acknowledged_by: by)
+  end
+
+  def acknowledged?
+    acknowledged_at.present?
   end
 
   def replaced?

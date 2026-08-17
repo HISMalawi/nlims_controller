@@ -24,6 +24,18 @@ module Api
         )
       end
 
+      def acknowledge
+        return unless authorize_scope!("results:read")
+
+        result = TestResult.find_by!(uuid: params[:uuid])
+        return unless authorize_facility!(result.order.sending_facility_code)
+        return if refuse_superseded(result)
+
+        result.acknowledge!(by: Current.api_client.name)
+
+        render_data(TestResultSerializer.call(result))
+      end
+
       private
 
       def feed
@@ -31,6 +43,19 @@ module Api
                   .for_facility(Current.api_client.facility_code)
                   .for_patient_national_id(params[:patient_national_id])
                   .includes(:indicator, order_test: [ :test_type, { order: :patient } ])
+      end
+
+      # Filing a reading that has since been corrected is the mistake the whole
+      # replaced_by_uuid design exists to prevent, so it is refused and the
+      # replacement is named.
+      def refuse_superseded(result)
+        return false unless result.replaced?
+
+        render_api_error(
+          Errors::CONFLICT,
+          message: "este resultado foi substituído por #{result.replaced_by_uuid}; " \
+                   "obtenha a correcção antes de confirmar"
+        )
       end
 
       def more_after?(next_cursor, results)
