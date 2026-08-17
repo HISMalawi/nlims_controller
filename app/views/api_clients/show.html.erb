@@ -1,0 +1,102 @@
+<% content_for :title, @client.name %>
+
+<div class="flex flex-wrap items-start justify-between gap-3">
+  <div>
+    <%= link_to t("api_clients.index.title"), api_clients_path, class: "text-xs text-slate-500 hover:text-slate-900" %>
+    <h1 class="mt-1 text-2xl font-semibold tracking-tight"><%= @client.name %></h1>
+    <p class="mt-2 flex flex-wrap items-center gap-2 text-sm">
+      <%= badge t("api_clients.kinds.#{@client.kind}") %>
+      <% if @client.facility_code.present? %>
+        <span class="font-mono text-xs text-slate-600"><%= @client.facility_code %></span>
+      <% end %>
+      <% if @client.lab_code.present? %>
+        <span class="font-mono text-xs text-slate-600"><%= @client.lab_code %></span>
+      <% end %>
+      <%= @client.active? ? badge(t("api_clients.states.active"), tone: :good) : badge(t("api_clients.states.inactive"), tone: :bad) %>
+    </p>
+  </div>
+
+  <div class="flex items-center gap-2">
+    <%= link_to t("api_clients.show.edit"), edit_api_client_path(@client),
+          class: "rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50" %>
+    <%= link_to t("api_clients.show.issue_key"), new_api_client_api_key_path(@client),
+          class: "rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white hover:bg-slate-800" %>
+  </div>
+</div>
+
+<div class="mt-6 space-y-6">
+  <%= panel t("api_clients.show.keys"), subtitle: t("api_clients.show.keys_hint") do %>
+    <% if @keys.empty? %>
+      <%= render "shared/empty", message: t("api_clients.show.no_keys") %>
+    <% else %>
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-slate-200 text-sm">
+          <thead class="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+            <tr>
+              <th class="px-5 py-2.5"><%= t("api_keys.columns.key") %></th>
+              <th class="px-5 py-2.5"><%= t("api_keys.columns.scopes") %></th>
+              <th class="px-5 py-2.5"><%= t("api_keys.columns.issued") %></th>
+              <th class="px-5 py-2.5"><%= t("api_keys.columns.last_used") %></th>
+              <th class="px-5 py-2.5"><%= t("api_keys.columns.state") %></th>
+              <th class="px-5 py-2.5"></th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            <% @keys.each do |key| %>
+              <tr class="<%= "bg-slate-50/60 text-slate-400" unless key.usable? %>">
+                <td class="px-5 py-2.5 font-mono text-xs"><%= key.masked_token %></td>
+                <td class="px-5 py-2.5">
+                  <div class="flex flex-wrap gap-1">
+                    <% key.scopes.each do |scope| %>
+                      <span class="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-xs text-slate-700"><%= scope %></span>
+                    <% end %>
+                  </div>
+                </td>
+                <td class="px-5 py-2.5">
+                  <%= timestamp key.created_at %>
+                  <% if key.issued_by.present? %>
+                    <span class="block text-xs text-slate-500"><%= key.issued_by %></span>
+                  <% end %>
+                </td>
+                <td class="px-5 py-2.5"><%= time_ago key.last_used_at, blank: t("api_clients.never_used") %></td>
+                <td class="px-5 py-2.5">
+                  <% if key.revoked? %>
+                    <%= badge t("api_keys.states.revoked"), tone: :bad %>
+                  <% elsif key.expired? %>
+                    <%= badge t("api_keys.states.expired"), tone: :bad %>
+                  <% else %>
+                    <%= badge t("api_keys.states.live"), tone: :good %>
+                    <% if key.expires_at %>
+                      <span class="block text-xs text-slate-500"><%= t("api_keys.expires_on", date: l(key.expires_at.to_date)) %></span>
+                    <% end %>
+                  <% end %>
+                </td>
+                <td class="px-5 py-2.5 text-right">
+                  <% unless key.revoked? %>
+                    <div class="flex justify-end gap-2">
+                      <%= button_to t("api_keys.rotate"), rotate_api_client_api_key_path(@client, key),
+                            class: "rounded-md border border-slate-300 bg-white px-2 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50" %>
+                      <%= button_to t("api_keys.revoke"), api_client_api_key_path(@client, key), method: :delete,
+                            form: { data: { turbo_confirm: t("api_keys.revoke_confirm", prefix: key.prefix) } },
+                            class: "rounded-md border border-rose-300 bg-white px-2 py-1 text-xs font-medium text-rose-700 hover:bg-rose-50" %>
+                    </div>
+                  <% end %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% end %>
+  <% end %>
+
+  <%= panel t("api_clients.show.recent_requests"),
+        actions: link_to(t("api_clients.show.all_requests"), audits_path(api_client_id: @client.id),
+                         class: "text-sm font-medium text-slate-600 hover:text-slate-900") do %>
+    <% if @recent_requests.empty? %>
+      <%= render "shared/empty", message: t("api_clients.show.no_requests") %>
+    <% else %>
+      <%= render "audits/table", audits: @recent_requests, show_client: false %>
+    <% end %>
+  <% end %>
+</div>

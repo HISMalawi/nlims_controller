@@ -16,7 +16,9 @@ module NavigationHelper
     [
       Item.new(key: :dashboard, path: root_path),
       Item.new(key: :orders, path: orders_path),
-      Item.new(key: :referrals, path: referrals_path)
+      Item.new(key: :referrals, path: referrals_path),
+      Item.new(key: :api_clients, path: api_clients_path, admin_only: true),
+      Item.new(key: :audits, path: audits_path, admin_only: true)
     ].select { |item| item.visible_to?(current_user) }
   end
 

@@ -1,0 +1,57 @@
+<% content_for :title, t(".title") %>
+
+<%# The secret is on this page and nowhere else. Only its SHA-256 was stored, so
+    there is no screen that could show it again and no support request that can
+    recover it — which is the whole point, and has to be said plainly here
+    rather than discovered later. %>
+<div class="mx-auto max-w-2xl">
+  <h1 class="text-2xl font-semibold tracking-tight"><%= t(".title") %></h1>
+  <p class="mt-2 text-sm text-slate-600"><%= t(".for_client", name: @client.name) %></p>
+
+  <% if @rotated_from %>
+    <div class="mt-4 rounded-md border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+      <%= t(".rotated_from", prefix: @rotated_from.prefix) %>
+    </div>
+  <% end %>
+
+  <div class="mt-6 rounded-xl border-2 border-emerald-400 bg-emerald-50 p-6"
+       data-controller="clipboard"
+       data-clipboard-copied-value="<%= t(".copied") %>">
+    <p class="text-sm font-semibold text-emerald-900"><%= t(".secret") %></p>
+
+    <p class="mt-3 break-all rounded-md border border-emerald-300 bg-white px-4 py-3 font-mono text-sm"
+       data-clipboard-target="source"><%= @token %></p>
+
+    <div class="mt-3 flex items-center gap-3">
+      <button type="button"
+              data-action="clipboard#copy"
+              data-clipboard-target="button"
+              class="rounded-md bg-emerald-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-800">
+        <%= t(".copy") %>
+      </button>
+      <p class="text-sm font-medium text-emerald-900"><%= t(".shown_once") %></p>
+    </div>
+  </div>
+
+  <dl class="mt-6 divide-y divide-slate-200 rounded-xl border border-slate-200 bg-white">
+    <div class="flex items-baseline justify-between gap-4 px-5 py-3">
+      <dt class="text-xs font-medium uppercase tracking-wide text-slate-500"><%= t("api_keys.columns.scopes") %></dt>
+      <dd class="flex flex-wrap justify-end gap-1">
+        <% @key.scopes.each do |scope| %>
+          <span class="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-xs text-slate-700"><%= scope %></span>
+        <% end %>
+      </dd>
+    </div>
+    <div class="flex items-baseline justify-between gap-4 px-5 py-3">
+      <dt class="text-xs font-medium uppercase tracking-wide text-slate-500"><%= t("api_keys.columns.expires") %></dt>
+      <dd class="text-sm text-slate-900">
+        <%= @key.expires_at ? l(@key.expires_at.to_date) : t(".no_expiry") %>
+      </dd>
+    </div>
+  </dl>
+
+  <p class="mt-6">
+    <%= link_to t(".done"), api_client_path(@client),
+          class: "inline-block rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white hover:bg-slate-800" %>
+  </p>
+</div>

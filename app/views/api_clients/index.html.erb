@@ -1,0 +1,53 @@
+<% content_for :title, t(".title") %>
+
+<div class="flex flex-wrap items-center justify-between gap-3">
+  <div>
+    <h1 class="text-2xl font-semibold tracking-tight"><%= t(".title") %></h1>
+    <p class="mt-2 max-w-prose text-sm text-slate-600"><%= t(".lede") %></p>
+  </div>
+
+  <%= link_to t(".new"), new_api_client_path,
+        class: "rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white hover:bg-slate-800" %>
+</div>
+
+<div class="mt-6">
+  <%= panel do %>
+    <% if @clients.empty? %>
+      <%= render "shared/empty", message: t(".none"), hint: t(".none_hint") %>
+    <% else %>
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-slate-200 text-sm">
+          <thead class="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+            <tr>
+              <th class="px-5 py-2.5"><%= t("api_clients.columns.name") %></th>
+              <th class="px-5 py-2.5"><%= t("api_clients.columns.kind") %></th>
+              <th class="px-5 py-2.5"><%= t("api_clients.columns.scope") %></th>
+              <th class="px-5 py-2.5"><%= t("api_clients.columns.keys") %></th>
+              <th class="px-5 py-2.5"><%= t("api_clients.columns.last_used") %></th>
+              <th class="px-5 py-2.5"><%= t("api_clients.columns.state") %></th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            <% @clients.each do |client| %>
+              <tr class="hover:bg-slate-50">
+                <td class="px-5 py-2.5">
+                  <%= link_to client.name, api_client_path(client),
+                        class: "font-medium text-slate-900 underline-offset-2 hover:underline" %>
+                </td>
+                <td class="px-5 py-2.5"><%= badge t("api_clients.kinds.#{client.kind}") %></td>
+                <td class="px-5 py-2.5 font-mono text-xs text-slate-600">
+                  <%= [client.facility_code, client.lab_code].compact_blank.join(" · ").presence || "—" %>
+                </td>
+                <td class="px-5 py-2.5 tabular text-slate-600"><%= client.keys_count %></td>
+                <td class="px-5 py-2.5 text-slate-600"><%= time_ago client.last_used_at, blank: t("api_clients.never_used") %></td>
+                <td class="px-5 py-2.5">
+                  <%= client.active? ? badge(t("api_clients.states.active"), tone: :good) : badge(t("api_clients.states.inactive"), tone: :bad) %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% end %>
+  <% end %>
+</div>

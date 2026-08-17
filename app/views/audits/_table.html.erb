@@ -1,0 +1,45 @@
+<div class="overflow-x-auto">
+  <table class="min-w-full divide-y divide-slate-200 text-sm">
+    <thead class="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+      <tr>
+        <th class="px-5 py-2.5"><%= t("audits.columns.at") %></th>
+        <% if show_client %>
+          <th class="px-5 py-2.5"><%= t("audits.columns.client") %></th>
+        <% end %>
+        <th class="px-5 py-2.5"><%= t("audits.columns.request") %></th>
+        <th class="px-5 py-2.5"><%= t("audits.columns.status") %></th>
+        <th class="px-5 py-2.5"><%= t("audits.columns.duration") %></th>
+        <th class="px-5 py-2.5"><%= t("audits.columns.ip") %></th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-slate-100">
+      <% audits.each do |audit| %>
+        <tr>
+          <td class="px-5 py-2 text-slate-600"><%= timestamp audit.created_at %></td>
+          <% if show_client %>
+            <td class="px-5 py-2">
+              <% if audit.api_client %>
+                <%= link_to audit.api_client.name, api_client_path(audit.api_client),
+                      class: "text-slate-900 underline-offset-2 hover:underline" %>
+              <% else %>
+                <span class="text-slate-400"><%= t("audits.anonymous") %></span>
+              <% end %>
+            </td>
+          <% end %>
+          <td class="px-5 py-2">
+            <span class="font-mono text-xs font-semibold text-slate-500"><%= audit.request_method %></span>
+            <span class="font-mono text-xs text-slate-700"><%= audit.path %></span>
+          </td>
+          <td class="px-5 py-2">
+            <%= badge audit.status, tone: audit.status < 400 ? :good : (audit.status < 500 ? :waiting : :bad) %>
+            <% if audit.error_code.present? %>
+              <span class="ml-1 font-mono text-xs text-slate-500"><%= audit.error_code %></span>
+            <% end %>
+          </td>
+          <td class="px-5 py-2 tabular text-slate-600"><%= "#{audit.duration_ms} ms" if audit.duration_ms %></td>
+          <td class="px-5 py-2 font-mono text-xs text-slate-500"><%= audit.ip %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>

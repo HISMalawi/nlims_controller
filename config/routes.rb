@@ -66,5 +66,15 @@ Rails.application.routes.draw do
 
   resources :referrals, only: :index
 
+  # Clients are never deleted. A client that has called this node is part of the
+  # audit trail; withdrawing it means marking it inactive.
+  resources :api_clients, except: :destroy do
+    resources :api_keys, only: %i[new create destroy] do
+      post :rotate, on: :member
+    end
+  end
+
+  resources :audits, only: :index
+
   root "dashboard#show"
 end

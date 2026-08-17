@@ -9,6 +9,8 @@ pt:
     dashboard: Painel
     orders: Pedidos
     referrals: Amostras referidas
+    api_clients: Clientes e chaves
+    audits: Auditoria
 
   auth:
     sign_out: Terminar sessão
@@ -20,6 +22,7 @@ pt:
     signed_out: Sessão terminada.
 
   time_ago: há %{distance}
+  cancel: Cancelar
 
   errors:
     not_found: Não foi encontrado.
@@ -190,6 +193,123 @@ pt:
         any_direction: Ambos os sentidos
         out: Enviadas daqui
         in: Recebidas aqui
+
+  api_clients:
+    never_used: nunca usada
+    kind_is_fixed: O tipo não se altera depois de criado — mudá-lo re-escoparia as chaves já emitidas.
+    facility_hint: Unidade sanitária por que o cliente fala. Obrigatória para EMR e SISLAB.
+    lab_hint: Laboratório, para clientes SISLAB. Em branco para um EMR.
+    active_label: Cliente activo
+    columns:
+      name: Nome
+      kind: Tipo
+      scope: Âmbito
+      facility: Unidade
+      lab: Laboratório
+      keys: Chaves
+      last_used: Última utilização
+      state: Estado
+    kinds:
+      emr: EMR
+      sislab: SISLAB
+      node: Nó
+      ui: Interface
+    states:
+      active: Activo
+      inactive: Inactivo
+    index:
+      title: Clientes e chaves
+      lede: Os sistemas autorizados a chamar este nó, e as chaves com que o fazem.
+      new: Novo cliente
+      none: Ainda não há clientes registados neste nó.
+      none_hint: Um EMR, um SISLAB ou outro nó só consegue chamar este nó com uma chave emitida aqui.
+    new:
+      title: Novo cliente
+    edit:
+      title: "Editar %{name}"
+    create:
+      created: "%{name} criado."
+    update:
+      updated: "%{name} actualizado."
+    show:
+      edit: Editar
+      issue_key: Emitir chave
+      keys: Chaves
+      keys_hint: Só o resumo criptográfico é guardado. Uma chave perdida substitui-se, não se recupera.
+      no_keys: Este cliente ainda não tem chaves.
+      recent_requests: Últimos pedidos
+      all_requests: Ver tudo
+      no_requests: Este cliente ainda não chamou este nó.
+
+  api_keys:
+    rotate: Rodar
+    revoke: Revogar
+    revoke_confirm: "Revogar a chave %{prefix}? O sistema que a usa deixa de conseguir chamar este nó."
+    expires_on: "Expira a %{date}"
+    columns:
+      key: Chave
+      scopes: Permissões
+      issued: Emitida
+      last_used: Última utilização
+      state: Estado
+      expires: Validade
+    states:
+      live: Válida
+      revoked: Revogada
+      expired: Expirada
+    scopes:
+      orders_read: Ler pedidos e o seu estado
+      orders_write: Criar pedidos
+      results_read: Ler resultados
+      results_write: Publicar resultados
+      referrals_write: Referir amostras para outro laboratório
+      dictionary_read: Ler o dicionário
+      dictionary_write: Alterar o dicionário
+      sync_push: Enviar eventos para o nó nacional
+      sync_pull: Receber eventos do nó nacional
+    new:
+      title: Emitir chave
+      lede: A chave é mostrada uma única vez. Só o seu resumo criptográfico fica guardado aqui.
+      scopes: Permissões
+      scopes_hint: Estão pré-seleccionadas as que um cliente deste tipo costuma precisar. Retire as que não forem necessárias.
+      expires_on: Expira em
+      expires_on_hint: Em branco, a chave não expira. Uma data obriga a rodá-la.
+      submit: Emitir
+    create:
+      no_scopes: Uma chave sem permissões não serve para nada. Escolha pelo menos uma.
+    created:
+      title: Chave emitida
+      for_client: "Para %{name}."
+      rotated_from: "Substitui a chave %{prefix}, que continua válida — revogue-a depois de o sistema passar a usar a nova."
+      secret: Chave
+      copy: Copiar
+      copied: Copiada
+      shown_once: Não volta a ser mostrada.
+      no_expiry: Sem validade
+      done: Concluído
+
+  audits:
+    anonymous: sem chave
+    columns:
+      at: Quando
+      client: Cliente
+      request: Pedido
+      status: Resposta
+      duration: Duração
+      ip: Origem
+    index:
+      title: Auditoria
+      lede: >-
+        Um registo por pedido, seja qual for o resultado. Os recusados são os mais
+        úteis: é assim que se vê uma chave a ser sondada ou uma integração apontada ao nó errado.
+      any_client: Todos os clientes
+      only_failures: Só os recusados
+      apply: Filtrar
+      results:
+        zero: Nenhum pedido
+        one: 1 pedido
+        other: "%{count} pedidos"
+      none: Nenhum pedido corresponde a este filtro.
 
   api:
     errors:

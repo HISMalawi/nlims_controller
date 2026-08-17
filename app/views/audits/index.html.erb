@@ -1,0 +1,44 @@
+<% content_for :title, t(".title") %>
+
+<h1 class="text-2xl font-semibold tracking-tight"><%= t(".title") %></h1>
+<p class="mt-2 max-w-prose text-sm text-slate-600"><%= t(".lede") %></p>
+
+<%= form_with url: audits_path, method: :get, class: "mt-6 flex flex-wrap items-end gap-3" do |form| %>
+  <div>
+    <%= form.label :api_client_id, t("audits.columns.client"), class: "block text-xs font-medium text-slate-600" %>
+    <%= form.select :api_client_id,
+          @clients.map { |client| [client.name, client.id] },
+          { include_blank: t(".any_client"), selected: @client&.id },
+          class: "mt-1 rounded-md border border-slate-300 px-3 py-1.5 text-sm shadow-sm
+                  focus:border-slate-500 focus:outline-none focus:ring-1 focus:ring-slate-500" %>
+  </div>
+
+  <label class="flex items-center gap-2 pb-1.5 text-sm text-slate-700">
+    <%= form.check_box :failures, { checked: @only_failures, class: "rounded border-slate-300 text-slate-900 focus:ring-slate-500" }, "1", nil %>
+    <%= t(".only_failures") %>
+  </label>
+
+  <%= form.submit t(".apply"),
+        class: "cursor-pointer rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-800" %>
+<% end %>
+
+<% if @failures_by_code.any? %>
+  <div class="mt-4 flex flex-wrap gap-2">
+    <% @failures_by_code.sort_by { |_, count| -count }.each do |code, count| %>
+      <span class="rounded-md bg-rose-50 px-2 py-1 text-xs text-rose-800 ring-1 ring-inset ring-rose-600/20">
+        <span class="font-mono"><%= code %></span> · <%= count %>
+      </span>
+    <% end %>
+  </div>
+<% end %>
+
+<div class="mt-4">
+  <%= panel t(".results", count: @total) do %>
+    <% if @audits.empty? %>
+      <%= render "shared/empty", message: t(".none") %>
+    <% else %>
+      <%= render "audits/table", audits: @audits, show_client: true %>
+      <%= render "shared/pagination", page: @page, pages: @pages, query: request.query_parameters %>
+    <% end %>
+  <% end %>
+</div>
