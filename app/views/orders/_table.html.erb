@@ -1,0 +1,35 @@
+<div class="overflow-x-auto">
+  <table class="min-w-full divide-y divide-slate-200 text-sm">
+    <thead class="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+      <tr>
+        <th class="px-5 py-2.5"><%= t("orders.columns.tracking_number") %></th>
+        <th class="px-5 py-2.5"><%= t("orders.columns.patient") %></th>
+        <th class="px-5 py-2.5"><%= t("orders.columns.tests") %></th>
+        <th class="px-5 py-2.5"><%= t("orders.columns.facility") %></th>
+        <th class="px-5 py-2.5"><%= t("orders.columns.status") %></th>
+        <th class="px-5 py-2.5"><%= t("orders.columns.created_at") %></th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-slate-100">
+      <% orders.each do |order| %>
+        <tr class="hover:bg-slate-50">
+          <td class="px-5 py-2.5">
+            <%= link_to order.tracking_number, order_path(order.tracking_number),
+                  class: "font-mono text-sm tabular font-medium text-slate-900 underline-offset-2 hover:underline" %>
+            <% if order.priority != "routine" %>
+              <%= badge t("orders.priorities.#{order.priority}"), tone: :bad %>
+            <% end %>
+          </td>
+          <td class="px-5 py-2.5">
+            <span class="block text-slate-900"><%= order.patient.name %></span>
+            <span class="block font-mono text-xs text-slate-500"><%= order.patient.national_id %></span>
+          </td>
+          <td class="px-5 py-2.5 tabular text-slate-600"><%= order.order_tests.size %></td>
+          <td class="px-5 py-2.5 font-mono text-xs text-slate-600"><%= order.sending_facility_code %></td>
+          <td class="px-5 py-2.5"><%= status_badge order.status, scope: "orders.statuses" %></td>
+          <td class="px-5 py-2.5 text-slate-600"><%= timestamp order.created_at %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>

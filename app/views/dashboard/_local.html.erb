@@ -1,0 +1,57 @@
+<%# The link to the capital comes first and is stated in words before it is
+    stated in numbers: everything else on this screen is only interesting once
+    an operator knows whether the node is reaching the national one. %>
+<div class="mt-6 rounded-xl border px-5 py-4
+            <%= if status.never_synced?
+                  "border-slate-300 bg-slate-50"
+                elsif status.reachable?
+                  "border-emerald-300 bg-emerald-50"
+                else
+                  "border-rose-300 bg-rose-50"
+                end %>">
+  <div class="flex flex-wrap items-baseline justify-between gap-2">
+    <p class="font-medium">
+      <% if status.never_synced? %>
+        <%= t("dashboard.sync.never") %>
+      <% elsif status.reachable? %>
+        <%= t("dashboard.sync.reachable") %>
+      <% else %>
+        <%= t("dashboard.sync.unreachable") %>
+      <% end %>
+    </p>
+    <p class="text-sm text-slate-600">
+      <%= t("dashboard.sync.last_contact") %>: <%= time_ago(status.heartbeat.last_synced_at, blank: t("dashboard.sync.never_short")) %>
+    </p>
+  </div>
+
+  <% error = status.heartbeat.last_error.presence || status.last_push_error.presence %>
+  <% if error %>
+    <p class="mt-2 font-mono text-xs text-rose-800"><%= error %></p>
+  <% end %>
+</div>
+
+<div class="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+  <%= stat t("dashboard.stats.outbox_pending"), status.outbox_pending,
+        tone: status.outbox_pending.zero? ? :good : :waiting,
+        hint: status.outbox_lag ? t("dashboard.stats.oldest", age: distance_of_time_in_words(status.outbox_lag)) : nil %>
+
+  <%= stat t("dashboard.stats.outbox_failing"), status.outbox_failing,
+        tone: status.outbox_failing.zero? ? :neutral : :bad,
+        hint: t("dashboard.stats.outbox_failing_hint") %>
+
+  <%= stat t("dashboard.stats.dictionary_cursor"), status.dictionary_cursor.value,
+        tone: status.dictionary_cursor.healthy? ? :neutral : :bad,
+        hint: t("dashboard.stats.synced_at", when: status.dictionary_cursor.last_synced_at ? l(status.dictionary_cursor.last_synced_at, format: :short) : t("dashboard.sync.never_short")) %>
+
+  <%= stat t("dashboard.stats.inbound_cursor"), status.inbound_cursor.value,
+        tone: status.inbound_cursor.healthy? ? :neutral : :bad,
+        hint: t("dashboard.stats.synced_at", when: status.inbound_cursor.last_synced_at ? l(status.inbound_cursor.last_synced_at, format: :short) : t("dashboard.sync.never_short")) %>
+</div>
+
+<div class="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+  <%= stat t("dashboard.stats.open_orders"), status.open_orders %>
+  <%= stat t("dashboard.stats.orders_recent"), status.orders_recently_created, hint: t("dashboard.stats.last_24h") %>
+  <%= stat t("dashboard.stats.referrals_in_transit"), status.referrals_in_transit,
+        tone: status.referrals_in_transit.zero? ? :neutral : :waiting %>
+  <%= stat t("dashboard.stats.dictionary_entries"), status.dictionary_entries %>
+</div>

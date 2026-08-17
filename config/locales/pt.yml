@@ -7,6 +7,8 @@ pt:
 
   nav:
     dashboard: Painel
+    orders: Pedidos
+    referrals: Amostras referidas
 
   auth:
     sign_out: Terminar sessão
@@ -37,16 +39,157 @@ pt:
         As contas são criadas pelo administrador do nó. As chaves de API são
         outra coisa e não servem para entrar aqui.
 
+  pagination:
+    previous: ← Anteriores
+    next: Seguintes →
+    of: Página %{page} de %{pages}
+
   dashboard:
     show:
       title: Painel do nó
+      recent_orders: Últimos pedidos
+      all_orders: Ver todos
+      no_orders: Ainda não há pedidos neste nó.
+    sync:
+      reachable: Este nó está a comunicar com o nó nacional.
+      unreachable: Este nó não está a conseguir comunicar com o nó nacional.
+      never: Este nó ainda nunca comunicou com o nó nacional.
+      last_contact: Último contacto
+      never_short: nunca
+    stats:
+      outbox_pending: Eventos por enviar
+      outbox_failing: Eventos com erro
+      outbox_failing_hint: Já tentaram e falharam
+      oldest: O mais antigo há %{age}
+      dictionary_cursor: Cursor do dicionário
+      inbound_cursor: Cursor de entrada
+      synced_at: 'Sincronizado: %{when}'
+      open_orders: Pedidos em curso
+      orders_recent: Pedidos novos
+      last_24h: Últimas 24 horas
+      referrals_in_transit: Amostras em trânsito
+      dictionary_entries: Entradas activas no dicionário
+      nodes: Nós registados
+      stale_nodes: Nós sem contacto
+      stale_after: Sem notícias há mais de %{period}
+      nodes_behind: Nós com atraso
+      nodes_behind_hint: Com eventos por entregar
+      events_recent: Eventos recebidos
+      inbound_pending: Eventos à espera
+      inbound_pending_hint: À espera do evento anterior
+      inbound_stalled: Eventos parados
+      inbound_stalled_hint: À espera há mais de uma hora
+      inbound_rejected: Eventos recusados
+      dictionary_drafts: Rascunhos por promover
+      dictionary_drafts_hint: Ainda não visíveis para os nós locais
+
+  patients:
+    name: Nome
+    national_id: NID
+    sex: Sexo
+    birthdate: Data de nascimento
+    age: "%{years} anos"
+    sexes:
+      F: Feminino
+      M: Masculino
+      Unknown: Desconhecido
+
+  status_events:
+    entities:
+      orders: pedido
+      order_tests: teste
+
+  orders:
+    columns:
+      tracking_number: Tracking number
+      patient: Doente
+      tests: Testes
+      facility: Unidade
+      status: Estado
+      created_at: Registado
+    fields:
+      receiving_lab: Laboratório destinatário
+      specimen_type: Tipo de amostra
+      collected_at: Colhida em
+      requested_by: Requisitado por
+      claimed_by: Reclamado por
+      source: Origem
+      uuid: UUID
+    search:
+      label: Procurar
+      placeholder: Tracking number, NID ou nome do doente
+      submit: Procurar
+      clear: Limpar
+      any_status: Qualquer estado
+      from: De
+      to: Até
+    priorities:
+      routine: Rotina
+      urgent: Urgente
+      stat: Imediato
+    statuses:
+      requested: Pedido
+      accepted: Aceite
+      specimen_collected: Amostra colhida
+      in_progress: Em execução
+      referred_out: Referida para fora
+      referred_in: Recebida por referência
+      completed: Concluído
+      rejected: Rejeitado
+      cancelled: Cancelado
+    index:
+      title: Pedidos
+      results:
+        zero: Nenhum pedido
+        one: 1 pedido
+        other: "%{count} pedidos"
+      none_found: Nenhum pedido corresponde a esta pesquisa.
+      none_found_hint: O tracking number e o NID têm de estar exactos; o nome procura pelo início.
+      none_yet: Ainda não há pedidos neste nó.
+    show:
+      heading: Pedido
+      rejected: Amostra rejeitada
+      tests: Testes
+      no_tests: Este pedido ainda não tem testes.
+      referrals: Referências
+      history: Histórico
+      history_hint: Tudo o que aconteceu sob este tracking number, incluindo os testes.
+      patient: Doente
+      sample: Amostra
+
+  order_tests:
+    statuses:
+      pending: Por executar
+      in_progress: Em execução
+      completed: Concluído
+      rejected: Rejeitado
+      cancelled: Cancelado
+
+  referrals:
+    dispatched_at: Enviada
+    transport_time: Tempo de transporte
+    states:
+      dispatched: Em trânsito
+      received: Recebida
+      rejected: Rejeitada
+    index:
+      title: Amostras referidas
       lede: >-
-        Este nó está a correr e configurado. Os ecrãs de operação — pedidos, amostras
-        referidas, dicionário, chaves de API e fila de sincronização — entram no passo S11.
-      node_code: Código do nó
-      version: Versão
-      environment: Ambiente
-      pending: Painel de operação por construir (S11).
+        Amostras entregues a outro laboratório. A diferença entre o envio e a
+        recepção é o tempo de transporte — a métrica que hoje ninguém consegue medir.
+      outstanding: Em trânsito
+      outstanding_hint: Enviadas e ainda não recebidas
+      average_transport: Tempo médio de transporte
+      average_transport_hint: Sobre as que chegaram
+      total: Total listadas
+      route: Percurso
+      none: Nenhuma amostra referida corresponde a este filtro.
+      in_transit_for: em trânsito há %{age}
+      filters:
+        all: Todas
+        any_direction: Ambos os sentidos
+        out: Enviadas daqui
+        in: Recebidas aqui
 
   api:
     errors:

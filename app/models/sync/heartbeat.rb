@@ -15,8 +15,17 @@ module Sync
       @node_code = node_code || SislabSync.node_code
     end
 
+    # The answer is recorded as well as sent. Without it a local node has no way
+    # of telling an operator when it last reached the capital: the outbox only
+    # shows the time of the last delivery, and a node with nothing to say
+    # delivers nothing for hours at a time while remaining perfectly healthy.
     def call
-      @transport.post("/api/v3/nodes/heartbeat", payload)
+      response = @transport.post("/api/v3/nodes/heartbeat", payload)
+      cursor.mark_synced!
+      response
+    rescue NodeTransport::TransportError => e
+      cursor.record_failure!(e.message)
+      raise
     end
 
     def payload
@@ -33,6 +42,10 @@ module Sync
     end
 
     private
+
+    def cursor
+      SyncCursor.for(SyncCursor::HEARTBEAT)
+    end
 
     # Whichever of the two things that can be wrong went wrong most recently:
     # the dictionary is not coming down, or the outbox is not going up.

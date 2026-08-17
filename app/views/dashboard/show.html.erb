@@ -1,12 +1,20 @@
 <% content_for :title, t(".title") %>
 
-<h1 class="text-2xl font-semibold tracking-tight"><%= t(".title") %></h1>
-<p class="mt-2 max-w-prose text-sm text-slate-600"><%= t(".lede") %></p>
-
-<div class="mt-6 grid gap-4 sm:grid-cols-3">
-  <%= stat t(".node_code"), SislabSync.node_code %>
-  <%= stat t(".version"), SislabSync.version %>
-  <%= stat t(".environment"), Rails.env %>
+<div class="flex flex-wrap items-baseline justify-between gap-2">
+  <h1 class="text-2xl font-semibold tracking-tight"><%= t(".title") %></h1>
+  <p class="text-sm text-slate-500">
+    <%= SislabSync.node_code %> · <%= t("modes.#{SislabSync.mode}") %> · v<%= SislabSync.version %>
+  </p>
 </div>
 
-<p class="mt-8 text-sm text-slate-500"><%= t(".pending") %></p>
+<%= render SislabSync.national? ? "dashboard/national" : "dashboard/local", status: @status %>
+
+<div class="mt-8">
+  <%= panel t(".recent_orders"), actions: link_to(t(".all_orders"), orders_path, class: "text-sm font-medium text-slate-600 hover:text-slate-900") do %>
+    <% if @recent_orders.empty? %>
+      <%= render "shared/empty", message: t(".no_orders") %>
+    <% else %>
+      <%= render "orders/table", orders: @recent_orders %>
+    <% end %>
+  <% end %>
+</div>

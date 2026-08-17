@@ -1,0 +1,83 @@
+<% content_for :title, t(".title") %>
+
+<h1 class="text-2xl font-semibold tracking-tight"><%= t(".title") %></h1>
+<p class="mt-2 max-w-prose text-sm text-slate-600"><%= t(".lede") %></p>
+
+<div class="mt-6 grid gap-4 sm:grid-cols-3">
+  <%= stat t(".outstanding"), @outstanding, tone: @outstanding.zero? ? :neutral : :waiting,
+        hint: t(".outstanding_hint") %>
+  <%= stat t(".average_transport"), @average_transport ? distance_of_time_in_words(@average_transport) : "—",
+        hint: t(".average_transport_hint") %>
+  <%= stat t(".total"), @total %>
+</div>
+
+<div class="mt-6 flex flex-wrap gap-2 text-sm">
+  <% [[nil, t(".filters.all")], *ReferralsController::STATES.map { |s| [s, t("referrals.states.#{s}")] }].each do |value, label| %>
+    <%= link_to label, referrals_path(request.query_parameters.merge(state: value, page: nil).compact),
+          class: "rounded-full border px-3 py-1 #{@state == value ? "border-slate-900 bg-slate-900 text-white" : "border-slate-300 bg-white text-slate-600 hover:border-slate-400"}" %>
+  <% end %>
+
+  <% if SislabSync.local? %>
+    <span class="mx-2 w-px bg-slate-200"></span>
+
+    <% [[nil, t(".filters.any_direction")], ["out", t(".filters.out")], ["in", t(".filters.in")]].each do |value, label| %>
+      <%= link_to label, referrals_path(request.query_parameters.merge(direction: value, page: nil).compact),
+            class: "rounded-full border px-3 py-1 #{@direction == value ? "border-slate-900 bg-slate-900 text-white" : "border-slate-300 bg-white text-slate-600 hover:border-slate-400"}" %>
+    <% end %>
+  <% end %>
+</div>
+
+<div class="mt-4">
+  <%= panel do %>
+    <% if @referrals.empty? %>
+      <%= render "shared/empty", message: t(".none") %>
+    <% else %>
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-slate-200 text-sm">
+          <thead class="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+            <tr>
+              <th class="px-5 py-2.5"><%= t("orders.columns.tracking_number") %></th>
+              <th class="px-5 py-2.5"><%= t("orders.columns.patient") %></th>
+              <th class="px-5 py-2.5"><%= t(".route") %></th>
+              <th class="px-5 py-2.5"><%= t("orders.columns.status") %></th>
+              <th class="px-5 py-2.5"><%= t("referrals.dispatched_at") %></th>
+              <th class="px-5 py-2.5"><%= t("referrals.transport_time") %></th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            <% @referrals.each do |referral| %>
+              <tr class="hover:bg-slate-50">
+                <td class="px-5 py-2.5">
+                  <%= link_to referral.tracking_number, order_path(referral.tracking_number),
+                        class: "font-mono text-sm tabular font-medium text-slate-900 underline-offset-2 hover:underline" %>
+                </td>
+                <td class="px-5 py-2.5 text-slate-900"><%= referral.order.patient.name %></td>
+                <td class="px-5 py-2.5 font-mono text-xs text-slate-600">
+                  <%= referral.from_lab_code || referral.from_facility_code %>
+                  <span class="mx-1 text-slate-400">&rarr;</span>
+                  <%= referral.to_lab_code %>
+                </td>
+                <td class="px-5 py-2.5">
+                  <%= status_badge referral.state, scope: "referrals.states" %>
+                  <% if referral.rejection_reason %>
+                    <span class="block text-xs text-rose-700"><%= referral.rejection_reason.name %></span>
+                  <% end %>
+                </td>
+                <td class="px-5 py-2.5 text-slate-600"><%= timestamp referral.dispatched_at %></td>
+                <td class="px-5 py-2.5 text-slate-600">
+                  <% if referral.dispatched? %>
+                    <span class="text-amber-700"><%= t(".in_transit_for", age: time_ago_in_words(referral.dispatched_at)) %></span>
+                  <% else %>
+                    <%= duration referral.transport_time %>
+                  <% end %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+
+      <%= render "shared/pagination", page: @page, pages: @pages, query: request.query_parameters %>
+    <% end %>
+  <% end %>
+</div>

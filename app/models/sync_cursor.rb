@@ -7,6 +7,12 @@ class SyncCursor < ApplicationRecord
   DICTIONARY = "dictionary"
   INBOUND = "inbound"
 
+  # Not a cursor over anybody's feed — it has no value to advance. It is here
+  # because "when did this node last reach the capital, and what did it say if
+  # it failed" is the same three columns, and the dashboard reads them the same
+  # way as the other two.
+  HEARTBEAT = "heartbeat"
+
   validates :name, presence: true, uniqueness: true
 
   def self.for(name)

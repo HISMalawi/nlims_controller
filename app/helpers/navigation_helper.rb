@@ -14,7 +14,9 @@ module NavigationHelper
 
   def navigation_items
     [
-      Item.new(key: :dashboard, path: root_path)
+      Item.new(key: :dashboard, path: root_path),
+      Item.new(key: :orders, path: orders_path),
+      Item.new(key: :referrals, path: referrals_path)
     ].select { |item| item.visible_to?(current_user) }
   end
 

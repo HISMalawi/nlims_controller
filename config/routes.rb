@@ -60,5 +60,11 @@ Rails.application.routes.draw do
   # JSON. Nothing crosses.
   resource :session, only: %i[new create destroy]
 
+  # Addressed by tracking number, as everywhere else: it is what is written on
+  # the tube and what an operator has in front of them.
+  resources :orders, only: %i[index show], param: :tracking_number
+
+  resources :referrals, only: :index
+
   root "dashboard#show"
 end
