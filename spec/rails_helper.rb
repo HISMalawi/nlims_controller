@@ -20,5 +20,8 @@ RSpec.configure do |config|
   config.use_transactional_fixtures = true
   config.include FactoryBot::Syntax::Methods
 
+  # For the specs that have to let an hour pass — backoff, staleness, an outage.
+  config.include ActiveSupport::Testing::TimeHelpers
+
   config.filter_rails_from_backtrace!
 end
