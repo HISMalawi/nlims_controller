@@ -11,7 +11,9 @@ Rails.application.routes.draw do
       # Endpoints the EMR and the SISLAB call. A national node has no clients of
       # this kind, so the routes simply do not exist there.
       if SislabSync.local?
-        # S7 — EMR: order-requests, orders, results
+        post "order-requests", to: "order_requests#create"
+
+        # S7 — EMR: orders, results
         # S8 — SISLAB: lab/pending-orders, lab/orders/:tn/*, lab/referrals
       end
 

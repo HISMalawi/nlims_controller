@@ -46,4 +46,37 @@ RSpec.describe Patient do
       expect(create(:patient, national_id: "  ").national_id).to be_nil
     end
   end
+
+  describe ".upsert_from!" do
+    it "creates a patient nobody has seen before" do
+      patient = described_class.upsert_from!(national_id: "110100234567A", name: "Ana Macuácua", sex: "F")
+
+      expect(patient).to be_persisted
+      expect(patient.national_id).to eq("110100234567A")
+    end
+
+    it "finds the patient the identifier already names and takes what is newer" do
+      existing = create(:patient, national_id: "110100234567A", name: "Ana M.", phone: "84 000 0000")
+
+      patient = described_class.upsert_from!(national_id: " 110100234567a ", name: "Ana Macuácua")
+
+      expect(patient).to eq(existing)
+      expect(patient.name).to eq("Ana Macuácua")
+      expect(patient.phone).to eq("84 000 0000"), "a field the sender left out was cleared"
+    end
+
+    # Two arrivals with no identifier may or may not be the same person, and
+    # guessing from a name and a birthdate merges two people sooner or later.
+    # An unmerged duplicate is the cheaper mistake.
+    it "creates a new patient every time nobody has an identifier" do
+      described_class.upsert_from!(name: "Ana Macuácua", sex: "F")
+      described_class.upsert_from!(name: "Ana Macuácua", sex: "F")
+
+      expect(described_class.count).to eq(2)
+    end
+
+    it "refuses a patient with nothing to identify them by at all" do
+      expect { described_class.upsert_from!(sex: "F") }.to raise_error(ActiveRecord::RecordInvalid)
+    end
+  end
 end
