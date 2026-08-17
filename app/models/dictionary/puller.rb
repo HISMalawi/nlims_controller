@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require "net/http"
-
 module Dictionary
   # Pulls the dictionary from the national node onto this one.
   #
@@ -17,20 +15,19 @@ module Dictionary
     # and be looked at rather than spin.
     MAX_BATCHES = 200
 
-    class TransportError < StandardError; end
+    # The transport moved to NodeTransport when the outbox push needed the same
+    # thing in the other direction. Kept as a name here because a broken feed is
+    # something callers of the puller already rescue by this one.
+    TransportError = NodeTransport::TransportError
 
     attr_reader :batches, :applier
 
     def self.from_env(**options)
-      new(
-        base_url: ENV.fetch("SISLAB_SYNC_NATIONAL_URL"),
-        api_key: ENV.fetch("SISLAB_SYNC_NATIONAL_API_KEY"),
-        **options
-      )
+      new(transport: NodeTransport.from_env, **options)
     end
 
     def initialize(base_url: nil, api_key: nil, limit: Dictionary::DEFAULT_LIMIT, transport: nil)
-      @transport = transport || HttpTransport.new(base_url: base_url, api_key: api_key)
+      @transport = transport || NodeTransport.new(base_url: base_url, api_key: api_key)
       @limit = limit
       @batches = 0
       @applier = Applier.new
@@ -67,53 +64,6 @@ module Dictionary
       parts << "resolved=#{@applier.resolved}" if @applier.resolved.positive?
       parts << "batches=#{@batches}"
       parts.join(" ")
-    end
-
-    # Net::HTTP rather than a gem: one GET with a bearer token does not need one.
-    class HttpTransport
-      OPEN_TIMEOUT = 10
-      READ_TIMEOUT = 60
-
-      def initialize(base_url:, api_key:)
-        raise TransportError, "SISLAB_SYNC_NATIONAL_URL is not set" if base_url.blank?
-        raise TransportError, "SISLAB_SYNC_NATIONAL_API_KEY is not set" if api_key.blank?
-
-        @base_uri = URI.parse(base_url)
-        @api_key = api_key
-      end
-
-      def get(path, params = {})
-        uri = @base_uri.dup
-        uri.path = path
-        uri.query = URI.encode_www_form(params)
-
-        response = perform(uri)
-
-        unless response.is_a?(Net::HTTPSuccess)
-          raise TransportError, "#{uri} answered #{response.code}: #{response.body.to_s.truncate(200)}"
-        end
-
-        JSON.parse(response.body)
-      rescue JSON::ParserError => e
-        raise TransportError, "#{uri} did not answer with json: #{e.message}"
-      end
-
-      private
-
-      def perform(uri)
-        request = Net::HTTP::Get.new(uri)
-        request["Authorization"] = "Bearer #{@api_key}"
-        request["Accept"] = "application/json"
-
-        Net::HTTP.start(uri.hostname, uri.port,
-                        use_ssl: uri.scheme == "https",
-                        open_timeout: OPEN_TIMEOUT,
-                        read_timeout: READ_TIMEOUT) do |http|
-          http.request(request)
-        end
-      rescue SystemCallError, Timeout::Error, OpenSSL::SSL::SSLError, SocketError => e
-        raise TransportError, "#{uri} unreachable: #{e.class}: #{e.message}"
-      end
     end
   end
 end

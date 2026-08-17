@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_17_050100) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_17_050200) do
   create_table "api_clients", charset: "utf8mb4", collation: "utf8mb4_unicode_ci", force: :cascade do |t|
     t.boolean "active", default: true, null: false
     t.datetime "created_at", null: false
@@ -187,6 +187,21 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_17_050100) do
     t.index ["revision"], name: "index_indicators_on_revision"
     t.index ["status", "revision"], name: "index_indicators_on_status_and_revision"
     t.index ["uuid"], name: "index_indicators_on_uuid", unique: true
+  end
+
+  create_table "nodes", charset: "utf8mb4", collation: "utf8mb4_unicode_ci", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "dictionary_cursor", default: 0, null: false
+    t.string "last_error", limit: 1000
+    t.datetime "last_seen_at"
+    t.string "name"
+    t.string "node_code", limit: 24, null: false
+    t.integer "outbox_failing", default: 0, null: false
+    t.integer "outbox_pending", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.string "version", limit: 32
+    t.index ["last_seen_at"], name: "index_nodes_on_last_seen_at"
+    t.index ["node_code"], name: "index_nodes_on_node_code", unique: true
   end
 
   create_table "order_tests", charset: "utf8mb4", collation: "utf8mb4_unicode_ci", force: :cascade do |t|

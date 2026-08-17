@@ -39,7 +39,8 @@ Rails.application.routes.draw do
           post "events", to: "events#create"
         end
 
-        # S9 — nodes/heartbeat
+        post "nodes/heartbeat", to: "nodes#heartbeat"
+
         # S10 — sync/inbound
       end
 
