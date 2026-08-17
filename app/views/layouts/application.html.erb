@@ -1,7 +1,7 @@
 <!DOCTYPE html>
-<html>
+<html lang="<%= I18n.locale %>" class="h-full">
   <head>
-    <title><%= content_for(:title) || "SISLAB Sync" %></title>
+    <title><%= [content_for(:title), t("app_name")].compact_blank.join(" · ") %></title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="application-name" content="SISLAB Sync">
@@ -11,18 +11,35 @@
 
     <%= yield :head %>
 
-    <%# Enable PWA manifest for installable apps (make sure to enable in config/routes.rb too!) %>
-    <%#= tag.link rel: "manifest", href: pwa_manifest_path(format: :json) %>
-
     <link rel="icon" href="/icon.png" type="image/png">
     <link rel="icon" href="/icon.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="/icon.png">
 
-    <%# Includes all stylesheet files in app/assets/stylesheets %>
-    <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
+    <%= stylesheet_link_tag :tailwind, "data-turbo-track": "reload" %>
+    <%= javascript_importmap_tags %>
   </head>
 
-  <body>
-    <%= yield %>
+  <body class="h-full bg-slate-100 text-slate-900 antialiased">
+    <% if signed_in? %>
+      <div class="lg:flex lg:min-h-full">
+        <%= render "layouts/sidebar" %>
+
+        <div class="min-w-0 flex-1">
+          <%= render "layouts/topbar" %>
+
+          <main class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+            <%= render "layouts/flash" %>
+            <%= yield %>
+          </main>
+        </div>
+      </div>
+    <% else %>
+      <main class="flex min-h-full items-center justify-center px-4 py-12">
+        <div class="w-full max-w-sm">
+          <%= render "layouts/flash" %>
+          <%= yield %>
+        </div>
+      </main>
+    <% end %>
   </body>
 </html>

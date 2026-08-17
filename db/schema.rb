@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_17_060100) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_17_070000) do
   create_table "api_clients", charset: "utf8mb4", collation: "utf8mb4_unicode_ci", force: :cascade do |t|
     t.boolean "active", default: true, null: false
     t.datetime "created_at", null: false
@@ -379,6 +379,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_17_060100) do
     t.index ["name"], name: "index_sequences_on_name", unique: true
   end
 
+  create_table "sessions", charset: "utf8mb4", collation: "utf8mb4_unicode_ci", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "ip", limit: 45
+    t.datetime "last_seen_at", null: false
+    t.datetime "updated_at", null: false
+    t.string "user_agent"
+    t.bigint "user_id", null: false
+    t.index ["last_seen_at"], name: "index_sessions_on_last_seen_at"
+    t.index ["user_id"], name: "index_sessions_on_user_id"
+  end
+
   create_table "specimen_types", charset: "utf8mb4", collation: "utf8mb4_unicode_ci", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "deleted_at"
@@ -551,6 +562,21 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_17_060100) do
     t.index ["uuid"], name: "index_test_types_on_uuid", unique: true
   end
 
+  create_table "users", charset: "utf8mb4", collation: "utf8mb4_unicode_ci", force: :cascade do |t|
+    t.boolean "active", default: true, null: false
+    t.datetime "created_at", null: false
+    t.string "email", null: false
+    t.string "facility_code", limit: 16
+    t.datetime "last_signed_in_at"
+    t.string "name", null: false
+    t.string "password_digest", null: false
+    t.string "role", limit: 16, default: "operator", null: false
+    t.datetime "updated_at", null: false
+    t.string "uuid", limit: 36, null: false
+    t.index ["email"], name: "index_users_on_email", unique: true
+    t.index ["uuid"], name: "index_users_on_uuid", unique: true
+  end
+
   add_foreign_key "api_keys", "api_clients"
   add_foreign_key "external_mappings", "api_clients"
   add_foreign_key "idempotent_requests", "api_clients"
@@ -569,6 +595,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_17_060100) do
   add_foreign_key "referrals", "rejection_reasons"
   add_foreign_key "request_audits", "api_clients"
   add_foreign_key "request_audits", "api_keys"
+  add_foreign_key "sessions", "users"
   add_foreign_key "test_panel_test_types", "test_panels"
   add_foreign_key "test_panel_test_types", "test_types"
   add_foreign_key "test_results", "indicators"

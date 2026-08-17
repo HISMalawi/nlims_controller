@@ -45,6 +45,13 @@ services:
     <<: *app
     command: bundle exec sidekiq
 
+  # Tailwind compiles into app/assets/builds, which is on the mounted volume, so
+  # the watcher is a service of its own rather than something the web process
+  # has to remember to start. In production the build happens once, in the image.
+  css:
+    <<: *app
+    command: bundle exec rails tailwindcss:watch
+
   mysql:
     image: mysql:8.4
     environment:

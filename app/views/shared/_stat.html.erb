@@ -1,0 +1,10 @@
+<div class="rounded-xl border border-slate-200 bg-white px-5 py-4 shadow-sm">
+  <p class="text-xs font-medium uppercase tracking-wide text-slate-500"><%= label %></p>
+  <p class="mt-1 text-2xl font-semibold tabular
+            <%= { good: "text-emerald-700", bad: "text-rose-700", waiting: "text-amber-700" }.fetch(tone, "text-slate-900") %>">
+    <%= value %>
+  </p>
+  <% if hint.present? %>
+    <p class="mt-1 text-xs text-slate-500"><%= hint %></p>
+  <% end %>
+</div>

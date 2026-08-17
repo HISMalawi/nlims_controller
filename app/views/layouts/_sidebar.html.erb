@@ -1,0 +1,23 @@
+<%# The mode is stated at the top of every screen and coloured differently in
+    each, because the single most expensive mistake an operator can make is
+    doing something on the national node believing they are on their own. %>
+<aside class="bg-slate-900 lg:w-64 lg:shrink-0">
+  <div class="px-4 py-4 lg:px-6 lg:py-6">
+    <%= link_to root_path, class: "block" do %>
+      <span class="block text-lg font-semibold tracking-tight text-white">SISLAB Sync</span>
+      <span class="mt-1 flex items-center gap-2">
+        <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold
+                     <%= SislabSync.national? ? "bg-amber-400/20 text-amber-200" : "bg-emerald-400/20 text-emerald-200" %>">
+          <%= t("modes.#{SislabSync.mode}") %>
+        </span>
+        <span class="font-mono text-xs text-slate-400"><%= SislabSync.node_code %></span>
+      </span>
+    <% end %>
+
+    <nav class="mt-6 flex gap-1 overflow-x-auto lg:mt-8 lg:flex-col lg:overflow-visible">
+      <% navigation_items.each do |item| %>
+        <div class="shrink-0"><%= nav_link_to(item) %></div>
+      <% end %>
+    </nav>
+  </div>
+</aside>

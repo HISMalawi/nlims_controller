@@ -1,0 +1,8 @@
+<% { notice: "border-emerald-300 bg-emerald-50 text-emerald-900",
+     alert: "border-rose-300 bg-rose-50 text-rose-900" }.each do |key, classes| %>
+  <% if flash[key].present? %>
+    <div class="mb-6 rounded-md border px-4 py-3 text-sm <%= classes %>" role="status">
+      <%= flash[key] %>
+    </div>
+  <% end %>
+<% end %>

@@ -55,5 +55,10 @@ Rails.application.routes.draw do
     end
   end
 
+  # The operator interface. Everything below authenticates with a user session
+  # and answers HTML; everything above authenticates with an API key and answers
+  # JSON. Nothing crosses.
+  resource :session, only: %i[new create destroy]
+
   root "dashboard#show"
 end

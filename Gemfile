@@ -21,6 +21,10 @@ gem "turbo-rails"
 gem "sidekiq", "~> 7.3"
 gem "sidekiq-cron", "~> 2.0"
 
+# The operator interface signs people in with a password. API clients never do:
+# they carry a key, and ApiKey hashes those itself.
+gem "bcrypt", "~> 3.1"
+
 # Configuration
 gem "dotenv-rails"
 

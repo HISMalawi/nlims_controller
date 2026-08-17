@@ -1,0 +1,35 @@
+<% content_for :title, t(".title") %>
+
+<div class="rounded-xl border border-slate-200 bg-white p-8 shadow-sm">
+  <h1 class="text-xl font-semibold tracking-tight">SISLAB Sync</h1>
+  <p class="mt-1 flex items-center gap-2 text-sm">
+    <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold
+                 <%= SislabSync.national? ? "bg-amber-100 text-amber-800" : "bg-emerald-100 text-emerald-800" %>">
+      <%= t("modes.#{SislabSync.mode}") %>
+    </span>
+    <span class="font-mono text-xs text-slate-500"><%= SislabSync.node_code %></span>
+  </p>
+
+  <%= form_with url: session_path, scope: :session, class: "mt-6 space-y-4" do |form| %>
+    <div>
+      <%= form.label :email, t("users.email"), class: "block text-sm font-medium text-slate-700" %>
+      <%= form.email_field :email, value: @email, required: true, autofocus: true,
+            autocomplete: "username", autocapitalize: "off",
+            class: "mt-1 w-full rounded-md border border-slate-300 px-3 py-2 shadow-sm
+                    focus:border-slate-500 focus:outline-none focus:ring-1 focus:ring-slate-500" %>
+    </div>
+
+    <div>
+      <%= form.label :password, t("users.password"), class: "block text-sm font-medium text-slate-700" %>
+      <%= form.password_field :password, required: true, autocomplete: "current-password",
+            class: "mt-1 w-full rounded-md border border-slate-300 px-3 py-2 shadow-sm
+                    focus:border-slate-500 focus:outline-none focus:ring-1 focus:ring-slate-500" %>
+    </div>
+
+    <%= form.submit t(".submit"),
+          class: "w-full cursor-pointer rounded-md bg-slate-900 px-3 py-2 font-medium text-white
+                  hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2" %>
+  <% end %>
+</div>
+
+<p class="mt-4 text-center text-xs text-slate-500"><%= t(".no_self_service") %></p>

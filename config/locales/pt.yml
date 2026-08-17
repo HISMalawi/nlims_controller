@@ -1,6 +1,42 @@
 pt:
   app_name: SISLAB Sync
 
+  modes:
+    local: Nó local
+    national: Nó nacional
+
+  nav:
+    dashboard: Painel
+
+  auth:
+    sign_out: Terminar sessão
+    sign_in_required: Inicie sessão para continuar.
+    admin_required: Esta operação exige uma conta de administrador.
+    invalid_credentials: Endereço ou palavra-passe incorrectos.
+    too_many_attempts: Demasiadas tentativas. Aguarde alguns minutos.
+    signed_in: Sessão iniciada. Bem-vindo(a), %{name}.
+    signed_out: Sessão terminada.
+
+  time_ago: há %{distance}
+
+  errors:
+    not_found: Não foi encontrado.
+
+  users:
+    email: Endereço de correio electrónico
+    password: Palavra-passe
+    roles:
+      operator: Operador
+      admin: Administrador
+
+  sessions:
+    new:
+      title: Iniciar sessão
+      submit: Entrar
+      no_self_service: >-
+        As contas são criadas pelo administrador do nó. As chaves de API são
+        outra coisa e não servem para entrar aqui.
+
   dashboard:
     show:
       title: Painel do nó
@@ -11,9 +47,6 @@ pt:
       version: Versão
       environment: Ambiente
       pending: Painel de operação por construir (S11).
-      mode:
-        local: Modo local
-        national: Modo nacional
 
   api:
     errors:
@@ -27,3 +60,17 @@ pt:
       not_found: Recurso não encontrado
       conflict: O recurso já foi criado ou reclamado
       unprocessable: Pedido inválido
+
+  activerecord:
+    models:
+      user: Utilizador
+      api_client: Cliente
+      api_key: Chave de API
+      order: Pedido
+      referral: Amostra referida
+    attributes:
+      user:
+        name: Nome
+        email: Endereço de correio electrónico
+        password: Palavra-passe
+        role: Perfil
