@@ -63,9 +63,27 @@ namespace :dictionary do
     puts promotion.summary
   end
 
+  desc "Pull the dictionary from the national node (local nodes only)"
+  task pull: :environment do
+    abort "Only a local node pulls the dictionary; this node is national." unless SislabSync.local?
+
+    puller = Dictionary::Puller.from_env.call
+    puts "Pulled: #{puller.summary}"
+
+    cursor = SyncCursor.for(SyncCursor::DICTIONARY)
+    puts "Cursor: #{cursor.value} (last synced #{cursor.last_synced_at})"
+  end
+
   desc "Show what the dictionary currently holds"
   task status: :environment do
-    puts "Cursor: #{Dictionary.cursor}"
+    if SislabSync.local?
+      cursor = SyncCursor.for(SyncCursor::DICTIONARY)
+      puts "Pulled up to: #{cursor.value} (last synced #{cursor.last_synced_at || 'never'})"
+      puts "Last error:   #{cursor.last_error}" if cursor.last_error.present?
+    else
+      puts "Cursor: #{Dictionary.cursor}"
+    end
+
     puts format("%-16s %8s %8s %8s", "entity", "draft", "active", "retired")
 
     Dictionary::ENTITIES.each_key do |entity_type|

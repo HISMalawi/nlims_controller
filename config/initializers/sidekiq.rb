@@ -16,7 +16,14 @@ end
 Sidekiq.configure_server do |_config|
   next unless SislabSync.local?
 
-  # S5 — DictionaryPullJob, every 5 minutes
+  Sidekiq::Cron::Job.load_from_hash!(
+    "dictionary_pull" => {
+      "cron" => ENV.fetch("DICTIONARY_PULL_CRON", "*/5 * * * *"),
+      "class" => "DictionaryPullJob",
+      "queue" => "sync"
+    }
+  )
+
   # S9 — SyncPushJob and the node heartbeat
   # S10 — SyncPullJob for inbound referrals
 end

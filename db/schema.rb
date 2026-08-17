@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_17_000000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_17_010100) do
   create_table "api_clients", charset: "utf8mb4", collation: "utf8mb4_unicode_ci", force: :cascade do |t|
     t.boolean "active", default: true, null: false
     t.datetime "created_at", null: false
@@ -62,6 +62,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_17_000000) do
     t.index ["revision"], name: "index_departments_on_revision"
     t.index ["status", "revision"], name: "index_departments_on_status_and_revision"
     t.index ["uuid"], name: "index_departments_on_uuid", unique: true
+  end
+
+  create_table "dictionary_link_deferrals", charset: "utf8mb4", collation: "utf8mb4_unicode_ci", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "link_name", limit: 32, null: false
+    t.string "owner_entity_type", limit: 32, null: false
+    t.string "owner_uuid", limit: 36, null: false
+    t.string "target_code", limit: 32, null: false
+    t.index ["owner_uuid", "link_name", "target_code"], name: "idx_link_deferrals_unique", unique: true
+    t.index ["target_code"], name: "index_dictionary_link_deferrals_on_target_code"
   end
 
   create_table "dictionary_status_changes", charset: "utf8mb4", collation: "utf8mb4_unicode_ci", force: :cascade do |t|
@@ -232,6 +242,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_17_000000) do
     t.index ["revision"], name: "index_specimen_types_on_revision"
     t.index ["status", "revision"], name: "index_specimen_types_on_status_and_revision"
     t.index ["uuid"], name: "index_specimen_types_on_uuid", unique: true
+  end
+
+  create_table "sync_cursors", charset: "utf8mb4", collation: "utf8mb4_unicode_ci", force: :cascade do |t|
+    t.integer "consecutive_failures", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "last_attempted_at"
+    t.string "last_error", limit: 1000
+    t.datetime "last_synced_at"
+    t.string "name", limit: 64, null: false
+    t.datetime "updated_at", null: false
+    t.bigint "value", default: 0, null: false
+    t.index ["name"], name: "index_sync_cursors_on_name", unique: true
   end
 
   create_table "test_panel_test_types", charset: "utf8mb4", collation: "utf8mb4_unicode_ci", force: :cascade do |t|

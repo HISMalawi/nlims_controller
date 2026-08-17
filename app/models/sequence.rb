@@ -44,6 +44,18 @@ class Sequence < ApplicationRecord
     where(name: name).pick(:value) || 0
   end
 
+  # Keeps a local node's counter in step with the revisions it has been given,
+  # so Dictionary.cursor means the same thing in both modes and a local node
+  # could never allocate a number the national one has already used.
+  def self.ensure_at_least!(name, value)
+    return if value.to_i <= current(name)
+
+    transaction do
+      row = lock.find_by!(name: name)
+      row.update_column(:value, value) if row.value < value.to_i
+    end
+  end
+
   def self.ensure_row(name)
     return if exists?(name: name)
 
