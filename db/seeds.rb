@@ -33,6 +33,20 @@ module Seeds
   FACILITY = SislabSync.node_code
   LAB = "#{SislabSync.node_code}-LAB"
 
+  # Where the demo credentials are written instead of being printed.
+  #
+  # bin/docker-entrypoint runs db:prepare, and db:prepare seeds whenever it
+  # creates a database — so `docker compose up` on a fresh volume runs this
+  # file, and anything it puts on stdout goes into the container log, gets
+  # shipped wherever logs are shipped, and is pasted into chats and issues
+  # along with the rest of the boot output. An API key is a bearer token: it
+  # is the whole credential, and it works for anybody who reads it.
+  CREDENTIALS_PATH = "tmp/demo_credentials.txt"
+
+  # A demo key that outlives the demo is a live credential nobody remembers
+  # issuing. This one stops working on its own.
+  KEY_LIFETIME = 30.days
+
   class << self
     def call
       say "Semeando o nó #{SislabSync.node_code} (#{SislabSync.mode})"
@@ -51,10 +65,40 @@ module Seeds
 
       nodes if SislabSync.national?
 
-      say "Pronto. Entre com #{User.order(:id).first&.email} / #{PASSWORD}"
+      write_credentials
     end
 
     private
+
+    # The secrets go to a file on the node, readable by whoever ran the seed and
+    # nobody else. The log gets the path.
+    def write_credentials
+      path = Rails.root.join(CREDENTIALS_PATH)
+      FileUtils.mkdir_p(path.dirname)
+
+      File.open(path, File::WRONLY | File::CREAT | File::TRUNC, 0o600) do |file|
+        file.puts "Credenciais de demonstração — #{SislabSync.node_code} (#{SislabSync.mode})"
+        file.puts "Geradas por db/seeds.rb em #{Time.current.iso8601}. Não são para nenhum nó real."
+        file.puts
+        User.order(:id).each { |user| file.puts "  #{user.role.ljust(9)} #{user.email}  #{PASSWORD}" }
+
+        file.puts
+
+        if @issued_token
+          file.puts "  chave do EMR de demonstração (expira #{@issued_expiry.to_date}):"
+          file.puts "  #{@issued_token}"
+        else
+          # Re-running must not look as though the key were lost, and cannot
+          # reprint it: only its digest was ever stored.
+          file.puts "  o EMR de demonstração já tinha uma chave válida — este ficheiro não a pode repetir."
+          file.puts "  Revogue-a na interface e volte a correr db:seed para obter outra."
+        end
+      end
+
+      File.chmod(0o600, path)
+
+      say "Pronto. Credenciais em #{CREDENTIALS_PATH} (não passam pelo log)."
+    end
 
     # find_or_create so re-running does not reset a password somebody is using.
     def users
@@ -79,12 +123,18 @@ module Seeds
       end
 
       if client.api_keys.usable.none?
-        _key, token = ApiKey.issue!(
+        @issued_expiry = KEY_LIFETIME.from_now
+
+        key, @issued_token = ApiKey.issue!(
           api_client: client,
           scopes: %w[orders:write orders:read results:read dictionary:read],
+          expires_at: @issued_expiry,
           issued_by: "db:seed"
         )
-        say "  chave do EMR de demonstração: #{token}"
+
+        # The prefix identifies the key without being the key. It is what is
+        # already shown on the interface, and it is enough to revoke by.
+        say "  chave do EMR de demonstração emitida (#{key.prefix}), expira #{@issued_expiry.to_date}"
       end
 
       client
