@@ -14,12 +14,17 @@
 # screens are actually reading — a seed that wrote those tables directly would
 # show a system that cannot happen.
 #
-# Development only. Production nodes get their dictionary from the national one
-# and their orders from the laboratory; there is nothing here they should ever
-# be given.
+# Development only, and enforced rather than intended.
+#
+# Production nodes get their dictionary from the national one and their orders
+# from the laboratory. The test database has to start empty, or every spec runs
+# against a dictionary it did not create — `db:prepare` seeds whenever it
+# creates a database, so this file runs in the test environment unless it says
+# otherwise, and the failures that follow point at the spec rather than here.
 
-if Rails.env.production?
-  abort("db/seeds.rb only makes demo data, and a production node must not have any.")
+unless Rails.env.development?
+  warn "db/seeds.rb makes demo data for development only — skipped in #{Rails.env}."
+  return
 end
 
 module Seeds

@@ -54,7 +54,7 @@ jobs:
       DATABASE_HOST: 127.0.0.1
       DATABASE_USER: root
       DATABASE_PASSWORD: sislab
-      DATABASE_NAME: sislab_sync_test_${{ matrix.mode }}
+      TEST_DATABASE_NAME: sislab_sync_test_${{ matrix.mode }}
       REDIS_URL: redis://127.0.0.1:6379/0
 
     steps:

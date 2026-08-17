@@ -29,7 +29,11 @@ development:
 
 test:
   <<: *default
-  database: <%= ENV.fetch("DATABASE_NAME", "sislab_sync_test") %>
+  # Deliberately not DATABASE_NAME. A node's .env sets that to the database the
+  # node actually runs on, and every environment reads the same file — so a test
+  # run honouring it truncates the working database, and `db:seed` writes demo
+  # data into the one the suite is about to assert against. Both have happened.
+  database: <%= ENV.fetch("TEST_DATABASE_NAME", "sislab_sync_test") %>
 
 production:
   <<: *default
