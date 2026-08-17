@@ -9,6 +9,9 @@ pt:
     dashboard: Painel
     orders: Pedidos
     referrals: Amostras referidas
+    dictionary: Dicionário
+    sync_queue: Fila de sincronização
+    nodes: Nós
     api_clients: Clientes e chaves
     audits: Auditoria
 
@@ -23,6 +26,7 @@ pt:
 
   time_ago: há %{distance}
   cancel: Cancelar
+  save: Guardar
 
   errors:
     not_found: Não foi encontrado.
@@ -310,6 +314,168 @@ pt:
         one: 1 pedido
         other: "%{count} pedidos"
       none: Nenhum pedido corresponde a este filtro.
+
+  dictionary:
+    no_loinc: sem LOINC
+    entities:
+      departments: Secções
+      specimen_types: Tipos de amostra
+      drugs: Antibióticos
+      organisms: Organismos
+      indicators: Indicadores
+      test_types: Testes
+      test_panels: Painéis
+      rejection_reasons: Motivos de rejeição
+    statuses:
+      draft: Rascunho
+      active: Activo
+      retired: Retirado
+    columns:
+      national_code: Código nacional
+      name: Nome
+      loinc: LOINC
+      revision: Revisão
+    fields:
+      name: Nome
+      short_name: Nome abreviado
+      description: Descrição
+      moh_code: Código do MISAU
+      loinc_code: Código LOINC
+      unit: Unidade
+      value_type: Tipo de valor
+      target_tat: Tempo de resposta previsto
+      performed_on_sex: Executado em
+      department_id: Secção
+    hints:
+      loinc_code: >-
+        O código LOINC internacional. Sem ele este item não significa nada fora
+        do país, e nenhuma interface FHIR ou HL7 o consegue traduzir.
+      moh_code: Código interno do MISAU, se existir. Não substitui o LOINC.
+      short_name: O que aparece num boletim estreito ou numa etiqueta.
+    issues:
+      duplicate_name: entradas com o nome repetido
+      test_type_without_indicators: testes sem indicadores — não reportam nada
+      test_type_without_specimen_types: testes sem tipo de amostra — não se conseguem colher
+      test_type_without_department: testes sem secção
+      indicator_without_test_type: indicadores que não pertencem a nenhum teste
+      numeric_indicator_without_range: indicadores numéricos sem intervalo de referência
+      invalid_range: intervalos de referência inválidos
+      specimen_type_without_test_types: tipos de amostra que nenhum teste usa
+      drug_without_organisms: antibióticos que nenhum organismo testa
+      organism_without_test_types: organismos que nenhum teste isola
+      test_panel_without_test_types: painéis vazios
+    index:
+      title: Dicionário
+      lede_national: >-
+        Este nó é o dono do dicionário. O que for activado aqui desce até todos
+        os laboratórios do país; o que for retirado desaparece deles.
+      lede_local: >-
+        Réplica do dicionário nacional. Só se altera no nó nacional — um código
+        inventado aqui não existiria para mais ninguém.
+      promote_all: Promover rascunhos
+      promote_confirm: >-
+        Activar todos os rascunhos que estejam utilizáveis? Passam a ser visíveis
+        em todos os laboratórios do país.
+      revision: Revisão actual
+      revision_hint: Onde um nó totalmente actualizado deixaria o cursor
+      local_cursor: Cursor deste nó
+      local_cursor_hint: 'Sincronizado: %{when}'
+      quality: Problemas que travam a promoção
+      entity: Entidade
+    show:
+      new: Nova entrada
+      edit: Editar
+      activate: Activar
+      retire: Retirar
+      retire_confirm: >-
+        Retirar %{name}? Deixa de poder ser pedido, e os nós locais são
+        informados de que saiu.
+      total: Entradas listadas
+      loinc_coverage: Cobertura LOINC
+      loinc_hint: "%{covered} de %{total} entradas activas"
+      search: Procurar
+      search_placeholder: Nome, código nacional, MISAU ou LOINC
+      any_status: Qualquer estado
+      apply: Filtrar
+      none: Nenhuma entrada corresponde a este filtro.
+
+  dictionary_entries:
+    new:
+      title: Nova entrada
+      lede: >-
+        Nasce como rascunho e não sai deste nó até ser activada. O código
+        nacional é atribuído ao gravar.
+    create:
+      created: "%{code} — %{name} criado como rascunho."
+    update:
+      updated: "%{code} actualizado."
+    activate:
+      activated: "%{code} activado. Já viaja para os nós locais."
+    retire:
+      retired: "%{code} retirado."
+    promote:
+      promoted: "%{promoted} entradas activadas, %{held_back} retidas por não estarem utilizáveis."
+
+  sync_queue:
+    index:
+      title: Fila de sincronização
+      lede: >-
+        Tudo o que aconteceu neste nó e tem de chegar ao nacional. Nada é
+        apagado: um evento entregue é a prova de que seguiu, e um falhado fica
+        onde alguém o possa ver.
+      retry_all: Reprocessar os %{count} com erro
+      pending: Por enviar
+      failing: Com erro
+      last_contact: Último contacto
+      link_error: O nó nacional não está a ser alcançado
+      none: Nada nesta lista.
+      retry: Reprocessar
+      sequence: "sequência %{n}"
+      next_attempt: "Nova tentativa: %{when}"
+      filters:
+        pending: Por enviar
+        failing: Com erro
+        delivered: Entregues
+      columns:
+        occurred: Aconteceu
+        type: Evento
+        sample: Amostra
+        attempts: Tentativas
+        state: Estado
+      states:
+        pending: Em fila
+        failing: Com erro
+        delivered: Entregue
+    retry:
+      queued: Evento %{uuid} recolocado na fila.
+    retry_all:
+      queued_all: "%{count} eventos recolocados na fila."
+
+  nodes:
+    index:
+      title: Nós
+      lede: Os nós locais que já falaram com este, e há quanto tempo não o fazem.
+      registered: Nós registados
+      stale: Sem contacto
+      stale_hint: Sem notícias há mais de %{period}
+      dictionary_revision: Revisão do dicionário
+      dictionary_revision_hint: A revisão que um nó actualizado deveria ter
+      none: Nenhum nó falou ainda com este.
+      none_hint: Um nó aparece aqui no primeiro heartbeat que enviar.
+      never: nunca
+      behind_by: "%{n} revisões atrás"
+      up_to_date: Actualizado
+      failing: "%{n} com erro"
+      columns:
+        node: Nó
+        last_seen: Último contacto
+        version: Versão
+        dictionary_lag: Dicionário
+        outbox: Por entregar
+        last_error: Último erro
+      states:
+        live: Activo
+        stale: Sem contacto
 
   api:
     errors:

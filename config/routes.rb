@@ -76,5 +76,35 @@ Rails.application.routes.draw do
 
   resources :audits, only: :index
 
+  # Readable in both modes, writable only on the national node — the same rule
+  # the API follows, drawn the same way, so a local node has no route that could
+  # invent a code nobody else has heard of.
+  get "dictionary", to: "dictionary#index", as: :dictionary
+
+  if SislabSync.national?
+    post "dictionary/promote", to: "dictionary_entries#promote", as: :promote_dictionary
+    get "dictionary/:entity_type/new", to: "dictionary_entries#new", as: :new_dictionary_entry
+    post "dictionary/:entity_type", to: "dictionary_entries#create", as: :dictionary_entries
+    get "dictionary/:entity_type/:national_code/edit", to: "dictionary_entries#edit", as: :edit_dictionary_entry
+    patch "dictionary/:entity_type/:national_code", to: "dictionary_entries#update", as: :dictionary_entry
+    post "dictionary/:entity_type/:national_code/activate", to: "dictionary_entries#activate",
+         as: :activate_dictionary_entry
+    post "dictionary/:entity_type/:national_code/retire", to: "dictionary_entries#retire",
+         as: :retire_dictionary_entry
+  end
+
+  get "dictionary/:entity_type", to: "dictionary#show", as: :dictionary_entity,
+      constraints: { entity_type: /[a-z_]+/ }
+
+  # The outbox only exists on a node that produces events; the nodes table only
+  # on the one that hears from them.
+  if SislabSync.local?
+    get "sync-queue", to: "sync_queue#index", as: :sync_queue
+    post "sync-queue/retry-all", to: "sync_queue#retry_all", as: :retry_all_sync_events
+    post "sync-queue/:id/retry", to: "sync_queue#retry", as: :retry_sync_event
+  end
+
+  resources :nodes, only: :index if SislabSync.national?
+
   root "dashboard#show"
 end

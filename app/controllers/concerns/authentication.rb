@@ -40,10 +40,10 @@ module Authentication
     return true if signed_in?
 
     # Where they were going, so signing in lands on the screen they asked for
-    # rather than dropping them at the dashboard to navigate again. Only GETs:
-    # replaying a POST after a sign-in would repeat an action they may no longer
-    # intend.
-    session[:return_to] = request.fullpath if request.get?
+    # rather than dropping them at the dashboard to navigate again. Only the
+    # safe verbs: replaying a POST after a sign-in would repeat an action they
+    # may no longer intend.
+    session[:return_to] = request.fullpath if request.get? || request.head?
 
     redirect_to new_session_path, alert: t("auth.sign_in_required")
   end

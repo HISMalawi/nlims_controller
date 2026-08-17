@@ -1,0 +1,56 @@
+<%= form_with model: entry,
+      url: entry.persisted? ? dictionary_entry_path(entity_type, entry.national_code) : dictionary_entries_path(entity_type),
+      method: entry.persisted? ? :patch : :post,
+      scope: :entry,
+      class: "space-y-4" do |form| %>
+
+  <% if entry.errors.any? %>
+    <div class="rounded-md border border-rose-300 bg-rose-50 px-4 py-3 text-sm text-rose-900">
+      <ul class="list-inside list-disc">
+        <% entry.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <% Dictionary::Editable.fields_for(entity_type).each do |field| %>
+    <div>
+      <%= form.label field.name, t("dictionary.fields.#{field.name}"), class: "block text-sm font-medium text-slate-700" %>
+
+      <% case field.kind %>
+      <% when :text %>
+        <%= form.text_area field.name, rows: 3,
+              class: "mt-1 w-full rounded-md border border-slate-300 px-3 py-2 shadow-sm
+                      focus:border-slate-500 focus:outline-none focus:ring-1 focus:ring-slate-500" %>
+      <% when :code %>
+        <%= form.text_field field.name,
+              class: "mt-1 w-full rounded-md border border-slate-300 px-3 py-2 font-mono shadow-sm
+                      focus:border-slate-500 focus:outline-none focus:ring-1 focus:ring-slate-500" %>
+      <% when :select %>
+        <%= form.select field.name, field.collection.call, {},
+              class: "mt-1 w-full rounded-md border border-slate-300 px-3 py-2 shadow-sm
+                      focus:border-slate-500 focus:outline-none focus:ring-1 focus:ring-slate-500" %>
+      <% when :belongs_to %>
+        <%= form.collection_select field.name, field.collection.call, :id, :name, { include_blank: true },
+              class: "mt-1 w-full rounded-md border border-slate-300 px-3 py-2 shadow-sm
+                      focus:border-slate-500 focus:outline-none focus:ring-1 focus:ring-slate-500" %>
+      <% else %>
+        <%= form.text_field field.name,
+              class: "mt-1 w-full rounded-md border border-slate-300 px-3 py-2 shadow-sm
+                      focus:border-slate-500 focus:outline-none focus:ring-1 focus:ring-slate-500" %>
+      <% end %>
+
+      <% hint = t("dictionary.hints.#{field.name}", default: "") %>
+      <% if hint.present? %>
+        <p class="mt-1 text-xs text-slate-500"><%= hint %></p>
+      <% end %>
+    </div>
+  <% end %>
+
+  <div class="flex items-center gap-3">
+    <%= form.submit t("save"),
+          class: "cursor-pointer rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white hover:bg-slate-800" %>
+    <%= link_to t("cancel"), dictionary_entity_path(entity_type), class: "text-sm text-slate-500 hover:text-slate-900" %>
+  </div>
+<% end %>
