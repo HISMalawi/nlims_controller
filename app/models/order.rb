@@ -34,6 +34,7 @@ class Order < ApplicationRecord
 
   belongs_to :patient
   belongs_to :specimen_type, optional: true
+  belongs_to :rejection_reason, optional: true
   belongs_to :source_client, class_name: "ApiClient", optional: true
 
   has_many :order_tests, dependent: :destroy
@@ -92,6 +93,24 @@ class Order < ApplicationRecord
 
       reload
       transition_to!(ACCEPTED, actor: actor, reason: "reclamado por #{lab_code}")
+    end
+
+    self
+  end
+
+  # The sample cannot be tested, and no test on it can run either. Rejecting the
+  # order without rejecting its tests would leave a queue of work against a tube
+  # that has already been thrown away.
+  def reject!(reason:, actor: nil, note: nil)
+    self.class.transaction do
+      self.rejection_reason = reason
+      transition_to!(REJECTED, actor: actor, reason: [ reason.name, note.presence ].compact.join(" — "))
+
+      order_tests.each do |order_test|
+        next if order_test.terminal?
+
+        order_test.transition_to!(OrderTest::REJECTED, actor: actor, reason: reason.name)
+      end
     end
 
     self

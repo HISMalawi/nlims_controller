@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_17_040000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_17_040100) do
   create_table "api_clients", charset: "utf8mb4", collation: "utf8mb4_unicode_ci", force: :cascade do |t|
     t.boolean "active", default: true, null: false
     t.datetime "created_at", null: false
@@ -197,6 +197,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_17_040000) do
     t.bigint "patient_id", null: false
     t.string "priority", limit: 12, default: "routine", null: false
     t.string "receiving_lab_code", limit: 24, null: false
+    t.bigint "rejection_reason_id"
     t.string "requested_by"
     t.bigint "revision", default: 0, null: false
     t.string "sending_facility_code", limit: 16, null: false
@@ -210,6 +211,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_17_040000) do
     t.index ["patient_id"], name: "index_orders_on_patient_id"
     t.index ["receiving_lab_code", "revision"], name: "index_orders_on_receiving_lab_code_and_revision"
     t.index ["receiving_lab_code", "status"], name: "index_orders_on_receiving_lab_code_and_status"
+    t.index ["rejection_reason_id"], name: "index_orders_on_rejection_reason_id"
     t.index ["revision"], name: "index_orders_on_revision"
     t.index ["sending_facility_code", "created_at"], name: "index_orders_on_sending_facility_code_and_created_at"
     t.index ["source_client_id"], name: "index_orders_on_source_client_id"
@@ -260,6 +262,25 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_17_040000) do
     t.index ["name"], name: "index_patients_on_name"
     t.index ["national_id"], name: "index_patients_on_national_id", unique: true
     t.index ["uuid"], name: "index_patients_on_uuid", unique: true
+  end
+
+  create_table "rejection_reasons", charset: "utf8mb4", collation: "utf8mb4_unicode_ci", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.datetime "deleted_at"
+    t.text "description"
+    t.string "loinc_code", limit: 32
+    t.string "moh_code", limit: 32
+    t.string "name", null: false
+    t.string "national_code", limit: 32, null: false
+    t.bigint "revision", default: 0, null: false
+    t.string "short_name"
+    t.string "status", limit: 12, default: "draft", null: false
+    t.datetime "updated_at", null: false
+    t.string "uuid", limit: 36, null: false
+    t.index ["national_code"], name: "index_rejection_reasons_on_national_code", unique: true
+    t.index ["revision"], name: "index_rejection_reasons_on_revision"
+    t.index ["status", "revision"], name: "index_rejection_reasons_on_status_and_revision"
+    t.index ["uuid"], name: "index_rejection_reasons_on_uuid", unique: true
   end
 
   create_table "request_audits", charset: "utf8mb4", collation: "utf8mb4_unicode_ci", force: :cascade do |t|
@@ -450,6 +471,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_17_040000) do
   add_foreign_key "order_tests", "test_types"
   add_foreign_key "orders", "api_clients", column: "source_client_id"
   add_foreign_key "orders", "patients"
+  add_foreign_key "orders", "rejection_reasons"
   add_foreign_key "orders", "specimen_types"
   add_foreign_key "organism_drugs", "drugs"
   add_foreign_key "organism_drugs", "organisms"

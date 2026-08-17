@@ -40,6 +40,11 @@ FactoryBot.define do
     sequence(:name) { |n| "Painel #{n}" }
   end
 
+  factory :rejection_reason do
+    dictionary_defaults
+    sequence(:name) { |n| "Motivo de rejeição #{n}" }
+  end
+
   factory :indicator do
     dictionary_defaults
     sequence(:name) { |n| "Indicador #{n}" }

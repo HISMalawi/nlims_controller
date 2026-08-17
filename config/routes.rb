@@ -26,6 +26,9 @@ Rails.application.routes.draw do
         namespace :lab do
           get "pending-orders", to: "orders#pending"
           post "orders/:tracking_number/claim", to: "orders#claim", as: :claim_order
+          patch "orders/:tracking_number/status", to: "orders#status", as: :order_status
+          post "orders/:tracking_number/results", to: "orders#results", as: :order_results
+          post "orders/:tracking_number/reject", to: "orders#reject", as: :reject_order
         end
       end
 

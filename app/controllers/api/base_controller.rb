@@ -18,6 +18,10 @@ module Api
       render_api_error(Errors::NOT_FOUND)
     end
 
+    rescue_from InvalidRequest do |exception|
+      render_api_error(Errors::UNPROCESSABLE, message: exception.message, field: exception.field)
+    end
+
     rescue_from ActiveRecord::RecordInvalid do |exception|
       render_api_error(
         Errors::UNPROCESSABLE,

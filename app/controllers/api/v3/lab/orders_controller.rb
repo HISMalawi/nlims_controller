@@ -43,7 +43,58 @@ module Api
           render_api_error(Errors::CONFLICT, message: e.message)
         end
 
+        # An illegal transition is refused by the model before anything is
+        # written, and arrives here as the 422 every endpoint renders.
+        def status
+          return unless authorize_scope!("results:write")
+          return unless load_order
+
+          @order.transition_to!(params[:status], actor: actor, reason: params[:reason])
+
+          render_data(OrderSerializer.call(@order, history: true))
+        end
+
+        def results
+          return unless authorize_scope!("results:write")
+          return unless load_order
+
+          LabReport.new(@order, report_params, actor: actor).record!
+
+          render_data(OrderSerializer.call(@order, results: true))
+        end
+
+        def reject
+          return unless authorize_scope!("results:write")
+          return unless load_order
+
+          rejection = rejection_params
+          reason = Dictionary.entry!("rejection_reasons", rejection[:reason], field: "reason")
+          @order.reject!(reason: reason, actor: actor, note: rejection[:note])
+
+          render_data(OrderSerializer.call(@order, history: true))
+        end
+
         private
+
+        # The technician, when the laboratory names one. The key identifies the
+        # installation, not the person who read the slide.
+        def actor
+          params[:actor].presence || Current.api_client.name
+        end
+
+        def rejection_params
+          params.permit(:note, reason: %i[national_code uuid])
+        end
+
+        def report_params
+          params.permit(
+            :final,
+            results: [
+              :value, :unit, :recorded_at, :recorded_by,
+              { test_type: %i[national_code uuid], indicator: %i[national_code uuid] }
+            ]
+          )
+        end
 
         def load_order
           @order = Order.find_by_tracking_number!(params[:tracking_number])

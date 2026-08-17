@@ -22,8 +22,6 @@ module Api
             status: :created
           )
         end
-      rescue OrderRequest::Invalid => e
-        render_api_error(Errors::UNPROCESSABLE, message: e.message, field: e.field)
       end
 
       private

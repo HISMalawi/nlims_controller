@@ -170,6 +170,21 @@ RSpec.describe "Dictionary feed", type: :request do
     end
   end
 
+  # A rejection reason is dictionary data like any other, so it reaches every
+  # laboratory down the same feed. That is what lets "hemolisada" mean the same
+  # thing — and be counted — in all of them.
+  it "carries rejection reasons" do
+    reason = create(:rejection_reason, name: "Amostra hemolisada")
+
+    get_changes({ entities: "rejection_reasons" })
+
+    expect(entries.sole).to include(
+      "entity" => "rejection_reasons",
+      "national_code" => reason.national_code,
+      "name" => "Amostra hemolisada"
+    )
+  end
+
   # Both modes answer this: a local node pulls from the national one, a SISLAB
   # pulls from its local node, and the contract has to be the same or the second
   # hop needs its own client.

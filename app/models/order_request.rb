@@ -7,17 +7,6 @@
 # that their dictionary is behind — the current system accepts the name it was
 # given and the test quietly becomes something nobody can report on.
 class OrderRequest
-  # Carries the field it happened in, so the client is told which of fifteen
-  # codes in the payload was the problem rather than being handed a flat "422".
-  class Invalid < StandardError
-    attr_reader :field
-
-    def initialize(message, field:)
-      super(message)
-      @field = field
-    end
-  end
-
   def initialize(payload, api_client:)
     @payload = payload.to_h.deep_symbolize_keys
     @api_client = api_client
@@ -59,8 +48,8 @@ class OrderRequest
   # lookups happen here too, so an order with one unknown test code writes
   # nothing at all rather than an order that is missing a test.
   def validate!
-    raise Invalid.new("é preciso pedir pelo menos um teste", field: "tests") if test_params.empty?
-    raise Invalid.new("o pedido tem de indicar o laboratório receptor", field: "order.receiving_lab_code") if
+    raise InvalidRequest.new("é preciso pedir pelo menos um teste", field: "tests") if test_params.empty?
+    raise InvalidRequest.new("o pedido tem de indicar o laboratório receptor", field: "order.receiving_lab_code") if
       order_params[:receiving_lab_code].blank?
 
     specimen_type
@@ -100,7 +89,7 @@ class OrderRequest
     return @specimen_type if defined?(@specimen_type)
 
     reference = order_params[:specimen_type]
-    @specimen_type = reference.blank? ? nil : resolve!("specimen_types", reference, field: "order.specimen_type")
+    @specimen_type = reference.blank? ? nil : Dictionary.entry!("specimen_types", reference, field: "order.specimen_type")
   end
 
   # A panel is expanded here rather than being stored as one row: the laboratory
@@ -112,7 +101,7 @@ class OrderRequest
       if test[:test_panel].present?
         expand_panel(test, index)
       else
-        [ { test_type: resolve!("test_types", test[:test_type] || {}, field: "tests[#{index}].test_type"),
+        [ { test_type: Dictionary.entry!("test_types", test[:test_type], field: "tests[#{index}].test_type"),
             test_panel: nil, method_of_testing: test[:method_of_testing] } ]
       end
     end
@@ -120,33 +109,15 @@ class OrderRequest
 
   def expand_panel(test, index)
     field = "tests[#{index}].test_panel"
-    panel = resolve!("test_panels", test[:test_panel], field: field)
+    panel = Dictionary.entry!("test_panels", test[:test_panel], field: field)
     members = panel.test_types.active.to_a
 
     if members.empty?
-      raise Invalid.new("o painel #{panel.national_code} (#{panel.name}) não tem testes activos", field: field)
+      raise InvalidRequest.new("o painel #{panel.national_code} (#{panel.name}) não tem testes activos", field: field)
     end
 
     members.map do |test_type|
       { test_type: test_type, test_panel: panel, method_of_testing: test[:method_of_testing] }
     end
-  end
-
-  def resolve!(entity_type, reference, field:)
-    model = Dictionary.model_for!(entity_type)
-    code = reference[:national_code].presence
-    uuid = reference[:uuid].presence
-
-    raise Invalid.new("é preciso indicar national_code ou uuid", field: field) if code.blank? && uuid.blank?
-
-    entry = code ? model.find_by(national_code: code) : model.find_by(uuid: uuid)
-    raise Invalid.new("o código #{code || uuid} não existe no dicionário deste nó", field: field) if entry.nil?
-
-    unless entry.active?
-      raise Invalid.new("#{entry.national_code} (#{entry.name}) não está activo no dicionário " \
-                        "(status: #{entry.status})", field: field)
-    end
-
-    entry
   end
 end
