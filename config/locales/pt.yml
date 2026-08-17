@@ -380,6 +380,8 @@ pt:
       revision_hint: Onde um nó totalmente actualizado deixaria o cursor
       local_cursor: Cursor deste nó
       local_cursor_hint: 'Sincronizado: %{when}'
+      loinc: Cobertura LOINC
+      loinc_hint: "%{covered} de %{total} entradas curáveis"
       quality: Problemas que travam a promoção
       entity: Entidade
     show:

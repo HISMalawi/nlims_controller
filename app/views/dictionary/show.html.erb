@@ -17,10 +17,13 @@
     a task somebody can finish rather than an intention. %>
 <div class="mt-6 grid gap-4 sm:grid-cols-3">
   <%= stat t(".total"), @total %>
-  <%= stat t(".loinc_coverage"),
-        @active_total.zero? ? "—" : "#{((@with_loinc / @active_total.to_f) * 100).round}%",
-        tone: @with_loinc.zero? ? :bad : (@with_loinc < @active_total ? :waiting : :good),
-        hint: t(".loinc_hint", covered: @with_loinc, total: @active_total) %>
+
+  <% if @curated %>
+    <%= stat t(".loinc_coverage"),
+          @active_total.zero? ? "—" : "#{((@with_loinc / @active_total.to_f) * 100).round}%",
+          tone: @with_loinc.zero? ? :bad : (@with_loinc < @active_total ? :waiting : :good),
+          hint: t(".loinc_hint", covered: @with_loinc, total: @active_total) %>
+  <% end %>
 </div>
 
 <%= form_with url: dictionary_entity_path(@entity_type), method: :get, class: "mt-6 flex flex-wrap items-end gap-3" do |form| %>

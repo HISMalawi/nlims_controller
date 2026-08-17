@@ -38,6 +38,7 @@ module DictionaryEntry
     validates :name, presence: true
     validates :status, inclusion: { in: STATUSES }
     validate :publication_is_not_withdrawn
+    validate :loinc_code_is_well_formed
 
     before_save :assign_national_code
     before_save :assign_revision
@@ -148,6 +149,21 @@ module DictionaryEntry
       actor: status_actor,
       reason: status_reason
     )
+  end
+
+  # A wrong LOINC code is worse than none: it states confidently that a test is
+  # something it is not, and it says so to every system that reads it. The check
+  # digit is what catches the single mistyped character, which is the way these
+  # are actually got wrong — they are copied out of a browser tab by hand.
+  #
+  # Blank stays allowed. Most of the catalogue has no code yet, and refusing to
+  # save an entry until somebody has curated it would stop the laboratory
+  # working over a field that is only useful outside the country.
+  def loinc_code_is_well_formed
+    return if loinc_code.blank?
+    return if Dictionary::Loinc.check_digit_valid?(loinc_code)
+
+    errors.add(:loinc_code, "#{loinc_code} não é um código LOINC válido")
   end
 
   # Un-publishing would strand every node that already has the record: they

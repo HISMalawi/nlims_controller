@@ -40,6 +40,26 @@ RSpec.describe "Dicionário na interface", type: :request do
       expect(response.body).to include("sem LOINC")
     end
 
+    it "não mede cobertura onde um código LOINC nunca significaria nada" do
+      create(:department)
+
+      get dictionary_entity_path("departments")
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).not_to include("Cobertura LOINC")
+    end
+
+    it "mostra a cobertura de todo o dicionário logo à entrada" do
+      create(:test_type, loinc_code: "718-7")
+      create(:test_type, loinc_code: nil)
+      create(:department, loinc_code: nil)
+
+      get dictionary_path
+
+      expect(response.body).to include("Cobertura LOINC")
+      expect(response.body).to include("1 de 2 entradas curáveis")
+    end
+
     it "não conhece uma entidade que não existe" do
       get dictionary_entity_path("bananas")
 

@@ -24,6 +24,10 @@
           hint: t(".local_cursor_hint", when: @local_cursor.last_synced_at ? l(@local_cursor.last_synced_at, format: :short) : t("dashboard.sync.never_short")) %>
   <% end %>
 
+  <%= stat t(".loinc"), @loinc.percentage ? "#{@loinc.percentage}%" : "—",
+        tone: @loinc.covered.zero? ? :bad : (@loinc.missing.positive? ? :waiting : :good),
+        hint: t(".loinc_hint", covered: @loinc.covered, total: @loinc.total) %>
+
   <% if @quality&.any? %>
     <div class="rounded-xl border border-amber-300 bg-amber-50 px-5 py-4 sm:col-span-2 lg:col-span-2">
       <p class="text-xs font-medium uppercase tracking-wide text-amber-800"><%= t(".quality") %></p>

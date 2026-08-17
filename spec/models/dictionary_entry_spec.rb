@@ -151,4 +151,30 @@ RSpec.describe DictionaryEntry do
       expect(TestType.changed_since(0).to_a).to eq(created)
     end
   end
+
+  describe "the LOINC code" do
+    it "may be blank, because almost the whole catalogue is still uncurated" do
+      expect(build(:test_type, loinc_code: nil)).to be_valid
+    end
+
+    it "is accepted when it is a real code" do
+      expect(build(:test_type, loinc_code: "718-7")).to be_valid
+    end
+
+    # A wrong code states confidently that a test is something it is not, and
+    # says so to every system that reads it. These are copied out of a browser
+    # tab by hand, so a single mistyped character is the way they go wrong.
+    it "is refused when the check digit does not agree" do
+      entry = build(:test_type, loinc_code: "718-8")
+
+      expect(entry).not_to be_valid
+      expect(entry.errors[:loinc_code]).to be_present
+    end
+
+    it "is refused through every door, not only the curation task" do
+      entry = create(:test_type)
+
+      expect { entry.update!(loinc_code: "12345") }.to raise_error(ActiveRecord::RecordInvalid)
+    end
+  end
 end

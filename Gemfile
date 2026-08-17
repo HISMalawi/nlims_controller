@@ -25,6 +25,11 @@ gem "sidekiq-cron", "~> 2.0"
 # they carry a key, and ApiKey hashes those itself.
 gem "bcrypt", "~> 3.1"
 
+# Leaves the default gems in Ruby 3.4. The quality report, the coverage report
+# and the LOINC worksheets are all CSV, so this stops being a warning and starts
+# being a boot failure the day the image's Ruby moves.
+gem "csv"
+
 # Configuration
 gem "dotenv-rails"
 

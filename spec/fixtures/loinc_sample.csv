@@ -1,0 +1,9 @@
+LOINC_NUM,COMPONENT,PROPERTY,TIME_ASPCT,SYSTEM,SCALE_TYP,METHOD_TYP,CLASS,STATUS,SHORTNAME,LONG_COMMON_NAME
+718-7,Hemoglobin,MCnc,Pt,Bld,Qn,,HEM/BC,ACTIVE,Hgb Bld-mCnc,Hemoglobin [Mass/volume] in Blood
+4544-3,Hematocrit,VFr,Pt,Bld,Qn,Automated count,HEM/BC,ACTIVE,Hct VFr Bld Auto,Hematocrit [Volume Fraction] of Blood by Automated count
+2345-7,Glucose,MCnc,Pt,Ser/Plas,Qn,,CHEM,ACTIVE,Glucose SerPl-mCnc,Glucose [Mass/volume] in Serum or Plasma
+2160-0,Creatinine,MCnc,Pt,Ser/Plas,Qn,,CHEM,ACTIVE,Creat SerPl-mCnc,Creatinine [Mass/volume] in Serum or Plasma
+6690-2,Leukocytes,NCnc,Pt,Bld,Qn,Automated count,HEM/BC,ACTIVE,WBC # Bld Auto,Leukocytes [#/volume] in Blood by Automated count
+30341-2,Erythrocyte sedimentation rate,Vel,Pt,Bld,Qn,,HEM/BC,ACTIVE,ESR Bld,Erythrocyte sedimentation rate
+5195-3,Hepatitis B virus surface Ag,ACnc,Pt,Ser,Ord,,MICRO,DEPRECATED,HBV SAg Ser Ql,Hepatitis B virus surface Ag [Presence] in Serum
+14682-9,Creatinine,SCnc,Pt,Ser/Plas,Qn,,CHEM,ACTIVE,Creat SerPl-sCnc,Creatinine [Moles/volume] in Serum or Plasma
