@@ -40,11 +40,10 @@ Rails.application.routes.draw do
       if SislabSync.national?
         namespace :sync do
           post "events", to: "events#create"
+          get "inbound", to: "inbound#index"
         end
 
         post "nodes/heartbeat", to: "nodes#heartbeat"
-
-        # S10 — sync/inbound
       end
 
       # The dictionary reads the same way in both modes: a local node pulls from

@@ -22,6 +22,7 @@ class Sequence < ApplicationRecord
   # change behind it, and neither cursor means anything to the other.
   RESULT_REVISION = "result_revision"
   ORDER_REVISION = "order_revision"
+  DELIVERY_REVISION = "delivery_revision"
 
   def self.next!(name)
     unless connection.transaction_open?

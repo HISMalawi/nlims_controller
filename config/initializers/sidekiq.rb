@@ -30,8 +30,13 @@ Sidekiq.configure_server do |_config|
       "cron" => ENV.fetch("SYNC_PUSH_CRON", "* * * * *"),
       "class" => "SyncPushJob",
       "queue" => "sync"
+    },
+    # A sample referred here is a courier already on the road, and a result
+    # coming back is a clinician waiting, so this runs as often as the push.
+    "sync_pull" => {
+      "cron" => ENV.fetch("SYNC_PULL_CRON", "* * * * *"),
+      "class" => "SyncPullJob",
+      "queue" => "sync"
     }
   )
-
-  # S10 — SyncPullJob for inbound referrals
 end

@@ -5,6 +5,11 @@
 class Current < ActiveSupport::CurrentAttributes
   attribute :api_key, :api_client, :request_id, :ip
 
+  # Set while this node is applying somebody else's events. Changes made under
+  # it produce no events of their own, or two nodes holding one sample would
+  # push each other's news round in a circle for ever.
+  attribute :replicating
+
   def api_client
     super || api_key&.api_client
   end

@@ -101,6 +101,12 @@ module Sync
       InboundEvent.transaction do
         Applier.new(event).apply!
         event.mark_applied!
+
+        # Only the national node can see who else has a hand on this sample, so
+        # only it works out who else needs to be told. In the same transaction:
+        # an event applied but not routed would be an event nobody comes back
+        # for.
+        Routing.fan_out(event) if SislabSync.national?
       end
 
       true

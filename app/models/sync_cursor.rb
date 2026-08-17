@@ -5,6 +5,7 @@
 # a skipped change.
 class SyncCursor < ApplicationRecord
   DICTIONARY = "dictionary"
+  INBOUND = "inbound"
 
   validates :name, presence: true, uniqueness: true
 

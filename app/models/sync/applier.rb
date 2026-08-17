@@ -22,6 +22,8 @@ module Sync
       when OutboxEvent::ORDER_TEST_ADDED then add_test
       when OutboxEvent::TEST_STATUS_CHANGED then change_test_status
       when OutboxEvent::TEST_RESULT_RECORDED then record_result
+      when OutboxEvent::REFERRAL_DISPATCHED then dispatch_referral
+      when OutboxEvent::REFERRAL_RECEIVED, OutboxEvent::REFERRAL_REJECTED then settle_referral
       else
         raise Rejected.new(Rejected::UNKNOWN_TYPE, "#{@event.type} is not an event this node knows")
       end
@@ -50,8 +52,8 @@ module Sync
     # national node has never heard of. Waiting for patient.upserted to arrive
     # first would mean ordering two aggregates against each other, which the
     # per-aggregate sequence deliberately does not do.
-    def create_order
-      json = @payload.fetch("order") { raise Rejected.new(Rejected::MALFORMED, "order.created carries no order") }
+    def create_order(json = nil, status: nil)
+      json ||= @payload.fetch("order") { raise Rejected.new(Rejected::MALFORMED, "order.created carries no order") }
       order = Order.find_or_initialize_by(uuid: json["uuid"])
       return order if order.persisted?
 
@@ -59,7 +61,7 @@ module Sync
         tracking_number: json["tracking_number"],
         patient: upsert_patient_from(json["patient"]),
         specimen_type: dictionary(SpecimenType, json["specimen_type"], "specimen_type"),
-        status: json["status"],
+        status: status || json["status"],
         priority: json["priority"],
         sending_facility_code: json["sending_facility_code"],
         receiving_lab_code: json["receiving_lab_code"],
@@ -75,7 +77,32 @@ module Sync
       )
 
       order.save!
+
+      # A referred sample arrives with its tests already on it: the node
+      # receiving it was not there when they were added, and will never be sent
+      # those events, because they happened before it had anything to do with
+      # the sample.
+      Array(json["tests"]).each { |test| upsert_test(order, test) }
+
       order
+    end
+
+    def upsert_test(order, json)
+      order_test = OrderTest.find_or_initialize_by(uuid: json["uuid"])
+      return order_test if order_test.persisted?
+
+      order_test.assign_attributes(
+        order: order,
+        test_type: dictionary!(TestType, json["test_type"], "test_type"),
+        test_panel: dictionary(TestPanel, json["test_panel"], "test_panel"),
+        status: json["status"],
+        method_of_testing: json["method_of_testing"],
+        replicated: true,
+        status_actor: actor
+      )
+
+      order_test.save!
+      order_test
     end
 
     def upsert_patient_from(json)
@@ -97,23 +124,64 @@ module Sync
 
     def add_test
       json = @payload.fetch("test") { raise Rejected.new(Rejected::MALFORMED, "order.test_added carries no test") }
-      order = find_order!
 
-      order_test = OrderTest.find_or_initialize_by(uuid: json["uuid"])
-      return order_test if order_test.persisted?
+      upsert_test(find_order!, json)
+    end
 
-      order_test.assign_attributes(
+    # The sample is on its way here, or on its way somewhere this node has an
+    # interest in. Either way the order comes with it, because the receiving
+    # node has never heard of this sample and cannot be asked to accept a parcel
+    # for something it does not have.
+    def dispatch_referral
+      json = referral_json
+      order = create_order(@payload["order"], status: arriving_here?(json) ? Order::REFERRED_IN : nil)
+
+      referral = Referral.find_or_initialize_by(uuid: json["uuid"])
+      return referral if referral.persisted?
+
+      referral.assign_attributes(
         order: order,
-        test_type: dictionary!(TestType, json["test_type"], "test_type"),
-        test_panel: dictionary(TestPanel, json["test_panel"], "test_panel"),
-        status: json["status"],
-        method_of_testing: json["method_of_testing"],
-        replicated: true,
-        status_actor: actor
+        tracking_number: json["tracking_number"],
+        from_facility_code: json["from_facility_code"],
+        from_lab_code: json["from_lab_code"],
+        to_facility_code: json["to_facility_code"],
+        to_lab_code: json["to_lab_code"],
+        state: json["state"],
+        dispatched_at: json["dispatched_at"],
+        courier: json["courier"],
+        remarks: json["remarks"],
+        replicated: true
       )
 
-      order_test.save!
-      order_test
+      referral.save!
+      referral
+    end
+
+    def settle_referral
+      json = referral_json
+      referral = Referral.find_by(uuid: json["uuid"]) ||
+                 raise(Rejected.new(Rejected::UNKNOWN_AGGREGATE, "this node has no referral #{json['uuid']}"))
+
+      referral.update!(
+        state: json["state"],
+        received_at: json["received_at"],
+        rejected_at: json["rejected_at"],
+        rejection_reason: dictionary(RejectionReason, json["rejection_reason"], "rejection_reason"),
+        remarks: json["remarks"]
+      )
+
+      referral
+    end
+
+    def referral_json
+      @payload.fetch("referral") { raise Rejected.new(Rejected::MALFORMED, "the event carries no referral") }
+    end
+
+    # A local node that is the destination holds the sample as referred_in: it
+    # is work arriving, not work sent away. The national node keeps the status
+    # the origin gave it, because from the capital the sample is simply out.
+    def arriving_here?(json)
+      SislabSync.local? && json["to_facility_code"] == SislabSync.node_code
     end
 
     def change_test_status

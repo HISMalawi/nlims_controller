@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_17_060000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_17_060100) do
   create_table "api_clients", charset: "utf8mb4", collation: "utf8mb4_unicode_ci", force: :cascade do |t|
     t.boolean "active", default: true, null: false
     t.datetime "created_at", null: false
@@ -132,6 +132,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_17_060000) do
     t.index ["api_client_id", "idempotency_key"], name: "idx_idempotent_on_client_and_key", unique: true
     t.index ["api_client_id"], name: "index_idempotent_requests_on_api_client_id"
     t.index ["created_at"], name: "index_idempotent_requests_on_created_at"
+  end
+
+  create_table "inbound_deliveries", charset: "utf8mb4", collation: "utf8mb4_unicode_ci", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "inbound_event_id", null: false
+    t.string "node_code", limit: 24, null: false
+    t.bigint "revision", null: false
+    t.index ["inbound_event_id"], name: "index_inbound_deliveries_on_inbound_event_id"
+    t.index ["node_code", "inbound_event_id"], name: "index_inbound_deliveries_on_node_and_event", unique: true
+    t.index ["node_code", "revision"], name: "index_inbound_deliveries_on_node_code_and_revision"
   end
 
   create_table "inbound_events", charset: "utf8mb4", collation: "utf8mb4_unicode_ci", force: :cascade do |t|
@@ -544,6 +554,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_17_060000) do
   add_foreign_key "api_keys", "api_clients"
   add_foreign_key "external_mappings", "api_clients"
   add_foreign_key "idempotent_requests", "api_clients"
+  add_foreign_key "inbound_deliveries", "inbound_events"
   add_foreign_key "indicator_ranges", "indicators"
   add_foreign_key "order_tests", "orders"
   add_foreign_key "order_tests", "test_panels"

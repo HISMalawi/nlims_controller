@@ -64,6 +64,11 @@ class OutboxEvent < ApplicationRecord
     def record!(type:, aggregate_uuid:, payload:, occurred_at: nil)
       return nil unless SislabSync.local?
 
+      # Applying somebody else's event is not news of this node's own. Without
+      # this, two nodes holding one referred sample would send each other's
+      # events back and forth for ever.
+      return nil if Current.replicating
+
       attempts = 0
 
       begin
