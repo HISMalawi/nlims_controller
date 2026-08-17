@@ -24,4 +24,8 @@ class TestType < ApplicationRecord
   has_many :test_panels, through: :test_panel_test_types
 
   validates :performed_on_sex, inclusion: { in: SEXES }
+
+  def self.delta_includes
+    [ :department, :specimen_types, :indicators, :organisms ]
+  end
 end

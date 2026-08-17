@@ -29,6 +29,12 @@ module DictionaryEntry
     # that writes the history does not have to read ambient state.
     attr_accessor :status_actor, :status_reason
 
+    # Set when this entry is a copy of one that arrived from another node. The
+    # revision then comes from the feed instead of being allocated here: there
+    # is one national revision space, and a local node inventing its own numbers
+    # would hand the SISLAB revisions the national node never issued.
+    attr_accessor :replicated_revision
+
     validates :name, presence: true
     validates :status, inclusion: { in: STATUSES }
     validate :publication_is_not_withdrawn
@@ -53,6 +59,13 @@ module DictionaryEntry
   class_methods do
     def entity_type
       table_name
+    end
+
+    # What the feed needs loaded alongside each entry. Overridden by the types
+    # that ship links or ranges inline, so serialising a batch of 500 is a
+    # handful of queries rather than a few thousand.
+    def delta_includes
+      []
     end
   end
 
@@ -93,6 +106,11 @@ module DictionaryEntry
   # Takes the sequence lock, which MySQL holds until this transaction commits.
   # That is what makes revision order and commit order the same order.
   def assign_revision
+    if replicated_revision.present?
+      self.revision = replicated_revision
+      return
+    end
+
     return unless revision_worthy_change?
 
     self.revision = Sequence.next_revision!

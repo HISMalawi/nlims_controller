@@ -8,4 +8,8 @@ class TestPanel < ApplicationRecord
 
   has_many :test_panel_test_types, dependent: :destroy
   has_many :test_types, through: :test_panel_test_types
+
+  def self.delta_includes
+    [ :test_types ]
+  end
 end

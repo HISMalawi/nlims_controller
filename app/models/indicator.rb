@@ -15,4 +15,8 @@ class Indicator < ApplicationRecord
   has_many :test_types, through: :test_type_indicators
 
   validates :value_type, inclusion: { in: VALUE_TYPES }
+
+  def self.delta_includes
+    [ :indicator_ranges ]
+  end
 end

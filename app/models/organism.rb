@@ -11,4 +11,8 @@ class Organism < ApplicationRecord
 
   has_many :test_type_organisms, dependent: :destroy
   has_many :test_types, through: :test_type_organisms
+
+  def self.delta_includes
+    [ :drugs ]
+  end
 end
