@@ -56,12 +56,25 @@ class Sequence < ApplicationRecord
     end
   end
 
+  # An upsert rather than an insert that rescues the duplicate.
+  #
+  # A plain INSERT that collides leaves a shared lock on the row it collided
+  # with, and the locking read below then has to upgrade that lock to an
+  # exclusive one. Two callers doing that at the same moment each hold the
+  # shared lock the other needs to release, and InnoDB kills one of them with a
+  # deadlock. ON DUPLICATE KEY UPDATE takes the exclusive lock straight away, so
+  # the callers queue instead of colliding.
+  #
+  # It only bites the very first caller of a counter, which is why the seeded
+  # dictionary counters never showed it: the counters that matter here are
+  # created fresh every day, at the moment several samples are registered at
+  # once.
   def self.ensure_row(name)
     return if exists?(name: name)
 
-    create!(name: name, value: 0)
-  rescue ActiveRecord::RecordNotUnique
-    nil
+    # No `unique_by`: MySQL does not take one, and skipping duplicates is what
+    # its ON DUPLICATE KEY UPDATE does by default.
+    insert_all([ { name: name, value: 0 } ], record_timestamps: true)
   end
   private_class_method :ensure_row
 end
