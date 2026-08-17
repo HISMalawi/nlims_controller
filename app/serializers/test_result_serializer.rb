@@ -20,6 +20,7 @@ class TestResultSerializer
 
     base.merge(
       tracking_number: @result.order_test.tracking_number,
+      order_test_uuid: @result.order_test.uuid,
       test_type: DictionaryReference.call(@result.order_test.test_type),
       patient: PatientSerializer.call(@result.order_test.order.patient)
     )

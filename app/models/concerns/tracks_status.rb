@@ -18,6 +18,12 @@ module TracksStatus
     # DictionaryEntry carries its actor rather than reading a thread local.
     attr_accessor :status_actor, :status_reason
 
+    # Set when this record is a copy of one that moved on another node. The
+    # machine is enforced where the change is made; a replica that refused a
+    # state the node of record had already committed would disagree with it for
+    # ever, and the disagreement would be invisible.
+    attr_accessor :replicated
+
     validate :status_is_known
     validate :status_transition_exists
 
@@ -62,6 +68,7 @@ module TracksStatus
   # mid-lifecycle, and refusing it because it did not start at the first status
   # would make a referral impossible to receive.
   def status_transition_exists
+    return if replicated
     return unless persisted? && status_changed?
     return if status_machine.allows?(status_was, status)
 

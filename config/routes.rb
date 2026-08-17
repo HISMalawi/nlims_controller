@@ -35,7 +35,11 @@ Rails.application.routes.draw do
 
       # Endpoints only the national node answers.
       if SislabSync.national?
-        # S9 — sync/events, nodes/heartbeat
+        namespace :sync do
+          post "events", to: "events#create"
+        end
+
+        # S9 — nodes/heartbeat
         # S10 — sync/inbound
       end
 

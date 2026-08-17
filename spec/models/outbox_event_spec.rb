@@ -2,7 +2,9 @@
 
 require "rails_helper"
 
-RSpec.describe OutboxEvent do
+# The outbox is a local node's queue: the national node receives events and
+# produces none, so there is nothing here for it to do.
+RSpec.describe OutboxEvent, mode: :local do
   def types_for(order)
     described_class.where(aggregate_uuid: order.uuid).in_order.pluck(:type)
   end

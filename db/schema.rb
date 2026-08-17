@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_17_050000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_17_050100) do
   create_table "api_clients", charset: "utf8mb4", collation: "utf8mb4_unicode_ci", force: :cascade do |t|
     t.boolean "active", default: true, null: false
     t.datetime "created_at", null: false
@@ -132,6 +132,26 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_17_050000) do
     t.index ["api_client_id", "idempotency_key"], name: "idx_idempotent_on_client_and_key", unique: true
     t.index ["api_client_id"], name: "index_idempotent_requests_on_api_client_id"
     t.index ["created_at"], name: "index_idempotent_requests_on_created_at"
+  end
+
+  create_table "inbound_events", charset: "utf8mb4", collation: "utf8mb4_unicode_ci", force: :cascade do |t|
+    t.string "aggregate_uuid", limit: 36, null: false
+    t.datetime "applied_at"
+    t.datetime "created_at", null: false
+    t.string "error_code", limit: 40
+    t.string "error_message", limit: 1000
+    t.string "event_uuid", limit: 36, null: false
+    t.string "node_code", limit: 24, null: false
+    t.datetime "occurred_at", null: false
+    t.text "payload", null: false
+    t.datetime "received_at", null: false
+    t.bigint "sequence", null: false
+    t.string "status", limit: 12, default: "pending", null: false
+    t.string "type", limit: 32, null: false
+    t.datetime "updated_at", null: false
+    t.index ["event_uuid"], name: "index_inbound_events_on_event_uuid", unique: true
+    t.index ["node_code", "aggregate_uuid", "sequence"], name: "index_inbound_events_on_stream", unique: true
+    t.index ["status", "received_at"], name: "index_inbound_events_on_status_and_received_at"
   end
 
   create_table "indicator_ranges", charset: "utf8mb4", collation: "utf8mb4_unicode_ci", force: :cascade do |t|
