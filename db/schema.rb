@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_17_010100) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_17_020400) do
   create_table "api_clients", charset: "utf8mb4", collation: "utf8mb4_unicode_ci", force: :cascade do |t|
     t.boolean "active", default: true, null: false
     t.datetime "created_at", null: false
@@ -35,14 +35,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_17_010100) do
     t.datetime "last_used_at"
     t.string "prefix", limit: 16, null: false
     t.datetime "revoked_at"
-    t.text "scopes", size: :long, null: false, collation: "utf8mb4_bin"
+    t.text "scopes", null: false
     t.datetime "updated_at", null: false
     t.string "uuid", limit: 36, null: false
     t.index ["api_client_id"], name: "index_api_keys_on_api_client_id"
     t.index ["prefix"], name: "index_api_keys_on_prefix", unique: true
     t.index ["revoked_at"], name: "index_api_keys_on_revoked_at"
     t.index ["uuid"], name: "index_api_keys_on_uuid", unique: true
-    t.check_constraint "json_valid(`scopes`)", name: "scopes"
   end
 
   create_table "departments", charset: "utf8mb4", collation: "utf8mb4_unicode_ci", force: :cascade do |t|
@@ -170,6 +169,51 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_17_010100) do
     t.index ["uuid"], name: "index_indicators_on_uuid", unique: true
   end
 
+  create_table "order_tests", charset: "utf8mb4", collation: "utf8mb4_unicode_ci", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "method_of_testing", limit: 64
+    t.bigint "order_id", null: false
+    t.string "status", limit: 24, default: "pending", null: false
+    t.bigint "test_panel_id"
+    t.bigint "test_type_id", null: false
+    t.datetime "updated_at", null: false
+    t.string "uuid", limit: 36, null: false
+    t.index ["order_id", "test_type_id"], name: "index_order_tests_on_order_id_and_test_type_id"
+    t.index ["order_id"], name: "index_order_tests_on_order_id"
+    t.index ["status"], name: "index_order_tests_on_status"
+    t.index ["test_panel_id"], name: "index_order_tests_on_test_panel_id"
+    t.index ["test_type_id"], name: "index_order_tests_on_test_type_id"
+    t.index ["uuid"], name: "index_order_tests_on_uuid", unique: true
+  end
+
+  create_table "orders", charset: "utf8mb4", collation: "utf8mb4_unicode_ci", force: :cascade do |t|
+    t.text "clinical_history"
+    t.datetime "collected_at"
+    t.datetime "created_at", null: false
+    t.string "lab_code", limit: 32
+    t.string "order_location"
+    t.bigint "patient_id", null: false
+    t.string "priority", limit: 12, default: "routine", null: false
+    t.string "receiving_lab_code", limit: 24, null: false
+    t.string "requested_by"
+    t.string "sending_facility_code", limit: 16, null: false
+    t.bigint "source_client_id"
+    t.string "source_system", limit: 16
+    t.bigint "specimen_type_id"
+    t.string "status", limit: 24, default: "requested", null: false
+    t.string "tracking_number", limit: 32, null: false
+    t.datetime "updated_at", null: false
+    t.string "uuid", limit: 36, null: false
+    t.index ["patient_id"], name: "index_orders_on_patient_id"
+    t.index ["receiving_lab_code", "status"], name: "index_orders_on_receiving_lab_code_and_status"
+    t.index ["sending_facility_code", "created_at"], name: "index_orders_on_sending_facility_code_and_created_at"
+    t.index ["source_client_id"], name: "index_orders_on_source_client_id"
+    t.index ["specimen_type_id"], name: "index_orders_on_specimen_type_id"
+    t.index ["status"], name: "index_orders_on_status"
+    t.index ["tracking_number"], name: "index_orders_on_tracking_number", unique: true
+    t.index ["uuid"], name: "index_orders_on_uuid", unique: true
+  end
+
   create_table "organism_drugs", charset: "utf8mb4", collation: "utf8mb4_unicode_ci", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.bigint "drug_id", null: false
@@ -197,6 +241,20 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_17_010100) do
     t.index ["revision"], name: "index_organisms_on_revision"
     t.index ["status", "revision"], name: "index_organisms_on_status_and_revision"
     t.index ["uuid"], name: "index_organisms_on_uuid", unique: true
+  end
+
+  create_table "patients", charset: "utf8mb4", collation: "utf8mb4_unicode_ci", force: :cascade do |t|
+    t.date "birthdate"
+    t.datetime "created_at", null: false
+    t.string "name", null: false
+    t.string "national_id", limit: 32
+    t.string "phone", limit: 32
+    t.string "sex", limit: 8, default: "Unknown", null: false
+    t.datetime "updated_at", null: false
+    t.string "uuid", limit: 36, null: false
+    t.index ["name"], name: "index_patients_on_name"
+    t.index ["national_id"], name: "index_patients_on_national_id", unique: true
+    t.index ["uuid"], name: "index_patients_on_uuid", unique: true
   end
 
   create_table "request_audits", charset: "utf8mb4", collation: "utf8mb4_unicode_ci", force: :cascade do |t|
@@ -244,6 +302,22 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_17_010100) do
     t.index ["uuid"], name: "index_specimen_types_on_uuid", unique: true
   end
 
+  create_table "status_events", charset: "utf8mb4", collation: "utf8mb4_unicode_ci", force: :cascade do |t|
+    t.string "actor"
+    t.datetime "created_at", null: false
+    t.string "entity_type", limit: 24, null: false
+    t.string "entity_uuid", limit: 36, null: false
+    t.string "from_status", limit: 24
+    t.string "reason"
+    t.string "to_status", limit: 24, null: false
+    t.string "tracking_number", limit: 32, null: false
+    t.string "uuid", limit: 36, null: false
+    t.index ["entity_type", "to_status"], name: "index_status_events_on_entity_type_and_to_status"
+    t.index ["entity_uuid", "created_at"], name: "index_status_events_on_entity_uuid_and_created_at"
+    t.index ["tracking_number", "created_at"], name: "index_status_events_on_tracking_number_and_created_at"
+    t.index ["uuid"], name: "index_status_events_on_uuid", unique: true
+  end
+
   create_table "sync_cursors", charset: "utf8mb4", collation: "utf8mb4_unicode_ci", force: :cascade do |t|
     t.integer "consecutive_failures", default: 0, null: false
     t.datetime "created_at", null: false
@@ -283,6 +357,25 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_17_010100) do
     t.index ["revision"], name: "index_test_panels_on_revision"
     t.index ["status", "revision"], name: "index_test_panels_on_status_and_revision"
     t.index ["uuid"], name: "index_test_panels_on_uuid", unique: true
+  end
+
+  create_table "test_results", charset: "utf8mb4", collation: "utf8mb4_unicode_ci", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "indicator_id", null: false
+    t.bigint "order_test_id", null: false
+    t.datetime "recorded_at", null: false
+    t.string "recorded_by"
+    t.string "replaced_by_uuid", limit: 36
+    t.string "unit", limit: 32
+    t.datetime "updated_at", null: false
+    t.string "uuid", limit: 36, null: false
+    t.text "value"
+    t.index ["indicator_id"], name: "index_test_results_on_indicator_id"
+    t.index ["order_test_id", "indicator_id"], name: "index_test_results_on_order_test_id_and_indicator_id"
+    t.index ["order_test_id"], name: "index_test_results_on_order_test_id"
+    t.index ["recorded_at"], name: "index_test_results_on_recorded_at"
+    t.index ["replaced_by_uuid"], name: "index_test_results_on_replaced_by_uuid"
+    t.index ["uuid"], name: "index_test_results_on_uuid", unique: true
   end
 
   create_table "test_type_indicators", charset: "utf8mb4", collation: "utf8mb4_unicode_ci", force: :cascade do |t|
@@ -343,12 +436,20 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_17_010100) do
   add_foreign_key "external_mappings", "api_clients"
   add_foreign_key "idempotent_requests", "api_clients"
   add_foreign_key "indicator_ranges", "indicators"
+  add_foreign_key "order_tests", "orders"
+  add_foreign_key "order_tests", "test_panels"
+  add_foreign_key "order_tests", "test_types"
+  add_foreign_key "orders", "api_clients", column: "source_client_id"
+  add_foreign_key "orders", "patients"
+  add_foreign_key "orders", "specimen_types"
   add_foreign_key "organism_drugs", "drugs"
   add_foreign_key "organism_drugs", "organisms"
   add_foreign_key "request_audits", "api_clients"
   add_foreign_key "request_audits", "api_keys"
   add_foreign_key "test_panel_test_types", "test_panels"
   add_foreign_key "test_panel_test_types", "test_types"
+  add_foreign_key "test_results", "indicators"
+  add_foreign_key "test_results", "order_tests"
   add_foreign_key "test_type_indicators", "indicators"
   add_foreign_key "test_type_indicators", "test_types"
   add_foreign_key "test_type_organisms", "organisms"
