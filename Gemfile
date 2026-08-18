@@ -20,6 +20,10 @@ gem "turbo-rails"
 # Background work
 gem "sidekiq", "~> 7.3"
 gem "sidekiq-cron", "~> 2.0"
+# Sidekiq 7 asks for connection_pool >= 2.3 with no upper bound, but 3.0 changed
+# TimedStack#pop and its scheduler thread dies on boot. Hold it at 2.x until the
+# app moves to Sidekiq 8.
+gem "connection_pool", "~> 2.5"
 
 # The operator interface signs people in with a password. API clients never do:
 # they carry a key, and ApiKey hashes those itself.
