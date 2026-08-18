@@ -59,6 +59,11 @@ group :development, :test do
   # real routes and against the responses the suite produces. OpenAPI 3.1 uses
   # JSON Schema draft 2020-12, which is what this validates.
   gem "json_schemer", "~> 2.3"
+
+  # The reference client, from this repository. It is here so the suite can
+  # drive all three of its profiles against this node — a client that is only
+  # ever tested against a mock of the node is a client that agrees with the mock.
+  gem "sislab_sync_client", path: "clients/ruby"
 end
 
 group :development do

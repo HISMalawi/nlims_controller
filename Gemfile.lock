@@ -1,3 +1,8 @@
+PATH
+  remote: clients/ruby
+  specs:
+    sislab_sync_client (2.0.0.pre)
+
 GEM
   remote: https://rubygems.org/
   specs:
@@ -397,6 +402,7 @@ DEPENDENCIES
   scalar_ruby
   sidekiq (~> 7.3)
   sidekiq-cron (~> 2.0)
+  sislab_sync_client!
   stimulus-rails
   tailwindcss-rails
   turbo-rails
