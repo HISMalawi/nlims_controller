@@ -1460,19 +1460,25 @@ components:
           required: [name]
           properties:
             national_id:
-              type: string
-              description: Número de Identificação do Doente (NID).
+              type: [string, "null"]
+              description: >
+                Número de Identificação do Doente (NID). Admite nulo: nem todo o
+                doente tem um, e nesse caso cada pedido cria um registo de doente
+                próprio, em vez de os agrupar todos sob um identificador vazio.
             name: { type: string }
-            sex: { type: string }
-            birthdate: { type: string, format: date }
-            phone: { type: string }
+            sex: { type: [string, "null"] }
+            birthdate: { type: [string, "null"], format: date }
+            phone: { type: [string, "null"] }
         order:
           type: object
-          required: [sending_facility_code, receiving_lab_code]
+          required: [receiving_lab_code]
           properties:
             sending_facility_code:
               type: string
-              description: Código da unidade sanitária emissora do pedido.
+              description: >
+                Código da unidade sanitária emissora. Facultativo: na ausência é
+                tomado da chave, que já sabe por que unidade fala. Quando
+                presente, tem de coincidir com a da chave.
             receiving_lab_code:
               type: string
               description: Código do laboratório destinatário do pedido.

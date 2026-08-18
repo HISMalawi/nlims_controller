@@ -42,11 +42,46 @@ module OpenapiContract
       ApiContract.resolve(response).dig("content", "application/json", "schema")
     end
 
+    # A body the node accepted has to be one the contract would have accepted
+    # too. Checked only on success, because plenty of specs send deliberate
+    # rubbish to see it refused, and the contract is not describing rubbish.
+    #
+    # This is the direction that catches an over-strict schema — a field marked
+    # required that the node is perfectly happy without — which no amount of
+    # validating responses will ever reveal.
+    #
+    # `answer` is needed because on one endpoint a 2xx does not mean the whole
+    # body was taken: /sync/events accepts the batch and names the events it
+    # could not apply. Those events are precisely the ones the contract should
+    # refuse, so a batch carrying any of them proves nothing either way.
+    def validate_request!(verb:, path:, status:, body:, answer: nil)
+      return true unless status.between?(200, 299)
+      return true if partly_refused?(answer)
+
+      operation = ApiContract.operation_for(verb, path)
+      return true if operation.nil?
+
+      schema = operation.definition.dig("requestBody", "content", "application/json", "schema")
+      return true if schema.nil?
+
+      errors = schemer(schema).validate(body).to_a
+      return true if errors.empty?
+
+      raise Violation, "#{operation} accepted a body the contract would have refused:\n" +
+                       errors.first(10).map { |error| "  #{describe(error)}" }.join("\n")
+    end
+
     def relative_document_path
       ApiContract::PATH.relative_path_from(Rails.root).to_s
     end
 
     private
+
+    def partly_refused?(answer)
+      data = answer.is_a?(Hash) ? answer["data"] : nil
+
+      data.is_a?(Hash) && Array(data["rejected"]).any?
+    end
 
     # `components` travels with each subschema so that every `$ref` in the
     # document resolves against a root that has them, without the whole document
@@ -83,6 +118,23 @@ module ValidatesAgainstTheContract
     OpenapiContract.validate_response!(
       verb: method, path: request.path, status: response.status, body: response.parsed_body
     )
+
+    sent = request_body_sent
+    return if sent.nil?
+
+    OpenapiContract.validate_request!(
+      verb: method, path: request.path, status: response.status, body: sent, answer: response.parsed_body
+    )
+  end
+
+  # Nil unless the spec actually sent a JSON body — a GET, a form post or a
+  # bodyless POST has nothing for the contract to check.
+  def request_body_sent
+    return nil unless request.media_type == "application/json"
+
+    JSON.parse(request.raw_post)
+  rescue JSON::ParserError
+    nil
   end
 end
 
