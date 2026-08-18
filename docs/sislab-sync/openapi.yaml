@@ -1,0 +1,1765 @@
+# O contrato da API do SISLAB Sync.
+#
+# Este ficheiro é a fonte: é validado em CI contra as rotas reais do nó e contra
+# as respostas que a suite de testes produz, de modo que um endpoint que mude de
+# forma sem que este documento mude com ele quebra a build. Ver
+# spec/contracts/openapi_spec.rb.
+#
+# Um nó só responde a parte disto. `x-node-mode` diz em que modo cada operação
+# existe: `local` num nó de unidade sanitária, `national` no nó nacional, `both`
+# em ambos. O documento servido em /api-docs já vem filtrado para o modo do nó
+# que o serve; este ficheiro descreve o sistema inteiro.
+openapi: 3.1.0
+
+info:
+  title: SISLAB Sync
+  version: 2.0.0-dev
+  summary: Pedidos, resultados e sincronização entre laboratórios de Moçambique.
+  description: |
+    A fronteira entre três sistemas: o **EMR** que pede análises, o **SISLAB**
+    que as executa no laboratório, e os **nós** que replicam tudo isso para o
+    nível nacional.
+
+    Toda a API vive sob `/api/v3`. Todas as respostas usam o mesmo envelope —
+    `data`, `meta`, `errors` — sem excepção, incluindo os erros. Um cliente que
+    saiba ler o envelope sabe ler qualquer endpoint.
+
+    ## Autenticação
+
+    Cada pedido leva uma chave de API no cabeçalho `Authorization`:
+
+    ```
+    Authorization: Bearer sls_live_...
+    ```
+
+    Não há sessões, nem endpoint de login, nem tokens curtos para renovar: as
+    integrações correm sem ninguém à frente, e uma chave que expira de
+    madrugada é uma paragem de serviço. As chaves emitem-se no ecrã **Clientes
+    e chaves** do nó, e o segredo só é mostrado uma vez.
+
+    Cada chave traz âmbitos (`scopes`) e um cliente traz uma unidade sanitária
+    e, quando é um laboratório, um `lab_code`. Uma chave válida a operar sobre
+    dados de outra unidade não é um aviso no log: é uma recusa.
+
+    ## Cursores
+
+    Os feeds — resultados, pedidos por atender, dicionário, entrada de
+    sincronização — paginam-se por `since`, que é uma **revisão**, não uma data.
+    Uma revisão vem de um contador com fecho, atribuído no commit, de modo que
+    um registo gravado devagar nunca fica atrás de um cursor que já passou por
+    ele. Guarde o `meta.next_cursor` da última resposta e envie-o em `since` no
+    pedido seguinte; enquanto `meta.has_more` for `true`, volte a chamar.
+
+    ## Erros
+
+    O campo `code` é o contrato e não muda. A `message` é para pessoas, está em
+    português e pode ser reescrita a qualquer momento — não a compare em código.
+  contact:
+    name: MISAU — Direcção de Informação para a Saúde
+    url: https://github.com/MISAU-DIS/nlims_controller
+  license:
+    name: MIT
+
+servers:
+  - url: http://localhost:3000
+    description: Nó em desenvolvimento, na máquina de quem integra
+  - url: https://{host}
+    description: Um nó instalado
+    variables:
+      host:
+        default: sislab.example.mz
+        description: O endereço do nó — o da unidade sanitária, ou o nacional
+
+security:
+  - apiKey: []
+
+tags:
+  - name: Nó
+    description: O que este nó é e o que esta chave pode fazer.
+  - name: EMR
+    description: |
+      O que um sistema clínico chama: pedir análises e recolher resultados.
+      Só existe num nó local.
+  - name: Laboratório
+    description: |
+      O que uma instalação SISLAB chama: puxar o trabalho, reclamá-lo, publicar
+      resultados e referir amostras. Só existe num nó local.
+  - name: Dicionário
+    description: |
+      O catálogo nacional — tipos de análise, indicadores, tipos de amostra.
+      Lê-se da mesma maneira nos dois modos.
+  - name: Sincronização
+    description: |
+      O que um nó local diz ao nacional e o que traz de volta. Só o nó nacional
+      responde a isto.
+
+paths:
+  /api/v3/health:
+    get:
+      tags: [Nó]
+      operationId: health
+      summary: Que nó é este
+      description: |
+        Sem chave e sem auditoria: é como um operador, um cliente ou um health
+        check de contentor descobrem com que nó estão a falar. Uma sonda de dez
+        em dez segundos é ruído, não é prova.
+      x-node-mode: both
+      security: []
+      responses:
+        "200":
+          description: O nó identifica-se.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, meta, errors]
+                additionalProperties: false
+                properties:
+                  data:
+                    type: object
+                    required: [mode, node_code, version, time]
+                    additionalProperties: false
+                    properties:
+                      mode:
+                        type: string
+                        enum: [local, national]
+                      node_code:
+                        type: string
+                        description: O código deste nó — a unidade sanitária, ou o do nacional.
+                      version:
+                        type: string
+                      time:
+                        type: string
+                        format: date-time
+                        description: A hora do nó, para se ver um relógio fora de horas.
+                  meta: { $ref: "#/components/schemas/Meta" }
+                  errors: { $ref: "#/components/schemas/NoErrors" }
+
+  /api/v3/me:
+    get:
+      tags: [Nó]
+      operationId: me
+      summary: Que chave é esta
+      description: |
+        A primeira chamada de quem integra, e a maneira mais rápida de
+        distinguir uma chave errada de um âmbito errado de um nó errado quando
+        alguma coisa não funciona.
+      x-node-mode: both
+      responses:
+        "200":
+          description: O cliente, a chave e o nó.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, meta, errors]
+                additionalProperties: false
+                properties:
+                  data:
+                    type: object
+                    required: [client, key, node]
+                    additionalProperties: false
+                    properties:
+                      client:
+                        type: object
+                        required: [uuid, name, kind, facility_code, lab_code]
+                        additionalProperties: false
+                        properties:
+                          uuid: { $ref: "#/components/schemas/Uuid" }
+                          name: { type: string }
+                          kind:
+                            type: string
+                            enum: [emr, sislab, node, ui]
+                          facility_code:
+                            type: [string, "null"]
+                            description: A unidade sanitária por que esta chave fala.
+                          lab_code:
+                            type: [string, "null"]
+                            description: |
+                              O laboratório por que fala. Em branco vale por
+                              qualquer laboratório do nó.
+                      key:
+                        type: object
+                        required: [uuid, token, scopes, expires_at, last_used_at]
+                        additionalProperties: false
+                        properties:
+                          uuid: { $ref: "#/components/schemas/Uuid" }
+                          token:
+                            type: string
+                            description: O prefixo da chave, mascarado. O segredo não se lê outra vez.
+                          scopes:
+                            type: array
+                            items: { $ref: "#/components/schemas/Scope" }
+                          expires_at: { type: [string, "null"], format: date-time }
+                          last_used_at: { type: [string, "null"], format: date-time }
+                      node:
+                        type: object
+                        required: [mode, node_code]
+                        additionalProperties: false
+                        properties:
+                          mode: { type: string, enum: [local, national] }
+                          node_code: { type: string }
+                  meta: { $ref: "#/components/schemas/Meta" }
+                  errors: { $ref: "#/components/schemas/NoErrors" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+
+  /api/v3/order-requests:
+    post:
+      tags: [EMR]
+      operationId: createOrderRequest
+      summary: Pedir análises
+      description: |
+        A resposta é um recibo, não o pedido: o `tracking_number` é o que o EMR
+        escreve no tubo e por que procura depois, e tudo o resto sobre o pedido
+        está a um GET de distância.
+
+        Um `test_panel` expande-se nas análises que o compõem — pede-se o painel,
+        recebem-se os testes.
+
+        **`Idempotency-Key` é obrigatório.** As redes entre uma unidade e o seu
+        laboratório caem a meio de um pedido; uma repetição com a mesma chave
+        devolve a primeira resposta tal e qual, em vez de criar um segundo
+        pedido. A mesma chave com um corpo diferente é recusada, porque replicar
+        a resposta antiga esconderia um erro do cliente.
+      x-node-mode: local
+      x-scope: orders:write
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/OrderRequest" }
+      responses:
+        "201":
+          description: O pedido foi criado. Guarde o `tracking_number`.
+          headers:
+            Idempotent-Replay:
+              description: Presente e `true` quando esta é a resposta guardada de uma tentativa anterior.
+              schema: { type: string, enum: ["true"] }
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, meta, errors]
+                additionalProperties: false
+                properties:
+                  data:
+                    type: object
+                    required: [tracking_number, order_uuid, status]
+                    additionalProperties: false
+                    properties:
+                      tracking_number: { $ref: "#/components/schemas/TrackingNumber" }
+                      order_uuid: { $ref: "#/components/schemas/Uuid" }
+                      status: { $ref: "#/components/schemas/OrderStatus" }
+                  meta: { $ref: "#/components/schemas/Meta" }
+                  errors: { $ref: "#/components/schemas/NoErrors" }
+        "400": { $ref: "#/components/responses/IdempotencyKeyRequired" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/Unprocessable" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+
+  /api/v3/orders/{tracking_number}:
+    get:
+      tags: [EMR]
+      operationId: showOrder
+      summary: Ver um pedido
+      description: |
+        Endereçado pelo número de seguimento, como em todo o lado: é o que está
+        escrito no tubo e o que um operador tem à frente quando telefona.
+
+        Uma chave de outra unidade sanitária é recusada em vez de receber uma
+        resposta vazia. A amostra existe, e fingir o contrário manda quem
+        integra caçar uma avaria que afinal é uma permissão.
+      x-node-mode: local
+      x-scope: orders:read
+      parameters:
+        - $ref: "#/components/parameters/TrackingNumber"
+      responses:
+        "200":
+          description: O pedido, com as suas análises e sem as leituras.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OrderResponse" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+
+  /api/v3/orders/{tracking_number}/results:
+    get:
+      tags: [EMR]
+      operationId: showOrderResults
+      summary: Ver os resultados de um pedido
+      description: |
+        O mesmo pedido, com as leituras dentro de cada análise. As leituras
+        substituídas viajam também: um cliente que puxou um valor errado tem de
+        conseguir ver que foi corrigido, e por que linha.
+      x-node-mode: local
+      x-scope: results:read
+      parameters:
+        - $ref: "#/components/parameters/TrackingNumber"
+      responses:
+        "200":
+          description: O pedido, com as leituras de cada análise.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OrderWithResultsResponse" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+
+  /api/v3/results:
+    get:
+      tags: [EMR]
+      operationId: listResults
+      summary: Resultados novos, por cursor
+      description: |
+        Como um EMR recolhe resultados sem lhe dizerem onde procurar: sonda um
+        cursor e recebe tudo o que é novo para a sua unidade sanitária, em vez
+        de perguntar por cada pedido que alguma vez levantou.
+
+        Cada leitura vem com o contexto que de outro modo teria de ir buscar —
+        a que amostra pertence, de quem é, e que análise a produziu.
+      x-node-mode: local
+      x-scope: results:read
+      parameters:
+        - $ref: "#/components/parameters/Since"
+        - $ref: "#/components/parameters/Limit"
+        - name: patient_national_id
+          in: query
+          required: false
+          description: Estreita o feed a um doente.
+          schema: { type: string }
+      responses:
+        "200":
+          description: As leituras novas desde o cursor.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, meta, errors]
+                additionalProperties: false
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/TestResultWithContext" }
+                  meta: { $ref: "#/components/schemas/CursorMeta" }
+                  errors: { $ref: "#/components/schemas/NoErrors" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+
+  /api/v3/results/{uuid}/acknowledge:
+    post:
+      tags: [EMR]
+      operationId: acknowledgeResult
+      summary: Confirmar que um resultado foi arquivado
+      description: |
+        Diz ao nó que esta leitura chegou ao processo clínico. É o que permite a
+        um laboratório saber que um resultado crítico foi visto e não ficou
+        parado numa fila.
+
+        Uma leitura já substituída é recusada com `409`, e a resposta nomeia a
+        que a substituiu. Arquivar um valor que entretanto foi corrigido é
+        exactamente o erro que o `replaced_by_uuid` existe para evitar.
+      x-node-mode: local
+      x-scope: results:read
+      parameters:
+        - name: uuid
+          in: path
+          required: true
+          description: O `uuid` da leitura.
+          schema: { $ref: "#/components/schemas/Uuid" }
+      responses:
+        "200":
+          description: A leitura, agora com `acknowledged_at`.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, meta, errors]
+                additionalProperties: false
+                properties:
+                  data: { $ref: "#/components/schemas/TestResult" }
+                  meta: { $ref: "#/components/schemas/Meta" }
+                  errors: { $ref: "#/components/schemas/NoErrors" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+
+  /api/v3/lab/pending-orders:
+    get:
+      tags: [Laboratório]
+      operationId: listPendingOrders
+      summary: O trabalho deste laboratório, por cursor
+      description: |
+        O laboratório sonda; o nó nunca chama o laboratório. É isso que permite
+        a uma instalação SISLAB estar atrás de um router que ninguém administra,
+        que é onde a maior parte delas está.
+
+        O feed traz **tudo o que mudou** desde o cursor, não só o que continua
+        em aberto. Um pedido cancelado na clínica depois de o laboratório o ter
+        levado é precisamente o que esse laboratório tem de saber, e um feed que
+        o escondesse deixaria uma amostra a ser trabalhada que já ninguém quer.
+      x-node-mode: local
+      x-scope: orders:read
+      parameters:
+        - $ref: "#/components/parameters/Since"
+        - $ref: "#/components/parameters/Limit"
+        - name: lab_code
+          in: query
+          required: false
+          description: |
+            Só é preciso para um cliente que fala por vários laboratórios, e
+            ainda assim tem de bater certo com a chave. Uma chave sem
+            laboratório associado e sem este parâmetro recebe `422`.
+          schema: { type: string }
+      responses:
+        "200":
+          description: Os pedidos que mudaram desde o cursor.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, meta, errors]
+                additionalProperties: false
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/Order" }
+                  meta:
+                    allOf:
+                      - { $ref: "#/components/schemas/CursorMeta" }
+                      - type: object
+                        properties:
+                          lab_code: { type: string }
+                  errors: { $ref: "#/components/schemas/NoErrors" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/Unprocessable" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+
+  /api/v3/lab/orders/{tracking_number}/claim:
+    post:
+      tags: [Laboratório]
+      operationId: claimOrder
+      summary: Reclamar um pedido
+      description: |
+        Diz que este laboratório ficou com a amostra. Dois laboratórios a
+        reclamar a mesma amostra resolvem-se por uma escrita condicional: o
+        primeiro fica com ela, o segundo recebe `409` e sabe imediatamente que
+        não é dele.
+      x-node-mode: local
+      x-scope: orders:read
+      parameters:
+        - $ref: "#/components/parameters/TrackingNumber"
+      responses:
+        "200":
+          description: O pedido, agora com `claimed_at` e `claimed_by_lab_code`.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OrderResponse" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "422":
+          description: |
+            Reclamar é aceitar, e uma amostra que já foi cancelada não pode ser
+            aceite. A reclamação cai com a transição recusada.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+
+  /api/v3/lab/orders/{tracking_number}/status:
+    patch:
+      tags: [Laboratório]
+      operationId: transitionOrder
+      summary: Mudar o estado de um pedido
+      description: |
+        As transições permitidas são as do diagrama de estados, e mais nenhuma:
+        um pedido `completed` não volta a `requested`. Uma transição que não
+        exista é recusada antes de se escrever seja o que for, e chega como o
+        `422` que todos os endpoints devolvem.
+
+        A resposta traz o histórico, para o laboratório poder mostrar o percurso
+        sem uma segunda chamada.
+      x-node-mode: local
+      x-scope: results:write
+      parameters:
+        - $ref: "#/components/parameters/TrackingNumber"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status:
+                  allOf:
+                    - { $ref: "#/components/schemas/OrderStatus" }
+                  description: O estado para onde vai.
+                reason:
+                  type: string
+                  description: Porquê, quando não é evidente. Fica no histórico.
+                actor:
+                  type: string
+                  description: |
+                    O técnico, quando o laboratório o nomeia. A chave identifica
+                    a instalação, não quem leu a lâmina.
+      responses:
+        "200":
+          description: O pedido no estado novo, com o histórico.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OrderWithHistoryResponse" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/Unprocessable" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+
+  /api/v3/lab/orders/{tracking_number}/results:
+    post:
+      tags: [Laboratório]
+      operationId: recordResults
+      summary: Registar resultados
+      description: |
+        Leituras parciais ou finais. `final: true` fecha as análises a que estas
+        leituras dizem respeito; sem ele, o laboratório está a publicar o que já
+        tem e continua a trabalhar.
+
+        Uma correcção é uma **linha nova** sobre uma análise que continua
+        `completed`, e a leitura antiga fica com `replaced_by_uuid` a apontar
+        para ela. Reabrir a análise faria a correcção parecer uma segunda
+        execução da mesma análise.
+      x-node-mode: local
+      x-scope: results:write
+      parameters:
+        - $ref: "#/components/parameters/TrackingNumber"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [results]
+              properties:
+                final:
+                  type: boolean
+                  default: false
+                  description: Se estas leituras fecham as análises a que pertencem.
+                actor: { type: string }
+                results:
+                  type: array
+                  minItems: 1
+                  items:
+                    type: object
+                    required: [test_type, indicator]
+                    properties:
+                      test_type:
+                        allOf: [{ $ref: "#/components/schemas/DictionaryRef" }]
+                        description: A análise a que a leitura pertence.
+                      indicator:
+                        allOf: [{ $ref: "#/components/schemas/DictionaryRef" }]
+                        description: O que foi medido.
+                      value:
+                        type: [string, number, "null"]
+                        description: O valor lido, como o laboratório o escreve.
+                      unit: { type: [string, "null"] }
+                      recorded_at:
+                        type: string
+                        format: date-time
+                        description: Quando foi lido. Na falta, é agora.
+                      recorded_by: { type: string }
+      responses:
+        "200":
+          description: O pedido, com as leituras de cada análise.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OrderWithResultsResponse" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/Unprocessable" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+
+  /api/v3/lab/orders/{tracking_number}/tests:
+    post:
+      tags: [Laboratório]
+      operationId: addTests
+      summary: Acrescentar análises não pedidas
+      description: |
+        Uma análise que o clínico não pediu mas que o laboratório fez à mesma —
+        uma confirmação, um teste reflexo, alguma coisa que o primeiro resultado
+        tornou necessária.
+
+        Vai na amostra que já foi colhida, debaixo do número de seguimento por
+        que a clínica já está à espera, em vez de se tornar um segundo pedido
+        que ninguém na clínica reconhece.
+      x-node-mode: local
+      x-scope: results:write
+      parameters:
+        - $ref: "#/components/parameters/TrackingNumber"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [tests]
+              properties:
+                actor: { type: string }
+                tests:
+                  type: array
+                  minItems: 1
+                  items:
+                    type: object
+                    required: [test_type]
+                    properties:
+                      test_type: { $ref: "#/components/schemas/DictionaryRef" }
+                      method_of_testing: { type: string }
+      responses:
+        "201":
+          description: O pedido, já com as análises novas. `meta.added` diz quantas entraram.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, meta, errors]
+                additionalProperties: false
+                properties:
+                  data: { $ref: "#/components/schemas/Order" }
+                  meta:
+                    type: object
+                    required: [added]
+                    properties:
+                      added:
+                        type: integer
+                        description: |
+                          Quantas análises entraram de facto. Uma que já lá
+                          estivesse não entra outra vez.
+                  errors: { $ref: "#/components/schemas/NoErrors" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/Unprocessable" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+
+  /api/v3/lab/orders/{tracking_number}/reject:
+    post:
+      tags: [Laboratório]
+      operationId: rejectOrder
+      summary: Rejeitar a amostra
+      description: |
+        Amostra hemolisada, tubo mal cheio, sem identificação. O motivo vem do
+        dicionário `rejection_reasons` e não de texto livre: a clínica que tem
+        de repetir a colheita precisa de um motivo que signifique o mesmo em
+        todo o país.
+      x-node-mode: local
+      x-scope: results:write
+      parameters:
+        - $ref: "#/components/parameters/TrackingNumber"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              properties:
+                reason:
+                  allOf: [{ $ref: "#/components/schemas/DictionaryRef" }]
+                  description: Uma entrada activa de `rejection_reasons`.
+                note:
+                  type: string
+                  description: O que mais houver a dizer a quem vai repetir a colheita.
+                actor: { type: string }
+      responses:
+        "200":
+          description: O pedido rejeitado, com o histórico.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OrderWithHistoryResponse" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/Unprocessable" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+
+  /api/v3/lab/referrals:
+    post:
+      tags: [Laboratório]
+      operationId: dispatchReferral
+      summary: Referir uma amostra para outro laboratório
+      description: |
+        Um laboratório distrital que hoje não consegue fazer uma análise manda a
+        amostra a um que consiga. Hoje isso acontece por estrada e por telefone,
+        e a clínica que colheu a amostra perde-a de vista por completo.
+
+        A amostra viaja debaixo do mesmo número de seguimento. O resultado volta
+        por ele, seja qual for o laboratório que o produziu.
+      x-node-mode: local
+      x-scope: referrals:write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [tracking_number, to_facility_code, to_lab_code]
+              properties:
+                tracking_number: { $ref: "#/components/schemas/TrackingNumber" }
+                to_facility_code:
+                  type: string
+                  description: A unidade sanitária de destino.
+                to_lab_code:
+                  type: string
+                  description: O laboratório de destino.
+                courier:
+                  type: string
+                  description: Quem leva a amostra.
+                remarks: { type: string }
+                actor: { type: string }
+      responses:
+        "201":
+          description: A remessa, em trânsito.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ReferralResponse" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/Unprocessable" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+
+  /api/v3/lab/referrals/{uuid}:
+    patch:
+      tags: [Laboratório]
+      operationId: settleReferral
+      summary: Receber ou recusar uma amostra referida
+      description: |
+        Quem diz o que aconteceu à remessa é o laboratório que a recebeu, e mais
+        ninguém. Qualquer outro `state` é recusado em vez de adivinhado.
+
+        Uma remessa já resolvida devolve `409`: o segundo a responder fica a
+        saber que chegou tarde, em vez de sobrescrever o primeiro.
+      x-node-mode: local
+      x-scope: referrals:write
+      parameters:
+        - name: uuid
+          in: path
+          required: true
+          description: O `uuid` da remessa.
+          schema: { $ref: "#/components/schemas/Uuid" }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [state]
+              properties:
+                state:
+                  type: string
+                  enum: [received, rejected]
+                reason:
+                  allOf: [{ $ref: "#/components/schemas/DictionaryRef" }]
+                  description: |
+                    Obrigatório quando `state` é `rejected`. Uma entrada activa
+                    de `rejection_reasons`.
+                remarks: { type: string }
+                actor: { type: string }
+      responses:
+        "200":
+          description: A remessa resolvida.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ReferralResponse" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "422": { $ref: "#/components/responses/Unprocessable" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+
+  /api/v3/dictionary/changes:
+    get:
+      tags: [Dicionário]
+      operationId: dictionaryChanges
+      summary: O que mudou no dicionário
+      description: |
+        Um cursor só para o dicionário inteiro, não um por entidade: as entradas
+        vivem em tabelas separadas mas partilham uma única sequência de
+        revisões, de modo que um cliente percorre tudo com um número.
+
+        Servido pelos dois modos e pelo mesmo código: um nó local puxa do
+        nacional, e um SISLAB ou um EMR puxa do seu nó local com exactamente
+        este contrato. É isso que faz o dicionário chegar a um laboratório cujo
+        nó está sem linha para a capital.
+      x-node-mode: both
+      x-scope: dictionary:read
+      parameters:
+        - $ref: "#/components/parameters/Since"
+        - $ref: "#/components/parameters/DictionaryLimit"
+        - name: entities
+          in: query
+          required: false
+          description: |
+            Lista separada por vírgulas, para quem só quer parte do catálogo.
+            Na falta, vêm todas. Uma entidade que não exista é dita pelo nome
+            em vez de dar calado um feed curto.
+          schema: { type: string }
+          example: test_types,indicators
+      responses:
+        "200":
+          description: As entradas alteradas desde o cursor, por ordem de revisão.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DictionaryFeedResponse" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/Unprocessable" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+
+  /api/v3/dictionary/{entity_type}:
+    get:
+      tags: [Dicionário]
+      operationId: dictionaryEntity
+      summary: O catálogo actual de uma entidade
+      description: |
+        Uma leitura directa, para quem só precisa do catálogo como ele está: um
+        EMR a construir um formulário de pedido não quer reproduzir um feed de
+        alterações.
+
+        Só entradas activas. Um rascunho ainda não é um código que outro nó
+        reconheça.
+      x-node-mode: both
+      x-scope: dictionary:read
+      parameters:
+        - name: entity_type
+          in: path
+          required: true
+          description: A entidade do dicionário.
+          schema: { $ref: "#/components/schemas/DictionaryEntity" }
+        - $ref: "#/components/parameters/Since"
+        - $ref: "#/components/parameters/DictionaryLimit"
+      responses:
+        "200":
+          description: As entradas activas desta entidade.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, meta, errors]
+                additionalProperties: false
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/DictionaryEntry" }
+                  meta:
+                    type: object
+                    required: [cursor, next_cursor]
+                    properties:
+                      cursor: { type: integer }
+                      next_cursor: { type: integer }
+                  errors: { $ref: "#/components/schemas/NoErrors" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/Unprocessable" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+
+  /api/v3/sync/events:
+    post:
+      tags: [Sincronização]
+      operationId: pushEvents
+      summary: Entregar eventos ao nó nacional
+      description: |
+        Onde o nó nacional recebe o que aconteceu no país. Só o nacional responde
+        a isto: um nó local não tem nada a receber nem nada que fazer a aceitar
+        eventos de outro nó.
+
+        A entrega é **pelo menos uma vez**, e guardar é idempotente por
+        `event_uuid`: o mesmo lote a chegar duas vezes — porque se perdeu a
+        resposta e não o pedido — é reconhecido em vez de duplicado.
+
+        Aplicar vem depois, e só **em sequência**. Um evento cujo antecessor
+        ainda não chegou fica onde está; aplicá-lo à mesma seria registar um
+        resultado sobre uma amostra de que este nó nunca ouviu falar, ou uma
+        mudança de estado cuja ordem é um palpite.
+
+        Um lote com mais de 500 eventos é recusado inteiro em vez de aplicado a
+        meio: quem envia pagina-o, e paginar é coisa que já sabe fazer.
+      x-node-mode: national
+      x-scope: sync:push
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [node_code, events]
+              properties:
+                node_code:
+                  type: string
+                  description: O nó que produziu estes eventos. Tem de bater certo com a chave.
+                events:
+                  type: array
+                  maxItems: 500
+                  items: { $ref: "#/components/schemas/SyncEvent" }
+      responses:
+        "200":
+          description: |
+            O que foi aceite e o que não foi. Um evento rejeitado não bloqueia
+            os outros nós, mas bloqueia o resto do seu próprio fluxo — o que
+            vem a seguir depende dele.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, meta, errors]
+                additionalProperties: false
+                properties:
+                  data:
+                    type: object
+                    required: [accepted, rejected]
+                    additionalProperties: false
+                    properties:
+                      accepted:
+                        type: array
+                        description: |
+                          Os `event_uuid` que ficaram aplicados. Um evento que
+                          já cá estava vem aqui outra vez — é isso que
+                          idempotente quer dizer, e quem envia pode riscá-lo da
+                          outbox à mesma.
+                        items: { $ref: "#/components/schemas/Uuid" }
+                      rejected:
+                        type: array
+                        items:
+                          type: object
+                          required: [event_uuid, code, message]
+                          properties:
+                            event_uuid: { $ref: "#/components/schemas/Uuid" }
+                            code: { type: [string, "null"] }
+                            message: { type: [string, "null"] }
+                  meta:
+                    type: object
+                    required: [node_code, received]
+                    properties:
+                      node_code: { type: string }
+                      received:
+                        type: integer
+                        description: Quantos vinham no lote.
+                  errors: { $ref: "#/components/schemas/NoErrors" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/Unprocessable" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+
+  /api/v3/sync/inbound:
+    get:
+      tags: [Sincronização]
+      operationId: inboundEvents
+      summary: O que o nacional tem guardado para este nó
+      description: |
+        Amostras referidas para ele, e resultados produzidos noutro sítio sobre
+        amostras que ele mandou embora.
+
+        Uma puxada e não um empurrão, como tudo entre nós: um laboratório atrás
+        de um router que ninguém administra não pode ser chamado.
+
+        Cada evento traz o `node_code` de quem o produziu. Um nó que os aplique
+        tem de manter o fluxo de cada origem na sua própria ordem, e duas
+        origens numeram os seus eventos independentemente uma da outra.
+      x-node-mode: national
+      x-scope: sync:pull
+      parameters:
+        - name: node_code
+          in: query
+          required: false
+          description: |
+            O nó que está a puxar. Na falta, o da chave. Tem de bater certo com
+            a chave de qualquer maneira.
+          schema: { type: string }
+        - $ref: "#/components/parameters/Since"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: Os eventos por entregar a este nó, por ordem de revisão.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, meta, errors]
+                additionalProperties: false
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/InboundEvent" }
+                  meta:
+                    allOf:
+                      - { $ref: "#/components/schemas/CursorMeta" }
+                      - type: object
+                        properties:
+                          node_code: { type: string }
+                  errors: { $ref: "#/components/schemas/NoErrors" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/Unprocessable" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+
+  /api/v3/nodes/heartbeat:
+    post:
+      tags: [Sincronização]
+      operationId: heartbeat
+      summary: Dizer ao nacional que este nó está vivo
+      description: |
+        O silêncio de um laboratório é, de outro modo, igual ao de um laboratório
+        que não tem nada para enviar, e a diferença entre esses dois casos é a
+        pergunta inteira de quem opera o nível nacional.
+
+        A resposta diz ao nó até onde é que o dicionário nacional já foi, para um
+        operador de pé ao lado do nó poder ver que está atrasado sem ter de
+        perguntar à capital.
+      x-node-mode: national
+      x-scope: sync:push
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [node_code]
+              properties:
+                node_code: { type: string }
+                name:
+                  type: string
+                  description: O nome por que a unidade se conhece.
+                version:
+                  type: string
+                  description: A versão que este nó corre.
+                dictionary_cursor:
+                  type: integer
+                  description: Até que revisão do dicionário este nó já leu.
+                outbox_pending:
+                  type: integer
+                  description: Quantos eventos estão por entregar.
+                outbox_failing:
+                  type: integer
+                  description: Destes, quantos já falharam pelo menos uma vez.
+                last_error:
+                  type: string
+                  description: O último erro de entrega, para se ler sem ir ao nó.
+      responses:
+        "200":
+          description: O nacional confirma, e diz onde está o dicionário.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, meta, errors]
+                additionalProperties: false
+                properties:
+                  data:
+                    type: object
+                    required: [node_code, last_seen_at, dictionary_cursor]
+                    additionalProperties: false
+                    properties:
+                      node_code: { type: string }
+                      last_seen_at: { type: string, format: date-time }
+                      dictionary_cursor:
+                        type: integer
+                        description: A revisão mais alta do dicionário nacional.
+                  meta: { $ref: "#/components/schemas/Meta" }
+                  errors: { $ref: "#/components/schemas/NoErrors" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/Unprocessable" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+
+components:
+  securitySchemes:
+    apiKey:
+      type: http
+      scheme: bearer
+      description: |
+        A chave emitida pelo nó, em `Authorization: Bearer <chave>`. O segredo é
+        mostrado uma única vez, quando a chave é criada.
+
+  parameters:
+    TrackingNumber:
+      name: tracking_number
+      in: path
+      required: true
+      description: O número escrito no tubo.
+      schema: { $ref: "#/components/schemas/TrackingNumber" }
+
+    Since:
+      name: since
+      in: query
+      required: false
+      description: |
+        A revisão a partir da qual se quer o que é novo — exclusiva. Comece em
+        `0` e guarde o `meta.next_cursor` de cada resposta.
+      schema: { type: integer, minimum: 0, default: 0 }
+
+    Limit:
+      name: limit
+      in: query
+      required: false
+      description: Quantos registos de cada vez.
+      schema: { type: integer, minimum: 1, maximum: 500, default: 100 }
+
+    DictionaryLimit:
+      name: limit
+      in: query
+      required: false
+      description: Quantas entradas de cada vez.
+      schema: { type: integer, minimum: 1, maximum: 1000, default: 500 }
+
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      description: |
+        Um identificador único deste pedido, escolhido pelo cliente — um uuid
+        serve. Repetir o pedido com a mesma chave devolve a primeira resposta.
+      schema: { type: string, minLength: 1 }
+
+  responses:
+    Unauthenticated:
+      description: Chave em falta, desconhecida, revogada ou expirada.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorResponse" }
+    Forbidden:
+      description: |
+        A chave é válida mas não pode fazer isto: falta-lhe o âmbito
+        (`insufficient_scope`), ou está a mexer em dados de outra unidade
+        sanitária (`facility_mismatch`) ou de outro laboratório
+        (`lab_mismatch`).
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorResponse" }
+    NotFound:
+      description: Não existe aqui — ou não existe de todo.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorResponse" }
+    Conflict:
+      description: |
+        O estado mudou debaixo dos pés: a amostra já foi reclamada, a remessa já
+        foi resolvida, a leitura já foi substituída.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorResponse" }
+    Unprocessable:
+      description: |
+        O pedido está bem formado mas não é aceitável. O `field` do erro nomeia
+        o que estava errado — um código que este nó não conhece, uma transição
+        que não existe, um parâmetro em falta.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorResponse" }
+    IdempotencyKeyRequired:
+      description: Falta o cabeçalho `Idempotency-Key`.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorResponse" }
+    RateLimited:
+      description: |
+        Demasiados pedidos com esta chave nesta janela. O cabeçalho `Retry-After`
+        diz quantos segundos faltam para a janela virar.
+      headers:
+        Retry-After:
+          description: Segundos até a janela seguinte.
+          schema: { type: string }
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  schemas:
+    Uuid:
+      type: string
+      format: uuid
+      description: Um identificador que atravessa nós. Ids de tabela nunca vão à linha.
+
+    TrackingNumber:
+      type: string
+      description: |
+        O número da amostra, atribuído pelo nó que a recebeu e único no país por
+        levar o código da unidade sanitária.
+      example: HCM26000123
+
+    Scope:
+      type: string
+      enum:
+        - orders:read
+        - orders:write
+        - results:read
+        - results:write
+        - referrals:write
+        - dictionary:read
+        - dictionary:write
+        - sync:push
+        - sync:pull
+
+    OrderStatus:
+      type: string
+      description: |
+        O estado da amostra. `referred_out` leva a `completed` porque o resultado
+        volta debaixo deste mesmo número, seja qual for o laboratório que o fez;
+        e leva a `rejected` porque o laboratório de destino pode recusar a
+        amostra. `referred_in` é onde uma amostra começa no nó que a recebe:
+        nada transita para lá, o pedido nasce assim.
+      enum:
+        - requested
+        - accepted
+        - specimen_collected
+        - in_progress
+        - referred_out
+        - referred_in
+        - completed
+        - rejected
+        - cancelled
+
+    TestStatus:
+      type: string
+      description: |
+        As análises movem-se nos seus próprios estados e não no do pedido: um
+        painel de três pode ter uma concluída, uma a correr e uma rejeitada por
+        falta de amostra, e o pedido não é nada disso.
+      enum: [pending, in_progress, completed, rejected, cancelled]
+
+    Priority:
+      type: string
+      enum: [routine, urgent, stat]
+
+    DictionaryEntity:
+      type: string
+      enum:
+        - departments
+        - specimen_types
+        - drugs
+        - organisms
+        - indicators
+        - test_types
+        - test_panels
+        - rejection_reasons
+
+    ErrorCode:
+      type: string
+      description: |
+        O código é o contrato e não muda. A mensagem é para pessoas e pode ser
+        reescrita — não a compare em código.
+      enum:
+        - unauthenticated
+        - insufficient_scope
+        - facility_mismatch
+        - lab_mismatch
+        - idempotency_key_required
+        - idempotency_key_reused
+        - rate_limited
+        - not_found
+        - conflict
+        - unprocessable
+
+    Meta:
+      type: object
+      description: Contexto da resposta. Vazio quando não há nada a dizer.
+
+    NoErrors:
+      type: array
+      maxItems: 0
+      description: Sempre vazio numa resposta com sucesso.
+
+    CursorMeta:
+      type: object
+      required: [cursor, next_cursor, has_more]
+      properties:
+        cursor:
+          type: integer
+          description: O cursor que este pedido trouxe.
+        next_cursor:
+          type: integer
+          description: O cursor a enviar no pedido seguinte.
+        has_more:
+          type: boolean
+          description: Se ainda há mais para trás deste lote.
+
+    ErrorResponse:
+      type: object
+      required: [data, meta, errors]
+      additionalProperties: false
+      properties:
+        data:
+          type: "null"
+          description: Nunca há dados numa resposta de erro.
+        meta: { $ref: "#/components/schemas/Meta" }
+        errors:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            required: [code, message]
+            additionalProperties: false
+            properties:
+              code: { $ref: "#/components/schemas/ErrorCode" }
+              message:
+                type: string
+                description: Em português, para ser lida por uma pessoa.
+              field:
+                type: string
+                description: O campo do pedido que estava errado, quando há um.
+
+    DictionaryRef:
+      type: object
+      description: |
+        Como um cliente aponta para uma entrada do dicionário. Indique
+        `national_code` **ou** `uuid` — o código é o endereço, e o uuid é aceite
+        para quem os guarda não ter de traduzir. Nunca pelo nome: o sistema que
+        isto substitui aceitava o nome que lhe davam, e a análise passava
+        caladamente a ser outra coisa sobre que ninguém conseguia relatar.
+      minProperties: 1
+      properties:
+        national_code: { type: string }
+        uuid: { $ref: "#/components/schemas/Uuid" }
+
+    DictionaryReference:
+      type: [object, "null"]
+      description: |
+        Como um registo transaccional aponta para o dicionário. O código nacional
+        é o endereço; o uuid vem para quem os guarda não ter de procurar, e o
+        nome para um ecrã ou um log se ler sem juntar o dicionário.
+      required: [uuid, national_code, name]
+      additionalProperties: false
+      properties:
+        uuid: { $ref: "#/components/schemas/Uuid" }
+        national_code: { type: string }
+        name: { type: string }
+
+    Patient:
+      type: object
+      required: [uuid, national_id, name, sex, birthdate, phone]
+      additionalProperties: false
+      properties:
+        uuid: { $ref: "#/components/schemas/Uuid" }
+        national_id:
+          type: [string, "null"]
+          description: O NID, quando o doente tem um.
+        name: { type: string }
+        sex: { type: string }
+        birthdate: { type: [string, "null"], format: date }
+        phone: { type: [string, "null"] }
+
+    TestResult:
+      type: object
+      description: Uma leitura.
+      required:
+        [uuid, revision, indicator, value, unit, recorded_at, recorded_by,
+         replaced_by_uuid, acknowledged_at]
+      properties:
+        uuid: { $ref: "#/components/schemas/Uuid" }
+        revision:
+          type: integer
+          description: A posição desta leitura no feed de resultados.
+        indicator: { $ref: "#/components/schemas/DictionaryReference" }
+        value: { type: [string, "null"] }
+        unit: { type: [string, "null"] }
+        recorded_at: { type: [string, "null"], format: date-time }
+        recorded_by: { type: [string, "null"] }
+        replaced_by_uuid:
+          type: [string, "null"]
+          description: |
+            Preenchido quando esta leitura foi corrigida. Aponta para a que a
+            substituiu. Uma leitura com isto preenchido não deve ser arquivada.
+        acknowledged_at:
+          type: [string, "null"]
+          format: date-time
+          description: Quando o EMR confirmou que a arquivou.
+
+    TestResultWithContext:
+      description: |
+        A mesma leitura, com o que um cliente que sonda o feed teria de ir buscar
+        a outro sítio: a que amostra pertence, de quem é, e que análise a
+        produziu.
+      allOf:
+        - { $ref: "#/components/schemas/TestResult" }
+        - type: object
+          required: [tracking_number, order_test_uuid, test_type, patient]
+          properties:
+            tracking_number: { $ref: "#/components/schemas/TrackingNumber" }
+            order_test_uuid: { $ref: "#/components/schemas/Uuid" }
+            test_type: { $ref: "#/components/schemas/DictionaryReference" }
+            patient: { $ref: "#/components/schemas/Patient" }
+
+    OrderTest:
+      type: object
+      description: Uma análise pedida sobre uma amostra.
+      required:
+        [uuid, status, test_type, test_panel, method_of_testing, created_at, updated_at]
+      properties:
+        uuid: { $ref: "#/components/schemas/Uuid" }
+        status: { $ref: "#/components/schemas/TestStatus" }
+        test_type: { $ref: "#/components/schemas/DictionaryReference" }
+        test_panel:
+          allOf: [{ $ref: "#/components/schemas/DictionaryReference" }]
+          description: O painel de onde esta análise saiu, quando saiu de um.
+        method_of_testing: { type: [string, "null"] }
+        created_at: { type: [string, "null"], format: date-time }
+        updated_at: { type: [string, "null"], format: date-time }
+        results:
+          type: array
+          description: |
+            Só vem quando foi pedida. Um cliente que segue o estado de uma
+            amostra quer saber que análises estão a correr, e mandar todas as
+            leituras com essa resposta faria da chamada corrente a mais cara.
+
+            As leituras substituídas viajam também, por ordem de registo.
+          items: { $ref: "#/components/schemas/TestResult" }
+
+    Referral:
+      type: [object, "null"]
+      description: A remessa em que esta amostra viaja, quando viaja.
+      required:
+        [uuid, tracking_number, state, from_facility_code, from_lab_code,
+         to_facility_code, to_lab_code, dispatched_at, received_at, rejected_at,
+         rejection_reason, courier, remarks]
+      additionalProperties: false
+      properties:
+        uuid: { $ref: "#/components/schemas/Uuid" }
+        tracking_number: { $ref: "#/components/schemas/TrackingNumber" }
+        state:
+          type: string
+          enum: [dispatched, received, rejected]
+        from_facility_code: { type: string }
+        from_lab_code: { type: [string, "null"] }
+        to_facility_code: { type: string }
+        to_lab_code: { type: string }
+        dispatched_at: { type: [string, "null"], format: date-time }
+        received_at: { type: [string, "null"], format: date-time }
+        rejected_at: { type: [string, "null"], format: date-time }
+        rejection_reason: { $ref: "#/components/schemas/DictionaryReference" }
+        courier: { type: [string, "null"] }
+        remarks: { type: [string, "null"] }
+
+    StatusEvent:
+      type: object
+      description: Uma transição, tal como ficou registada.
+      required:
+        [uuid, entity, entity_uuid, tracking_number, from_status, to_status,
+         actor, reason, created_at]
+      additionalProperties: false
+      properties:
+        uuid: { $ref: "#/components/schemas/Uuid" }
+        entity:
+          type: string
+          description: O que mudou de estado — o pedido ou uma das suas análises.
+          enum: [orders, order_tests]
+        entity_uuid: { $ref: "#/components/schemas/Uuid" }
+        tracking_number: { $ref: "#/components/schemas/TrackingNumber" }
+        from_status:
+          type: [string, "null"]
+          description: Vazio no primeiro evento de um registo.
+        to_status: { type: string }
+        actor: { type: [string, "null"] }
+        reason: { type: [string, "null"] }
+        created_at: { type: [string, "null"], format: date-time }
+
+    Order:
+      type: object
+      description: |
+        Uma amostra na linha, na forma que o EMR, o SISLAB e o nó nacional
+        recebem — a mesma para os três. Há um serializador e não um por
+        audiência: as três integrações discordarem sobre o que é um pedido é
+        como o sistema actual acabou a traduzir entre três formas do mesmo
+        registo.
+      required:
+        [uuid, revision, tracking_number, status, priority, claimed_at,
+         claimed_by_lab_code, sending_facility_code, receiving_lab_code, lab_code,
+         specimen_type, collected_at, requested_by, order_location,
+         clinical_history, source_system, patient, referral, created_at,
+         updated_at, tests]
+      properties:
+        uuid: { $ref: "#/components/schemas/Uuid" }
+        revision:
+          type: integer
+          description: A posição deste pedido no feed do laboratório.
+        tracking_number: { $ref: "#/components/schemas/TrackingNumber" }
+        status: { $ref: "#/components/schemas/OrderStatus" }
+        priority: { $ref: "#/components/schemas/Priority" }
+        claimed_at: { type: [string, "null"], format: date-time }
+        claimed_by_lab_code: { type: [string, "null"] }
+        sending_facility_code:
+          type: string
+          description: A unidade sanitária que pediu.
+        receiving_lab_code:
+          type: string
+          description: O laboratório a quem foi dirigida.
+        lab_code: { type: [string, "null"] }
+        specimen_type: { $ref: "#/components/schemas/DictionaryReference" }
+        collected_at: { type: [string, "null"], format: date-time }
+        requested_by:
+          type: [string, "null"]
+          description: O clínico que pediu.
+        order_location: { type: [string, "null"] }
+        clinical_history: { type: [string, "null"] }
+        source_system: { type: [string, "null"] }
+        patient: { $ref: "#/components/schemas/Patient" }
+        referral: { $ref: "#/components/schemas/Referral" }
+        created_at: { type: [string, "null"], format: date-time }
+        updated_at: { type: [string, "null"], format: date-time }
+        tests:
+          type: array
+          items: { $ref: "#/components/schemas/OrderTest" }
+        history:
+          type: array
+          description: |
+            Só vem onde foi pedido. As transições do pedido e das suas análises
+            entrelaçadas, por ordem.
+          items: { $ref: "#/components/schemas/StatusEvent" }
+
+    OrderResponse:
+      type: object
+      required: [data, meta, errors]
+      additionalProperties: false
+      properties:
+        data: { $ref: "#/components/schemas/Order" }
+        meta: { $ref: "#/components/schemas/Meta" }
+        errors: { $ref: "#/components/schemas/NoErrors" }
+
+    OrderWithResultsResponse:
+      type: object
+      required: [data, meta, errors]
+      additionalProperties: false
+      properties:
+        data:
+          allOf: [{ $ref: "#/components/schemas/Order" }]
+          description: O pedido, com `results` dentro de cada análise.
+        meta: { $ref: "#/components/schemas/Meta" }
+        errors: { $ref: "#/components/schemas/NoErrors" }
+
+    OrderWithHistoryResponse:
+      type: object
+      required: [data, meta, errors]
+      additionalProperties: false
+      properties:
+        data:
+          allOf: [{ $ref: "#/components/schemas/Order" }]
+          description: O pedido, com `history`.
+        meta: { $ref: "#/components/schemas/Meta" }
+        errors: { $ref: "#/components/schemas/NoErrors" }
+
+    ReferralResponse:
+      type: object
+      required: [data, meta, errors]
+      additionalProperties: false
+      properties:
+        data: { $ref: "#/components/schemas/Referral" }
+        meta: { $ref: "#/components/schemas/Meta" }
+        errors: { $ref: "#/components/schemas/NoErrors" }
+
+    OrderRequest:
+      type: object
+      description: O que um EMR envia para pedir análises.
+      required: [patient, order, tests]
+      properties:
+        patient:
+          type: object
+          required: [name]
+          properties:
+            national_id:
+              type: string
+              description: |
+                O NID. É por ele que o doente é reconhecido entre pedidos; sem
+                ele, cada pedido é um doente novo.
+            name: { type: string }
+            sex: { type: string }
+            birthdate: { type: string, format: date }
+            phone: { type: string }
+        order:
+          type: object
+          required: [sending_facility_code, receiving_lab_code]
+          properties:
+            sending_facility_code:
+              type: string
+              description: Tem de ser a unidade sanitária da chave.
+            receiving_lab_code:
+              type: string
+              description: O laboratório a quem se dirige o pedido.
+            lab_code: { type: string }
+            priority: { $ref: "#/components/schemas/Priority" }
+            requested_by: { type: string }
+            order_location: { type: string }
+            clinical_history: { type: string }
+            collected_at: { type: string, format: date-time }
+            specimen_type:
+              allOf: [{ $ref: "#/components/schemas/DictionaryRef" }]
+              description: Uma entrada activa de `specimen_types`.
+        tests:
+          type: array
+          minItems: 1
+          description: |
+            Cada linha pede uma análise ou um painel. Um painel expande-se nas
+            análises que o compõem.
+          items:
+            type: object
+            minProperties: 1
+            properties:
+              test_type: { $ref: "#/components/schemas/DictionaryRef" }
+              test_panel: { $ref: "#/components/schemas/DictionaryRef" }
+              method_of_testing: { type: string }
+
+    DictionaryEntry:
+      type: object
+      description: |
+        Uma entrada do dicionário como viaja entre nós. Tudo é endereçado por
+        código nacional: ids auto-incrementados nunca atravessam a linha —
+        não significam nada do outro lado e apontariam calados para o registo
+        errado depois de um re-seed.
+
+        Os campos extra dependem da entidade: `indicators` traz `unit`,
+        `value_type` e `ranges`; `test_types` traz `department`, `target_tat` e
+        `performed_on_sex`. As ligações viajam dentro da entrada que as possui,
+        por código nacional.
+      required:
+        [entity, revision, uuid, national_code, status, name, short_name,
+         description, loinc_code, moh_code, deleted_at]
+      additionalProperties: false
+      properties:
+        entity: { $ref: "#/components/schemas/DictionaryEntity" }
+        revision: { type: integer }
+        uuid: { $ref: "#/components/schemas/Uuid" }
+        national_code: { type: string }
+        status:
+          type: string
+          description: |
+            `draft` é onde tudo nasce e para onde uma edição volta. Só uma
+            promoção explícita e auditada põe uma entrada em `active`.
+          enum: [draft, active, retired]
+        name: { type: string }
+        short_name: { type: [string, "null"] }
+        description: { type: [string, "null"] }
+        loinc_code: { type: [string, "null"] }
+        moh_code: { type: [string, "null"] }
+        deleted_at: { type: [string, "null"], format: date-time }
+        unit: { type: [string, "null"] }
+        value_type: { type: [string, "null"] }
+        ranges:
+          type: array
+          description: Os intervalos de referência de um indicador.
+          items:
+            type: object
+            required: [age_min, age_max, sex, range_lower, range_upper, interpretation, value]
+            additionalProperties: false
+            properties:
+              age_min: { type: [integer, "null"] }
+              age_max: { type: [integer, "null"] }
+              sex: { type: [string, "null"] }
+              range_lower:
+                type: [string, "null"]
+                description: |
+                  Os decimais viajam como texto. Um intervalo lido como vírgula
+                  flutuante e escrito outra vez deriva, e um intervalo que deriva
+                  muda a leitura de um resultado.
+              range_upper: { type: [string, "null"] }
+              interpretation: { type: [string, "null"] }
+              value: { type: [string, "null"] }
+        department:
+          type: [object, "null"]
+          required: [national_code]
+          additionalProperties: false
+          properties:
+            national_code: { type: string }
+        target_tat:
+          type: [string, "null"]
+          description: O tempo de resposta que se espera desta análise.
+        performed_on_sex: { type: [string, "null"] }
+        specimen_types: { $ref: "#/components/schemas/DictionaryLinks" }
+        indicators: { $ref: "#/components/schemas/DictionaryLinks" }
+        organisms: { $ref: "#/components/schemas/DictionaryLinks" }
+        drugs: { $ref: "#/components/schemas/DictionaryLinks" }
+        test_types: { $ref: "#/components/schemas/DictionaryLinks" }
+
+    DictionaryLinks:
+      type: array
+      description: Entradas ligadas, por código nacional e por ordem.
+      items:
+        type: object
+        required: [national_code]
+        additionalProperties: false
+        properties:
+          national_code: { type: string }
+
+    DictionaryFeedResponse:
+      type: object
+      required: [data, meta, errors]
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          items: { $ref: "#/components/schemas/DictionaryEntry" }
+        meta: { $ref: "#/components/schemas/CursorMeta" }
+        errors: { $ref: "#/components/schemas/NoErrors" }
+
+    SyncEvent:
+      type: object
+      description: |
+        Um facto que aconteceu num nó. Os eventos de um mesmo agregado são
+        numerados por `sequence`, e é por aí que quem recebe sabe que o fluxo
+        está completo.
+      required: [event_uuid, aggregate_uuid, sequence, type, occurred_at, payload]
+      properties:
+        event_uuid:
+          allOf: [{ $ref: "#/components/schemas/Uuid" }]
+          description: Único para sempre. É por ele que uma entrega repetida é reconhecida.
+        aggregate_uuid:
+          allOf: [{ $ref: "#/components/schemas/Uuid" }]
+          description: O registo a que o evento pertence — o pedido, o doente, a remessa.
+        sequence:
+          type: integer
+          minimum: 1
+          description: A posição deste evento dentro do seu agregado, a começar em 1.
+        type: { $ref: "#/components/schemas/SyncEventType" }
+        occurred_at: { type: string, format: date-time }
+        payload:
+          type: object
+          description: O conteúdo do evento, na forma que o seu tipo determina.
+
+    SyncEventType:
+      type: string
+      enum:
+        - patient.upserted
+        - order.created
+        - order.status_changed
+        - order.test_added
+        - test.status_changed
+        - test.result_recorded
+        - specimen.rejected
+        - referral.dispatched
+        - referral.received
+        - referral.rejected
+
+    InboundEvent:
+      description: |
+        O evento como a sua origem o enviou, mais o nó de onde veio e a revisão
+        por que se pagina.
+      allOf:
+        - { $ref: "#/components/schemas/SyncEvent" }
+        - type: object
+          required: [revision, node_code]
+          properties:
+            revision:
+              type: integer
+              description: O cursor deste feed. Não confundir com `sequence`.
+            node_code:
+              type: string
+              description: O nó que produziu o evento.

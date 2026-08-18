@@ -1,0 +1,74 @@
+<article id="<%= operation.id %>" class="scroll-mt-6 overflow-hidden rounded-lg ring-1 ring-slate-200">
+  <header class="flex flex-wrap items-baseline gap-x-3 gap-y-2 bg-slate-50 px-5 py-4">
+    <span class="rounded px-2 py-0.5 text-xs font-bold ring-1 ring-inset <%= contract_verb_class(operation.verb) %>">
+      <%= operation.verb %>
+    </span>
+    <code class="font-mono text-sm font-medium text-slate-800"><%= operation.template %></code>
+
+    <% if operation.scope %>
+      <span class="ml-auto rounded bg-white px-2 py-0.5 font-mono text-xs text-slate-600 ring-1 ring-slate-300"
+            title="<%= t("api_docs.scope_required") %>">
+        <%= operation.scope %>
+      </span>
+    <% elsif !operation.authenticated? %>
+      <span class="ml-auto rounded bg-white px-2 py-0.5 text-xs text-slate-600 ring-1 ring-slate-300">
+        <%= t("api_docs.no_key_needed") %>
+      </span>
+    <% end %>
+  </header>
+
+  <div class="px-5 py-5">
+    <h3 class="text-lg font-semibold"><%= operation.summary %></h3>
+
+    <div class="contract-prose mt-2 text-sm text-slate-700">
+      <%= contract_prose(operation.description) %>
+    </div>
+
+    <% parameters = operation.parameters.map { |parameter| ApiContract.resolve(parameter) } %>
+    <% if parameters.any? %>
+      <h4 class="contract-section"><%= t("api_docs.parameters") %></h4>
+      <ul class="contract-fields">
+        <% parameters.each do |parameter| %>
+          <li class="contract-field">
+            <div class="contract-field-head">
+              <code class="contract-name"><%= parameter["name"] %></code>
+              <span class="contract-meta"><%= contract_type(parameter.fetch("schema", {})) %></span>
+              <span class="contract-meta"><%= t("api_docs.in.#{parameter['in']}") %></span>
+              <% if parameter["required"] %>
+                <span class="contract-required"><%= t("api_docs.required") %></span>
+              <% end %>
+            </div>
+            <div class="contract-prose contract-field-body"><%= contract_prose(parameter["description"]) %></div>
+          </li>
+        <% end %>
+      </ul>
+    <% end %>
+
+    <% if (body = operation.definition["requestBody"]) %>
+      <h4 class="contract-section"><%= t("api_docs.request_body") %></h4>
+      <%= render "schema", schema: body.dig("content", "application/json", "schema"), depth: 0 %>
+    <% end %>
+
+    <h4 class="contract-section"><%= t("api_docs.responses") %></h4>
+    <ul class="mt-2 space-y-4">
+      <% operation.responses.each do |status, response| %>
+        <% response = ApiContract.resolve(response) %>
+        <li>
+          <div class="flex items-baseline gap-2">
+            <span class="font-mono text-sm font-semibold <%= contract_status_class(status) %>"><%= status %></span>
+            <div class="contract-prose text-sm text-slate-600"><%= contract_prose(response["description"]) %></div>
+          </div>
+
+          <%# Only the successful shape is drawn out. Every failure answers the %>
+          <%# same envelope, and repeating it under each status would bury the %>
+          <%# one shape a reader came here to find. %>
+          <% if contract_success?(status) %>
+            <div class="mt-2">
+              <%= render "schema", schema: response.dig("content", "application/json", "schema"), depth: 0 %>
+            </div>
+          <% end %>
+        </li>
+      <% end %>
+    </ul>
+  </div>
+</article>

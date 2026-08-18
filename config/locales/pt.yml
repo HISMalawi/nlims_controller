@@ -479,6 +479,48 @@ pt:
         live: Activo
         stale: Sem contacto
 
+  api_docs:
+    title: Referência da API
+    eyebrow: Contrato de integração
+    meta_description: A referência da API do SISLAB Sync, servida pelo nó que a cumpre.
+    contents: Nesta página
+    operation_count:
+      one: 1 operação
+      other: "%{count} operações"
+    scoped_to_node_html: >
+      Esta página mostra apenas o que <strong>este</strong> nó responde, porque é
+      um %{mode}. O contrato completo, com os dois modos, está no repositório.
+    node:
+      mode: Modo
+      code: Código do nó
+      version: Versão
+      download: Documento
+    scope_required: Âmbito exigido nesta operação
+    footer_html: >
+      Esta página é gerada a partir de %{path}, o mesmo ficheiro contra o qual
+      cada resposta da suite de testes é validada.
+    no_key_needed: Sem chave
+    parameters: Parâmetros
+    request_body: Corpo do pedido
+    responses: Respostas
+    required: obrigatório
+    always_present: vem sempre
+    nested_further: Continua a aninhar. Veja o documento JSON ou YAML.
+    in:
+      path: no caminho
+      query: na query
+      header: no cabeçalho
+    types:
+      object: objecto
+      array: lista
+      string: texto
+      integer: inteiro
+      number: número
+      boolean: booleano
+      "null": nulo
+      enum: valor de uma lista
+      any: qualquer
+
   api:
     errors:
       unauthenticated: Chave de API em falta ou inválida

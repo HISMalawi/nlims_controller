@@ -20,3 +20,66 @@
     font-variant-numeric: tabular-nums;
   }
 }
+
+/* The API reference at /api-docs. It is a document rather than a screen — read
+   top to bottom by someone integrating, often before they have a key — so it
+   gets prose spacing and a field list, and none of the interface chrome. */
+@layer components {
+  .contract-prose .contract-p {
+    @apply my-2 leading-relaxed;
+  }
+
+  .contract-prose .contract-h4 {
+    @apply mt-4 mb-1 font-semibold text-slate-900;
+  }
+
+  .contract-prose .contract-list {
+    @apply my-2 list-disc space-y-1 pl-5;
+  }
+
+  .contract-prose .contract-pre {
+    @apply my-3 overflow-x-auto rounded bg-slate-900 px-3 py-2 font-mono text-xs text-slate-100;
+  }
+
+  .contract-code {
+    @apply rounded bg-slate-100 px-1 py-0.5 font-mono text-[0.9em] text-slate-800;
+  }
+
+  .contract-section {
+    @apply mt-6 text-xs font-semibold uppercase tracking-wide text-slate-500;
+  }
+
+  .contract-fields {
+    @apply mt-2 divide-y divide-slate-100 border-t border-slate-100;
+  }
+
+  .contract-field {
+    @apply py-2;
+  }
+
+  .contract-field-head {
+    @apply flex flex-wrap items-baseline gap-x-2;
+  }
+
+  .contract-name {
+    @apply font-mono text-sm font-medium text-slate-900;
+  }
+
+  .contract-meta {
+    @apply text-xs text-slate-500;
+  }
+
+  .contract-required {
+    @apply rounded bg-slate-100 px-1.5 text-xs text-slate-600;
+  }
+
+  .contract-field-body {
+    @apply text-sm text-slate-600;
+  }
+
+  /* Nesting is drawn with a rule rather than indentation alone: three levels of
+     indent in a narrow column stops reading as structure. */
+  .contract-nested {
+    @apply mt-1 border-l-2 border-slate-100 pl-4;
+  }
+}

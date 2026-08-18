@@ -55,6 +55,11 @@ Rails.application.routes.draw do
     end
   end
 
+  # The contract, served by the node it describes and narrowed to what this node
+  # answers. Open to anyone who can reach the node: it is what a team reads
+  # before they have a key. `.json` and `.yaml` give the OpenAPI document itself.
+  get "api-docs", to: "api_docs#show", as: :api_docs
+
   # The operator interface. Everything below authenticates with a user session
   # and answers HTML; everything above authenticates with an API key and answers
   # JSON. Nothing crosses.

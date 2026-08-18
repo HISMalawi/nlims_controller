@@ -331,12 +331,46 @@ emite chaves e altera o dicionário.
 
 ---
 
-## 9. Estado
+## 9. O contrato da API
+
+Cada nó serve a sua própria referência em **`/api-docs`**, sem chave e sem
+sessão: é o que uma equipa lê antes de ter uma chave, e pedir uma chave para
+descobrir como pedir uma chave era o ciclo que isto elimina.
+
+| Endereço | O que dá |
+| --- | --- |
+| `/api-docs` | A referência legível, em português, com os âmbitos que cada operação exige |
+| `/api-docs.json` | O documento OpenAPI 3.1 |
+| `/api-docs.yaml` | O mesmo, em YAML |
+
+A página mostra **apenas o que aquele nó responde**. Um nó local não anuncia os
+endpoints do nacional, porque não os tem. O contrato completo, com os dois
+modos, é [`docs/sislab-sync/openapi.yaml`](docs/sislab-sync/openapi.yaml).
+
+Esse ficheiro não é documentação a acompanhar o código: é verificado em CI
+contra as rotas reais de cada modo, contra as constantes que o código impõe —
+estados, prioridades, âmbitos, códigos de erro, tipos de evento — e contra
+**cada resposta que a suite de testes produz**. Um serializador que ganhe um
+campo, ou um endpoint que passe a responder 409 onde o contrato diz que não
+pode, faz a build ficar vermelha.
+
+Para experimentar à mão há uma colecção Postman com o percurso completo de uma
+amostra, do pedido ao resultado:
+[`docs/sislab-sync/sislab-sync.postman_collection.json`](docs/sislab-sync/sislab-sync.postman_collection.json).
+
+---
+
+## 10. Estado
 
 Em construção, no ramo `v2`. Concluídos S1 a S11 — fundação e modo dual, chaves
 de API, dicionário, importação do mLab, feed de alterações, núcleo
 transaccional, API do EMR, API do SISLAB, outbox e envio, referências ponta a
 ponta, e a interface.
 
-A seguir: **S12 — contrato, SDK e entrega**. Os passos, com critérios de
-aceitação e commits, estão no [plano](docs/sislab-sync/plano.html).
+A decorrer: **S12 — contrato, SDK e entrega**. Já feito o contrato OpenAPI 3.1,
+validado em CI e servido em `/api-docs`, e a colecção de exemplos. Falta a gem
+`sislab_sync_client`, os guias de integração das três fronteiras, o teste de
+carga, a renomeação e a tag `v2.0.0`.
+
+Os passos, com critérios de aceitação e commits, estão no
+[plano](docs/sislab-sync/plano.html).

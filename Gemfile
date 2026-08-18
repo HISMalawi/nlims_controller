@@ -51,6 +51,11 @@ group :development, :test do
   gem "rspec-rails", "~> 8.0"
   gem "rubocop-rails-omakase", require: false
   gem "rubocop-rspec", require: false
+
+  # The OpenAPI contract in docs/sislab-sync/openapi.yaml is checked against the
+  # real routes and against the responses the suite produces. OpenAPI 3.1 uses
+  # JSON Schema draft 2020-12, which is what this validates.
+  gem "json_schemer", "~> 2.3"
 end
 
 group :development do
