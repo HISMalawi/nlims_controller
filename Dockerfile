@@ -48,6 +48,9 @@ RUN bundle install
 COPY . .
 
 EXPOSE 3000
+# Same entrypoint as the production stage: it prepares the database and clears
+# a pid file left behind by a container that was killed rather than stopped.
+ENTRYPOINT ["/rails/bin/docker-entrypoint"]
 CMD ["./bin/rails", "server", "-b", "0.0.0.0", "-p", "3000"]
 
 # Throw-away build stage to reduce size of final image

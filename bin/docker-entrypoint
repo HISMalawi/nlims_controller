@@ -1,7 +1,13 @@
 #!/bin/bash -e
 
-# If running the rails server then create or migrate existing database
-if [ "${@: -2:1}" == "./bin/rails" ] && [ "${@: -1:1}" == "server" ]; then
+# If running the rails server then create or migrate existing database. The
+# command carries flags after `server`, so the whole argument list is matched
+# rather than just the last two arguments.
+#
+# The code directory is bind-mounted, so a container that was killed rather
+# than stopped leaves its pid file behind and the next boot refuses to start.
+if [[ "${*}" == *"rails server"* ]]; then
+  rm -f ./tmp/pids/server.pid
   ./bin/rails db:prepare
 fi
 
