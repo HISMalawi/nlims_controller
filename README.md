@@ -1,101 +1,101 @@
 # SISLAB Sync
 
-Sincronização de dados laboratoriais entre unidades sanitárias e o nível nacional.
+Sistema de integração e sincronização transacional de dados laboratoriais entre unidades sanitárias e a base de dados central nacional.
 
-A mesma aplicação corre em dois modos:
+A aplicação opera em dois modos mutuamente exclusivos:
 
-| Modo | Papel |
+| Modo | Descrição Funcional |
 | --- | --- |
-| `local` | Nó de uma unidade sanitária. Recebe pedidos do EMR, serve o SISLAB, gera números de rastreio e empurra tudo para o nacional. |
-| `national` | Nó central. É a fonte do dicionário, recebe os eventos dos nós locais e encaminha as amostras referidas. |
+| `local` | Nó local instalado na unidade sanitária. Processa pedidos do EMR, faz a ponte operacional com o SISLAB, gera números de rastreio nacionais e enfileira eventos transacionais na outbox para envio ao nó nacional. |
+| `national` | Nó central nacional. Mantém a autoridade sobre o catálogo de dados mestre (dicionário nacional), agrega o fluxo transacional de todos os nós locais e orquestra o encaminhamento de amostras referidas. |
 
-O modo é decidido por `SISLAB_SYNC_MODE` e por mais nada. A aplicação recusa-se
-a arrancar sem ele, e as rotas que só existem num dos modos não são sequer
-desenhadas no outro.
-
-> Sucede ao NLIMS Controller. O plano completo da reconstrução está em
-> [`docs/sislab-sync/plano.html`](docs/sislab-sync/plano.html).
+O modo de operação é parametrizado exclusivamente pela variável de ambiente `SISLAB_SYNC_MODE`. A aplicação aborta a inicialização caso a variável não esteja definida. As rotas, jobs e tarefas específicas de cada modo são carregadas condicionalmente.
 
 ---
 
-## 1. Requisitos
+## 1. Requisitos do Sistema
 
-Docker é o caminho suportado. Precisa apenas de:
+O ambiente de execução padrão e suportado é baseado em contentores Docker:
 
-- Docker e Docker Compose
+- Docker Engine (versão 24.0 ou superior)
+- Docker Compose (versão 2.20 ou superior)
 
-Para correr fora do Docker, veja a [secção 7](#7-desenvolvimento-sem-docker).
+Para execução nativa fora de contentores, consulte a [secção 7](#7-execução-em-ambiente-nativo-sem-docker).
 
 ---
 
-## 2. Arrancar em cinco passos
+## 2. Inicialização e Configuração Inicial
 
-### 2.1. Escolher o que este nó é
+### 2.1. Configuração do Ficheiro de Ambiente
+
+Selecione o modelo de configuração correspondente ao modo de operação pretendido:
 
 ```bash
-cp .env.local.example .env       # nó de unidade sanitária
+cp .env.local.example .env       # Para implantação de nó local (unidade sanitária)
 # ou
-cp .env.national.example .env    # nó nacional
+cp .env.national.example .env    # Para implantação do nó nacional central
 ```
 
-Edite o `.env`. O mínimo a rever num nó local é `SISLAB_SYNC_NODE_CODE` — deve
-ser o código da unidade sanitária, porque é por ele que o nó se identifica ao
-nacional e é ele que entra nos números de rastreio.
+No modo `local`, configure obrigatoriamente a variável `SISLAB_SYNC_NODE_CODE` com o código oficial da unidade sanitária (utilizado na identificação do nó e no prefixo dos números de rastreio).
 
-### 2.2. Levantar os serviços
+### 2.2. Inicialização dos Serviços
+
+Execute o provisionamento dos contentores e dependências:
 
 ```bash
-docker compose up
+docker compose up -d
 ```
 
-Na primeira vez isto constrói a imagem, cria a base de dados, corre as migrações
-e — em `development` — semeia dados de demonstração.
+Na primeira inicialização, o contentor de aplicação executa automaticamente a compilação, criação da base de dados, execução das migrações do ActiveRecord e, em ambiente `development`, a inserção de dados de demonstração.
 
-### 2.3. Confirmar que está de pé, e o que é
+### 2.3. Verificação de Estado Operacional (Healthcheck)
+
+Valide a inicialização através do endpoint de diagnóstico:
 
 ```bash
-curl -s localhost:3000/api/v3/health | jq
+curl -s http://localhost:3000/api/v3/health | jq
 ```
+
+Resposta estruturada:
 
 ```json
 {
-  "data": { "mode": "local", "node_code": "HCM", "version": "2.0.0-dev", "time": "…" },
+  "data": {
+    "mode": "local",
+    "node_code": "HCM",
+    "version": "2.0.0-dev",
+    "time": "2026-08-18T11:40:00Z"
+  },
   "meta": {},
   "errors": []
 }
 ```
 
-### 2.4. Entrar na interface
+### 2.4. Acesso à Interface de Gestão
 
-Em `development`, a semente cria dois utilizadores e uma chave de API de
-demonstração. As credenciais **não são escritas para o log** — ficam num
-ficheiro só legível por si:
+Em ambiente `development`, as credenciais administrativas geradas automaticamente são registadas no ficheiro temporário:
 
 ```bash
 cat tmp/demo_credentials.txt
 ```
 
-Abra `http://localhost:3000` e entre com o utilizador `admin` que lá está.
+Aceda a `http://localhost:3000` e autentique-se com o utilizador `admin`.
 
-Num nó a sério não há semente nenhuma. Crie a primeira conta à mão:
+Em ambiente de produção (`production`), crie a conta administrativa inicial via CLI:
 
 ```bash
-docker compose exec app bin/rails "users:create[Ana Machava,ana@hcm.gov.mz,admin]"
+docker compose exec app bin/rails "users:create[Nome Utilizador,email@instituicao.gov.mz,admin]"
 ```
 
-A palavra-passe é gerada e mostrada **uma única vez**. Não há registo dela em
-lado nenhum: só o resumo criptográfico é guardado.
+A palavra-passe temporária é emitida uma única vez no stdout do comando. O sistema armazena apenas o hash criptográfico (bcrypt).
 
-### 2.5. Emitir a chave que o EMR ou o SISLAB vai usar
+### 2.5. Emissão de Chaves de API para Sistemas Integrados
 
-Pela interface, em **Clientes e chaves** → *Novo cliente* → *Emitir chave*. O
-segredo aparece uma vez e não volta a aparecer.
-
-Ou pela linha de comandos:
+A emissão de credenciais de integração (para sistemas EMR ou SISLAB) pode ser realizada via interface web (**Clientes e chaves** → *Novo cliente* → *Emitir chave*) ou via linha de comandos:
 
 ```bash
 docker compose exec app bin/rails api_client:create \
-  NAME="EMR do HCM" KIND=emr FACILITY_CODE=HCM
+  NAME="EMR Unidade Central" KIND=emr FACILITY_CODE=HCM
 
 docker compose exec app bin/rails api_key:issue \
   CLIENT=HCM SCOPES="orders:write,orders:read,results:read,dictionary:read"
@@ -103,166 +103,150 @@ docker compose exec app bin/rails api_key:issue \
 
 ---
 
-## 3. Os serviços do `docker compose`
+## 3. Topologia de Serviços do Docker Compose
 
-| Serviço | O que faz |
+| Serviço | Descrição Técnica |
 | --- | --- |
-| `app` | Puma, na porta `APP_PORT` (3000 por omissão). Prepara a base de dados ao arrancar. |
-| `sidekiq` | Os trabalhos periódicos: puxar o dicionário, empurrar a outbox, puxar as entregas. Só num nó local é que há trabalhos agendados. |
-| `css` | O compilador do Tailwind em modo *watch*. Só faz falta em desenvolvimento. |
-| `mysql` | MySQL 8.4. |
-| `redis` | Redis 7, para o Sidekiq e para o contador de rate limit. |
+| `app` | Servidor de aplicação HTTP Puma na porta `APP_PORT` (padrão: 3000). Executa a rotina de verificação e migração de base de dados na inicialização. |
+| `sidekiq` | Processador de tarefas assíncronas e agendadas em segundo plano (sincronização de outbox, pooling de dicionário e encaminhamentos). |
+| `css` | Compilador do Tailwind CSS em modo de monitorização contínua (*watch*). Utilizado em ambiente de desenvolvimento. |
+| `mysql` | Sistema de Gestão de Base de Dados Relacional MySQL 8.4 LTS. |
+| `redis` | Servidor Redis 7 para gestão de filas do Sidekiq e armazenamento temporário de rate limiting. |
+
+Comandos operacionais frequentes:
 
 ```bash
-docker compose up -d mysql redis      # só a infra-estrutura
-docker compose logs -f app            # seguir a aplicação
-docker compose exec app bin/rails c   # consola
-docker compose down                   # parar
-docker compose down -v                # parar e apagar os dados
+docker compose up -d mysql redis      # Inicialização exclusiva da infraestrutura de dados
+docker compose logs -f app            # Acompanhamento contínuo de logs da aplicação
+docker compose exec app bin/rails c   # Acesso à consola interativa do Rails
+docker compose down                   # Encerramento dos contentores
+docker compose down -v                # Encerramento com eliminação persistente dos volumes de dados
 ```
 
 ---
 
-## 4. Correr os dois nós ao mesmo tempo
+## 4. Execução Simultânea Multimodelo (Local e Nacional)
 
-Necessário a partir do passo S9, e é como se prova que a sincronização funciona.
-Use directorias separadas, cada uma com o seu `.env`, e dê a cada uma um
-`COMPOSE_PROJECT_NAME` e um `APP_PORT` distintos:
+Para testes e validação de fluxos de sincronização em ambiente de desenvolvimento, execute duas instâncias isoladas com namespaces de projeto e portas distintas:
 
 ```bash
-# na directoria do nó nacional
-COMPOSE_PROJECT_NAME=sislab_national APP_PORT=3100 docker compose up
+# Instância do Nó Nacional
+COMPOSE_PROJECT_NAME=sislab_national APP_PORT=3100 docker compose up -d
 
-# na directoria do nó local, com o .env a apontar para o nacional
+# Instância do Nó Local (configurada no .env correspondente)
 SISLAB_SYNC_NATIONAL_URL=http://host.docker.internal:3100
-SISLAB_SYNC_NATIONAL_API_KEY=<chave de tipo `node` emitida no nacional>
+SISLAB_SYNC_NATIONAL_API_KEY=<token_emitido_no_nacional_com_escopos_sync>
 ```
 
-A chave que o nó local usa é emitida **no nacional**, para um cliente de tipo
-`node`, com os âmbitos `sync:push`, `sync:pull` e `dictionary:read`.
+A chave utilizada pelo nó local deve ser previamente emitida no nó nacional para um cliente de tipo `node` com os âmbitos `sync:push`, `sync:pull` e `dictionary:read`.
 
 ---
 
-## 5. Variáveis de ambiente
+## 5. Especificação de Variáveis de Ambiente
 
-### Identidade do nó
+### 5.1. Identificação do Nó
 
-| Variável | Obrigatória | Para que serve |
+| Variável | Obrigatoriedade | Descrição |
 | --- | --- | --- |
-| `SISLAB_SYNC_MODE` | sim | `local` ou `national`. Sem ela a aplicação não arranca. |
-| `SISLAB_SYNC_NODE_CODE` | em modo local | Como este nó se identifica. Use o código da unidade sanitária. |
-| `SISLAB_SYNC_NATIONAL_URL` | em modo local | Onde vive o nó nacional. |
-| `SISLAB_SYNC_NATIONAL_API_KEY` | em modo local | A chave com que este nó fala com o nacional. |
-| `SISLAB_SYNC_PUSH_BATCH` | não | Eventos por lote no envio da outbox. 100 por omissão. |
+| `SISLAB_SYNC_MODE` | Obrigatória | Define o modo de operação: `local` ou `national`. |
+| `SISLAB_SYNC_NODE_CODE` | Obrigatória em modo local | Código identificador da unidade sanitária / nó. |
+| `SISLAB_SYNC_NATIONAL_URL` | Obrigatória em modo local | URL base de comunicação com o nó nacional central. |
+| `SISLAB_SYNC_NATIONAL_API_KEY` | Obrigatória em modo local | Token de autenticação Bearer para comunicação com o nó nacional. |
+| `SISLAB_SYNC_PUSH_BATCH` | Opcional | Quantidade máxima de eventos por lote de envio da outbox (padrão: 100). |
 
-### Base de dados e cache
+### 5.2. Base de Dados e Cache
 
-| Variável | Notas |
+| Variável | Descrição |
 | --- | --- |
-| `DATABASE_HOST`, `DATABASE_PORT`, `DATABASE_USER`, `DATABASE_PASSWORD` | Ligação ao MySQL. |
-| `DATABASE_NAME` | A base de dados **deste nó**. |
-| `TEST_DATABASE_NAME` | Só para a suite. Existe separada de propósito: se o ambiente de teste lesse `DATABASE_NAME`, correr os testes truncava a base de dados do nó. `sislab_sync_test` por omissão. |
-| `REDIS_URL` | Sidekiq e rate limit. |
+| `DATABASE_HOST`, `DATABASE_PORT`, `DATABASE_USER`, `DATABASE_PASSWORD` | Parâmetros de ligação TCP ao servidor MySQL. |
+| `DATABASE_NAME` | Nome da base de dados relacional da aplicação. |
+| `TEST_DATABASE_NAME` | Nome da base de dados dedicada à execução de testes automatizados (padrão: `sislab_sync_test`). |
+| `REDIS_URL` | URI de ligação ao servidor Redis. |
 
-### Trabalhos periódicos (só em modo local)
+### 5.3. Agendamento de Trabalhos em Segundo Plano (Modo Local)
 
-| Variável | Omissão | O que agenda |
+| Variável | Valor Padrão (Cron) | Descrição do Job |
 | --- | --- | --- |
-| `SYNC_PUSH_CRON` | `* * * * *` | Envia a outbox e o heartbeat. |
-| `SYNC_PULL_CRON` | `* * * * *` | Puxa as entregas de amostras referidas e resultados. |
-| `DICTIONARY_PULL_CRON` | `*/5 * * * *` | Puxa as alterações do dicionário. |
+| `SYNC_PUSH_CRON` | `* * * * *` | Despacho periódico da outbox de eventos e sinal de heartbeat. |
+| `SYNC_PULL_CRON` | `* * * * *` | Consulta e receção de amostras referidas e resultados concluídos. |
+| `DICTIONARY_PULL_CRON` | `*/5 * * * *` | Sincronização incremental de atualizações do catálogo nacional. |
 
-### Outras
+### 5.4. Parâmetros de Dimensionamento e Rate Limiting
 
-| Variável | O que serve |
+| Variável | Descrição |
 | --- | --- |
-| `API_RATE_LIMIT_PER_MINUTE` | Pedidos por minuto por chave. |
-| `MLAB_DB_*` | Base de dados de origem para importar o dicionário do mLab. Só no nacional. |
-| `LOINC_CSV` | Caminho para o `Loinc.csv` da versão LOINC, usado na curação. |
-| `WEB_CONCURRENCY`, `RAILS_MAX_THREADS`, `SIDEKIQ_CONCURRENCY` | Dimensionamento. |
+| `API_RATE_LIMIT_PER_MINUTE` | Limite de requisições por minuto por chave de API. |
+| `MLAB_DB_*` | Configurações de conexão para importação do legado mLab (exclusivo do nó nacional). |
+| `LOINC_CSV` | Caminho no sistema de ficheiros para o ficheiro `Loinc.csv` oficial utilizado na curadoria. |
+| `WEB_CONCURRENCY`, `RAILS_MAX_THREADS`, `SIDEKIQ_CONCURRENCY` | Parâmetros de paralelismo de processos e threads do servidor de aplicação e workers. |
 
 ---
 
-## 6. Scripts e tarefas
+## 6. Interface de Linha de Comandos (CLI) e Tarefas de Gestão
 
-### 6.1. `bin/`
+### 6.1. Utilitários em `bin/`
 
-| Comando | O que faz |
+| Executável | Finalidade Técnica |
 | --- | --- |
-| `bin/rails` | O de sempre. |
-| `bin/setup` | Instala as gems, prepara a base de dados, limpa logs e arranca o servidor. `--skip-server` para não arrancar; `--reset` para recriar a base de dados. |
-| `bin/dev` | Servidor **e** compilador de Tailwind ao mesmo tempo, via `foreman`. Fora do Docker. |
-| `bin/ci` | Estilo e segurança: RuboCop, `bundler-audit`, auditoria do importmap e Brakeman. **Não corre a suite** — essa corre em separado (ver 6.6). |
-| `bin/rubocop`, `bin/brakeman`, `bin/bundler-audit` | Cada verificação por si. |
-| `bin/docker-entrypoint` | Usado pela imagem: prepara a base de dados antes de arrancar o Puma. |
+| `bin/rails` | Executável padrão do framework Rails. |
+| `bin/setup` | Script de inicialização: instalação de dependências, migração de esquema e inicialização de serviços. |
+| `bin/dev` | Inicializador de desenvolvimento com processos concorrentes via Foreman. |
+| `bin/ci` | Execução integrada de análises estáticas (RuboCop, Bundler Audit, Brakeman). |
+| `bin/rubocop`, `bin/brakeman`, `bin/bundler-audit` | Execução modular de ferramentas de análise estática e auditoria de vulnerabilidades. |
 
-### 6.2. Utilizadores da interface
-
-Nada a ver com as chaves de API: uma pessoa tem palavra-passe, um sistema tem
-chave, e nunca autenticam o mesmo pedido.
+### 6.2. Gestão de Utilizadores Administrativos e Operadores
 
 ```bash
-bin/rails "users:create[Ana Machava,ana@hcm.gov.mz,admin]"   # papéis: admin, operator
-bin/rails "users:reset_password[ana@hcm.gov.mz]"             # termina todas as sessões abertas
-bin/rails users:list
+bin/rails "users:create[Nome Completo,email@dominio.mz,admin]"   # Papéis disponíveis: admin, operator
+bin/rails "users:reset_password[email@dominio.mz]"               # Invalidação de sessões e redefinição de credencial
+bin/rails users:list                                             # Listagem de contas registadas
 ```
 
-### 6.3. Clientes e chaves de API
+### 6.3. Gestão de Clientes e Chaves de API
 
 ```bash
-bin/rails api_client:create NAME="EMR do HCM" KIND=emr FACILITY_CODE=HCM
+bin/rails api_client:create NAME="EMR Local" KIND=emr FACILITY_CODE=HCM
 bin/rails api_client:list
-
 bin/rails api_key:issue CLIENT=HCM SCOPES="orders:write,results:read" [EXPIRES_AT=2027-01-01]
 bin/rails api_key:list
-bin/rails api_key:revoke KEY=a1b2c3d4        # uuid ou prefixo
+bin/rails api_key:revoke KEY=<uuid_ou_prefixo>
 ```
 
-Âmbitos disponíveis: `orders:read`, `orders:write`, `results:read`,
-`results:write`, `referrals:write`, `dictionary:read`, `dictionary:write`,
-`sync:push`, `sync:pull`.
+Âmbitos estruturados: `orders:read`, `orders:write`, `results:read`, `results:write`, `referrals:write`, `dictionary:read`, `dictionary:write`, `sync:push`, `sync:pull`.
 
-### 6.4. Dicionário
+### 6.4. Gestão e Sincronização do Dicionário Nacional
 
-Só o nó nacional é dono do dicionário. As tarefas de escrita recusam-se a correr
-noutro modo.
+A autoridade de escrita sobre o catálogo é restrita ao nó nacional:
 
 ```bash
-bin/rails dictionary:import_from_mlab           # importa do mLab; tudo entra como rascunho
-bin/rails dictionary:quality                    # relatório de problemas → tmp/dictionary_quality.csv
-ACTOR="Ana Machava" SKIP_BLOCKED=1 \
-  bin/rails dictionary:promote                  # publica os rascunhos utilizáveis
-bin/rails dictionary:status                     # o que o dicionário tem neste momento
+# Executado no Nó Nacional:
+bin/rails dictionary:import_from_mlab           # Importação inicial a partir da base legada mLab (estado draft)
+bin/rails dictionary:quality                    # Geração de relatório de conformidade → tmp/dictionary_quality.csv
+ACTOR="Administrador" SKIP_BLOCKED=1 \
+  bin/rails dictionary:promote                  # Publicação e ativação estruturada de rascunhos válidos
+bin/rails dictionary:status                     # Diagnóstico do estado quantitativo do catálogo
 
-bin/rails dictionary:pull                       # (nó local) puxa as alterações do nacional
+# Executado no Nó Local:
+bin/rails dictionary:pull                       # Sincronização manual imediata com o nó nacional
 ```
 
-### 6.5. Curação de códigos LOINC
-
-O catálogo importado chegou sem nenhum código LOINC. Sem eles, um código `MOZ-`
-não significa nada fora do país. A versão LOINC não está neste repositório — tem
-licença própria e descarrega-se de [loinc.org](https://loinc.org).
+### 6.5. Curadoria de Mapeamentos LOINC
 
 ```bash
-bin/rails dictionary:loinc:coverage             # onde estamos, por entidade
+bin/rails dictionary:loinc:coverage             # Métricas de cobertura de mapeamentos por entidade
 
 LOINC_CSV=tmp/Loinc.csv \
-  bin/rails dictionary:loinc:worksheet          # → tmp/loinc_worksheet.csv, com candidatos
+  bin/rails dictionary:loinc:worksheet          # Extração de planilha de trabalho com candidatos → tmp/loinc_worksheet.csv
 
-# ... alguém do laboratório preenche a coluna loinc_code ...
-
+# Aplicação transacional do mapeamento validado:
 LOINC_CSV=tmp/Loinc.csv \
-  bin/rails "dictionary:loinc:apply[tmp/loinc_worksheet.csv]"        # simulação
+  bin/rails "dictionary:loinc:apply[tmp/loinc_worksheet.csv]"             # Modo de simulação (dry-run)
 
-LOINC_CSV=tmp/Loinc.csv ACTOR="Ana Machava" APPLY=1 \
-  bin/rails "dictionary:loinc:apply[tmp/loinc_worksheet.csv]"        # a sério
+LOINC_CSV=tmp/Loinc.csv ACTOR="Responsável Técnico" APPLY=1 \
+  bin/rails "dictionary:loinc:apply[tmp/loinc_worksheet.csv]"             # Execução efetiva com persistência
 ```
 
-Os candidatos são uma ajuda de leitura, não uma decisão: a coluna `loinc_code`
-vem sempre vazia, mesmo quando a correspondência parece óbvia. A aplicação é
-tudo-ou-nada — um ficheiro com um código errado não altera nada.
-
-### 6.6. Testes e verificações
+### 6.6. Execução da Suite de Testes e Validação de Conformidade
 
 ```bash
 docker compose run --rm -e RAILS_ENV=test app bundle exec rspec
@@ -271,106 +255,118 @@ docker compose run --rm app bin/brakeman --quiet --no-pager --exit-on-warn --exi
 docker compose run --rm app bin/bundler-audit
 ```
 
-A suite corre nos **dois modos**, e é assim que corre em CI:
+Execução segmentada por modo operacional:
 
 ```bash
+# Execução da suite em modo Local:
 docker compose run --rm -e RAILS_ENV=test \
   -e SISLAB_SYNC_MODE=local -e SISLAB_SYNC_NODE_CODE=LOCAL01 app bundle exec rspec
 
+# Execução da suite em modo Nacional:
 docker compose run --rm -e RAILS_ENV=test \
   -e SISLAB_SYNC_MODE=national -e SISLAB_SYNC_NODE_CODE=NATIONAL app bundle exec rspec
 ```
 
-Uma rota, um job ou um initializer que só funcione num dos modos falha lá, e não
-numa instalação. Os testes que só fazem sentido num modo declaram-no com
-`mode: :local` ou `mode: :national` e são saltados no outro.
-
 ---
 
-## 7. Desenvolvimento sem Docker
+## 7. Execução em Ambiente Nativo (Sem Docker)
 
-Precisa de Ruby 3.3.8, MySQL 8 (ou MariaDB) e Redis a correr localmente.
+Requisitos de runtime: Ruby 3.3.8, MySQL 8.4 e Redis 7.
 
 ```bash
 bundle install
 
 export SISLAB_SYNC_MODE=local SISLAB_SYNC_NODE_CODE=DEV
-export DATABASE_HOST=127.0.0.1 DATABASE_USER=root DATABASE_PASSWORD=…
+export DATABASE_HOST=127.0.0.1 DATABASE_USER=root DATABASE_PASSWORD=...
 
 bin/rails db:prepare
-bin/dev                 # servidor + Tailwind
+bin/dev
 ```
 
-Nota: o compose e o CI usam MySQL 8.4. O MariaDB já divergiu três vezes de
-maneiras que não davam erro nenhum — colunas `json` lidas como `longtext`,
-`UPDATE ... WHERE` a falhar sob concorrência, e o `innodb_snapshot_isolation`.
-Por isso é que o `config/database.yml` fixa `transaction_isolation` em
-`READ-COMMITTED`. Qualquer trabalho de esquema ou de concorrência deve ser
-confirmado em Docker antes de se dar por feito.
+*Nota técnica*: O sistema requer isolamento de transação `READ-COMMITTED` configurado no MySQL (`config/database.yml`).
 
 ---
 
-## 8. A interface
+## 8. Interface de Gestão Web
 
-Em português, na mesma aplicação, com sessão de utilizador separada das chaves
-de API.
+Interface web integrada para operadores e administradores, com autenticação por sessão:
 
-| Ecrã | Serve para | Modo |
+| Módulo | Finalidade Operacional | Modos Suportados |
 | --- | --- | --- |
-| Painel | Estado da sincronização, outbox, último contacto, cursores | ambos |
-| Pedidos | Pesquisa por tracking number, NID ou nome; detalhe com o histórico completo | ambos |
-| Amostras referidas | Em trânsito, recebidas, rejeitadas, com tempo de transporte | ambos |
-| Dicionário | Navegação em qualquer modo; edição, promoção e retirada só no nacional | ambos |
-| Fila de sincronização | Eventos falhados com o erro e botão de reprocessar | local |
-| Nós | Último contacto, versão, atraso do cursor | nacional |
-| Clientes e chaves | Emitir, rodar, revogar, ver última utilização | ambos (admin) |
-| Auditoria | Que cliente chamou o quê, e o que foi recusado | ambos (admin) |
-
-Dois papéis: **operador** lê tudo e reprocessa eventos; **administrador** também
-emite chaves e altera o dicionário.
+| Painel | Monitorização do estado da sincronização, outbox, cursores de revisão e latência de rede. | `local`, `national` |
+| Pedidos | Consulta e rastreamento de pedidos por número de rastreio, NID do paciente ou nome. | `local`, `national` |
+| Amostras Referidas | Gestão de amostras em trânsito, receções e rejeições de encaminhamento. | `local`, `national` |
+| Dicionário | Navegação pelo catálogo ativo (leitura universal; edição e ativação restrita ao nacional). | `local`, `national` |
+| Fila de Sincronização | Inspeção de eventos de outbox com falha e reprocessamento sob demanda. | `local` |
+| Nós | Monitorização de nós locais conectados, versão de software e atraso de cursor. | `national` |
+| Clientes e Chaves | Emissão, rotação e revogação de chaves de API com controlo de acessos baseado em âmbitos. | `local`, `national` (admin) |
+| Auditoria | Histórico estruturado de requisições de API e tentativas de acesso negadas. | `local`, `national` (admin) |
 
 ---
 
-## 9. O contrato da API
+## 9. Especificação OpenAPI e Documentação da API com Scalar
 
-Cada nó serve a sua própria referência em **`/api-docs`**, sem chave e sem
-sessão: é o que uma equipa lê antes de ter uma chave, e pedir uma chave para
-descobrir como pedir uma chave era o ciclo que isto elimina.
+A especificação formal da API é disponibilizada diretamente pelo nó em `/api-docs`:
 
-| Endereço | O que dá |
-| --- | --- |
-| `/api-docs` | A referência legível, em português, com os âmbitos que cada operação exige |
-| `/api-docs.json` | O documento OpenAPI 3.1 |
-| `/api-docs.yaml` | O mesmo, em YAML |
+| Endpoint | Formato | Descrição |
+| --- | --- | --- |
+| `GET /api-docs` | HTML | Interface interativa de referência e consola de testes da API baseada em **Scalar**. |
+| `GET /api-docs.json` | JSON | Especificação OpenAPI 3.1 filtrada dinamicamente para os endpoints ativos do nó. |
+| `GET /api-docs.yaml` | YAML | Especificação OpenAPI 3.1 em formato YAML. |
 
-A página mostra **apenas o que aquele nó responde**. Um nó local não anuncia os
-endpoints do nacional, porque não os tem. O contrato completo, com os dois
-modos, é [`docs/sislab-sync/openapi.yaml`](docs/sislab-sync/openapi.yaml).
+O contrato global completo do sistema encontra-se no ficheiro [`docs/sislab-sync/openapi.yaml`](docs/sislab-sync/openapi.yaml).
 
-Esse ficheiro não é documentação a acompanhar o código: é verificado em CI
-contra as rotas reais de cada modo, contra as constantes que o código impõe —
-estados, prioridades, âmbitos, códigos de erro, tipos de evento — e contra
-**cada resposta que a suite de testes produz**. Um serializador que ganhe um
-campo, ou um endpoint que passe a responder 409 onde o contrato diz que não
-pode, faz a build ficar vermelha.
+### 9.1. Configuração e Script do Scalar
 
-Para experimentar à mão há uma colecção Postman com o percurso completo de uma
-amostra, do pedido ao resultado:
+A interface interativa é gerida via gem `scalar_ruby` e configurada em [`config/initializers/scalar.rb`](config/initializers/scalar.rb):
+
+```ruby
+Scalar.setup do |config|
+  config.page_title = "SISLAB Sync · Referência da API"
+  config.configuration = {
+    url: "/api-docs.json",
+    theme: "saturn",
+    layout: "modern",
+    showSidebar: true,
+    searchHotKey: "k"
+  }
+end
+```
+
+Na renderização da rota `/api-docs`, o `Scalar::UI` injecta o script de cliente autónomo que consome a especificação do nó:
+
+```html
+<div id="app"></div>
+<script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference"></script>
+<script>
+  Scalar.createApiReference(
+    '#app',
+    {
+      "url": "/api-docs.json",
+      "theme": "saturn",
+      "layout": "modern",
+      "showSidebar": true,
+      "searchHotKey": "k"
+    }
+  )
+</script>
+```
+
+### 9.2. Validação Contínua de Contrato
+
+A conformidade da especificação OpenAPI é validada em pipeline de CI contra:
+- As rotas ativas do framework em cada modo operacional.
+- Os enums e constantes de domínio (`OrderStatus`, `TestStatus`, `Priority`, `ErrorCode`, `SyncEventType`).
+- Os esquemas de validação JSON Schema draft 2020-12 aplicados sobre todas as respostas da suite de testes.
+
+Coleção Postman para testes integrados manuais de ponta a ponta:
 [`docs/sislab-sync/sislab-sync.postman_collection.json`](docs/sislab-sync/sislab-sync.postman_collection.json).
 
 ---
 
-## 10. Estado
+## 10. Estado do Projeto
 
-Em construção, no ramo `v2`. Concluídos S1 a S11 — fundação e modo dual, chaves
-de API, dicionário, importação do mLab, feed de alterações, núcleo
-transaccional, API do EMR, API do SISLAB, outbox e envio, referências ponta a
-ponta, e a interface.
+Desenvolvimento ativo no ramo `v2`. Etapas concluídas (S1 a S11): arquitetura dual, gestão de credenciais e âmbitos, motor de dados mestre de dicionário, feed transacional de alterações, API REST para EMR e SISLAB, pipeline assíncrono de outbox, orquestração de referências e interface web de gestão.
 
-A decorrer: **S12 — contrato, SDK e entrega**. Já feito o contrato OpenAPI 3.1,
-validado em CI e servido em `/api-docs`, e a colecção de exemplos. Falta a gem
-`sislab_sync_client`, os guias de integração das três fronteiras, o teste de
-carga, a renomeação e a tag `v2.0.0`.
+Fase atual: **S12 — Especificação de Contrato, SDK e Entrega**. Concluídos a especificação OpenAPI 3.1 com interface Scalar, validação de esquemas em CI e coleções de referência. Em desenvolvimento: gem de cliente `sislab_sync_client` e documentação técnica de integração.
 
-Os passos, com critérios de aceitação e commits, estão no
-[plano](docs/sislab-sync/plano.html).
