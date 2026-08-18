@@ -1,7 +1,11 @@
 # frozen_string_literal: true
 
 require "spec_helper"
-ENV["RAILS_ENV"] ||= "test"
+# Assigned, not defaulted with ||=. The development image pins
+# RAILS_ENV=development, so `bundle exec rspec` inside the container would
+# otherwise keep that value and run the whole suite against the node's working
+# database — which is the very thing config/database.yml refuses to do.
+ENV["RAILS_ENV"] = "test"
 require_relative "../config/environment"
 
 abort("The Rails environment is running in production mode!") if Rails.env.production?
