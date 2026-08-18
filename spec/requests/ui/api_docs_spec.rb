@@ -3,11 +3,12 @@
 require "rails_helper"
 
 RSpec.describe "Referência da API", type: :request do
-  it "abre sem chave e sem sessão iniciada" do
+  it "abre sem chave e sem sessão iniciada carregando a interface Scalar" do
     get "/api-docs"
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("SISLAB Sync")
+    expect(response.body).to include("scalar")
+    expect(response.body).to include("/api-docs.json")
   end
 
   it "serve o documento OpenAPI em JSON" do
@@ -16,6 +17,7 @@ RSpec.describe "Referência da API", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.parsed_body["openapi"]).to start_with("3.1")
     expect(response.parsed_body["paths"]).to be_present
+    expect(response.parsed_body.dig("info", "version")).to eq(SislabSync.version)
   end
 
   it "serve o documento OpenAPI em YAML" do
@@ -41,17 +43,10 @@ RSpec.describe "Referência da API", type: :request do
     end
   end
 
-  it "diz que nó é este, para se saber a que se está a ler" do
-    get "/api-docs"
+  it "declara os âmbitos exigidos nas operações do documento" do
+    get "/api-docs.json"
 
-    expect(response.body).to include(SislabSync.node_code)
-    expect(response.body).to include(SislabSync.version)
-  end
-
-  it "desenha cada operação com o âmbito que exige" do
-    get "/api-docs"
-
-    expect(response.body).to include("dictionary:read")
-    expect(response.body).to include("/api/v3/dictionary/changes")
+    changes_op = response.parsed_body.dig("paths", "/api/v3/dictionary/changes", "get")
+    expect(changes_op["x-scope"]).to eq("dictionary:read")
   end
 end

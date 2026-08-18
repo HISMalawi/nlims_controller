@@ -312,6 +312,7 @@ GEM
       regexp_parser (>= 2.0)
       rubocop (~> 1.86, >= 1.86.2)
     ruby-progressbar (1.13.0)
+    scalar_ruby (2.0.0)
     securerandom (0.4.1)
     sidekiq (7.3.9)
       base64
@@ -393,6 +394,7 @@ DEPENDENCIES
   rspec-rails (~> 8.0)
   rubocop-rails-omakase
   rubocop-rspec
+  scalar_ruby
   sidekiq (~> 7.3)
   sidekiq-cron (~> 2.0)
   stimulus-rails

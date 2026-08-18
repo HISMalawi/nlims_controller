@@ -40,6 +40,9 @@ gem "dotenv-rails"
 # Portuguese for the validation and error messages Rails itself produces.
 gem "rails-i18n", "~> 8.0"
 
+# Interactive API Reference UI via Scalar
+gem "scalar_ruby"
+
 gem "bootsnap", require: false
 gem "tzinfo-data", platforms: %i[windows jruby]
 

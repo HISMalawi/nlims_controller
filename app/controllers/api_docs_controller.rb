@@ -13,14 +13,16 @@
 class ApiDocsController < ApplicationController
   allow_unauthenticated_access
 
-  layout "api_docs"
-
   def show
     @document = ApiContract.this_node
-    @operations = ApiContract.operations(@document)
 
     respond_to do |format|
-      format.html
+      format.html do
+        status, headers, body = Scalar::UI.call(request.env)
+        response.status = status
+        response.headers.merge!(headers)
+        self.response_body = body
+      end
       format.json { render json: @document }
       format.yaml { render plain: @document.to_yaml, content_type: "application/yaml" }
     end
