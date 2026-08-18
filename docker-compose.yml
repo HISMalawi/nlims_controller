@@ -50,7 +50,7 @@ services:
   # has to remember to start. In production the build happens once, in the image.
   css:
     <<: *app
-    command: bundle exec rails tailwindcss:watch
+    command: bundle exec rails tailwindcss:watch[always]
 
   mysql:
     image: mysql:8.4
