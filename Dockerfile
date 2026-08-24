@@ -42,6 +42,9 @@ RUN apt-get update -qq && \
     apt-get install --no-install-recommends -y build-essential default-libmysqlclient-dev git libyaml-dev pkg-config && \
     rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
+# The reference client is a path gem, so its source has to be here before
+# bundler is asked to resolve it — the application code arrives further down.
+COPY clients ./clients
 COPY Gemfile Gemfile.lock ./
 RUN bundle install
 
@@ -63,6 +66,9 @@ RUN apt-get update -qq && \
 
 # Install application gems
 COPY vendor/* ./vendor/
+# The reference client is a path gem: bundler needs its source, not just the
+# lockfile entry, and the application code is only copied in further down.
+COPY clients ./clients
 COPY Gemfile Gemfile.lock ./
 
 RUN bundle install && \
@@ -77,8 +83,15 @@ COPY . .
 # -j 1 disable parallel compilation to avoid a QEMU bug: https://github.com/rails/bootsnap/issues/495
 RUN bundle exec bootsnap precompile -j 1 app/ lib/
 
-# Precompiling assets for production without requiring secret RAILS_MASTER_KEY
-RUN SECRET_KEY_BASE_DUMMY=1 ./bin/rails assets:precompile
+# Precompiling assets for production without requiring secret RAILS_MASTER_KEY.
+#
+# The run mode is a dummy here for the same reason the secret is: config/routes.rb
+# draws different routes per mode, so booting to precompile needs *a* mode, and
+# the assets are the same either way. It is deliberately not an ENV — the whole
+# point of this image is that one build runs as either kind of node, and the
+# real mode arrives from the environment at run time.
+RUN SECRET_KEY_BASE_DUMMY=1 SISLAB_SYNC_MODE=local SISLAB_SYNC_NODE_CODE=BUILD \
+    ./bin/rails assets:precompile
 
 
 
