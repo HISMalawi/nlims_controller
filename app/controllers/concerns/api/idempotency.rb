@@ -18,8 +18,10 @@ module Api
 
     private
 
-    def idempotent
-      key = request.headers["Idempotency-Key"].presence
+    # `key` is the header unless the caller has something better. The FHIR
+    # façade passes the placer order number the EMR already put on the request,
+    # so a client that has never heard of this header still retries safely.
+    def idempotent(key: request.headers["Idempotency-Key"].presence)
       return render_api_error(Errors::IDEMPOTENCY_KEY_REQUIRED) if key.blank?
 
       digest = IdempotentRequest.digest_for(request.raw_post)

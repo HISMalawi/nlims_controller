@@ -55,6 +55,43 @@ Rails.application.routes.draw do
     end
   end
 
+  # The FHIR R4 façade for the EMR: the same orders, samples and readings the
+  # JSON API serves, in the shape an EMR already knows how to read. Nothing here
+  # owns any data — every write goes back through the same OrderRequest intake.
+  #
+  # Deliberately outside /api/v3: FHIR resources carry their own shape and their
+  # own error resource, and two envelopes under one prefix would make the
+  # published contract ambiguous. The contract here is the CapabilityStatement,
+  # which is where a FHIR client looks for it.
+  #
+  # Local mode only, for the same reason the JSON EMR endpoints are: a national
+  # node has no EMRs of its own.
+  if SislabSync.local?
+    scope "fhir/r4", module: :fhir, as: :fhir do
+      get "metadata", to: "capability#show", as: :metadata
+
+      # A transaction Bundle posted to the base URL — several tests on one
+      # sample, in one call.
+      post "/", to: "transactions#create", as: :transaction
+
+      post "ServiceRequest", to: "service_requests#create"
+      get "ServiceRequest", to: "service_requests#index", as: :service_requests
+      get "ServiceRequest/:id", to: "service_requests#show", as: :service_request
+
+      get "DiagnosticReport", to: "diagnostic_reports#index", as: :diagnostic_reports
+      get "DiagnosticReport/:id", to: "diagnostic_reports#show", as: :diagnostic_report
+
+      get "Observation", to: "observations#index", as: :observations
+      get "Observation/:id", to: "observations#show", as: :observation
+      post "Observation/:id/$acknowledge", to: "observations#acknowledge", as: :acknowledge_observation
+
+      get "Patient", to: "patients#index", as: :patients
+      get "Patient/:id", to: "patients#show", as: :patient
+
+      get "Specimen/:id", to: "specimens#show", as: :specimen
+    end
+  end
+
   # The contract, served by the node it describes and narrowed to what this node
   # answers. Open to anyone who can reach the node: it is what a team reads
   # before they have a key. `.json` and `.yaml` give the OpenAPI document itself.
