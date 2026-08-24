@@ -24,7 +24,7 @@ RSpec.describe ApiContract do
   def routed_operations
     Rails.application.routes.routes.filter_map do |route|
       path = route.path.spec.to_s.sub(/\(\.:format\)\z/, "")
-      next unless path.start_with?(ApiContract::DOCUMENTED_PREFIX)
+      next unless ApiContract.documented?(path)
 
       verb = route.verb.presence || "GET"
       [ verb, path.gsub(/:(\w+)/) { "{#{Regexp.last_match(1)}}" } ]

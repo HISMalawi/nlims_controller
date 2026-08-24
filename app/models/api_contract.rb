@@ -20,7 +20,17 @@ class ApiContract
 
   # Everything the contract speaks for. The operator interface, the container
   # health check and the assets are outside it and none of its business.
-  DOCUMENTED_PREFIX = "/api/v3/"
+  #
+  # The FHIR façade is inside it. Its resources are standardised by HL7 and the
+  # document describes them only as far as this node guarantees them — but the
+  # *operations* are described in full, which is what makes the cross-check
+  # against the router work in both directions. Without that, a FHIR route added
+  # and documented nowhere would fail nothing.
+  DOCUMENTED_PREFIXES = [ "/api/v3/", "/fhir/r4" ].freeze
+
+  def self.documented?(path)
+    DOCUMENTED_PREFIXES.any? { |prefix| path.start_with?(prefix) }
+  end
 
   Operation = Struct.new(:template, :verb, :definition, keyword_init: true) do
     def node_mode = definition["x-node-mode"]

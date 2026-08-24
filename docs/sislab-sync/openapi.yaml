@@ -7,6 +7,11 @@
 # Cada nó expõe apenas os endpoints correspondentes ao seu modo de operação.
 # O atributo `x-node-mode` especifica a disponibilidade de cada operação:
 # `local` (nó de unidade sanitária), `national` (nó nacional) ou `both` (ambos).
+#
+# A fachada HL7 FHIR R4 servida em `/fhir/r4` não é descrita aqui: os seus
+# recursos têm forma própria e recurso de erro próprio, e o seu contrato é o
+# CapabilityStatement gerado em `GET /fhir/r4/metadata` — a única rota da
+# fachada presente neste documento, para que seja descoberta a partir dele.
 openapi: 3.1.0
 
 info:
@@ -18,8 +23,25 @@ info:
     sistema de gestão laboratorial (**SISLAB**) e a rede de replicação e
     sincronização de **nós locais e nacional**.
 
-    Todos os endpoints utilizam o prefixo `/api/v3`. As respostas seguem uma
-    estrutura padronizada composta pelos campos `data`, `meta` e `errors`.
+    Os endpoints REST nativos utilizam o prefixo `/api/v3`. As respostas seguem
+    uma estrutura padronizada composta pelos campos `data`, `meta` e `errors`.
+
+    ## Fachada HL7 FHIR R4
+
+    Um nó local serve ainda uma fachada **HL7 FHIR R4** em `/fhir/r4`, destinada
+    a sistemas EMR que já falam FHIR. Projeta os mesmos pedidos, amostras e
+    leituras — `ServiceRequest`, `DiagnosticReport`, `Observation`, `Patient` e
+    `Specimen` — e toda a escrita reentra na mesma admissão que valida códigos
+    de dicionário e expande painéis. Autenticação, âmbitos, regra de unidade
+    sanitária, limitação de taxa, idempotência e trilho de auditoria são os
+    descritos neste documento: são propriedades do nó, não do dialeto.
+
+    O que difere é a forma das respostas — recursos FHIR em
+    `application/fhir+json` e `OperationOutcome` em vez do envelope
+    `data`/`meta`/`errors`. Por isso a fachada não é descrita aqui: o seu
+    contrato é o `CapabilityStatement` em `GET /fhir/r4/metadata`, gerado a
+    partir das constantes que os controladores utilizam e, portanto, incapaz de
+    divergir do que o nó realmente serve.
 
     ## Autenticação
 
@@ -78,8 +100,395 @@ tags:
     description: Consulta e sincronização do catálogo e dados mestre nacionais.
   - name: Sincronização
     description: Protocolo de replicação transacional entre nós locais e o nó nacional.
+  - name: FHIR
+    description: |
+      Fachada HL7 FHIR R4 para sistemas EMR, servida em `/fhir/r4` por nós
+      locais. Descrita pelo seu próprio CapabilityStatement, não por este
+      documento.
 
 paths:
+  /fhir/r4/metadata:
+    get:
+      tags: [FHIR]
+      operationId: fhirCapabilityStatement
+      summary: Contrato da fachada FHIR R4
+      description: |
+        Retorna o `CapabilityStatement` que descreve a fachada HL7 FHIR R4
+        servida por este nó: recursos, interações, parâmetros de pesquisa,
+        operações e sistemas de codificação utilizados.
+
+        Não requer autenticação, pela mesma razão que `/api-docs` não requer —
+        é o que uma equipa lê antes de possuir uma chave.
+      x-node-mode: local
+      security: []
+      responses:
+        "200":
+          description: CapabilityStatement do nó.
+          content:
+            application/fhir+json:
+              schema: { $ref: "#/components/schemas/CapabilityStatement" }
+
+  /fhir/r4:
+    post:
+      tags: [FHIR]
+      operationId: fhirTransaction
+      summary: Submissão de várias análises numa única amostra
+      description: |
+        Aceita um `Bundle` de tipo `transaction` contendo um `Patient`, um
+        `Specimen` e um `ServiceRequest` por análise, agrupados pelo campo
+        `requisition`. Cada grupo de `requisition` origina um pedido.
+
+        A operação é atómica: se qualquer análise referenciar um código
+        inexistente no dicionário do nó, nenhum registo é escrito. Bundles de
+        tipo `batch` são rejeitados, por prometerem independência entre
+        entradas que esta admissão não oferece.
+
+        A chave de idempotência é o cabeçalho `Idempotency-Key` ou, na sua
+        ausência, o `identifier` do primeiro recurso do Bundle.
+      x-node-mode: local
+      x-scope: orders:write
+      parameters:
+        - $ref: "#/components/parameters/FhirIdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/fhir+json:
+            schema: { $ref: "#/components/schemas/FhirBundle" }
+      responses:
+        "201":
+          description: Bundle `transaction-response` com os ServiceRequest criados.
+          headers:
+            Idempotent-Replay:
+              description: Presente com o valor `true` quando a resposta é retornada a partir de uma execução idempotente anterior.
+              schema: { type: string, enum: ["true"] }
+          content:
+            application/fhir+json:
+              schema: { $ref: "#/components/schemas/FhirBundle" }
+        "400": { $ref: "#/components/responses/FhirIdempotencyKeyRequired" }
+        "401": { $ref: "#/components/responses/FhirUnauthenticated" }
+        "403": { $ref: "#/components/responses/FhirForbidden" }
+        "422": { $ref: "#/components/responses/FhirUnprocessable" }
+        "429": { $ref: "#/components/responses/FhirRateLimited" }
+
+  /fhir/r4/ServiceRequest:
+    post:
+      tags: [FHIR]
+      operationId: fhirCreateServiceRequest
+      summary: Pedido de uma análise clínica
+      description: |
+        Cria um pedido com a análise indicada em `code`. O doente e a amostra
+        são fornecidos em `contained` e referenciados por `#id`, ou, tratando-se
+        de doente já conhecido do nó, por `subject.identifier`.
+
+        `code` é aceite no sistema nacional
+        (`.../CodeSystem/test-types`), em LOINC — apenas onde o
+        mapeamento já tenha sido curado — ou como código `MOZ-` sem sistema
+        declarado. Um código de painel expande-se nas análises constituintes e a
+        resposta passa a ser um `Bundle` de tipo `collection`.
+
+        `performer` é obrigatório e identifica o laboratório receptor. A unidade
+        sanitária é sempre a da chave de API.
+
+        A chave de idempotência é o cabeçalho `Idempotency-Key` ou, na sua
+        ausência, o `identifier` do pedido.
+      x-node-mode: local
+      x-scope: orders:write
+      parameters:
+        - $ref: "#/components/parameters/FhirIdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/fhir+json:
+            schema: { $ref: "#/components/schemas/FhirServiceRequest" }
+      responses:
+        "201":
+          description: |
+            O ServiceRequest criado, ou um Bundle `collection` com os vários
+            criados quando o código pedido era um painel.
+          headers:
+            Location:
+              description: URL do ServiceRequest criado. Ausente quando a resposta é um Bundle.
+              schema: { type: string }
+            Idempotent-Replay:
+              description: Presente com o valor `true` quando a resposta é retornada a partir de uma execução idempotente anterior.
+              schema: { type: string, enum: ["true"] }
+          content:
+            application/fhir+json:
+              schema:
+                oneOf:
+                  - { $ref: "#/components/schemas/FhirServiceRequest" }
+                  - { $ref: "#/components/schemas/FhirBundle" }
+        "400": { $ref: "#/components/responses/FhirIdempotencyKeyRequired" }
+        "401": { $ref: "#/components/responses/FhirUnauthenticated" }
+        "403": { $ref: "#/components/responses/FhirForbidden" }
+        "422": { $ref: "#/components/responses/FhirUnprocessable" }
+        "429": { $ref: "#/components/responses/FhirRateLimited" }
+    get:
+      tags: [FHIR]
+      operationId: fhirSearchServiceRequest
+      summary: Pesquisa de análises pedidas
+      description: |
+        Devolve um `Bundle` de tipo `searchset`. Os resultados são restritos à
+        unidade sanitária da chave: uma pesquisa que abranja outra unidade
+        devolve um bundle vazio, não um erro.
+      x-node-mode: local
+      x-scope: orders:read
+      parameters:
+        - $ref: "#/components/parameters/FhirRequisition"
+        - $ref: "#/components/parameters/FhirIdentifier"
+        - $ref: "#/components/parameters/FhirPatient"
+        - $ref: "#/components/parameters/FhirPatientIdentifier"
+        - $ref: "#/components/parameters/FhirServiceRequestStatus"
+        - $ref: "#/components/parameters/FhirCount"
+      responses:
+        "200":
+          description: Bundle `searchset` de ServiceRequest.
+          content:
+            application/fhir+json:
+              schema: { $ref: "#/components/schemas/FhirBundle" }
+        "401": { $ref: "#/components/responses/FhirUnauthenticated" }
+        "403": { $ref: "#/components/responses/FhirForbidden" }
+        "429": { $ref: "#/components/responses/FhirRateLimited" }
+
+  /fhir/r4/ServiceRequest/{id}:
+    get:
+      tags: [FHIR]
+      operationId: fhirReadServiceRequest
+      summary: Leitura de uma análise pedida
+      description: |
+        `id` é o uuid da análise. As análises de uma mesma amostra partilham o
+        campo `requisition`, que é o número de rastreio.
+      x-node-mode: local
+      x-scope: orders:read
+      parameters:
+        - $ref: "#/components/parameters/FhirId"
+      responses:
+        "200":
+          description: O ServiceRequest.
+          content:
+            application/fhir+json:
+              schema: { $ref: "#/components/schemas/FhirServiceRequest" }
+        "401": { $ref: "#/components/responses/FhirUnauthenticated" }
+        "403": { $ref: "#/components/responses/FhirForbidden" }
+        "404": { $ref: "#/components/responses/FhirNotFound" }
+        "429": { $ref: "#/components/responses/FhirRateLimited" }
+
+  /fhir/r4/DiagnosticReport:
+    get:
+      tags: [FHIR]
+      operationId: fhirSearchDiagnosticReport
+      summary: Pesquisa de relatórios de análises
+      description: |
+        Devolve um `Bundle` de tipo `searchset`. Cada relatório traz as leituras
+        atuais em `contained`, poupando uma chamada por leitura.
+      x-node-mode: local
+      x-scope: results:read
+      parameters:
+        - $ref: "#/components/parameters/FhirIdentifier"
+        - $ref: "#/components/parameters/FhirPatient"
+        - $ref: "#/components/parameters/FhirPatientIdentifier"
+        - $ref: "#/components/parameters/FhirDiagnosticReportStatus"
+        - $ref: "#/components/parameters/FhirCount"
+      responses:
+        "200":
+          description: Bundle `searchset` de DiagnosticReport.
+          content:
+            application/fhir+json:
+              schema: { $ref: "#/components/schemas/FhirBundle" }
+        "401": { $ref: "#/components/responses/FhirUnauthenticated" }
+        "403": { $ref: "#/components/responses/FhirForbidden" }
+        "429": { $ref: "#/components/responses/FhirRateLimited" }
+
+  /fhir/r4/DiagnosticReport/{id}:
+    get:
+      tags: [FHIR]
+      operationId: fhirReadDiagnosticReport
+      summary: Leitura do relatório de uma análise
+      description: |
+        `id` é o uuid da análise, o mesmo do ServiceRequest correspondente. O
+        estado `corrected` indica que uma leitura foi substituída depois de a
+        análise ter terminado — a análise não reabre.
+      x-node-mode: local
+      x-scope: results:read
+      parameters:
+        - $ref: "#/components/parameters/FhirId"
+      responses:
+        "200":
+          description: O DiagnosticReport, com as leituras atuais em `contained`.
+          content:
+            application/fhir+json:
+              schema: { $ref: "#/components/schemas/FhirDiagnosticReport" }
+        "401": { $ref: "#/components/responses/FhirUnauthenticated" }
+        "403": { $ref: "#/components/responses/FhirForbidden" }
+        "404": { $ref: "#/components/responses/FhirNotFound" }
+        "429": { $ref: "#/components/responses/FhirRateLimited" }
+
+  /fhir/r4/Observation:
+    get:
+      tags: [FHIR]
+      operationId: fhirSearchObservation
+      summary: Feed incremental de leituras
+      description: |
+        Devolve um `Bundle` de tipo `searchset` com tudo o que mudou depois da
+        revisão indicada em `_since`.
+
+        `_since` é uma revisão sequencial atribuída por contador com bloqueio,
+        não um timestamp: uma leitura cuja transação demore a confirmar nunca
+        fica atrás de um cursor já avançado. O cliente segue `link[next]` até
+        este deixar de existir e retém a última revisão para a ronda seguinte.
+
+        As correções circulam neste mesmo feed: a leitura substituída volta a
+        mover-se e chega com `status: entered-in-error` e a extensão
+        `replaced-by` a identificar a substituta.
+      x-node-mode: local
+      x-scope: results:read
+      parameters:
+        - $ref: "#/components/parameters/FhirSince"
+        - $ref: "#/components/parameters/FhirIdentifier"
+        - $ref: "#/components/parameters/FhirPatient"
+        - $ref: "#/components/parameters/FhirPatientIdentifier"
+        - $ref: "#/components/parameters/FhirCount"
+      responses:
+        "200":
+          description: Bundle `searchset` de Observation, com `link[next]` enquanto houver mais.
+          content:
+            application/fhir+json:
+              schema: { $ref: "#/components/schemas/FhirBundle" }
+        "401": { $ref: "#/components/responses/FhirUnauthenticated" }
+        "403": { $ref: "#/components/responses/FhirForbidden" }
+        "429": { $ref: "#/components/responses/FhirRateLimited" }
+
+  /fhir/r4/Observation/{id}:
+    get:
+      tags: [FHIR]
+      operationId: fhirReadObservation
+      summary: Leitura de um resultado
+      description: |
+        Indicadores numéricos são emitidos em `valueQuantity`, e os restantes em
+        `valueString`. `valueQuantity` não declara `system` UCUM: as unidades do
+        dicionário são as do laboratório e rotulá-las como UCUM convidaria um
+        cliente a converter entre unidades que apenas se assemelham.
+      x-node-mode: local
+      x-scope: results:read
+      parameters:
+        - $ref: "#/components/parameters/FhirId"
+      responses:
+        "200":
+          description: A Observation.
+          content:
+            application/fhir+json:
+              schema: { $ref: "#/components/schemas/FhirObservation" }
+        "401": { $ref: "#/components/responses/FhirUnauthenticated" }
+        "403": { $ref: "#/components/responses/FhirForbidden" }
+        "404": { $ref: "#/components/responses/FhirNotFound" }
+        "429": { $ref: "#/components/responses/FhirRateLimited" }
+
+  /fhir/r4/Observation/{id}/$acknowledge:
+    post:
+      tags: [FHIR]
+      operationId: fhirAcknowledgeObservation
+      summary: Confirmação de arquivamento de um resultado
+      description: |
+        Regista que o sistema clínico arquivou a leitura. É uma operação e não
+        um campo do recurso porque a confirmação diz respeito apenas a estes
+        dois sistemas.
+
+        Confirmar uma leitura já substituída por uma correção é recusado com
+        `409`, identificando a substituta: arquivar um valor que entretanto foi
+        corrigido é precisamente o erro que o modelo de substituição existe para
+        impedir.
+
+        A confirmação não altera a revisão da leitura — caso contrário o cursor
+        do cliente avançaria por causa da sua própria confirmação, sem fim.
+      x-node-mode: local
+      x-scope: results:read
+      parameters:
+        - $ref: "#/components/parameters/FhirId"
+      responses:
+        "200":
+          description: A Observation, já com a extensão `acknowledged-at`.
+          content:
+            application/fhir+json:
+              schema: { $ref: "#/components/schemas/FhirObservation" }
+        "401": { $ref: "#/components/responses/FhirUnauthenticated" }
+        "403": { $ref: "#/components/responses/FhirForbidden" }
+        "404": { $ref: "#/components/responses/FhirNotFound" }
+        "409": { $ref: "#/components/responses/FhirConflict" }
+        "429": { $ref: "#/components/responses/FhirRateLimited" }
+
+  /fhir/r4/Patient:
+    get:
+      tags: [FHIR]
+      operationId: fhirSearchPatient
+      summary: Pesquisa de doentes por identificador nacional
+      description: |
+        Restrita a doentes com amostras da unidade sanitária da chave. O
+        parâmetro `identifier` é obrigatório na prática: sem ele a pesquisa
+        devolve um bundle vazio, porque este nó é um sistema laboratorial e não
+        um registo nacional de doentes.
+      x-node-mode: local
+      x-scope: orders:read
+      parameters:
+        - $ref: "#/components/parameters/FhirIdentifier"
+        - $ref: "#/components/parameters/FhirCount"
+      responses:
+        "200":
+          description: Bundle `searchset` de Patient.
+          content:
+            application/fhir+json:
+              schema: { $ref: "#/components/schemas/FhirBundle" }
+        "401": { $ref: "#/components/responses/FhirUnauthenticated" }
+        "403": { $ref: "#/components/responses/FhirForbidden" }
+        "429": { $ref: "#/components/responses/FhirRateLimited" }
+
+  /fhir/r4/Patient/{id}:
+    get:
+      tags: [FHIR]
+      operationId: fhirReadPatient
+      summary: Leitura de um doente
+      description: |
+        `id` é o uuid do doente. Doentes sem identificador nacional têm
+        `identifier` vazio: um identificador nunca é inventado.
+      x-node-mode: local
+      x-scope: orders:read
+      parameters:
+        - $ref: "#/components/parameters/FhirId"
+      responses:
+        "200":
+          description: O Patient.
+          content:
+            application/fhir+json:
+              schema: { $ref: "#/components/schemas/FhirPatient" }
+        "401": { $ref: "#/components/responses/FhirUnauthenticated" }
+        "403": { $ref: "#/components/responses/FhirForbidden" }
+        "404": { $ref: "#/components/responses/FhirNotFound" }
+        "429": { $ref: "#/components/responses/FhirRateLimited" }
+
+  /fhir/r4/Specimen/{id}:
+    get:
+      tags: [FHIR]
+      operationId: fhirReadSpecimen
+      summary: Leitura de uma amostra
+      description: |
+        `id` é o uuid do pedido: neste sistema um pedido corresponde a uma
+        amostra, pelo que o Specimen é projetado a partir do pedido e partilha o
+        seu uuid. Uma amostra recusada pelo laboratório apresenta o estado
+        `unsatisfactory` e o motivo em `note`.
+      x-node-mode: local
+      x-scope: orders:read
+      parameters:
+        - $ref: "#/components/parameters/FhirId"
+      responses:
+        "200":
+          description: O Specimen.
+          content:
+            application/fhir+json:
+              schema: { $ref: "#/components/schemas/FhirSpecimen" }
+        "401": { $ref: "#/components/responses/FhirUnauthenticated" }
+        "403": { $ref: "#/components/responses/FhirForbidden" }
+        "404": { $ref: "#/components/responses/FhirNotFound" }
+        "429": { $ref: "#/components/responses/FhirRateLimited" }
+
   /api/v3/health:
     get:
       tags: [Nó]
@@ -1053,6 +1462,91 @@ components:
         Identificador único da operação para garantia de idempotência no processamento.
       schema: { type: string, minLength: 1 }
 
+    FhirId:
+      name: id
+      in: path
+      required: true
+      description: Identificador da instância do recurso (uuid).
+      schema: { $ref: "#/components/schemas/Uuid" }
+
+    FhirIdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: false
+      description: |
+        Chave de idempotência. Opcional apenas porque, na sua ausência, é usado
+        o `identifier` do recurso submetido — um dos dois tem de existir, sob
+        pena de `400`.
+      schema: { type: string, minLength: 1 }
+
+    FhirIdentifier:
+      name: identifier
+      in: query
+      required: false
+      description: |
+        Pesquisa por identificador, no formato `system|valor`, `|valor` ou
+        apenas `valor`. Para pedidos, relatórios e leituras é o número de
+        rastreio; para doentes é o identificador nacional.
+      schema: { type: string }
+
+    FhirRequisition:
+      name: requisition
+      in: query
+      required: false
+      description: Número de rastreio que agrupa as análises de uma mesma amostra.
+      schema: { type: string }
+
+    FhirPatient:
+      name: patient
+      in: query
+      required: false
+      description: Referência ao doente, como `Patient/{uuid}` ou apenas o uuid.
+      schema: { type: string }
+
+    FhirPatientIdentifier:
+      name: patient.identifier
+      in: query
+      required: false
+      description: Identificador nacional do doente, no formato `system|valor` ou apenas `valor`.
+      schema: { type: string }
+
+    FhirServiceRequestStatus:
+      name: status
+      in: query
+      required: false
+      description: |
+        Estado FHIR do pedido. Cada valor corresponde a vários estados nativos:
+        `active` cobre todo o percurso anterior a um estado terminal, e
+        `revoked` cobre tanto o cancelamento na consulta como a recusa da
+        amostra pelo laboratório. O estado nativo é publicado na extensão
+        `order-status`.
+      schema: { type: string, enum: [active, completed, revoked, unknown] }
+
+    FhirDiagnosticReportStatus:
+      name: status
+      in: query
+      required: false
+      description: |
+        Estado FHIR do relatório. `corrected` não é pesquisável por ser uma
+        propriedade das leituras e não da análise.
+      schema: { type: string, enum: [registered, partial, final, cancelled, unknown] }
+
+    FhirSince:
+      name: _since
+      in: query
+      required: false
+      description: |
+        Cursor de revisão. Devolve o que mudou depois desta revisão. Omitido ou
+        `0`, devolve desde o início.
+      schema: { type: integer, minimum: 0 }
+
+    FhirCount:
+      name: _count
+      in: query
+      required: false
+      description: Número máximo de recursos por bundle.
+      schema: { type: integer, minimum: 1, maximum: 500, default: 100 }
+
   responses:
     Unauthenticated:
       description: Token de autenticação em falta, inválido, revogado ou expirado.
@@ -1101,6 +1595,51 @@ components:
       content:
         application/json:
           schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+    FhirUnauthenticated:
+      description: Token de autenticação em falta, inválido, revogado ou expirado.
+      content:
+        application/fhir+json:
+          schema: { $ref: "#/components/schemas/OperationOutcome" }
+    FhirForbidden:
+      description: |
+        Acesso negado: permissões insuficientes (`insufficient_scope`) ou
+        incompatibilidade de unidade sanitária (`facility_mismatch`).
+      content:
+        application/fhir+json:
+          schema: { $ref: "#/components/schemas/OperationOutcome" }
+    FhirNotFound:
+      description: Recurso não encontrado no nó.
+      content:
+        application/fhir+json:
+          schema: { $ref: "#/components/schemas/OperationOutcome" }
+    FhirConflict:
+      description: |
+        Conflito de estado: a leitura já foi substituída por uma correção
+        (`conflict`).
+      content:
+        application/fhir+json:
+          schema: { $ref: "#/components/schemas/OperationOutcome" }
+    FhirUnprocessable:
+      description: |
+        Conteúdo inválido: código inexistente no dicionário, campo obrigatório
+        em falta, ou reutilização de chave de idempotência com conteúdo
+        diferente. `issue[0].expression` identifica o campo.
+      content:
+        application/fhir+json:
+          schema: { $ref: "#/components/schemas/OperationOutcome" }
+    FhirIdempotencyKeyRequired:
+      description: |
+        Nem o cabeçalho `Idempotency-Key` nem o `identifier` do recurso foram
+        fornecidos, pelo que a submissão não pode ser repetida com segurança.
+      content:
+        application/fhir+json:
+          schema: { $ref: "#/components/schemas/OperationOutcome" }
+    FhirRateLimited:
+      description: Limite de pedidos por minuto excedido para esta chave.
+      content:
+        application/fhir+json:
+          schema: { $ref: "#/components/schemas/OperationOutcome" }
 
   schemas:
     Uuid:
@@ -1629,3 +2168,415 @@ components:
             node_code:
               type: string
               description: Código do nó originador do evento.
+
+    # ------------------------------------------------------------------ FHIR
+    #
+    # A forma destes recursos é normalizada pelo HL7, não por este documento. O
+    # que aqui se declara é o subconjunto que este nó garante emitir e aceitar —
+    # o suficiente para um cliente saber com o que conta antes de chamar. Copiar
+    # a definição completa de sete recursos FHIR para YAML seria uma duplicação
+    # que divergiria dos serializers na primeira alteração, e a especificação
+    # HL7 continua a ser a referência para tudo o que não esteja aqui.
+    #
+    # Por isso `additionalProperties` fica aberto em todos: um recurso FHIR é
+    # extensível por construção.
+
+    FhirCodeableConcept:
+      type: object
+      description: |
+        Conceito codificado. Este nó emite sempre dois `coding` por esta ordem:
+        o código nacional, sempre presente, e LOINC, presente apenas onde o
+        mapeamento do dicionário já tenha sido curado. Na admissão, qualquer um
+        dos dois é aceite.
+      properties:
+        coding:
+          type: array
+          items:
+            type: object
+            properties:
+              system: { type: string }
+              code: { type: string }
+              display: { type: string }
+        text: { type: string }
+
+    FhirExtension:
+      type: array
+      description: |
+        Extensões deste nó, para o que o vocabulário do FHIR não distingue:
+        `order-status` e `test-status` (estados nativos), `test-panel` (painel de
+        origem), `revision` (revisão da leitura), `replaced-by` (leitura que
+        substituiu esta) e `acknowledged-at`.
+      items:
+        type: object
+        required: [url]
+        properties:
+          url: { type: string }
+          valueCode: { type: string }
+          valueString: { type: string }
+          valueInteger: { type: integer }
+          valueDateTime: { type: string, format: date-time }
+          valueCodeableConcept: { $ref: "#/components/schemas/FhirCodeableConcept" }
+
+    FhirServiceRequest:
+      type: object
+      description: |
+        Uma análise pedida. As análises de uma mesma amostra partilham
+        `requisition`, que é o número de rastreio — o mesmo agrupamento que o
+        HL7 v2 designa por número de grupo do requisitante.
+      required: [resourceType, status, intent, code, subject]
+      properties:
+        resourceType: { type: string, const: ServiceRequest }
+        id: { $ref: "#/components/schemas/Uuid" }
+        meta: { type: object }
+        extension: { $ref: "#/components/schemas/FhirExtension" }
+        identifier: { type: array, items: { type: object } }
+        requisition:
+          type: object
+          description: Número de rastreio que agrupa as análises da amostra.
+          properties:
+            system: { type: string }
+            value: { $ref: "#/components/schemas/TrackingNumber" }
+        status: { type: string, enum: [active, completed, revoked, unknown] }
+        intent: { type: string }
+        priority: { type: string, enum: [routine, urgent, asap, stat] }
+        category: { type: array, items: { $ref: "#/components/schemas/FhirCodeableConcept" } }
+        code: { $ref: "#/components/schemas/FhirCodeableConcept" }
+        orderDetail: { type: array, items: { type: object } }
+        subject: { type: object }
+        specimen: { type: array, items: { type: object } }
+        authoredOn: { type: string, format: date-time }
+        requester: { type: object }
+        performer:
+          type: array
+          description: Laboratório receptor. Obrigatório na admissão.
+          items: { type: object }
+        locationCode: { type: array, items: { type: object } }
+        note: { type: array, items: { type: object } }
+        contained:
+          type: array
+          description: Patient e Specimen submetidos com o pedido, referenciados por `#id`.
+          items: { type: object }
+
+    FhirDiagnosticReport:
+      type: object
+      description: |
+        O que uma análise diz. Um relatório por análise e não por amostra: um
+        painel de três pode ter uma concluída, uma em curso e uma rejeitada.
+      required: [resourceType, status, code, subject]
+      properties:
+        resourceType: { type: string, const: DiagnosticReport }
+        id: { $ref: "#/components/schemas/Uuid" }
+        meta: { type: object }
+        extension: { $ref: "#/components/schemas/FhirExtension" }
+        identifier: { type: array, items: { type: object } }
+        basedOn: { type: array, items: { type: object } }
+        status:
+          type: string
+          enum: [registered, partial, final, corrected, cancelled, unknown]
+          description: |
+            `corrected` indica que uma leitura foi substituída depois de a
+            análise ter terminado. A análise não reabre — uma correção é uma
+            linha nova, não uma segunda execução.
+        category: { type: array, items: { $ref: "#/components/schemas/FhirCodeableConcept" } }
+        code: { $ref: "#/components/schemas/FhirCodeableConcept" }
+        subject: { type: object }
+        specimen: { type: array, items: { type: object } }
+        effectiveDateTime: { type: string, format: date-time }
+        issued: { type: string, format: date-time }
+        performer: { type: array, items: { type: object } }
+        result:
+          type: array
+          description: Referências às leituras atuais. Leituras substituídas não constam.
+          items: { type: object }
+        contained:
+          type: array
+          description: As leituras atuais, incluídas para poupar uma chamada por leitura.
+          items: { $ref: "#/components/schemas/FhirObservation" }
+        conclusion:
+          type: string
+          description: Motivo, quando a análise foi rejeitada e nada produziu.
+
+    FhirObservation:
+      type: object
+      description: |
+        Uma leitura contra um indicador. Nada aqui é reescrito: uma correção é
+        uma linha nova, e a leitura corrigida passa a `entered-in-error` com a
+        extensão `replaced-by` a identificar a substituta.
+
+        Indicadores numéricos são emitidos em `valueQuantity` e os restantes em
+        `valueString`; exatamente uma das duas está presente.
+      required: [resourceType, status, code, subject]
+      properties:
+        resourceType: { type: string, const: Observation }
+        id: { $ref: "#/components/schemas/Uuid" }
+        meta: { type: object }
+        extension: { $ref: "#/components/schemas/FhirExtension" }
+        identifier: { type: array, items: { type: object } }
+        basedOn: { type: array, items: { type: object } }
+        status: { type: string, enum: [final, entered-in-error] }
+        category: { type: array, items: { $ref: "#/components/schemas/FhirCodeableConcept" } }
+        code: { $ref: "#/components/schemas/FhirCodeableConcept" }
+        subject: { type: object }
+        specimen: { type: object }
+        effectiveDateTime:
+          type: string
+          format: date-time
+          description: Momento da colheita, não do registo — é o que a pergunta clínica exige.
+        issued: { type: string, format: date-time }
+        performer: { type: array, items: { type: object } }
+        valueQuantity:
+          type: object
+          description: |
+            Sem `system` UCUM: as unidades do dicionário são as do laboratório, e
+            rotulá-las como UCUM convidaria à conversão entre unidades que apenas
+            se assemelham.
+          required: [value]
+          properties:
+            value: { type: number }
+            unit: { type: string }
+        valueString: { type: string }
+        referenceRange:
+          type: array
+          description: Apenas os intervalos aplicáveis ao sexo e idade deste doente.
+          items: { type: object }
+
+    FhirPatient:
+      type: object
+      required: [resourceType, identifier]
+      properties:
+        resourceType: { type: string, const: Patient }
+        id: { $ref: "#/components/schemas/Uuid" }
+        identifier:
+          type: array
+          description: |
+            Vazio para doentes sem identificador nacional. Um identificador
+            nunca é inventado.
+          items: { type: object }
+        active: { type: boolean }
+        name:
+          type: array
+          description: |
+            Emitido apenas como `text`. Este sistema guarda o nome como uma
+            cadeia única, e reparti-lo por `family`/`given` colocaria nomes
+            errados em campos estruturados.
+          items: { type: object }
+        telecom: { type: array, items: { type: object } }
+        gender: { type: string, enum: [female, male, other, unknown] }
+        birthDate: { type: string, format: date }
+
+    FhirSpecimen:
+      type: object
+      description: |
+        A amostra. Não existe tabela de amostras: um pedido é uma amostra, pelo
+        que o Specimen partilha o uuid do pedido.
+      required: [resourceType, status]
+      properties:
+        resourceType: { type: string, const: Specimen }
+        id: { $ref: "#/components/schemas/Uuid" }
+        identifier: { type: array, items: { type: object } }
+        accessionIdentifier:
+          type: object
+          properties:
+            system: { type: string }
+            value: { $ref: "#/components/schemas/TrackingNumber" }
+        status:
+          type: string
+          enum: [available, unsatisfactory, entered-in-error]
+          description: |
+            `unsatisfactory` quando o laboratório recusou a amostra; o motivo
+            escolhido pelo operador consta em `note`.
+        type: { $ref: "#/components/schemas/FhirCodeableConcept" }
+        subject: { type: object }
+        receivedTime: { type: string, format: date-time }
+        collection: { type: object }
+        note: { type: array, items: { type: object } }
+
+    FhirBundle:
+      type: object
+      description: |
+        Conjunto de recursos numa só resposta, ou submissão transacional numa só
+        chamada. A paginação faz-se por `link`, e o cursor dentro do link `next`
+        é uma revisão, não um deslocamento — um deslocamento desloca-se quando
+        uma linha é inserida atrás dele.
+      required: [resourceType, type]
+      properties:
+        resourceType: { type: string, const: Bundle }
+        type:
+          type: string
+          enum: [searchset, collection, transaction, transaction-response]
+        total: { type: integer }
+        link:
+          type: array
+          items:
+            type: object
+            required: [relation, url]
+            properties:
+              relation: { type: string, enum: [self, next] }
+              url: { type: string }
+        entry:
+          type: array
+          items:
+            type: object
+            properties:
+              fullUrl: { type: string }
+              resource: { type: object }
+              search: { type: object }
+              response:
+                type: object
+                properties:
+                  status: { type: string }
+                  location: { type: string }
+
+    OperationOutcome:
+      type: object
+      description: |
+        A única forma que o FHIR tem para uma recusa. Cada `issue` transporta
+        dois códigos: o do FHIR em `code`, para clientes genéricos, e o código
+        estável deste nó em `details.coding[0].code` — o mesmo enum `ErrorCode`
+        publicado para a API em `/api/v3`. Um integrador não deve ter de
+        aprender dois vocabulários de erro.
+      required: [resourceType, issue]
+      properties:
+        resourceType: { type: string, const: OperationOutcome }
+        issue:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            required: [severity, code, details]
+            properties:
+              severity: { type: string, enum: [fatal, error, warning, information] }
+              code:
+                type: string
+                description: Código do vocabulário do FHIR.
+                enum: [login, forbidden, required, duplicate, throttled, not-found, conflict, invalid, processing]
+              details:
+                type: object
+                required: [coding, text]
+                properties:
+                  coding:
+                    type: array
+                    items:
+                      type: object
+                      required: [system, code]
+                      properties:
+                        system: { type: string }
+                        code: { $ref: "#/components/schemas/ErrorCode" }
+                  text: { type: string }
+              expression:
+                type: array
+                description: Campo que originou a recusa.
+                items: { type: string }
+
+    # A forma do CapabilityStatement é normalizada pelo HL7, não por este
+    # documento. O que aqui se declara é o subconjunto que este nó garante
+    # emitir — o suficiente para um cliente decidir se fala com a fachada antes
+    # de a chamar. `additionalProperties` fica aberto de propósito: um recurso
+    # FHIR é extensível, e fechá-lo faria deste esquema uma cópia à mão que
+    # divergiria do gerador na primeira extensão acrescentada.
+    CapabilityStatement:
+      type: object
+      description: |
+        Contrato da fachada HL7 FHIR R4 deste nó, gerado a partir das constantes
+        que os controladores utilizam. Ver a especificação HL7 para a definição
+        completa do recurso.
+      required: [resourceType, status, kind, fhirVersion, format, rest]
+      properties:
+        resourceType:
+          type: string
+          const: CapabilityStatement
+        id: { type: string }
+        url:
+          type: string
+          description: URL canónico deste CapabilityStatement.
+        version:
+          type: string
+          description: Versão do software em execução no nó, igual à reportada em `/api/v3/health`.
+        name: { type: string }
+        title: { type: string }
+        status:
+          type: string
+          enum: [draft, active, retired, unknown]
+        date: { type: string, format: date }
+        publisher: { type: string }
+        kind:
+          type: string
+          enum: [instance, capability, requirements]
+        software:
+          type: object
+          properties:
+            name: { type: string }
+            version: { type: string }
+        implementation:
+          type: object
+          properties:
+            description: { type: string }
+            url: { type: string }
+        fhirVersion:
+          type: string
+          const: 4.0.1
+        format:
+          type: array
+          description: Formatos de serialização aceites pela fachada.
+          items: { type: string }
+        rest:
+          type: array
+          minItems: 1
+          description: |
+            Capacidades REST do servidor: recursos servidos com as suas
+            interações e parâmetros de pesquisa, interações ao nível do sistema
+            (`transaction`) e operações declaradas (`$acknowledge`).
+          items:
+            type: object
+            required: [mode, resource]
+            properties:
+              mode:
+                type: string
+                enum: [client, server]
+              documentation: { type: string }
+              security: { type: object }
+              resource:
+                type: array
+                items:
+                  type: object
+                  required: [type, interaction]
+                  properties:
+                    type:
+                      type: string
+                      description: Nome do recurso FHIR servido.
+                    profile: { type: string }
+                    documentation: { type: string }
+                    interaction:
+                      type: array
+                      items:
+                        type: object
+                        required: [code]
+                        properties:
+                          code: { type: string }
+                          documentation: { type: string }
+                    searchParam:
+                      type: array
+                      items:
+                        type: object
+                        required: [name, type]
+                        properties:
+                          name: { type: string }
+                          type: { type: string }
+                          documentation: { type: string }
+              interaction:
+                type: array
+                items:
+                  type: object
+                  required: [code]
+                  properties:
+                    code: { type: string }
+                    documentation: { type: string }
+              operation:
+                type: array
+                items:
+                  type: object
+                  required: [name, definition]
+                  properties:
+                    name: { type: string }
+                    definition: { type: string }
+                    documentation: { type: string }

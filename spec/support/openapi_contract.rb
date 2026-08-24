@@ -13,6 +13,11 @@ require "json_schemer"
 module OpenapiContract
   class Violation < StandardError; end
 
+  # The two dialects the contract speaks for. FHIR resources are JSON under a
+  # media type of their own, and a response the document describes must be
+  # checked whichever of the two it arrives as.
+  MEDIA_TYPES = [ "application/json", "application/fhir+json" ].freeze
+
   class << self
     # Raises with everything needed to fix it: which operation, which pointer
     # inside the body, and what was there instead.
@@ -39,7 +44,9 @@ module OpenapiContract
       response = operation.responses[status.to_s]
       return nil if response.nil?
 
-      ApiContract.resolve(response).dig("content", "application/json", "schema")
+      content = ApiContract.resolve(response).fetch("content", {})
+
+      MEDIA_TYPES.filter_map { |media_type| content.dig(media_type, "schema") }.first
     end
 
     # A body the node accepted has to be one the contract would have accepted
@@ -112,8 +119,8 @@ module ValidatesAgainstTheContract
 
   def validate_against_contract(method)
     return unless RSpec.configuration.validate_openapi_contract
-    return unless request.path.start_with?(ApiContract::DOCUMENTED_PREFIX)
-    return unless response.media_type == "application/json"
+    return unless ApiContract.documented?(request.path)
+    return unless response.media_type.in?(OpenapiContract::MEDIA_TYPES)
 
     OpenapiContract.validate_response!(
       verb: method, path: request.path, status: response.status, body: response.parsed_body
