@@ -38,7 +38,9 @@ cp .env.local.example .env       # Para implantação de nó local (unidade sani
 cp .env.national.example .env    # Para implantação do nó nacional central
 ```
 
-No modo `local`, configure obrigatoriamente a variável `SISLAB_SYNC_NODE_CODE` com o código oficial da unidade sanitária (utilizado na identificação do nó e no prefixo dos números de rastreio).
+No modo `local`, configure obrigatoriamente a variável `SISLAB_SYNC_LAB_CODE` com o código do laboratório no registo nacional (`labs`). É a única identidade que um nó tem de receber: a unidade sanitária, o nome e o distrito são lidos da entrada correspondente do registo, replicada do nó nacional, e as chaves emitidas no nó herdam-nos. Enquanto o registo não chegar, o próprio código serve de prefixo aos números de rastreio.
+
+A variável anterior, `SISLAB_SYNC_NODE_CODE`, continua a ser lida e significa o mesmo, para nós instalados antes de o registo existir.
 
 ### 2.2. Inicialização dos Serviços
 
@@ -97,11 +99,13 @@ A emissão de credenciais de integração (para sistemas EMR ou SISLAB) pode ser
 
 ```bash
 docker compose exec app bin/rails api_client:create \
-  NAME="EMR Unidade Central" KIND=emr FACILITY_CODE=HCM
+  NAME="EMR Unidade Central" KIND=emr
 
 docker compose exec app bin/rails api_key:issue \
-  CLIENT=HCM SCOPES="orders:write,orders:read,results:read,dictionary:read"
+  CLIENT="EMR Unidade Central" SCOPES="orders:write,orders:read,results:read,dictionary:read"
 ```
+
+Não é preciso indicar códigos. Um nó local é um laboratório e sabe qual: a chave herda o código do laboratório (`SISLAB_SYNC_LAB_CODE`) e o da unidade sanitária que consta da entrada correspondente no registo nacional. Um pedido que declare outros códigos não é recusado — o nó usa os seus.
 
 ---
 
@@ -151,10 +155,11 @@ A chave utilizada pelo nó local deve ser previamente emitida no nó nacional pa
 | Variável | Obrigatoriedade | Descrição |
 | --- | --- | --- |
 | `SISLAB_SYNC_MODE` | Obrigatória | Define o modo de operação: `local` ou `national`. |
-| `SISLAB_SYNC_NODE_CODE` | Obrigatória em modo local | Código identificador da unidade sanitária / nó. |
+| `SISLAB_SYNC_LAB_CODE` | Obrigatória em modo local | Código do laboratório no registo nacional (`labs`). Identifica o nó e prefixa os números de rastreio. |
 | `SISLAB_SYNC_NATIONAL_URL` | Obrigatória em modo local | URL base de comunicação com o nó nacional central. |
 | `SISLAB_SYNC_NATIONAL_API_KEY` | Obrigatória em modo local | Token de autenticação Bearer para comunicação com o nó nacional. |
 | `SISLAB_SYNC_PUSH_BATCH` | Opcional | Quantidade máxima de eventos por lote de envio da outbox (padrão: 100). |
+| `SISLAB_SYNC_TLS_TERMINATED` | Opcional | `false` num nó de produção servido em HTTP simples, sem proxy inverso a terminar TLS (padrão: `true`). Ver [secção 8.5](#85-terminação-tls). |
 
 ### 5.2. Base de Dados e Cache
 
@@ -179,6 +184,7 @@ A chave utilizada pelo nó local deve ser previamente emitida no nó nacional pa
 | --- | --- |
 | `API_RATE_LIMIT_PER_MINUTE` | Limite de requisições por minuto por chave de API. |
 | `MLAB_DB_*` | Configurações de conexão para importação do legado mLab (exclusivo do nó nacional). |
+| `MLAB_API_URL`, `MLAB_API_TOKEN`, `MLAB_API_USER`, `MLAB_API_PASSWORD` | Endereço e credenciais da API do mLab, alternativa à ligação directa à base de dados na importação do catálogo. O token é opcional: na sua ausência a importação autentica-se em `/api/v1/auth/application_login`. |
 | `LOINC_CSV` | Caminho no sistema de ficheiros para o ficheiro `Loinc.csv` oficial utilizado na curadoria. |
 | `WEB_CONCURRENCY`, `RAILS_MAX_THREADS`, `SIDEKIQ_CONCURRENCY` | Parâmetros de paralelismo de processos e threads do servidor de aplicação e workers. |
 
@@ -207,22 +213,42 @@ bin/rails users:list                                             # Listagem de c
 ### 6.3. Gestão de Clientes e Chaves de API
 
 ```bash
-bin/rails api_client:create NAME="EMR Local" KIND=emr FACILITY_CODE=HCM
+bin/rails api_client:create NAME="EMR Local" KIND=emr
 bin/rails api_client:list
-bin/rails api_key:issue CLIENT=HCM SCOPES="orders:write,results:read" [EXPIRES_AT=2027-01-01]
+bin/rails api_key:issue CLIENT="EMR Local" SCOPES="orders:write,results:read" [EXPIRES_AT=2027-01-01]
 bin/rails api_key:list
 bin/rails api_key:revoke KEY=<uuid_ou_prefixo>
 ```
 
 Âmbitos estruturados: `orders:read`, `orders:write`, `results:read`, `results:write`, `referrals:write`, `dictionary:read`, `dictionary:write`, `sync:push`, `sync:pull`.
 
-### 6.4. Gestão e Sincronização do Dicionário Nacional
+### 6.4. Registo Nacional de Laboratórios
+
+O nó nacional conhece todos os laboratórios do país e publica a lista pelo mesmo canal do dicionário — `labs` é uma entidade do catálogo como qualquer outra, com a mesma sequência de revisões, o mesmo cursor e os mesmos ecrãs. Cada entrada acrescenta ao tronco comum a unidade sanitária onde o laboratório está, o distrito, a província e um contacto.
+
+É esse registo que torna possível referenciar entre laboratórios sem ninguém escrever códigos:
+
+- o pedido de encaminhamento indica apenas `to_lab_code`; a unidade sanitária de destino é lida do registo;
+- um código que o registo não conheça é recusado, porque uma encomenda endereçada a uma gralha nunca chega;
+- as chaves emitidas num nó herdam a unidade sanitária da entrada do próprio nó;
+- um nó que ainda não tenha recebido o registo continua a funcionar: usa o seu próprio código como prefixo dos números de rastreio e aceita qualquer destino.
+
+As entradas mantêm-se no nó nacional, pelos ecrãs do dicionário (**Dicionário** → *Laboratórios*), e chegam aos nós locais na sincronização seguinte.
+
+### 6.5. Gestão e Sincronização do Dicionário Nacional
+
+O catálogo é uma referência, não uma barreira. Um exame, painel, tipo de amostra, indicador ou motivo de rejeição pode ser indicado por `national_code`, por `uuid` ou por nome, e um termo que o nó não reconheça é aceite e guardado tal como chegou — com o nome e o código com que veio, sem entrada de dicionário associada. A ligação faz-se mais tarde, quando o catálogo alcançar o termo, sem reintroduzir a leitura. O mesmo vale na sincronização: o nó nacional deixou de bloquear a fila de um nó por um código que ainda não tenha.
+
+A única recusa que resta é a de um termo que não indique nada — um teste sem exame, uma leitura sem indicador —, porque nesse caso ninguém saberia o que foi pedido ou medido.
 
 A autoridade de escrita sobre o catálogo é restrita ao nó nacional:
 
 ```bash
 # Executado no Nó Nacional:
-bin/rails dictionary:import_from_mlab           # Importação inicial a partir da base legada mLab (estado draft)
+bin/rails dictionary:seed                       # Carga inicial: catálogo distribuído com a release, já publicado
+bin/rails dictionary:snapshot                   # Recolha de um novo catálogo a partir do mLab (SOURCE=api|database)
+bin/rails dictionary:import_from_mlab           # Importação directa a partir da base legada mLab (estado draft)
+bin/rails dictionary:import_from_mlab_api       # Importação equivalente através da API do mLab (estado draft)
 bin/rails dictionary:quality                    # Geração de relatório de conformidade → tmp/dictionary_quality.csv
 ACTOR="Administrador" SKIP_BLOCKED=1 \
   bin/rails dictionary:promote                  # Publicação e ativação estruturada de rascunhos válidos
@@ -232,7 +258,51 @@ bin/rails dictionary:status                     # Diagnóstico do estado quantit
 bin/rails dictionary:pull                       # Sincronização manual imediata com o nó nacional
 ```
 
-### 6.5. Curadoria de Mapeamentos LOINC
+#### Carga inicial do catálogo
+
+O ficheiro `db/dictionary/mlab_catalog.json` acompanha a release e contém o catálogo do mLab tal como
+estava no momento da recolha — departamentos, espécimes, fármacos, organismos, indicadores com os
+respectivos intervalos de referência, exames, painéis e todas as ligações entre eles. `dictionary:seed`
+importa-o, acrescenta os motivos de rejeição (o mLab não tem tabela para eles) e publica tudo,
+registando o acto contra `ACTOR`. É idempotente: a identidade vem do id do mLab através de
+`ExternalMapping`, pelo que uma segunda execução não duplica nem altera nada.
+
+Esta é a carga **inicial**. A partir daí o catálogo é propriedade do nó nacional e os exames novos são
+criados à mão na interface; `dictionary:snapshot` só volta a ser necessário para distribuir um catálogo
+mais recente do mLab numa nova release.
+
+| Entidade | Entradas na recolha de 2026-08-24 |
+| --- | --- |
+| Departamentos | 13 |
+| Tipos de espécime | 28 |
+| Fármacos | 30 |
+| Organismos | 224 |
+| Indicadores | 524 (3 recusados por não terem nome) |
+| Intervalos de referência | 1051 |
+| Exames | 115 |
+| Painéis | 9 |
+| Motivos de rejeição | 10 (deste repositório, não do mLab) |
+
+O relatório de qualidade é gerado no fim da carga e não a bloqueia: a recolha de 2026-08-24 acusa 279
+nomes duplicados e 199 indicadores sem exame associado, herdados do mLab. `SKIP_BLOCKED=1` retém os
+exames sem indicadores ou sem espécime em rascunho, para serem corrigidos antes de chegarem aos
+laboratórios.
+
+#### Reimportação directa do mLab
+
+As duas importações são intercambiáveis — partilham o mesmo importador, a mesma identidade por
+`ExternalMapping` e a mesma idempotência — e diferem apenas na origem das linhas. A via API é a
+indicada quando apenas o HTTP do mLab está acessível, com três limitações que decorrem da própria
+API e que a tarefa comunica no final da execução:
+
+- Exames e painéis pediátricos ou oncológicos são omitidos pelas listagens da API; uma importação
+  por esta via retira os que uma importação anterior pela base de dados tenha criado.
+- Um indicador chega através do exame que o utiliza, pelo que indicadores sem exame associado não
+  são importados.
+- Um exame cujo departamento esteja retirado no mLab não pode ser lido em detalhe (a API responde
+  404), pelo que é importado sem indicadores nem organismos e é nomeado nos avisos da fonte.
+
+### 6.6. Curadoria de Mapeamentos LOINC
 
 ```bash
 bin/rails dictionary:loinc:coverage             # Métricas de cobertura de mapeamentos por entidade
@@ -248,7 +318,7 @@ LOINC_CSV=tmp/Loinc.csv ACTOR="Responsável Técnico" APPLY=1 \
   bin/rails "dictionary:loinc:apply[tmp/loinc_worksheet.csv]"             # Execução efetiva com persistência
 ```
 
-### 6.6. Execução da Suite de Testes e Validação de Conformidade
+### 6.7. Execução da Suite de Testes e Validação de Conformidade
 
 ```bash
 docker compose run --rm -e RAILS_ENV=test app bundle exec rspec
@@ -262,11 +332,11 @@ Execução segmentada por modo operacional:
 ```bash
 # Execução da suite em modo Local:
 docker compose run --rm -e RAILS_ENV=test \
-  -e SISLAB_SYNC_MODE=local -e SISLAB_SYNC_NODE_CODE=LOCAL01 app bundle exec rspec
+  -e SISLAB_SYNC_MODE=local -e SISLAB_SYNC_LAB_CODE=LOCAL01 app bundle exec rspec
 
 # Execução da suite em modo Nacional:
 docker compose run --rm -e RAILS_ENV=test \
-  -e SISLAB_SYNC_MODE=national -e SISLAB_SYNC_NODE_CODE=NATIONAL app bundle exec rspec
+  -e SISLAB_SYNC_MODE=national -e SISLAB_SYNC_LAB_CODE=NATIONAL app bundle exec rspec
 ```
 
 ---
@@ -278,7 +348,7 @@ Requisitos de runtime: Ruby 3.3.8, MySQL 8.4 e Redis 7.
 ```bash
 bundle install
 
-export SISLAB_SYNC_MODE=local SISLAB_SYNC_NODE_CODE=DEV
+export SISLAB_SYNC_MODE=local SISLAB_SYNC_LAB_CODE=DEV
 export DATABASE_HOST=127.0.0.1 DATABASE_USER=root DATABASE_PASSWORD=...
 
 bin/rails db:prepare
@@ -318,7 +388,8 @@ Em ambiente `production` a aplicação requer um segredo, fornecido por uma das 
 | --- | --- | --- |
 | `RAILS_ENV` | `production` | |
 | `SISLAB_SYNC_MODE` | `local` \| `national` | |
-| `SISLAB_SYNC_NODE_CODE` | `HCM` | Obrigatória em modo `local`; prefixa os números de rastreio. |
+| `SISLAB_SYNC_LAB_CODE` | `HCM` | Obrigatória em modo `local`; identifica o laboratório no registo nacional e prefixa os números de rastreio. |
+| `SISLAB_SYNC_TLS_TERMINATED` | `true` | `false` se o nó for servido em HTTP simples (ver 8.5). |
 | `DATABASE_HOST`, `DATABASE_USER`, `DATABASE_PASSWORD`, `DATABASE_NAME` | | MySQL 8.4 com `transaction_isolation=READ-COMMITTED`. |
 | `REDIS_URL` | `redis://redis:6379/0` | Cache, limitação de taxa e filas Sidekiq. |
 | `SISLAB_SYNC_NATIONAL_URL`, `SISLAB_SYNC_NATIONAL_API_KEY` | | Modo `local`, para replicação com o nó nacional. |
@@ -331,11 +402,11 @@ A especificação completa consta da [secção 5](#5-especificação-de-variáve
 docker run -d --name sislab_sync \
   -e RAILS_ENV=production \
   -e RAILS_MASTER_KEY="$(cat config/master.key)" \
-  -e SISLAB_SYNC_MODE=local -e SISLAB_SYNC_NODE_CODE=HCM \
+  -e SISLAB_SYNC_MODE=local -e SISLAB_SYNC_LAB_CODE=HCM \
   -e DATABASE_HOST=... -e DATABASE_USER=... -e DATABASE_PASSWORD=... \
   -e DATABASE_NAME=sislab_sync_production \
   -e REDIS_URL=redis://... \
-  -p 3000:3000 sislab_sync:2.0.0
+  -p 127.0.0.1:3000:3000 sislab_sync:2.0.0
 ```
 
 Em modo `local`, um processo Sidekiq adicional executa o despacho da outbox, a receção de amostras referidas e a sincronização do dicionário (ver [secção 5.3](#53-agendamento-de-trabalhos-em-segundo-plano-modo-local)). Utiliza a mesma imagem e o mesmo conjunto de variáveis:
@@ -346,7 +417,26 @@ docker run -d --name sislab_sync_worker <mesmas variáveis> sislab_sync:2.0.0 bu
 
 ### 8.5. Terminação TLS
 
-`config/environments/production.rb` define `force_ssl` e `assume_ssl`. A terminação TLS é realizada por um proxy reverso à frente do nó, com encaminhamento do cabeçalho `X-Forwarded-Proto`. Em acesso direto por HTTP, os pedidos entram em ciclo de redirecionamento e os URLs gerados utilizam o esquema `https`.
+Por omissão, `config/environments/production.rb` define `force_ssl` e `assume_ssl`: a terminação TLS é realizada por um proxy reverso à frente do nó, que encaminha o cabeçalho `X-Forwarded-Proto`. O processo Puma serve exclusivamente HTTP simples na porta 3000, que não deve ser exposta fora da máquina — publique-a apenas no interface de loopback (`-p 127.0.0.1:3000:3000`) e coloque o proxy à frente.
+
+```nginx
+location / {
+    proxy_pass http://127.0.0.1:3000;
+    proxy_set_header X-Forwarded-Proto https;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header Host $host;
+}
+```
+
+**Nó sem proxy TLS.** Um nó servido diretamente em HTTP simples tem de declarar `SISLAB_SYNC_TLS_TERMINATED=false`. Mantido no valor por omissão, `assume_ssl` marca todos os pedidos como seguros antes do redirecionamento de `force_ssl` ser avaliado — pelo que nenhum pedido é redirecionado e o nó apenas passa a declarar um esquema que não pratica:
+
+| Efeito | Consequência observada |
+| --- | --- |
+| Cookie de sessão marcado `Secure` | O navegador aceita o cookie e nunca o devolve: a autenticação na interface web não persiste. |
+| `request.base_url` resolve para `https://<host>:3000` | Os `fullUrl` e os `link` dos Bundles FHIR apontam para uma porta sem TLS. Um cliente que siga a paginação abre uma ligação TLS contra o Puma, que regista `Puma::HttpParserError: Invalid HTTP format`. |
+| Cabeçalho `Strict-Transport-Security` emitido em HTTP simples | Ignorado por navegadores conformes (RFC 6797 §8.1); o comportamento de outros clientes não é uniforme. |
+
+A variável não desativa proteção alguma que o transporte já possua: alinha a configuração da aplicação com o transporte efetivamente em uso. Num nó em HTTP simples, as credenciais e os resultados clínicos circulam em claro na rede, pelo que a colocação de um proxy com TLS permanece o destino correto.
 
 ### 8.6. Migrações de Base de Dados
 
@@ -374,6 +464,9 @@ docker exec sislab_sync bin/rails "users:create[Nome Utilizador,email@instituica
 # Credenciais de integração para o sistema clínico
 docker exec sislab_sync bin/rails api_client:create NAME="EMR Unidade Central" KIND=emr FACILITY_CODE=HCM
 docker exec sislab_sync bin/rails api_key:issue CLIENT=HCM SCOPES="orders:write,orders:read,results:read,dictionary:read"
+
+# Carga inicial do catálogo — apenas no nó nacional, uma única vez (ver 6.4)
+docker exec sislab_sync bin/rails dictionary:seed ACTOR="Nome de quem aceita o catálogo"
 ```
 
 *Nota técnica*: a inserção de dados de demonstração e a geração automática de credenciais administrativas (`tmp/demo_credentials.txt`) são exclusivas do ambiente `development`.

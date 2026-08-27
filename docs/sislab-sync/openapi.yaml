@@ -31,10 +31,10 @@ info:
     Um nó local serve ainda uma fachada **HL7 FHIR R4** em `/fhir/r4`, destinada
     a sistemas EMR que já falam FHIR. Projeta os mesmos pedidos, amostras e
     leituras — `ServiceRequest`, `DiagnosticReport`, `Observation`, `Patient` e
-    `Specimen` — e toda a escrita reentra na mesma admissão que valida códigos
-    de dicionário e expande painéis. Autenticação, âmbitos, regra de unidade
-    sanitária, limitação de taxa, idempotência e trilho de auditoria são os
-    descritos neste documento: são propriedades do nó, não do dialeto.
+    `Specimen` — e toda a escrita reentra na mesma admissão que liga os termos
+    ao catálogo e expande painéis. Autenticação, âmbitos, limitação de taxa,
+    idempotência e trilho de auditoria são os descritos neste documento: são
+    propriedades do nó, não do dialeto.
 
     O que difere é a forma das respostas — recursos FHIR em
     `application/fhir+json` e `OperationOutcome` em vez do envelope
@@ -51,11 +51,25 @@ info:
     Authorization: Bearer <api_key>
     ```
 
-    Cada chave está associada a um cliente específico, com permissões
-    estruturadas por âmbitos (`scopes`), código de unidade sanitária
-    (`facility_code`) e, quando aplicável, código de laboratório (`lab_code`).
-    Operações sobre recursos de outras unidades sanitárias são rejeitadas com
-    código HTTP `403 Forbidden`.
+    Cada chave está associada a um cliente específico e a um conjunto de âmbitos
+    (`scopes`). Um nó local é um laboratório: a chave herda o código do
+    laboratório e o da unidade sanitária do próprio nó, e os códigos que o corpo
+    de um pedido declare são ignorados em favor desses. Só um cliente nó-a-nó
+    é recusado com `403 Forbidden` ao falar por outro nó (`lab_mismatch`).
+
+    ## Termos Clínicos
+
+    Exames, painéis, tipos de amostra, indicadores e motivos de rejeição são
+    indicados por `national_code`, por `uuid` ou por `name` — e uma cadeia de
+    texto simples vale por `{ "name": "..." }`.
+
+    Um termo que o nó não reconheça **não** é recusado. O catálogo nacional está
+    em consolidação, e recusar o exame que um laboratório executa todos os dias
+    por a lista ainda lá não ter chegado impede o trabalho em vez de o proteger.
+    O termo fica guardado com o nome e o código com que chegou, é devolvido
+    dessa forma (`uuid` nulo, `national_code` nulo se não tiver sido indicado) e
+    pode ser ligado ao catálogo mais tarde sem que a leitura seja reintroduzida.
+    A única recusa que resta é a de um termo que não indique nada.
 
     ## Paginação por Cursores
 
@@ -138,10 +152,12 @@ paths:
         `Specimen` e um `ServiceRequest` por análise, agrupados pelo campo
         `requisition`. Cada grupo de `requisition` origina um pedido.
 
-        A operação é atómica: se qualquer análise referenciar um código
-        inexistente no dicionário do nó, nenhum registo é escrito. Bundles de
-        tipo `batch` são rejeitados, por prometerem independência entre
-        entradas que esta admissão não oferece.
+        A operação é atómica: se qualquer entrada for inválida, nenhum registo
+        é escrito. Um código que o catálogo do nó não tenha **não** torna a
+        entrada inválida — é guardado como chegou, com o `display` por nome (ver
+        *Termos Clínicos*); inválida é a análise que não identifica exame
+        nenhum. Bundles de tipo `batch` são rejeitados, por prometerem
+        independência entre entradas que esta admissão não oferece.
 
         A chave de idempotência é o cabeçalho `Idempotency-Key` ou, na sua
         ausência, o `identifier` do primeiro recurso do Bundle.
@@ -186,8 +202,14 @@ paths:
         declarado. Um código de painel expande-se nas análises constituintes e a
         resposta passa a ser um `Bundle` de tipo `collection`.
 
-        `performer` é obrigatório e identifica o laboratório receptor. A unidade
-        sanitária é sempre a da chave de API.
+        Um `code` que não corresponda a nenhuma entrada do catálogo deste nó é
+        aceite na mesma: fica guardado com o código e o `display` (ou o `text`
+        do conceito) com que chegou, e é devolvido como um `coding` sem
+        `system`, que é o que este nó pode afirmar sobre ele. Só é recusado um
+        `code` que não traga nem código nem palavra nenhuma.
+
+        `performer` identifica o laboratório receptor; na sua ausência é o
+        próprio nó. A unidade sanitária é sempre a do nó, nunca a do corpo.
 
         A chave de idempotência é o cabeçalho `Idempotency-Key` ou, na sua
         ausência, o `identifier` do pedido.
@@ -1038,8 +1060,9 @@ paths:
       operationId: rejectOrder
       summary: Rejeição técnica de amostra
       description: |
-        Regista a rejeição técnica de uma amostra não conforme com indicação
-        obrigatória do motivo padronizado do dicionário nacional.
+        Regista a rejeição técnica de uma amostra não conforme. O motivo é
+        obrigatório, mas não tem de constar do dicionário nacional: um motivo
+        que o nó não conheça fica guardado como chegou (ver *Termos Clínicos*).
       x-node-mode: local
       x-scope: results:write
       parameters:
@@ -1087,15 +1110,20 @@ paths:
           application/json:
             schema:
               type: object
-              required: [tracking_number, to_facility_code, to_lab_code]
+              required: [tracking_number, to_lab_code]
               properties:
                 tracking_number: { $ref: "#/components/schemas/TrackingNumber" }
-                to_facility_code:
-                  type: string
-                  description: Código da unidade sanitária de destino.
                 to_lab_code:
                   type: string
-                  description: Código do laboratório de destino.
+                  description: >
+                    Código do laboratório de destino, tal como consta do registo
+                    nacional (`labs`) que este nó replica.
+                to_facility_code:
+                  type: string
+                  description: >
+                    Ignorado: a unidade sanitária de destino é lida do registo.
+                    Aceite para que clientes escritos contra o contrato anterior
+                    continuem a funcionar.
                 courier:
                   type: string
                   description: Identificação do responsável pelo transporte / estafeta.
@@ -1556,8 +1584,7 @@ components:
     Forbidden:
       description: |
         Acesso negado: permissões insuficientes (`insufficient_scope`) ou
-        incompatibilidade de unidade sanitária (`facility_mismatch`) ou
-        laboratório (`lab_mismatch`).
+        chave a falar por outro nó (`lab_mismatch`).
       content:
         application/json:
           schema: { $ref: "#/components/schemas/ErrorResponse" }
@@ -1604,7 +1631,7 @@ components:
     FhirForbidden:
       description: |
         Acesso negado: permissões insuficientes (`insufficient_scope`) ou
-        incompatibilidade de unidade sanitária (`facility_mismatch`).
+        chave a falar por outro nó (`lab_mismatch`).
       content:
         application/fhir+json:
           schema: { $ref: "#/components/schemas/OperationOutcome" }
@@ -1622,9 +1649,10 @@ components:
           schema: { $ref: "#/components/schemas/OperationOutcome" }
     FhirUnprocessable:
       description: |
-        Conteúdo inválido: código inexistente no dicionário, campo obrigatório
-        em falta, ou reutilização de chave de idempotência com conteúdo
-        diferente. `issue[0].expression` identifica o campo.
+        Conteúdo inválido: termo que não identifica nada, campo obrigatório em
+        falta, ou reutilização de chave de idempotência com conteúdo diferente.
+        Um código que o catálogo do nó não tenha não é motivo de recusa.
+        `issue[0].expression` identifica o campo.
       content:
         application/fhir+json:
           schema: { $ref: "#/components/schemas/OperationOutcome" }
@@ -1692,6 +1720,7 @@ components:
     DictionaryEntity:
       type: string
       enum:
+        - labs
         - departments
         - specimen_types
         - drugs
@@ -1707,7 +1736,6 @@ components:
       enum:
         - unauthenticated
         - insufficient_scope
-        - facility_mismatch
         - lab_mismatch
         - idempotency_key_required
         - idempotency_key_reused
@@ -1765,23 +1793,40 @@ components:
                 description: Nome do campo associado ao erro de validação, quando aplicável.
 
     DictionaryRef:
-      type: object
       description: |
-        Referência de entrada do catálogo nacional por `national_code` ou `uuid`.
-      minProperties: 1
-      properties:
-        national_code: { type: string }
-        uuid: { $ref: "#/components/schemas/Uuid" }
+        Termo clínico, indicado por `national_code`, por `uuid` ou por `name`.
+
+        O catálogo nacional ainda está em consolidação, pelo que um termo que
+        este nó não conheça **não** é recusado: fica registado com o nome e o
+        código com que chegou, e é ligado ao catálogo mais tarde, sem que a
+        leitura tenha de ser reintroduzida. Uma cadeia de texto simples é aceite
+        como forma abreviada de `{ "name": "..." }`.
+      oneOf:
+        - type: string
+          minLength: 1
+        - type: object
+          minProperties: 1
+          properties:
+            national_code: { type: string }
+            uuid: { $ref: "#/components/schemas/Uuid" }
+            name: { type: string }
 
     DictionaryReference:
       type: [object, "null"]
       description: |
-        Objeto descritivo de referência a uma entidade do catálogo nacional.
+        Termo clínico tal como o registo o guarda.
+
+        `name` está sempre presente. `uuid` é nulo quando o termo não
+        corresponde a nenhuma entrada do catálogo deste nó, e `national_code`
+        é nulo quando o pedido também não indicou nenhum — é o caso de um termo
+        indicado apenas por nome, enquanto o catálogo nacional não estiver
+        consolidado.
       required: [uuid, national_code, name]
       additionalProperties: false
       properties:
-        uuid: { $ref: "#/components/schemas/Uuid" }
-        national_code: { type: string }
+        uuid:
+          oneOf: [{ $ref: "#/components/schemas/Uuid" }, { type: "null" }]
+        national_code: { type: [string, "null"] }
         name: { type: string }
 
     Patient:
@@ -1869,9 +1914,13 @@ components:
         state:
           type: string
           enum: [dispatched, received, rejected]
-        from_facility_code: { type: string }
+        from_facility_code: { type: [string, "null"] }
         from_lab_code: { type: [string, "null"] }
-        to_facility_code: { type: string }
+        to_facility_code:
+          type: [string, "null"]
+          description: >
+            Unidade sanitária de destino, lida do registo de laboratórios. Nula
+            enquanto o registo não tiver chegado a este nó.
         to_lab_code: { type: string }
         dispatched_at: { type: [string, "null"], format: date-time }
         received_at: { type: [string, "null"], format: date-time }
@@ -1923,7 +1972,7 @@ components:
         claimed_at: { type: [string, "null"], format: date-time }
         claimed_by_lab_code: { type: [string, "null"] }
         sending_facility_code:
-          type: string
+          type: [string, "null"]
           description: Código da unidade sanitária requisitante.
         receiving_lab_code:
           type: string
@@ -2010,17 +2059,19 @@ components:
             phone: { type: [string, "null"] }
         order:
           type: object
-          required: [receiving_lab_code]
           properties:
             sending_facility_code:
               type: string
               description: >
-                Código da unidade sanitária emissora. Facultativo: na ausência é
-                tomado da chave, que já sabe por que unidade fala. Quando
-                presente, tem de coincidir com a da chave.
+                Código da unidade sanitária emissora. Ignorado: o nó usa o da
+                chave, ou o da sua própria entrada no registo de laboratórios.
+                Aceite para que clientes escritos contra o contrato anterior
+                continuem a funcionar.
             receiving_lab_code:
               type: string
-              description: Código do laboratório destinatário do pedido.
+              description: >
+                Código do laboratório que vai executar as análises. Facultativo:
+                na ausência é o próprio nó que recebe o pedido.
             lab_code: { type: string }
             priority: { $ref: "#/components/schemas/Priority" }
             requested_by: { type: string }
@@ -2089,6 +2140,13 @@ components:
           additionalProperties: false
           properties:
             national_code: { type: string }
+        facility_code:
+          type: [string, "null"]
+          description: Unidade sanitária onde o laboratório está instalado (`labs`).
+        facility_name: { type: [string, "null"] }
+        district: { type: [string, "null"] }
+        province: { type: [string, "null"] }
+        phone: { type: [string, "null"] }
         target_tat:
           type: [string, "null"]
           description: Tempo de resposta esperado (Turnaround Time).
@@ -2184,10 +2242,14 @@ components:
     FhirCodeableConcept:
       type: object
       description: |
-        Conceito codificado. Este nó emite sempre dois `coding` por esta ordem:
-        o código nacional, sempre presente, e LOINC, presente apenas onde o
-        mapeamento do dicionário já tenha sido curado. Na admissão, qualquer um
-        dos dois é aceite.
+        Conceito codificado. Para um termo ligado ao catálogo, este nó emite
+        dois `coding` por esta ordem: o código nacional, sempre presente, e
+        LOINC, presente apenas onde o mapeamento tenha sido curado.
+
+        Para um termo que o catálogo não tenha, emite o código com que o pedido
+        chegou **sem `system`** — não há sistema que este nó possa nomear sem o
+        inventar — ou, não havendo código, apenas `text`. Na admissão, qualquer
+        destas formas é aceite.
       properties:
         coding:
           type: array

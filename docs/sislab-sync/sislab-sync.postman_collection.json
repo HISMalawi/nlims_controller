@@ -32,11 +32,6 @@
       "type": "string"
     },
     {
-      "key": "facility_code",
-      "value": "HCM",
-      "type": "string"
-    },
-    {
       "key": "lab_code",
       "value": "HCM-LAB",
       "type": "string"
@@ -165,7 +160,7 @@
             "description": "Guarda o tracking_number na variavel da coleccao. As chamadas seguintes usam-no.",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"patient\": {\n    \"national_id\": \"120000000123T\",\n    \"name\": \"Alzira Muianga\",\n    \"sex\": \"F\",\n    \"birthdate\": \"1990-04-12\",\n    \"phone\": \"840000123\"\n  },\n  \"order\": {\n    \"sending_facility_code\": \"{{facility_code}}\",\n    \"receiving_lab_code\": \"{{lab_code}}\",\n    \"priority\": \"routine\",\n    \"requested_by\": \"Dr. Alberto Nhaca\",\n    \"order_location\": \"Consulta externa\",\n    \"clinical_history\": \"Dados de teste para verificar a sincronizacao com o no nacional.\",\n    \"collected_at\": \"2026-08-18T09:00:00+02:00\",\n    \"specimen_type\": {\n      \"national_code\": \"MOZ-SP-0001\"\n    }\n  },\n  \"tests\": [\n    {\n      \"test_type\": {\n        \"national_code\": \"MOZ-TT-0001\"\n      }\n    }\n  ]\n}",
+              "raw": "{\n  \"patient\": {\n    \"national_id\": \"120000000123T\",\n    \"name\": \"Alzira Muianga\",\n    \"sex\": \"F\",\n    \"birthdate\": \"1990-04-12\",\n    \"phone\": \"840000123\"\n  },\n  \"order\": {\n    \"receiving_lab_code\": \"{{lab_code}}\",\n    \"priority\": \"routine\",\n    \"requested_by\": \"Dr. Alberto Nhaca\",\n    \"order_location\": \"Consulta externa\",\n    \"clinical_history\": \"Dados de teste para verificar a sincronizacao com o no nacional.\",\n    \"collected_at\": \"2026-08-18T09:00:00+02:00\",\n    \"specimen_type\": {\n      \"national_code\": \"MOZ-SP-0001\"\n    }\n  },\n  \"tests\": [\n    {\n      \"test_type\": {\n        \"national_code\": \"MOZ-TT-0001\"\n      }\n    }\n  ]\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -223,7 +218,7 @@
             "description": "",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"patient\": {\n    \"national_id\": \"120000000456K\",\n    \"name\": \"Faustino Chirindza\",\n    \"sex\": \"M\",\n    \"birthdate\": \"1978-11-30\",\n    \"phone\": \"840000456\"\n  },\n  \"order\": {\n    \"sending_facility_code\": \"{{facility_code}}\",\n    \"receiving_lab_code\": \"{{lab_code}}\",\n    \"priority\": \"urgent\",\n    \"requested_by\": \"Dr. Alberto Nhaca\",\n    \"order_location\": \"Consulta externa\",\n    \"clinical_history\": \"Dados de teste para verificar a sincronizacao com o no nacional.\",\n    \"collected_at\": \"2026-08-18T09:00:00+02:00\",\n    \"specimen_type\": {\n      \"national_code\": \"MOZ-SP-0002\"\n    }\n  },\n  \"tests\": [\n    {\n      \"test_type\": {\n        \"national_code\": \"MOZ-TT-0002\"\n      }\n    }\n  ]\n}",
+              "raw": "{\n  \"patient\": {\n    \"national_id\": \"120000000456K\",\n    \"name\": \"Faustino Chirindza\",\n    \"sex\": \"M\",\n    \"birthdate\": \"1978-11-30\",\n    \"phone\": \"840000456\"\n  },\n  \"order\": {\n    \"receiving_lab_code\": \"{{lab_code}}\",\n    \"priority\": \"urgent\",\n    \"requested_by\": \"Dr. Alberto Nhaca\",\n    \"order_location\": \"Consulta externa\",\n    \"clinical_history\": \"Dados de teste para verificar a sincronizacao com o no nacional.\",\n    \"collected_at\": \"2026-08-18T09:00:00+02:00\",\n    \"specimen_type\": {\n      \"national_code\": \"MOZ-SP-0002\"\n    }\n  },\n  \"tests\": [\n    {\n      \"test_type\": {\n        \"national_code\": \"MOZ-TT-0002\"\n      }\n    }\n  ]\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -281,7 +276,7 @@
             "description": "",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"patient\": {\n    \"national_id\": \"120000000789M\",\n    \"name\": \"Rosalina Cossa\",\n    \"sex\": \"F\",\n    \"birthdate\": \"1965-02-08\",\n    \"phone\": \"840000789\"\n  },\n  \"order\": {\n    \"sending_facility_code\": \"{{facility_code}}\",\n    \"receiving_lab_code\": \"{{lab_code}}\",\n    \"priority\": \"stat\",\n    \"requested_by\": \"Dr. Alberto Nhaca\",\n    \"order_location\": \"Consulta externa\",\n    \"clinical_history\": \"Dados de teste para verificar a sincronizacao com o no nacional.\",\n    \"collected_at\": \"2026-08-18T09:00:00+02:00\",\n    \"specimen_type\": {\n      \"national_code\": \"MOZ-SP-0003\"\n    }\n  },\n  \"tests\": [\n    {\n      \"test_type\": {\n        \"national_code\": \"MOZ-TT-0003\"\n      }\n    }\n  ]\n}",
+              "raw": "{\n  \"patient\": {\n    \"national_id\": \"120000000789M\",\n    \"name\": \"Rosalina Cossa\",\n    \"sex\": \"F\",\n    \"birthdate\": \"1965-02-08\",\n    \"phone\": \"840000789\"\n  },\n  \"order\": {\n    \"receiving_lab_code\": \"{{lab_code}}\",\n    \"priority\": \"stat\",\n    \"requested_by\": \"Dr. Alberto Nhaca\",\n    \"order_location\": \"Consulta externa\",\n    \"clinical_history\": \"Dados de teste para verificar a sincronizacao com o no nacional.\",\n    \"collected_at\": \"2026-08-18T09:00:00+02:00\",\n    \"specimen_type\": {\n      \"national_code\": \"MOZ-SP-0003\"\n    }\n  },\n  \"tests\": [\n    {\n      \"test_type\": {\n        \"national_code\": \"MOZ-TT-0003\"\n      }\n    }\n  ]\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -339,7 +334,65 @@
             "description": "",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"patient\": {\n    \"national_id\": \"120000000321P\",\n    \"name\": \"Ivandro Sitoe\",\n    \"sex\": \"M\",\n    \"birthdate\": \"2001-07-19\",\n    \"phone\": \"840000321\"\n  },\n  \"order\": {\n    \"sending_facility_code\": \"{{facility_code}}\",\n    \"receiving_lab_code\": \"{{lab_code}}\",\n    \"priority\": \"routine\",\n    \"requested_by\": \"Dr. Alberto Nhaca\",\n    \"order_location\": \"Consulta externa\",\n    \"clinical_history\": \"Dados de teste para verificar a sincronizacao com o no nacional.\",\n    \"collected_at\": \"2026-08-18T09:00:00+02:00\",\n    \"specimen_type\": {\n      \"national_code\": \"MOZ-SP-0001\"\n    }\n  },\n  \"tests\": [\n    {\n      \"test_type\": {\n        \"national_code\": \"MOZ-TT-0001\"\n      }\n    },\n    {\n      \"test_type\": {\n        \"national_code\": \"MOZ-TT-0002\"\n      }\n    }\n  ]\n}",
+              "raw": "{\n  \"patient\": {\n    \"national_id\": \"120000000321P\",\n    \"name\": \"Ivandro Sitoe\",\n    \"sex\": \"M\",\n    \"birthdate\": \"2001-07-19\",\n    \"phone\": \"840000321\"\n  },\n  \"order\": {\n    \"receiving_lab_code\": \"{{lab_code}}\",\n    \"priority\": \"routine\",\n    \"requested_by\": \"Dr. Alberto Nhaca\",\n    \"order_location\": \"Consulta externa\",\n    \"clinical_history\": \"Dados de teste para verificar a sincronizacao com o no nacional.\",\n    \"collected_at\": \"2026-08-18T09:00:00+02:00\",\n    \"specimen_type\": {\n      \"national_code\": \"MOZ-SP-0001\"\n    }\n  },\n  \"tests\": [\n    {\n      \"test_type\": {\n        \"national_code\": \"MOZ-TT-0001\"\n      }\n    },\n    {\n      \"test_type\": {\n        \"national_code\": \"MOZ-TT-0002\"\n      }\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const b = pm.response.json();",
+                  "if (b.data && b.data.tracking_number) {",
+                  "  pm.collectionVariables.set('tracking_number', b.data.tracking_number);",
+                  "  console.log('tracking_number =', b.data.tracking_number);",
+                  "}",
+                  "pm.test('201 criado', () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Pedido 5 — exame que o catalogo ainda nao tem",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v3/order-requests",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v3",
+                "order-requests"
+              ]
+            },
+            "description": "O catalogo nacional esta em consolidacao. Um exame que o no nao reconheca nao e recusado: fica guardado com o nome e o codigo com que chegou, e e ligado ao catalogo mais tarde. Um termo pode ser indicado por national_code, por uuid, por name, ou por uma cadeia de texto simples — que vale por { \"name\": \"...\" }.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patient\": {\n    \"national_id\": \"120000000654R\",\n    \"name\": \"Telma Nhantumbo\",\n    \"sex\": \"F\",\n    \"birthdate\": \"1988-03-05\"\n  },\n  \"order\": {\n    \"receiving_lab_code\": \"{{lab_code}}\",\n    \"priority\": \"routine\",\n    \"requested_by\": \"Dr. Alberto Nhaca\",\n    \"clinical_history\": \"Exame fora do catalogo nacional, indicado por nome.\",\n    \"specimen_type\": \"Sangue total\"\n  },\n  \"tests\": [\n    {\n      \"test_type\": \"Ferritina serica\"\n    },\n    {\n      \"test_type\": {\n        \"national_code\": \"MOZ-TT-9999\",\n        \"name\": \"Vitamina D 25-OH\"\n      }\n    }\n  ]\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -847,6 +900,32 @@
             "description": ""
           },
           "response": []
+        },
+        {
+          "name": "Dicionario — registo de laboratorios",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v3/dictionary/labs",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v3",
+                "dictionary",
+                "labs"
+              ]
+            },
+            "description": "O registo de laboratorios que o no nacional publica e todos os nos replicam. E o que permite referir uma amostra indicando apenas to_lab_code: a unidade sanitaria de destino e lida daqui."
+          },
+          "response": []
         }
       ]
     },
@@ -1033,7 +1112,7 @@
             "description": "So a partir de `in_progress` — a referencia poe o pedido em `referred_out`. Corra antes os passos da pasta 2 ate 'Em analise'. Escreve referral.dispatched. Guarda o uuid em {{referral_uuid}}.",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"tracking_number\": \"{{tracking_number}}\",\n  \"to_facility_code\": \"HPM\",\n  \"to_lab_code\": \"HPM-LAB\",\n  \"courier\": \"Motorista Chico\",\n  \"remarks\": \"Sem reagente hoje, enviado para o HPM.\",\n  \"actor\": \"Tec. Sofia Matola\"\n}",
+              "raw": "{\n  \"tracking_number\": \"{{tracking_number}}\",\n  \"to_lab_code\": \"HPM-LAB\",\n  \"courier\": \"Motorista Chico\",\n  \"remarks\": \"Sem reagente hoje, enviado para o HPM.\",\n  \"actor\": \"Tec. Sofia Matola\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
