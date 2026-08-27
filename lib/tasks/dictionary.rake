@@ -3,7 +3,10 @@
 # Loading and publishing the national dictionary. Only the national node owns
 # it, so these refuse to run anywhere else.
 #
-#   bin/rails dictionary:import_from_mlab
+#   bin/rails dictionary:snapshot               # mLab -> db/dictionary/mlab_catalog.json
+#   bin/rails dictionary:seed                   # that file -> a new national node
+#   bin/rails dictionary:import_from_mlab       # from the mLab database
+#   bin/rails dictionary:import_from_mlab_api   # from the mLab API
 #   bin/rails dictionary:quality
 #   ACTOR="Kelven" SKIP_BLOCKED=1 bin/rails dictionary:promote
 #   bin/rails dictionary:status
@@ -17,20 +20,54 @@ namespace :dictionary do
 
   desc "Import the dictionary from the SISLAB/mLab database (everything arrives as a draft)"
   task import_from_mlab: :national_only do
-    source = Dictionary::MlabSource.from_env
-    puts "Reading from #{source.describe}"
+    import_the_dictionary(Dictionary::MlabSource.from_env)
+  end
 
-    importer = Dictionary::MlabImporter.new(source: source).call
+  desc "Import the dictionary from the mLab API (MLAB_API_URL, and MLAB_API_TOKEN or MLAB_API_USER/PASSWORD)"
+  task import_from_mlab_api: :national_only do
+    import_the_dictionary(Dictionary::MlabApiSource.from_env)
+  end
+
+  desc "Take the mLab catalogue into a file the seed can load (SOURCE=api|database, OUT=path)"
+  task snapshot: :environment do
+    source = case ENV.fetch("SOURCE", "api")
+    when "api" then Dictionary::MlabApiSource.from_env
+    when "database" then Dictionary::MlabSource.from_env
+    else abort "SOURCE is api or database."
+    end
+
+    puts "Reading from #{source.describe}"
+    path = Dictionary::SnapshotSource.write(source, ENV.fetch("OUT", Dictionary::SnapshotSource::DEFAULT_PATH))
+
+    puts "\nCatalogue: #{path} (#{ActiveSupport::NumberHelper.number_to_human_size(path.size)})"
+    Dictionary::SnapshotSource::ENTITIES.each do |entity|
+      puts format("  %-28s %6d", entity, source.public_send(entity).length)
+    end
+
+    print_warnings(source)
+  end
+
+  desc "Load the catalogue shipped with the release onto a new national node and publish it (ACTOR=..., SKIP_BLOCKED=1)"
+  task seed: :national_only do
+    seed = Dictionary::Seed.new(
+      source: Dictionary::SnapshotSource.load(ENV.fetch("SNAPSHOT", Dictionary::SnapshotSource::DEFAULT_PATH)),
+      actor: ENV["ACTOR"].presence || Dictionary::Seed::ACTOR,
+      skip_blocked: ENV["SKIP_BLOCKED"].present?
+    )
+
+    puts "Reading from #{seed.source.describe}"
+    seed.call
 
     puts "\nImported:"
-    puts importer.summary
+    puts seed.importer.summary
+    puts format("  %-16s %4d criados  %4d já existiam", "rejection_reasons",
+                seed.reasons_created, Dictionary::Seed::REJECTION_REASONS.length - seed.reasons_created)
 
-    if importer.skipped.any?
-      puts "\nSkipped:"
-      importer.skipped.each do |skip|
-        puts format("  %-16s id=%-8s %s", skip[:entity_type], skip[:external_code], skip[:reason])
-      end
-    end
+    print_skipped(seed.importer)
+    print_warnings(seed.source)
+
+    puts "\nPublished:"
+    puts seed.promotion.summary
 
     Rake::Task["dictionary:quality"].invoke
   end
@@ -90,5 +127,41 @@ namespace :dictionary do
       model = Dictionary.model_for!(entity_type)
       puts format("%-16s %8d %8d %8d", entity_type, model.drafts.count, model.active.count, model.retired.count)
     end
+  end
+
+  # Both imports run the same way; only where the rows are read from differs.
+  def import_the_dictionary(source)
+    puts "Reading from #{source.describe}"
+
+    importer = Dictionary::MlabImporter.new(source: source).call
+
+    puts "\nImported:"
+    puts importer.summary
+
+    print_skipped(importer)
+    print_warnings(source)
+
+    Rake::Task["dictionary:quality"].invoke
+  end
+
+  # Rows the importer would not take, named so the laboratory can go and fix
+  # them upstream.
+  def print_skipped(importer)
+    return if importer.skipped.empty?
+
+    puts "\nSkipped:"
+    importer.skipped.each do |skip|
+      puts format("  %-16s id=%-8s %s", skip[:entity_type], skip[:external_code], skip[:reason])
+    end
+  end
+
+  # What the source could not read. The API has gaps the database does not, and
+  # they belong in front of whoever is promoting these entries.
+  def print_warnings(source)
+    warnings = source.try(:warnings).to_a
+    return if warnings.empty?
+
+    puts "\nAvisos da fonte:"
+    warnings.each { |warning| puts "  #{warning}" }
   end
 end

@@ -145,6 +145,7 @@ module Seeds
     # both are exactly what the quality report holds a promotion back for.
     def dictionary
       return say("  dicionário já tem entradas") if TestType.exists?
+      return national_catalogue if SislabSync.national? && Dictionary::SnapshotSource.available?
 
       bioquimica = Department.create!(name: "Bioquímica", status: DictionaryEntry::ACTIVE)
       hematologia = Department.create!(name: "Hematologia", status: DictionaryEntry::ACTIVE)
@@ -178,6 +179,21 @@ module Seeds
         .each { |name| RejectionReason.create!(name: name, status: DictionaryEntry::ACTIVE) }
 
       say "  dicionário: #{Dictionary.published_counts.values.sum} entradas publicadas, 1 rascunho, #{renal.national_code} inclusive"
+    end
+
+    # The national node owns the catalogue, so a national demo gets the real
+    # one — the same entries `rake dictionary:seed` puts on a node being stood
+    # up — and the orders below are raised against it. A local node keeps the
+    # four tests invented here: its dictionary arrives from the capital, and a
+    # small one is easier to read on the screens.
+    def national_catalogue
+      seed = Dictionary::Seed.new(actor: "semente de demonstração").call
+
+      # Left as a draft on purpose, as below: the promotion screen needs
+      # something to promote.
+      TestType.create!(name: "Urocultura", department: Department.active.first, status: DictionaryEntry::DRAFT)
+
+      say "  dicionário: #{seed.published} entradas do catálogo mLab publicadas, 1 rascunho"
     end
 
     def specimen(name)
