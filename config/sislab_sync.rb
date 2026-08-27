@@ -41,9 +41,24 @@ module SislabSync
       "0.0.0-dev"
     end
 
+    # Whether a reverse proxy in front of this node terminates TLS. True by
+    # default: that is how a node is meant to be deployed, and production.rb
+    # turns on force_ssl and assume_ssl on the strength of it.
+    #
+    # A node reached over plain HTTP has to say so. Left at the default it would
+    # tell Rails every request arrived over TLS when none did, and the node would
+    # mark its session cookie Secure (never sent back, so nobody stays signed in)
+    # and advertise itself as https in the URLs it builds — the FHIR Bundle links
+    # included, which sends clients back at a port that speaks no TLS.
+    def tls_terminated?
+      return @tls_terminated unless @tls_terminated.nil?
+
+      @tls_terminated = ENV.fetch("SISLAB_SYNC_TLS_TERMINATED", "true").strip.downcase != "false"
+    end
+
     # Test support: forget everything memoised from the environment.
     def reset!
-      @mode = @node_code = @version = nil
+      @mode = @node_code = @version = @tls_terminated = nil
     end
 
     private

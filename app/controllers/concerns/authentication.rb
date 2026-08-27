@@ -84,7 +84,10 @@ module Authentication
       value: record.id,
       httponly: true,
       same_site: :lax,
-      secure: Rails.env.production?
+      # The scheme the request actually came in on, not the environment name: a
+      # node without TLS in front of it would set a cookie the browser keeps and
+      # never sends back, and nobody would get past the sign-in page.
+      secure: request.ssl?
     }
 
     user.update_column(:last_signed_in_at, Time.current)

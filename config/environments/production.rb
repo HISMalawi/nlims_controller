@@ -21,14 +21,19 @@ Rails.application.configure do
   # Enable serving of images, stylesheets, and JavaScripts from an asset server.
   # config.asset_host = "http://assets.example.com"
 
-  # Assume all access to the app is happening through a SSL-terminating reverse proxy.
-  config.assume_ssl = true
+  # Assume all access to the app is happening through a SSL-terminating reverse
+  # proxy, and refuse anything that did not arrive over TLS.
+  #
+  # Both come off together on a node deployed without a proxy in front
+  # (SISLAB_SYNC_TLS_TERMINATED=false). Keeping them on there would not add any
+  # protection the transport does not have: assume_ssl runs ahead of the
+  # force_ssl redirect and marks every request as already secure, so nothing is
+  # ever redirected — the node would only lie about its scheme.
+  config.assume_ssl = SislabSync.tls_terminated?
+  config.force_ssl  = SislabSync.tls_terminated?
 
-  # Force all access to the app over SSL, use Strict-Transport-Security, and use secure cookies.
-  config.force_ssl = true
-
-  # Skip http-to-https redirect for the default health check endpoint.
-  # config.ssl_options = { redirect: { exclude: ->(request) { request.path == "/up" } } }
+  # Skip http-to-https redirect for the health check endpoint.
+  config.ssl_options = { redirect: { exclude: ->(request) { request.path == "/api/v3/health" } } }
 
   # Log to STDOUT with the current request id as a default log tag.
   config.log_tags = [ :request_id ]
@@ -38,7 +43,7 @@ Rails.application.configure do
   config.log_level = ENV.fetch("RAILS_LOG_LEVEL", "info")
 
   # Prevent health checks from clogging up the logs.
-  config.silence_healthcheck_path = "/up"
+  config.silence_healthcheck_path = "/api/v3/health"
 
   # Don't log any deprecations.
   config.active_support.report_deprecations = false

@@ -83,6 +83,34 @@ RSpec.describe SislabSync do
     end
   end
 
+  describe ".tls_terminated?" do
+    it "assumes a proxy terminates TLS when nothing says otherwise" do
+      with_env("SISLAB_SYNC_TLS_TERMINATED" => nil) do
+        expect(described_class).to be_tls_terminated
+      end
+    end
+
+    it "takes false to mean the node is reached over plain HTTP" do
+      with_env("SISLAB_SYNC_TLS_TERMINATED" => "false") do
+        expect(described_class).not_to be_tls_terminated
+      end
+    end
+
+    it "accepts the opt-out in any casing or padding" do
+      with_env("SISLAB_SYNC_TLS_TERMINATED" => " FALSE ") do
+        expect(described_class).not_to be_tls_terminated
+      end
+    end
+
+    # Anything other than an explicit false keeps TLS assumed: a typo in the
+    # deployment environment should not quietly downgrade a node.
+    it "keeps TLS assumed on an unrecognised value" do
+      with_env("SISLAB_SYNC_TLS_TERMINATED" => "no") do
+        expect(described_class).to be_tls_terminated
+      end
+    end
+  end
+
   describe ".version" do
     it "reads the VERSION file" do
       expect(described_class.version).to match(/\A\d+\.\d+\.\d+/)

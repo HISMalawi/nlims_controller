@@ -29,3 +29,6 @@
 
 # Local bundler install path (Docker is the supported path).
 /vendor/bundle
+
+# Local compose adjustments (this node runs RAILS_ENV=production).
+/docker-compose.override.yml
