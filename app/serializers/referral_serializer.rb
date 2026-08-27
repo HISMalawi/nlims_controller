@@ -16,7 +16,7 @@ class ReferralSerializer
       dispatched_at: referral.dispatched_at&.iso8601,
       received_at: referral.received_at&.iso8601,
       rejected_at: referral.rejected_at&.iso8601,
-      rejection_reason: DictionaryReference.call(referral.rejection_reason),
+      rejection_reason: DictionaryReference.call(referral.rejection_reason_reference),
       courier: referral.courier,
       remarks: referral.remarks
     }

@@ -10,7 +10,7 @@ RSpec.describe Sync::Pull, mode: :local do
   let(:referral_uuid) { SecureRandom.uuid }
 
   # What the national node is holding for this node: a sample referred to it.
-  def dispatch(revision: 1, to_facility_code: SislabSync.node_code)
+  def dispatch(revision: 1, to_lab_code: SislabSync.lab_code)
     {
       "revision" => revision, "node_code" => "XAI", "event_uuid" => SecureRandom.uuid,
       "aggregate_uuid" => order_uuid, "sequence" => 1,
@@ -18,7 +18,7 @@ RSpec.describe Sync::Pull, mode: :local do
       "payload" => {
         "referral" => { "uuid" => referral_uuid, "tracking_number" => "MZ-XAI-26229-0001",
                         "state" => "dispatched", "from_facility_code" => "XAI", "from_lab_code" => "XAI-LAB",
-                        "to_facility_code" => to_facility_code, "to_lab_code" => "HCM-LAB-CENTRAL",
+                        "to_facility_code" => "HCM", "to_lab_code" => to_lab_code,
                         "dispatched_at" => Time.current.iso8601 },
         "order" => {
           "uuid" => order_uuid, "tracking_number" => "MZ-XAI-26229-0001", "status" => "referred_out",
@@ -69,7 +69,7 @@ RSpec.describe Sync::Pull, mode: :local do
   # A sample merely passing through — this node is the origin hearing news about
   # a sample it sent elsewhere — is not work arriving here.
   it "leaves a sample referred somewhere else as it was sent" do
-    pull(feed(dispatch(to_facility_code: "MAP")))
+    pull(feed(dispatch(to_lab_code: "MAP-LAB-CENTRAL")))
 
     expect(Order.find_by!(uuid: order_uuid).status).to eq(Order::REFERRED_OUT)
   end

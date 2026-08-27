@@ -30,8 +30,19 @@ end
 module Seeds
   PASSWORD = "palavra-passe-demo"
 
-  FACILITY = SislabSync.node_code
-  LAB = "#{SislabSync.node_code}-LAB"
+  # This node is a laboratory. Its own code is what it answers to; the health
+  # facility comes from the register seeded below.
+  LAB = SislabSync.lab_code
+  FACILITY = "HCM"
+
+  # The register the capital publishes, as this node holds it. Two entries is
+  # enough to show what it is for: this node, and somewhere to refer a sample to.
+  REGISTER = [
+    { national_code: LAB, name: "Laboratório Central", facility_code: FACILITY,
+      facility_name: "Hospital Central de Maputo", district: "KaMpfumo", province: "Maputo Cidade" },
+    { national_code: "HPM-LAB", name: "Laboratório do Hospital Provincial", facility_code: "HPM",
+      facility_name: "Hospital Provincial da Matola", district: "Matola", province: "Maputo Província" }
+  ].freeze
 
   # Where the demo credentials are written instead of being printed.
   #
@@ -52,6 +63,7 @@ module Seeds
       say "Semeando o nó #{SislabSync.node_code} (#{SislabSync.mode})"
 
       users
+      register
       client = api_client
       dictionary
 
@@ -138,6 +150,20 @@ module Seeds
       end
 
       client
+    end
+
+    # Who else is out there. On a real node this arrives from the capital down
+    # the dictionary feed like any other entry; seeding it here is what lets a
+    # development node refer a sample and issue a key without inventing codes.
+    def register
+      created = REGISTER.count do |attributes|
+        next false if Lab.exists?(national_code: attributes[:national_code])
+
+        Lab.create!(**attributes, status: DictionaryEntry::ACTIVE, status_actor: "registo de demonstração")
+        true
+      end
+
+      say(created.zero? ? "  registo de laboratórios já semeado" : "  registo: #{created} laboratórios")
     end
 
     # Small, but linked the way the real catalogue is: a test with no indicators
@@ -306,7 +332,7 @@ module Seeds
       order = raise_order(ApiClient.find_by(name: "EMR de demonstração"), patient: :gilda)
       walk_to_in_progress(order)
 
-      Referral.dispatch!(order: order, to_facility_code: "HPM", to_lab_code: "HPM-LAB",
+      Referral.dispatch!(order: order, to_lab_code: "HPM-LAB",
                          courier: "Transporte provincial", remarks: "Caixa isotérmica, saída às 07h30")
 
       say "  1 amostra referida para HPM-LAB, ainda em trânsito"

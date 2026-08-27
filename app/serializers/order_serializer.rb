@@ -35,7 +35,7 @@ class OrderSerializer
       sending_facility_code: @order.sending_facility_code,
       receiving_lab_code: @order.receiving_lab_code,
       lab_code: @order.lab_code,
-      specimen_type: DictionaryReference.call(@order.specimen_type),
+      specimen_type: DictionaryReference.call(@order.specimen_type_reference),
       collected_at: @order.collected_at&.iso8601,
       requested_by: @order.requested_by,
       order_location: @order.order_location,

@@ -5,16 +5,19 @@ require "rails_helper"
 RSpec.describe "Ecrã de amostras referidas", type: :request do
   before { sign_in_as }
 
-  # Collected at this node, whatever this node is called in the run, so that
+  # Taken in at this node, whatever this node is called in the run, so that
   # "sent from here" means what it says without the spec depending on the
-  # facility code the suite happens to have been started with.
-  def dispatch_referral(to_facility: "HPM", to_lab: "HPM-LAB")
-    order = create(:order, sending_facility_code: SislabSync.node_code)
+  # laboratory code the suite happens to have been started with.
+  def dispatch_referral(to_lab: "HPM-LAB")
+    create(:lab, national_code: to_lab, facility_code: "HPM", name: "Laboratório Provincial")
+
+    order = create(:order, sending_facility_code: SislabSync.facility_code,
+                           receiving_lab_code: SislabSync.lab_code)
     order.transition_to!(Order::ACCEPTED)
     order.transition_to!(Order::SPECIMEN_COLLECTED)
     order.transition_to!(Order::IN_PROGRESS)
 
-    Referral.dispatch!(order: order, to_facility_code: to_facility, to_lab_code: to_lab)
+    Referral.dispatch!(order: order, to_lab_code: to_lab)
   end
 
   it "lista as amostras em trânsito e há quanto tempo esperam" do

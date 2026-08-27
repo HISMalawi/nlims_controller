@@ -41,7 +41,7 @@ module Fhir
         basedOn: [ Fhir::ServiceRequestResource.reference(@order_test) ],
         status: status,
         category: [ { coding: [ CATEGORY ], text: "Laboratory" } ],
-        code: Fhir::CodeableConcept.call(@order_test.test_type),
+        code: Fhir::CodeableConcept.call(@order_test.test_type_reference),
         subject: Fhir::PatientResource.reference(@order.patient),
         specimen: [ Fhir::SpecimenResource.reference(@order) ],
         effectiveDateTime: @order.collected_at&.iso8601,

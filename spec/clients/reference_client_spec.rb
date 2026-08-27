@@ -258,12 +258,27 @@ RSpec.describe SislabSyncClient, type: :request do
         emr.create_order(
           patient: { name: "Ana Macuácua" },
           order: { receiving_lab_code: "HCM-LAB" },
-          tests: [ "NAO-EXISTE" ]
+          tests: [ { method_of_testing: "PCR" } ]
         )
       end.to raise_error(SislabSyncClient::Unprocessable) do |error|
         expect(error.field).to eq("tests[0].test_type")
-        expect(error.message).to include("NAO-EXISTE")
       end
+    end
+
+    # The catalogue is not consolidated, so a term the node does not carry is
+    # kept as it was written rather than refused.
+    it "takes an exam the node's dictionary has never heard of" do
+      emr = profile_for(SislabSyncClient::Emr, issue_key(api_client: api_client, scopes: %w[orders:write]).last)
+
+      receipt = emr.create_order(
+        patient: { name: "Ana Macuácua" },
+        order: { receiving_lab_code: "HCM-LAB" },
+        tests: [ "Ferritina sérica" ]
+      )
+
+      expect(receipt["tracking_number"]).to be_present
+      expect(Order.find_by!(uuid: receipt["order_uuid"]).order_tests.sole.test_type_label)
+        .to eq("Ferritina sérica")
     end
 
     it "raises Conflict when a second laboratory wants a sample that is taken" do
@@ -343,12 +358,23 @@ RSpec.describe SislabSyncClient, type: :request do
     end
 
     it "names what it could not apply, rather than failing the whole batch" do
-      unknown = order_created(specimen_type: { national_code: "NAO-EXISTE" })
+      malformed = order_created.tap { |event| event[:payload][:order] = nil }
+
+      answer = node.push_events(node_code: "HCM", events: [ malformed ])
+
+      expect(answer["accepted"]).to be_empty
+      expect(answer["rejected"].first["event_uuid"]).to eq(malformed[:event_uuid])
+    end
+
+    # A term the national catalogue has not reached is not a reason to refuse
+    # a laboratory's work: it is kept as it arrived, and linked later.
+    it "takes an event naming a term the capital does not carry" do
+      unknown = order_created(specimen_type: { national_code: "NAO-EXISTE", name: "Aspirado medular" })
 
       answer = node.push_events(node_code: "HCM", events: [ unknown ])
 
-      expect(answer["accepted"]).to be_empty
-      expect(answer["rejected"].first["event_uuid"]).to eq(unknown[:event_uuid])
+      expect(answer["rejected"]).to be_empty
+      expect(Order.find_by!(uuid: order_uuid).specimen_type_label).to eq("Aspirado medular")
     end
 
     it "refuses to send a batch bigger than the node will take, before sending it" do

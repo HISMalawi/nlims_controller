@@ -229,41 +229,35 @@ RSpec.describe "POST /api/v3/sync/events", mode: :national, type: :request do
   end
 
   describe "events it cannot apply" do
-    it "rejects a test whose code the national dictionary does not have, with a code" do
+    # This used to be a rejection — unknown_dictionary_item — which blocked the
+    # sending node's whole stream until somebody in the capital noticed. Local
+    # nodes order exams the national catalogue has not reached, so a reading
+    # refused here is a reading lost. The term travels with its name, and the
+    # capital stores what was measured either way.
+    it "takes a test whose code the national dictionary does not have" do
       post_events([ order_created,
                     event(sequence: 2, type: "order.test_added",
                           payload: { test: { uuid: SecureRandom.uuid, status: "pending",
-                                             test_type: { national_code: "MOZ-TT-9999" } } }) ])
+                                             test_type: { national_code: "MOZ-TT-9999",
+                                                          name: "Ferritina" } } }) ])
 
-      expect(rejected.length).to eq(1)
-      expect(rejected.first["code"]).to eq("unknown_dictionary_item")
-      expect(rejected.first["message"]).to include("MOZ-TT-9999")
+      expect(rejected).to be_empty
+
+      added = Order.find_by!(uuid: order_uuid).order_tests.find_by(test_code: "MOZ-TT-9999")
+      expect(added.test_type).to be_nil
+      expect(added.test_name).to eq("Ferritina")
     end
 
-    # A rejected event blocks its own stream on purpose: everything after it
-    # describes a sample this node's copy no longer matches.
-    it "holds the rest of that sample's stream until someone intervenes" do
+    it "does not block the rest of that sample's stream over a term it does not carry" do
       post_events([ order_created,
                     event(sequence: 2, type: "order.test_added",
                           payload: { test: { uuid: SecureRandom.uuid, status: "pending",
-                                             test_type: { national_code: "MOZ-TT-9999" } } }),
+                                             test_type: { national_code: "MOZ-TT-9999",
+                                                          name: "Ferritina" } } }),
                     event(sequence: 3, type: "order.status_changed", payload: { to_status: "accepted" }) ])
 
-      expect(Order.find_by!(uuid: order_uuid).status).to eq(Order::REQUESTED)
-      expect(InboundEvent.pending.count).to eq(1)
-      expect(InboundEvent.rejected.count).to eq(1)
-    end
-
-    it "reports a rejection again when the sender resends it" do
-      bad = event(sequence: 2, type: "order.test_added",
-                  payload: { test: { uuid: SecureRandom.uuid, status: "pending",
-                                     test_type: { national_code: "MOZ-TT-9999" } } })
-
-      post_events([ order_created, bad ])
-      post_events([ bad ])
-
-      expect(accepted).to be_empty
-      expect(rejected.first["code"]).to eq("unknown_dictionary_item")
+      expect(Order.find_by!(uuid: order_uuid).status).to eq(Order::ACCEPTED)
+      expect(InboundEvent.rejected).to be_empty
     end
 
     it "rejects an event type it has never heard of" do
@@ -298,13 +292,13 @@ RSpec.describe "POST /api/v3/sync/events", mode: :national, type: :request do
     end
 
     it "answers 403 for a node sending another node's events" do
-      pinned = create(:api_client, kind: "node", facility_code: "XAI")
+      pinned = create(:api_client, kind: "node", lab_code: "XAI-LAB")
       key = issue_key(api_client: pinned, scopes: %w[sync:push]).last
 
       post_events([ order_created ], node_code: "HCM", bearer: key)
 
       expect(response).to have_http_status(:forbidden)
-      expect(response.parsed_body.dig("errors", 0, "code")).to eq("facility_mismatch")
+      expect(response.parsed_body.dig("errors", 0, "code")).to eq("lab_mismatch")
     end
 
     it "asks for the node code when the batch does not say" do

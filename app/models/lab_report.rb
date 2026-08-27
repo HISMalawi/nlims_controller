@@ -38,21 +38,39 @@ class LabReport
   end
 
   def resolve(row, index)
-    test_type = Dictionary.entry!("test_types", row[:test_type], field: "results[#{index}].test_type")
-    order_test = @order.order_tests.find_by(test_type: test_type)
+    field = "results[#{index}].test_type"
+    test = Dictionary::Reference.resolve!("test_types", row[:test_type], field: field,
+                                          message: "é preciso indicar o exame, por código ou por nome")
+    order_test = find_test(test)
 
     if order_test.nil?
-      raise InvalidRequest.new(
-        "#{test_type.national_code} (#{test_type.name}) não faz parte de #{@order.tracking_number}",
-        field: "results[#{index}].test_type"
-      )
+      raise InvalidRequest.new("#{test.description} não faz parte de #{@order.tracking_number}", field: field)
     end
 
     {
       order_test: order_test,
-      indicator: Dictionary.entry!("indicators", row[:indicator], field: "results[#{index}].indicator"),
+      indicator: Dictionary::Reference.resolve!("indicators", row[:indicator],
+                                                field: "results[#{index}].indicator",
+                                                message: "é preciso indicar o indicador, por código ou por nome"),
       row: row
     }
+  end
+
+  # Which test on this sample the reading belongs to. A term the dictionary
+  # carries is matched by its entry; one it does not is matched by the name the
+  # order was raised under, which is what the laboratory is reading off its own
+  # worksheet. This refusal stays: a reading for a test nobody asked for is a
+  # reading filed against the wrong sample, and no amount of loosening the
+  # dictionary makes that safe.
+  def find_test(reference)
+    tests = @order.order_tests.to_a
+
+    if reference.known?
+      tests.find { |test| test.test_type_id == reference.entry.id }
+    else
+      tests.find { |test| test.test_name.to_s.casecmp?(reference.name.to_s) } ||
+        tests.find { |test| test.test_code.present? && test.test_code == reference.code }
+    end
   end
 
   def record_one(resolved)

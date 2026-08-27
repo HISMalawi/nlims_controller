@@ -11,7 +11,7 @@ module Api
       def heartbeat
         return unless authorize_scope!("sync:push")
         return unless node_code
-        return unless authorize_facility!(node_code)
+        return unless authorize_node!(node_code)
 
         node = Node.heard_from!(node_code, heartbeat_params.except(:node_code).to_h.symbolize_keys)
 

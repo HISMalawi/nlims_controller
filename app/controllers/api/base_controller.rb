@@ -32,6 +32,15 @@ module Api
 
     private
 
+    # The request body with every clinical term in object form.
+    #
+    # A term may be named with an object or with a bare string, and strong
+    # parameters cannot declare a key as both. Normalising here means each
+    # controller declares one shape and both arrive in it.
+    def payload
+      @payload ||= Dictionary::Reference.expand(params)
+    end
+
     def render_data(data, meta: {}, status: :ok)
       render json: { data: data, meta: meta, errors: [] }, status: status
     end

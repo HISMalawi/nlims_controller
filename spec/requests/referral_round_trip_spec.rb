@@ -15,7 +15,14 @@ require "rails_helper"
 # every message means, which is the part that breaks.
 RSpec.describe "a sample referred between two facilities", mode: :local, type: :request do
   # Shared by every node in reality, because it is replicated from the capital
-  # before any of this happens. Kept across the phases for the same reason.
+  # before any of this happens. Kept across the phases for the same reason —
+  # the register of laboratories included, which is how one node can address a
+  # parcel to another by code alone.
+  before do
+    create(:lab, national_code: "HCM-LAB", facility_code: "HCM", name: "Laboratório do HCM")
+    create(:lab, national_code: "MAP-LAB-CENTRAL", facility_code: "MAP", name: "Laboratório Central de Maputo")
+  end
+
   let!(:specimen_type) { create(:specimen_type, name: "Sangue total") }
   let!(:test_type) { create(:test_type, name: "Carga viral") }
   let!(:indicator) { create(:indicator, name: "Carga viral", unit: "cópias/mL") }
@@ -30,7 +37,7 @@ RSpec.describe "a sample referred between two facilities", mode: :local, type: :
     tracking_number = nil
 
     # ---- 1. HCM raises the sample and sends it away --------------------------
-    from_hcm = as_node("HCM") do
+    from_hcm = as_node("HCM-LAB") do
       order = raise_order_at("HCM")
       tracking_number = order.tracking_number
 
@@ -38,7 +45,7 @@ RSpec.describe "a sample referred between two facilities", mode: :local, type: :
       order.transition_to!(Order::SPECIMEN_COLLECTED, actor: "enf.langa")
       order.transition_to!(Order::IN_PROGRESS, actor: "tec.mabjaia")
 
-      Referral.dispatch!(order: order, to_facility_code: "MAP", to_lab_code: "MAP-LAB-CENTRAL",
+      Referral.dispatch!(order: order, to_lab_code: "MAP-LAB-CENTRAL",
                          courier: "Transporte MISAU", actor: "tec.mabjaia")
 
       expect(order.reload.status).to eq(Order::REFERRED_OUT)
@@ -46,14 +53,14 @@ RSpec.describe "a sample referred between two facilities", mode: :local, type: :
     end
 
     # ---- 2. The capital routes it to MAP ------------------------------------
-    for_map = rebuild_the_national_node(from_hcm => "HCM") { inbound_for("MAP") }
+    for_map = rebuild_the_national_node(from_hcm => "HCM-LAB") { inbound_for("MAP-LAB-CENTRAL") }
 
     expect(for_map.map { |event| event["type"] }).to include(OutboxEvent::REFERRAL_DISPATCHED)
 
     # ---- 3. MAP receives the sample, runs it, and reports ---------------------
-    from_map = as_node("MAP") do
+    from_map = as_node("MAP-LAB-CENTRAL") do
       clear_the_node
-      Sync::Pull.new(transport: RecordedInbound.new(for_map), node_code: "MAP").call
+      Sync::Pull.new(transport: RecordedInbound.new(for_map), node_code: "MAP-LAB-CENTRAL").call
 
       # It arrived as work, with everything the bench needs, and under the
       # number the clinic at HCM is still asking after.
@@ -79,23 +86,23 @@ RSpec.describe "a sample referred between two facilities", mode: :local, type: :
     end
 
     # ---- 4. The capital routes the result back to HCM ------------------------
-    for_hcm = rebuild_the_national_node(from_hcm => "HCM", from_map => "MAP") do
+    for_hcm = rebuild_the_national_node(from_hcm => "HCM-LAB", from_map => "MAP-LAB-CENTRAL") do
       # The capital holds one sample, not two, however many nodes have touched it.
       expect(Order.where(tracking_number: tracking_number).count).to eq(1)
       expect(Order.sole.status).to eq(Order::COMPLETED)
       expect(Referral.sole).to be_received
 
-      inbound_for("HCM")
+      inbound_for("HCM-LAB")
     end
 
     expect(for_hcm.map { |event| event["type"] })
       .to include(OutboxEvent::REFERRAL_RECEIVED, OutboxEvent::TEST_RESULT_RECORDED)
 
     # ---- 5. HCM takes the result in, and its EMR reads it --------------------
-    as_node("HCM") do
+    as_node("HCM-LAB") do
       clear_the_node
-      replay(from_hcm, node_code: "HCM")
-      Sync::Pull.new(transport: RecordedInbound.new(for_hcm), node_code: "HCM").call
+      replay(from_hcm, node_code: "HCM-LAB")
+      Sync::Pull.new(transport: RecordedInbound.new(for_hcm), node_code: "HCM-LAB").call
 
       order = Order.find_by!(tracking_number: tracking_number)
 
@@ -185,13 +192,18 @@ RSpec.describe "a sample referred between two facilities", mode: :local, type: :
     Patient.delete_all
   end
 
-  def as_node(code)
-    allow(SislabSync).to receive_messages(local?: true, national?: false, node_code: code)
+  # A node is a laboratory, and answers to its entry in the register.
+  def as_node(lab_code)
+    lab = Lab.find_by!(national_code: lab_code)
+
+    allow(SislabSync).to receive_messages(local?: true, national?: false, node_code: lab_code,
+                                          lab_code: lab_code, lab: lab, facility_code: lab.facility_code)
     yield
   end
 
   def as_the_national_node
-    allow(SislabSync).to receive_messages(local?: false, national?: true, node_code: "NATIONAL")
+    allow(SislabSync).to receive_messages(local?: false, national?: true, node_code: "NATIONAL",
+                                          lab_code: "NATIONAL", lab: nil, facility_code: "NATIONAL")
     yield
   end
 end

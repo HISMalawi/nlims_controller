@@ -64,16 +64,6 @@ RSpec.describe "POST /api/v3/lab/orders/{tn}/claim", mode: :local, type: :reques
     expect(response).to have_http_status(:not_found)
   end
 
-  it "refuses to let one laboratory take another's sample" do
-    other = create(:order, receiving_lab_code: "XAI-LAB")
-
-    claim(tracking_number: other.tracking_number)
-
-    expect(response).to have_http_status(:forbidden)
-    expect(response.parsed_body.dig("errors", 0, "code")).to eq("lab_mismatch")
-    expect(other.reload).not_to be_claimed
-  end
-
   # Claiming is accepting, and a sample that has been cancelled cannot be
   # accepted. The claim has to come off with the refused transition.
   it "does not hold a sample it could not accept" do

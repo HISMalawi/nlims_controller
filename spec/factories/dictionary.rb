@@ -15,6 +15,14 @@ FactoryBot.define do
     status { DictionaryEntry::RETIRED }
   end
 
+  factory :lab do
+    dictionary_defaults
+    sequence(:name) { |n| "Laboratório #{n}" }
+    sequence(:facility_code) { |n| "US#{n}" }
+    sequence(:facility_name) { |n| "Unidade Sanitária #{n}" }
+    province { "Maputo Cidade" }
+  end
+
   factory :department do
     dictionary_defaults
     sequence(:name) { |n| "Secção #{n}" }

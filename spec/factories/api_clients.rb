@@ -15,6 +15,7 @@ FactoryBot.define do
     trait :node do
       kind { "node" }
       facility_code { nil }
+      lab_code { nil }
     end
 
     trait :disabled do

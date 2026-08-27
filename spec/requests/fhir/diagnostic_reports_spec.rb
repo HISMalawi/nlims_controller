@@ -124,13 +124,5 @@ RSpec.describe "FHIR DiagnosticReport", mode: :local, type: :request do
 
       expect(response.parsed_body["entry"].map { |entry| entry.dig("resource", "id") }).to eq([ order_test.uuid ])
     end
-
-    it "refuses another facility's report asked for by id" do
-      theirs = create(:order_test, order: create(:order, sending_facility_code: "HRQ"))
-
-      get "/fhir/r4/DiagnosticReport/#{theirs.uuid}", headers: headers
-
-      expect(response).to have_http_status(:forbidden)
-    end
   end
 end

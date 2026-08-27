@@ -8,11 +8,13 @@
 # with no record of which reading came second.
 class TestResult < ApplicationRecord
   include HasUuid
+  include DictionaryTerms
 
   # Everything that describes the reading itself. `replaced_by_uuid` is
   # deliberately absent: marking a row as superseded is the one change a
   # recorded result is allowed to undergo.
-  IMMUTABLE = %w[uuid order_test_id indicator_id value unit recorded_at recorded_by].freeze
+  IMMUTABLE = %w[uuid order_test_id indicator_id indicator_name indicator_code value unit recorded_at
+                 recorded_by].freeze
 
   # What a polling client is owed a new revision for. Acknowledgement is
   # deliberately absent: an EMR that confirms a reading would otherwise move the
@@ -20,8 +22,14 @@ class TestResult < ApplicationRecord
   PUBLISHABLE = (IMMUTABLE + %w[replaced_by_uuid]).freeze
 
   belongs_to :order_test
-  belongs_to :indicator
   has_one :order, through: :order_test
+
+  # What was measured. Linked to the dictionary when the indicator is in it, and
+  # kept by name when it is not: a reading nobody can file is still a reading,
+  # and the exam it belongs to may not be in the catalogue either.
+  dictionary_term :indicator, entity: "indicators", name: :indicator_name, code: :indicator_code
+
+  validate :indicator_is_named
 
   validates :value, presence: true
   validates :recorded_at, presence: true
@@ -60,6 +68,8 @@ class TestResult < ApplicationRecord
   # indicator currently reads before inserting, so two corrections arriving
   # together cannot both leave themselves as the current one.
   def self.record!(order_test:, indicator:, value:, unit: nil, recorded_at: nil, recorded_by: nil)
+    reference = indicator.is_a?(Dictionary::Reference) ? indicator : Dictionary::Reference.resolve("indicators", indicator)
+
     transaction do
       # The replacement's uuid is settled first so the old row can be marked
       # before the new one is written. A client reading by revision then learns
@@ -67,19 +77,34 @@ class TestResult < ApplicationRecord
       # superseded it, rather than the other way round.
       uuid = SecureRandom.uuid
 
-      current.where(order_test: order_test, indicator: indicator).lock.each do |row|
-        row.update!(replaced_by_uuid: uuid)
-      end
+      supersede(order_test, reference).lock.each { |row| row.update!(replaced_by_uuid: uuid) }
 
-      create!(
+      result = new(
         uuid: uuid,
         order_test: order_test,
-        indicator: indicator,
         value: value,
         unit: unit,
         recorded_at: recorded_at || Time.current,
         recorded_by: recorded_by
       )
+      result.indicator_reference = reference
+      result.save!
+      result
+    end
+  end
+
+  # The readings this one replaces: the same indicator on the same test. An
+  # indicator in the dictionary is matched by its row, one that is not by the
+  # name it was recorded under — which is the only handle a free term has, and
+  # is why two spellings of the same thing stand as two readings rather than
+  # one silently overwriting the other.
+  def self.supersede(order_test, reference)
+    rows = current.where(order_test: order_test)
+
+    if reference.known?
+      rows.where(indicator_id: reference.entry.id)
+    else
+      rows.where(indicator_id: nil, indicator_name: reference.name)
     end
   end
 
@@ -133,6 +158,14 @@ class TestResult < ApplicationRecord
     return unless new_record? || (changed & PUBLISHABLE).any?
 
     self.revision = Sequence.next_result_revision!
+  end
+
+  # A reading has to say what it measured, by code or by name. Without either
+  # there is a number on a screen and nothing to say what it is a number of.
+  def indicator_is_named
+    return if indicator_reference.present?
+
+    errors.add(:base, "um resultado tem de indicar o indicador, por código ou por nome")
   end
 
   def recorded_readings_are_never_rewritten

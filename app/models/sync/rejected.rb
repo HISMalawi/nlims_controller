@@ -11,6 +11,11 @@ module Sync
     UNKNOWN_TYPE = "unknown_type"
     MALFORMED = "malformed"
     UNKNOWN_AGGREGATE = "unknown_aggregate"
+
+    # No longer raised. A term the receiving node's catalogue does not carry is
+    # kept as it arrived instead of blocking the sender's stream — see
+    # Sync::Applier#term. Declared still, because a node talking to a peer that
+    # has not been updated will be sent this and has to know what it means.
     UNKNOWN_DICTIONARY_ITEM = "unknown_dictionary_item"
     INVALID = "invalid"
     APPLY_FAILED = "apply_failed"

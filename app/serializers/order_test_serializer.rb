@@ -19,8 +19,8 @@ class OrderTestSerializer
     base = {
       uuid: @order_test.uuid,
       status: @order_test.status,
-      test_type: DictionaryReference.call(@order_test.test_type),
-      test_panel: DictionaryReference.call(@order_test.test_panel),
+      test_type: DictionaryReference.call(@order_test.test_type_reference),
+      test_panel: DictionaryReference.call(@order_test.test_panel_reference),
       method_of_testing: @order_test.method_of_testing,
       created_at: @order_test.created_at&.iso8601,
       updated_at: @order_test.updated_at&.iso8601

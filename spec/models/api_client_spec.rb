@@ -12,41 +12,33 @@ RSpec.describe ApiClient do
       .to raise_error(ActiveRecord::RecordInvalid, /Kind/)
   end
 
-  # A key that cannot say which facility it speaks for cannot be checked against
-  # the data it is touching.
-  it "requires a facility code on clients that act for one" do
-    expect { create(:api_client, kind: "emr", facility_code: nil) }
-      .to raise_error(ActiveRecord::RecordInvalid, /Facility code/)
-  end
+  # Issuing a key used to mean typing a facility code and a laboratory code into
+  # a form, and the pair then decided whether the client's requests were
+  # answered. On a node that is itself a laboratory both are already known.
+  describe "the identity it inherits", mode: :local do
+    it "takes this node's laboratory and facility, so the form need not ask" do
+      client = create(:api_client, kind: "emr", facility_code: nil, lab_code: nil)
 
-  it "does not require a facility code on a node client" do
-    expect(create(:api_client, :node)).to be_persisted
-  end
-
-  describe "#acts_for_facility?" do
-    it "accepts its own facility and refuses another" do
-      client = create(:api_client, facility_code: "HCM")
-
-      expect(client).to be_acts_for_facility("HCM")
-      expect(client).not_to be_acts_for_facility("QUELIMANE")
+      expect(client.lab_code).to eq(SislabSync.lab_code)
+      expect(client.facility_code).to eq(SislabSync.facility_code)
     end
 
-    it "accepts any facility when it is not pinned to one" do
-      expect(create(:api_client, :node)).to be_acts_for_facility("HCM")
-    end
-  end
+    it "reads the facility out of this node's entry in the register" do
+      create(:lab, national_code: SislabSync.lab_code, facility_code: "HCM", name: "Laboratório Central")
 
-  describe "#acts_for_lab?" do
-    it "accepts its own lab and refuses another" do
-      client = create(:api_client, :sislab, lab_code: "HCM-LAB-BIOQ")
-
-      expect(client).to be_acts_for_lab("HCM-LAB-BIOQ")
-      expect(client).not_to be_acts_for_lab("HCM-LAB-MICRO")
+      expect(create(:api_client, facility_code: nil).facility_code).to eq("HCM")
     end
 
-    # An EMR speaks for the whole facility; it has no laboratory of its own.
-    it "accepts any lab when it is not pinned to one" do
-      expect(create(:api_client, kind: "emr", lab_code: nil)).to be_acts_for_lab("HCM-LAB-BIOQ")
+    it "leaves alone a code that was given on purpose" do
+      expect(create(:api_client, facility_code: "QUELIMANE").facility_code).to eq("QUELIMANE")
+    end
+
+    # A node-to-node client speaks for whoever is on the other end of it.
+    it "gives a node client no codes at all" do
+      client = create(:api_client, :node)
+
+      expect(client.facility_code).to be_nil
+      expect(client.lab_code).to be_nil
     end
   end
 

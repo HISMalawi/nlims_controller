@@ -87,7 +87,7 @@ module SislabSyncClient
     end
 
     # A test may be asked for by code, or as a hash for anything more. Both
-    # `test_type` and `test_panel` take a bare national code — a panel expands
+    # `test_type` and `test_panel` take a bare national code or name — a panel expands
     # into the tests that make it up.
     def normalise_test(test)
       return { test_type: reference(test, :test_type) } if test.is_a?(String)

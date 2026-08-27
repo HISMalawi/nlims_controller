@@ -35,11 +35,16 @@ RSpec.describe "Clientes e chaves na interface", type: :request do
       expect(response).to redirect_to(api_client_path(client))
     end
 
-    it "recusa um cliente EMR sem unidade sanitária" do
+    # O formulário deixou de perguntar os códigos: um nó é um laboratório, e
+    # sabe o seu próprio código e a unidade sanitária onde está.
+    it "dá ao cliente os códigos deste nó, sem os pedir a ninguém", mode: :local do
+      create(:lab, national_code: SislabSync.lab_code, facility_code: "HCM", name: "Laboratório Central")
+
       post api_clients_path, params: { api_client: { name: "EMR sem casa", kind: "emr", active: "1" } }
 
-      expect(response).to have_http_status(:unprocessable_content)
-      expect(ApiClient.count).to be_zero
+      client = ApiClient.sole
+      expect(client.lab_code).to eq(SislabSync.lab_code)
+      expect(client.facility_code).to eq("HCM")
     end
 
     it "não deixa mudar o tipo depois de criado, porque isso re-escoparia as chaves já emitidas" do

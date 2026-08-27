@@ -60,15 +60,6 @@ RSpec.describe "GET /api/v3/orders/{tracking_number}", mode: :local, type: :requ
       expect(response).to have_http_status(:unauthorized)
     end
 
-    it "answers 403 for a key belonging to another facility" do
-      other = issue_key(api_client: create(:api_client, facility_code: "XAI"), scopes: %w[orders:read])
-
-      get_order(bearer: other.last)
-
-      expect(response).to have_http_status(:forbidden)
-      expect(response.parsed_body.dig("errors", 0, "code")).to eq("facility_mismatch")
-    end
-
     # Scope is checked before the sample is looked up, so a key that may not
     # read orders cannot learn which tracking numbers exist by watching for the
     # difference between 403 and 404.

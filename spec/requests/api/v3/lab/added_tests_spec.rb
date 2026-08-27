@@ -53,9 +53,33 @@ RSpec.describe "POST /api/v3/lab/orders/{tn}/tests", mode: :local, type: :reques
     expect(order.reload.order_tests.count).to eq(2)
   end
 
-  it "refuses a code the dictionary does not have, by position" do
+  # The bench runs what the bench runs. A code this node's catalogue does not
+  # carry is kept as it arrived rather than refused, and can be linked to the
+  # dictionary later, once the national catalogue reaches it.
+  it "takes a code the dictionary does not have, and keeps it" do
     add_tests({ tests: [ { test_type: { national_code: test_type.national_code } },
-                         { test_type: { national_code: "MOZ-TT-9999" } } ] })
+                         { test_type: { national_code: "MOZ-TT-9999", name: "Ferritina" } } ] })
+
+    expect(response).to have_http_status(:created)
+
+    added = order.reload.order_tests.find_by(test_code: "MOZ-TT-9999")
+    expect(added.test_type).to be_nil
+    expect(added.test_name).to eq("Ferritina")
+    expect(added.test_type_label).to eq("Ferritina")
+  end
+
+  it "takes a test named with nothing but its name" do
+    add_tests({ tests: [ { test_type: "Ferritina" } ] })
+
+    expect(response).to have_http_status(:created)
+    expect(order.reload.order_tests.last.test_name).to eq("Ferritina")
+  end
+
+  # The one refusal left: a test with no exam on it is not a loose end anybody
+  # can tie up later, because nobody would know what was asked for.
+  it "refuses a test that names nothing at all, by position" do
+    add_tests({ tests: [ { test_type: { national_code: test_type.national_code } },
+                         { method_of_testing: "PCR" } ] })
 
     expect(response).to have_http_status(:unprocessable_content)
     expect(response.parsed_body.dig("errors", 0, "field")).to eq("tests[1].test_type")
@@ -79,15 +103,6 @@ RSpec.describe "POST /api/v3/lab/orders/{tn}/tests", mode: :local, type: :reques
     expect(response).to have_http_status(:unprocessable_content)
     expect(response.parsed_body.dig("errors", 0, "message")).to include(Order::CANCELLED)
     expect(order.reload.order_tests).to be_empty
-  end
-
-  it "refuses to let one laboratory add work to another's sample" do
-    other = create(:order, receiving_lab_code: "XAI-LAB")
-
-    add_tests(one_test, tracking_number: other.tracking_number)
-
-    expect(response).to have_http_status(:forbidden)
-    expect(response.parsed_body.dig("errors", 0, "code")).to eq("lab_mismatch")
   end
 
   it "answers 403 for a key that may read but not publish" do

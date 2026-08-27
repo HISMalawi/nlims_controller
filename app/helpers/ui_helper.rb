@@ -30,6 +30,23 @@ module UiHelper
                           "ring-1 ring-inset #{TONES.fetch(tone, TONES[:neutral])}")
   end
 
+  # A clinical term as a screen should show it: the name, the code where there
+  # is one, and — where the term reached no dictionary entry — a mark saying so.
+  #
+  # The mark is the point. A term kept as it was written is legitimate while the
+  # national catalogue is being assembled, but it is not the same as one the
+  # catalogue accounts for, and the person looking at the screen is the one who
+  # can do something about the difference.
+  def term(reference, code: true)
+    return tag.span("—", class: "text-slate-400") if reference.nil? || reference.blank?
+
+    parts = [ tag.span(reference.label, class: "text-slate-900") ]
+    parts << tag.span(reference.code, class: "ml-2 font-mono text-xs text-slate-500") if code && reference.code
+    parts << tag.span(badge(t("dictionary.uncatalogued"), tone: :waiting), class: "ml-2") unless reference.known?
+
+    safe_join(parts)
+  end
+
   def status_badge(status, scope:)
     badge(t("#{scope}.#{status}", default: status.to_s.humanize), tone: STATUS_TONES.fetch(status.to_s, :neutral))
   end

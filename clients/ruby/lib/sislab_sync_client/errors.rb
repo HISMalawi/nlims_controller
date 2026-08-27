@@ -27,7 +27,7 @@ module SislabSyncClient
 
   class Unauthenticated < Error; end
   class InsufficientScope < Error; end
-  class FacilityMismatch < Error; end
+  # A key acting for a node other than its own.
   class LabMismatch < Error; end
   class IdempotencyKeyRequired < Error; end
   class IdempotencyKeyReused < Error; end
@@ -59,7 +59,6 @@ module SislabSyncClient
   ERRORS = {
     "unauthenticated" => Unauthenticated,
     "insufficient_scope" => InsufficientScope,
-    "facility_mismatch" => FacilityMismatch,
     "lab_mismatch" => LabMismatch,
     "idempotency_key_required" => IdempotencyKeyRequired,
     "idempotency_key_reused" => IdempotencyKeyReused,

@@ -3,6 +3,7 @@
 # One sample submitted for testing. Replaces the old `specimen` table.
 class Order < ApplicationRecord
   include HasUuid
+  include DictionaryTerms
   include TracksStatus
 
   REQUESTED = "requested"
@@ -39,16 +40,16 @@ class Order < ApplicationRecord
   class AlreadyClaimed < StandardError; end
 
   belongs_to :patient
-  belongs_to :specimen_type, optional: true
-  belongs_to :rejection_reason, optional: true
   belongs_to :source_client, class_name: "ApiClient", optional: true
+
+  dictionary_term :specimen_type, entity: "specimen_types", name: :specimen_name, code: :specimen_code
+  dictionary_term :rejection_reason, entity: "rejection_reasons", name: :rejection_name, code: :rejection_code
 
   has_many :order_tests, dependent: :destroy
   has_many :test_results, through: :order_tests
   has_many :referrals, dependent: :destroy
 
   validates :tracking_number, presence: true
-  validates :sending_facility_code, presence: true
   validates :receiving_lab_code, presence: true
   validates :priority, inclusion: { in: PRIORITIES }
 
@@ -109,14 +110,16 @@ class Order < ApplicationRecord
   # order without rejecting its tests would leave a queue of work against a tube
   # that has already been thrown away.
   def reject!(reason:, actor: nil, note: nil)
+    reference = reason.is_a?(Dictionary::Reference) ? reason : Dictionary::Reference.resolve("rejection_reasons", reason)
+
     self.class.transaction do
-      self.rejection_reason = reason
-      transition_to!(REJECTED, actor: actor, reason: [ reason.name, note.presence ].compact.join(" — "))
+      self.rejection_reason_reference = reference
+      transition_to!(REJECTED, actor: actor, reason: [ reference.label, note.presence ].compact.join(" — "))
 
       order_tests.each do |order_test|
         next if order_test.terminal?
 
-        order_test.transition_to!(OrderTest::REJECTED, actor: actor, reason: reason.name)
+        order_test.transition_to!(OrderTest::REJECTED, actor: actor, reason: reference.label)
       end
     end
 
@@ -149,12 +152,18 @@ class Order < ApplicationRecord
   def assign_tracking_number
     return if tracking_number.present?
 
-    # Nothing to build a number from yet. Leaving it unset lets the presence
-    # validations say which codes are missing, which is a far more useful answer
-    # than the generator's exception.
-    return if sending_facility_code.blank?
+    # The facility that collected the sample, or the laboratory that took it in
+    # when the register has not told this node its facility yet. Either is a
+    # stable prefix; what matters is that a sample is never left without a
+    # number, because the number is what the clinic writes on the tube.
+    prefix = sending_facility_code.presence || receiving_lab_code.presence
 
-    self.tracking_number = TrackingNumber.generate(facility_code: sending_facility_code)
+    # Nothing to build a number from yet. Leaving it unset lets the presence
+    # validation say so, which is a far more useful answer than the generator's
+    # exception.
+    return if prefix.blank?
+
+    self.tracking_number = TrackingNumber.generate(facility_code: prefix)
   end
 
   # Takes the sequence lock, which MySQL holds until this transaction commits,

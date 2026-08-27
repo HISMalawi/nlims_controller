@@ -27,16 +27,16 @@ module Api
       private
 
       def order_request_params
-        params.permit(
+        payload.permit(
           patient: %i[national_id name sex birthdate phone],
           order: [
             :sending_facility_code, :receiving_lab_code, :lab_code, :priority, :requested_by,
             :order_location, :clinical_history, :collected_at,
-            { specimen_type: %i[national_code uuid] }
+            { specimen_type: Dictionary::Reference::ATTRIBUTES }
           ],
           tests: [
             :method_of_testing,
-            { test_type: %i[national_code uuid], test_panel: %i[national_code uuid] }
+            { test_type: Dictionary::Reference::ATTRIBUTES, test_panel: Dictionary::Reference::ATTRIBUTES }
           ]
         )
       end

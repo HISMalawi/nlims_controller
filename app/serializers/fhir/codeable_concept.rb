@@ -13,11 +13,17 @@ module Fhir
   # would make a report leaving the country unreadable. Emitting both means the
   # curation improves the wire format on its own, without a client changing a
   # line — which is why this is the only place either system is named.
+  # A term the dictionary does not carry is emitted too, as a concept with the
+  # code it arrived with and no system — the same shape this node accepts on the
+  # way in — or, where there was no code either, as text alone, which is what
+  # FHIR provides for precisely this. Leaving it out instead would drop the exam
+  # from the resource and leave a client reading a report of nothing.
   class CodeableConcept
-    def self.call(entry, text: nil)
-      return if entry.nil?
+    def self.call(term, text: nil)
+      return if term.nil?
+      return if term.is_a?(Dictionary::Reference) && term.blank?
 
-      new(entry, text: text).as_json
+      new(term, text: text).as_json
     end
 
     # For the handful of concepts that are ours and have no dictionary row —
@@ -29,19 +35,32 @@ module Fhir
       concept.merge(text: display || code)
     end
 
-    def initialize(entry, text: nil)
-      @entry = entry
+    def initialize(term, text: nil)
+      @reference = term.is_a?(Dictionary::Reference) ? term : nil
+      @entry = @reference ? @reference.entry : term
       @text = text
     end
 
     def as_json
-      { coding: codings, text: @text || @entry.name }
+      { coding: codings, text: @text || label }
     end
 
     private
 
+    def label
+      @entry&.name.presence || @reference&.label
+    end
+
     def codings
-      [ national_coding, loinc_coding ].compact
+      return [ national_coding, loinc_coding ].compact if @entry
+
+      # No entry to codify. The code the request was written with is still worth
+      # carrying, but this node cannot say what system it belongs to without
+      # inventing one.
+      code = @reference&.code
+      return [] if code.blank?
+
+      [ { code: code, display: label }.compact ]
     end
 
     def national_coding

@@ -201,8 +201,14 @@ pt:
   api_clients:
     never_used: nunca usada
     kind_is_fixed: O tipo não se altera depois de criado — mudá-lo re-escoparia as chaves já emitidas.
-    facility_hint: Unidade sanitária por que o cliente fala. Obrigatória para EMR e SISLAB.
-    lab_hint: Laboratório, para clientes SISLAB. Em branco para um EMR.
+    node_identity_html: >-
+      As chaves emitidas aqui falam por %{lab} (%{code}), na unidade sanitária %{facility}.
+      Não é preciso indicar códigos: são os deste nó.
+    node_not_in_register: >-
+      Este laboratório ainda não consta do registo nacional replicado, pelo que a unidade
+      sanitária é, por agora, o próprio código do laboratório.
+    facility_hint: Unidade sanitária por que o cliente fala.
+    lab_hint: Laboratório por que o cliente fala.
     active_label: Cliente activo
     columns:
       name: Nome
@@ -317,7 +323,9 @@ pt:
 
   dictionary:
     no_loinc: sem LOINC
+    uncatalogued: fora do catálogo
     entities:
+      labs: Laboratórios
       departments: Secções
       specimen_types: Tipos de amostra
       drugs: Antibióticos
@@ -343,6 +351,11 @@ pt:
       loinc_code: Código LOINC
       unit: Unidade
       value_type: Tipo de valor
+      facility_code: Código da unidade sanitária
+      facility_name: Unidade sanitária
+      district: Distrito
+      province: Província
+      phone: Telefone
       target_tat: Tempo de resposta previsto
       performed_on_sex: Executado em
       department_id: Secção

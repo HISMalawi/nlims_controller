@@ -60,6 +60,22 @@ RSpec.describe "Dicionário na interface", type: :request do
       expect(response.body).to include("1 de 2 entradas curáveis")
     end
 
+    # O registo de laboratórios anda no dicionário, e por isso ganha o ecrã de
+    # graça: é o que o nó nacional mantém e o que os nós locais consultam para
+    # saber para onde podem referir uma amostra.
+    it "lista o registo de laboratórios como mais uma entidade" do
+      create(:lab, name: "Laboratório Central de Maputo", facility_name: "Hospital Central de Maputo")
+
+      get dictionary_path
+
+      expect(response.body).to include("Laboratórios")
+
+      get dictionary_entity_path("labs")
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Laboratório Central de Maputo")
+    end
+
     it "não conhece uma entidade que não existe" do
       get dictionary_entity_path("bananas")
 

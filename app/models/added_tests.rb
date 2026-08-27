@@ -48,16 +48,17 @@ class AddedTests
 
   def resolve(row, index)
     {
-      test_type: Dictionary.entry!("test_types", row[:test_type], field: "tests[#{index}].test_type"),
+      test_type: Dictionary::Reference.resolve!("test_types", row[:test_type],
+                                                field: "tests[#{index}].test_type",
+                                                message: "é preciso indicar o exame, por código ou por nome"),
       method_of_testing: row[:method_of_testing]
     }
   end
 
   def create_test(resolved)
-    @order.order_tests.create!(
-      test_type: resolved[:test_type],
-      method_of_testing: resolved[:method_of_testing],
-      status_actor: @actor
-    )
+    order_test = @order.order_tests.new(method_of_testing: resolved[:method_of_testing], status_actor: @actor)
+    order_test.test_type_reference = resolved[:test_type]
+    order_test.save!
+    order_test
   end
 end

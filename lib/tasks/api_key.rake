@@ -3,13 +3,18 @@
 # Issuing and revoking keys before the interface exists (S11), and afterwards
 # for anything scripted.
 #
-#   NAME="EMR do HCM" KIND=emr FACILITY_CODE=HCM bin/rails api_client:create
-#   CLIENT=HCM SCOPES="orders:write,results:read" bin/rails api_key:issue
+#   NAME="EMR do HCM" KIND=emr bin/rails api_client:create
+#   CLIENT="EMR do HCM" SCOPES="orders:write,results:read" bin/rails api_key:issue
 #   KEY=a1b2c3d4 bin/rails api_key:revoke
 #   bin/rails api_key:list
+#
+# On a local node the facility and laboratory codes are this node's own and
+# need not be given: it is a laboratory, and it knows which. FACILITY_CODE and
+# LAB_CODE are still read, for the national node, which issues keys on behalf
+# of laboratories other than its own.
 
 namespace :api_client do
-  desc "Create an API client (NAME, KIND, FACILITY_CODE, LAB_CODE)"
+  desc "Create an API client (NAME, KIND; FACILITY_CODE and LAB_CODE optional, taken from this node)"
   task create: :environment do
     client = ApiClient.create!(
       name: ENV.fetch("NAME"),
@@ -38,7 +43,7 @@ namespace :api_client do
 end
 
 namespace :api_key do
-  desc "Issue a key for a client (CLIENT=uuid|facility_code|name, SCOPES=comma separated, EXPIRES_AT optional)"
+  desc "Issue a key for a client (CLIENT=uuid|lab_code|facility_code|name, SCOPES=comma separated, EXPIRES_AT optional)"
   task issue: :environment do
     client = find_client!(ENV.fetch("CLIENT"))
     scopes = ENV.fetch("SCOPES").split(",").map(&:strip).reject(&:empty?)
@@ -87,8 +92,9 @@ end
 
 def find_client!(identifier)
   client = ApiClient.find_by(uuid: identifier) ||
-           ApiClient.find_by(facility_code: identifier) ||
-           ApiClient.find_by(name: identifier)
+           ApiClient.find_by(name: identifier) ||
+           ApiClient.find_by(lab_code: identifier) ||
+           ApiClient.find_by(facility_code: identifier)
   abort "No client matches #{identifier}" unless client
 
   client

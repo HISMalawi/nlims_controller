@@ -34,7 +34,7 @@ module Fhir
         intent: Fhir::INTENT,
         priority: Fhir::ORDER_PRIORITY[@order.priority],
         category: [ { coding: [ LAB_CATEGORY ], text: "Laboratory procedure" } ],
-        code: Fhir::CodeableConcept.call(@order_test.test_type),
+        code: Fhir::CodeableConcept.call(@order_test.test_type_reference),
         orderDetail: order_detail,
         subject: Fhir::PatientResource.reference(@order.patient),
         specimen: [ Fhir::SpecimenResource.reference(@order) ],
@@ -66,7 +66,7 @@ module Fhir
       # requested — the laboratory runs its members one at a time — but a client
       # that ordered "hemograma completo" has to be able to recognise the tests
       # it got back as that panel.
-      panel = Fhir::CodeableConcept.call(@order_test.test_panel)
+      panel = Fhir::CodeableConcept.call(@order_test.test_panel_reference)
       list << { url: Fhir.url("StructureDefinition/test-panel"), valueCodeableConcept: panel } if panel
 
       list

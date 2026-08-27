@@ -13,7 +13,7 @@ module Api
         def create
           return unless authorize_scope!("sync:push")
           return unless node_code
-          return unless authorize_facility!(node_code)
+          return unless authorize_node!(node_code)
           return unless batch_within_limit?
 
           result = ::Sync::Ingest.new(node_code: node_code, events: events_params).call

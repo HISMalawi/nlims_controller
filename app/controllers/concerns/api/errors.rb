@@ -6,7 +6,9 @@ module Api
   module Errors
     UNAUTHENTICATED = "unauthenticated"
     INSUFFICIENT_SCOPE = "insufficient_scope"
-    FACILITY_MISMATCH = "facility_mismatch"
+    # A key acting for a node other than its own. There is no facility
+    # equivalent any more: a node is a laboratory, and a request no longer
+    # names a facility this node could disagree with.
     LAB_MISMATCH = "lab_mismatch"
     IDEMPOTENCY_KEY_REQUIRED = "idempotency_key_required"
     IDEMPOTENCY_KEY_REUSED = "idempotency_key_reused"
@@ -18,7 +20,6 @@ module Api
     STATUSES = {
       UNAUTHENTICATED => :unauthorized,
       INSUFFICIENT_SCOPE => :forbidden,
-      FACILITY_MISMATCH => :forbidden,
       LAB_MISMATCH => :forbidden,
       IDEMPOTENCY_KEY_REQUIRED => :bad_request,
       IDEMPOTENCY_KEY_REUSED => :unprocessable_content,

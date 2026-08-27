@@ -6,6 +6,13 @@ RSpec.describe "Referrals between laboratories", mode: :local, type: :request do
   let(:api_client) { create(:api_client, :sislab, facility_code: "HCM", lab_code: "HCM-LAB") }
   let(:token) { issue_key(api_client: api_client, scopes: %w[referrals:write]).last }
 
+  # The national register, as this node holds it. A referral is addressed to a
+  # laboratory code and nothing else: the health facility and the name that goes
+  # in the history are read from here.
+  before do
+    create(:lab, national_code: "MAP-LAB-CENTRAL", name: "Laboratório Central de Maputo", facility_code: "MAP")
+  end
+
   # A sample that reached the bench and turned out to need a laboratory that
   # can run the test.
   def in_progress_order
@@ -25,8 +32,7 @@ RSpec.describe "Referrals between laboratories", mode: :local, type: :request do
   describe "POST /api/v3/lab/referrals" do
     def refer(body = {}, bearer: token)
       send_json(:post, "/api/v3/lab/referrals",
-                { tracking_number: in_progress_order.tracking_number,
-                  to_facility_code: "MAP", to_lab_code: "MAP-LAB-CENTRAL",
+                { tracking_number: in_progress_order.tracking_number, to_lab_code: "MAP-LAB-CENTRAL",
                   courier: "Transporte MISAU", remarks: "sem reagente" }.merge(body), bearer: bearer)
     end
 
@@ -42,6 +48,13 @@ RSpec.describe "Referrals between laboratories", mode: :local, type: :request do
       expect(data["dispatched_at"]).to be_present
     end
 
+    # The client sent a laboratory code and nothing else.
+    it "fills in the health facility from the register" do
+      refer
+
+      expect(response.parsed_body.dig("data", "to_facility_code")).to eq("MAP")
+    end
+
     # The clinic goes on asking after the same number, whichever institution
     # ends up running the test.
     it "keeps the tracking number the sample already had" do
@@ -54,7 +67,7 @@ RSpec.describe "Referrals between laboratories", mode: :local, type: :request do
       refer
 
       expect(in_progress_order.reload.status).to eq(Order::REFERRED_OUT)
-      expect(in_progress_order.own_status_events.last.reason).to include("MAP-LAB-CENTRAL")
+      expect(in_progress_order.own_status_events.last.reason).to include("Laboratório Central de Maputo")
     end
 
     it "tells the rest of the country, carrying the whole sample" do
@@ -68,17 +81,29 @@ RSpec.describe "Referrals between laboratories", mode: :local, type: :request do
     end
 
     it "refuses to refer a sample to the laboratory that already has it" do
-      refer({ to_facility_code: "HCM", to_lab_code: "HCM-LAB" })
+      create(:lab, national_code: "HCM-LAB", facility_code: "HCM")
+
+      refer({ to_lab_code: "HCM-LAB" })
 
       expect(response).to have_http_status(:unprocessable_content)
       expect(in_progress_order.reload.status).to eq(Order::IN_PROGRESS)
     end
 
     it "refuses a referral with nowhere to go" do
-      refer({ to_facility_code: nil })
+      refer({ to_lab_code: nil })
 
       expect(response).to have_http_status(:unprocessable_content)
-      expect(response.parsed_body.dig("errors", 0, "field")).to eq("to_facility_code")
+      expect(response.parsed_body.dig("errors", 0, "field")).to eq("to_lab_code")
+    end
+
+    # The register is the list of laboratories in the country. A code that is
+    # not in it is a typo, and a parcel addressed to a typo never arrives.
+    it "refuses a laboratory the register does not carry" do
+      refer({ to_lab_code: "MAP-LAB-INVENTADO" })
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(response.parsed_body.dig("errors", 0, "field")).to eq("to_lab_code")
+      expect(Referral.count).to be_zero
     end
 
     it "refuses to refer a sample that has not reached the bench" do
@@ -89,15 +114,6 @@ RSpec.describe "Referrals between laboratories", mode: :local, type: :request do
       expect(response).to have_http_status(:unprocessable_content)
       expect(order.reload.status).to eq(Order::REQUESTED)
       expect(Referral.count).to be_zero
-    end
-
-    it "refuses to let one laboratory send another's sample away" do
-      other = create(:order, receiving_lab_code: "XAI-LAB")
-
-      refer({ tracking_number: other.tracking_number })
-
-      expect(response).to have_http_status(:forbidden)
-      expect(response.parsed_body.dig("errors", 0, "code")).to eq("lab_mismatch")
     end
 
     it "answers 403 for a key that may not refer" do
@@ -186,19 +202,22 @@ RSpec.describe "Referrals between laboratories", mode: :local, type: :request do
       expect(response.parsed_body.dig("errors", 0, "field")).to eq("state")
     end
 
-    it "refuses a rejection with no reason from the dictionary" do
-      settle({ state: Referral::REJECTED, reason: { national_code: "MOZ-RJ-9999" } })
+    # The list of rejection reasons is not consolidated either, and a parcel
+    # refused for a reason nobody has catalogued is still a refused parcel.
+    it "records a refusal for a reason the dictionary does not carry" do
+      settle({ state: Referral::REJECTED, reason: "Tubo partido em trânsito" })
+
+      expect(response).to have_http_status(:ok)
+      expect(referral.reload.state).to eq(Referral::REJECTED)
+      expect(referral.rejection_reason).to be_nil
+      expect(referral.rejection_reason_label).to eq("Tubo partido em trânsito")
+    end
+
+    it "refuses a rejection that gives no reason at all" do
+      settle({ state: Referral::REJECTED })
 
       expect(response).to have_http_status(:unprocessable_content)
       expect(referral.reload).to be_dispatched
-    end
-
-    # Only the laboratory the sample was sent to can say whether it arrived.
-    it "refuses to let the sending laboratory settle its own parcel" do
-      settle({ state: Referral::RECEIVED }, bearer: token)
-
-      expect(response).to have_http_status(:forbidden)
-      expect(response.parsed_body.dig("errors", 0, "code")).to eq("lab_mismatch")
     end
 
     it "answers 404 for a referral this node does not have" do

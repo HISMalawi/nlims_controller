@@ -38,7 +38,7 @@ module Fhir
         basedOn: [ Fhir::ServiceRequestResource.reference(@order_test) ],
         status: status,
         category: [ { coding: [ CATEGORY ], text: "Laboratory" } ],
-        code: Fhir::CodeableConcept.call(@result.indicator),
+        code: Fhir::CodeableConcept.call(@result.indicator_reference),
         subject: Fhir::PatientResource.reference(@order.patient),
         specimen: Fhir::SpecimenResource.reference(@order),
         # When the sample was taken, not when somebody typed the number in. The

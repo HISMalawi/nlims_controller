@@ -37,8 +37,8 @@ class ReferralsController < ApplicationController
     relation = relation.where(state: @state) if @state
 
     case @direction
-    when "out" then relation.where(from_facility_code: SislabSync.node_code)
-    when "in" then relation.where(to_facility_code: SislabSync.node_code)
+    when "out" then relation.where(from_lab_code: SislabSync.lab_code)
+    when "in" then relation.where(to_lab_code: SislabSync.lab_code)
     else relation
     end
   end

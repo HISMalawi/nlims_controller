@@ -58,15 +58,6 @@ RSpec.describe "What a laboratory publishes", mode: :local, type: :request do
       expect(order.reload.status).to eq(Order::REQUESTED)
     end
 
-    it "refuses to let one laboratory move another's sample" do
-      other = create(:order, receiving_lab_code: "XAI-LAB")
-
-      send_json(:patch, "/api/v3/lab/orders/#{other.tracking_number}/status", { status: Order::ACCEPTED })
-
-      expect(response).to have_http_status(:forbidden)
-      expect(response.parsed_body.dig("errors", 0, "code")).to eq("lab_mismatch")
-    end
-
     it "answers 403 for a key that may read but not publish" do
       reader = issue_key(api_client: api_client, scopes: %w[orders:read])
 
@@ -151,23 +142,55 @@ RSpec.describe "What a laboratory publishes", mode: :local, type: :request do
       expect(response.parsed_body.dig("errors", 0, "field")).to eq("results[0].test_type")
     end
 
-    it "refuses an indicator the dictionary does not have" do
+    # The catalogue of indicators is no more consolidated than the catalogue of
+    # exams. A reading the dictionary cannot account for is still a reading, and
+    # is kept under the name it was recorded with.
+    it "records a reading against an indicator the dictionary does not have" do
       order_test
 
-      post_results({ results: [ reading("12.4").merge(indicator: { national_code: "MOZ-TI-9999" }) ] })
+      post_results({ results: [ reading("12.4").merge(indicator: { national_code: "MOZ-TI-9999",
+                                                                   name: "Ferritina sérica" }) ] })
 
-      expect(response.parsed_body.dig("errors", 0, "field")).to eq("results[0].indicator")
+      expect(response).to have_http_status(:ok)
+
+      result = order_test.reload.current_results.sole
+      expect(result.indicator).to be_nil
+      expect(result.indicator_code).to eq("MOZ-TI-9999")
+      expect(result.indicator_label).to eq("Ferritina sérica")
+    end
+
+    it "takes an indicator named with nothing but its name" do
+      order_test
+
+      post_results({ results: [ reading("12.4").merge(indicator: "Ferritina sérica") ] })
+
+      expect(response).to have_http_status(:ok)
+      expect(order_test.reload.current_results.sole.indicator_name).to eq("Ferritina sérica")
+    end
+
+    # A free term is superseded by the name it was recorded under, which is the
+    # only handle it has: two spellings stand as two readings rather than one
+    # silently overwriting the other.
+    it "corrects a free reading with a second one under the same name" do
+      order_test
+
+      post_results({ results: [ reading("12.4").merge(indicator: "Ferritina sérica") ] })
+      post_results({ results: [ reading("13.1").merge(indicator: "Ferritina sérica") ] })
+
+      expect(order_test.reload.current_results.sole.value).to eq("13.1")
     end
 
     # One bad row and none of them are stored: half a report is worse to read
     # than none, because it looks complete.
-    it "stores nothing when one reading in the batch is refused" do
+    it "stores nothing when one reading in the batch names no indicator" do
       order_test
 
       expect do
-        post_results({ results: [ reading("12.4"),
-                                  reading("5.1").merge(indicator: { national_code: "MOZ-TI-9999" }) ] })
+        post_results({ results: [ reading("12.4"), reading("5.1").merge(indicator: nil) ] })
       end.not_to change(TestResult, :count)
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(response.parsed_body.dig("errors", 0, "field")).to eq("results[1].indicator")
     end
 
     it "refuses an empty report" do
@@ -230,22 +253,34 @@ RSpec.describe "What a laboratory publishes", mode: :local, type: :request do
       expect(done.reload.status).to eq(OrderTest::COMPLETED)
     end
 
-    it "refuses a reason that is not in the dictionary" do
+    it "accepts a reason that is not in the dictionary, and keeps it" do
       order.claim!(lab_code: "HCM-LAB")
 
-      post_rejection({ reason: { national_code: "MOZ-RJ-9999" } })
+      post_rejection({ reason: { national_code: "MOZ-RJ-9999", name: "Tubo sem etiqueta" } })
+
+      expect(response).to have_http_status(:ok)
+      expect(order.reload.status).to eq(Order::REJECTED)
+      expect(order.rejection_reason).to be_nil
+      expect(order.rejection_reason_label).to eq("Tubo sem etiqueta")
+    end
+
+    it "accepts free text in place of a code" do
+      order.claim!(lab_code: "HCM-LAB")
+
+      post_rejection({ reason: "hemolisada" })
+
+      expect(response).to have_http_status(:ok)
+      expect(order.reload.rejection_reason_label).to eq("hemolisada")
+    end
+
+    it "refuses a rejection that gives no reason at all" do
+      order.claim!(lab_code: "HCM-LAB")
+
+      post_rejection({ reason: nil })
 
       expect(response).to have_http_status(:unprocessable_content)
       expect(response.parsed_body.dig("errors", 0, "field")).to eq("reason")
       expect(order.reload.status).to eq(Order::ACCEPTED)
-    end
-
-    it "refuses free text in place of a code" do
-      order.claim!(lab_code: "HCM-LAB")
-
-      post_rejection({ reason: { name: "hemolisada" } })
-
-      expect(response).to have_http_status(:unprocessable_content)
     end
 
     # Rejecting is something the laboratory does with a sample in its hands, so

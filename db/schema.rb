@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_17_070000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_27_090100) do
   create_table "api_clients", charset: "utf8mb4", collation: "utf8mb4_unicode_ci", force: :cascade do |t|
     t.boolean "active", default: true, null: false
     t.datetime "created_at", null: false
@@ -199,6 +199,31 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_17_070000) do
     t.index ["uuid"], name: "index_indicators_on_uuid", unique: true
   end
 
+  create_table "labs", charset: "utf8mb4", collation: "utf8mb4_unicode_ci", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.datetime "deleted_at"
+    t.text "description"
+    t.string "district"
+    t.string "facility_code", limit: 16
+    t.string "facility_name"
+    t.string "loinc_code", limit: 32
+    t.string "moh_code", limit: 32
+    t.string "name", null: false
+    t.string "national_code", limit: 32, null: false
+    t.string "phone", limit: 32
+    t.string "province"
+    t.bigint "revision", default: 0, null: false
+    t.string "short_name"
+    t.string "status", limit: 12, default: "draft", null: false
+    t.datetime "updated_at", null: false
+    t.string "uuid", limit: 36, null: false
+    t.index ["facility_code"], name: "index_labs_on_facility_code"
+    t.index ["national_code"], name: "index_labs_on_national_code", unique: true
+    t.index ["revision"], name: "index_labs_on_revision"
+    t.index ["status", "revision"], name: "index_labs_on_status_and_revision"
+    t.index ["uuid"], name: "index_labs_on_uuid", unique: true
+  end
+
   create_table "nodes", charset: "utf8mb4", collation: "utf8mb4_unicode_ci", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.bigint "dictionary_cursor", default: 0, null: false
@@ -218,14 +243,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_17_070000) do
     t.datetime "created_at", null: false
     t.string "method_of_testing", limit: 64
     t.bigint "order_id", null: false
+    t.string "panel_code", limit: 64
+    t.string "panel_name"
     t.string "status", limit: 24, default: "pending", null: false
+    t.string "test_code", limit: 64
+    t.string "test_name"
     t.bigint "test_panel_id"
-    t.bigint "test_type_id", null: false
+    t.bigint "test_type_id"
     t.datetime "updated_at", null: false
     t.string "uuid", limit: 36, null: false
     t.index ["order_id", "test_type_id"], name: "index_order_tests_on_order_id_and_test_type_id"
     t.index ["order_id"], name: "index_order_tests_on_order_id"
     t.index ["status"], name: "index_order_tests_on_status"
+    t.index ["test_name"], name: "index_order_tests_on_test_name"
     t.index ["test_panel_id"], name: "index_order_tests_on_test_panel_id"
     t.index ["test_type_id"], name: "index_order_tests_on_test_type_id"
     t.index ["uuid"], name: "index_order_tests_on_uuid", unique: true
@@ -242,12 +272,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_17_070000) do
     t.bigint "patient_id", null: false
     t.string "priority", limit: 12, default: "routine", null: false
     t.string "receiving_lab_code", limit: 24, null: false
+    t.string "rejection_code", limit: 64
+    t.string "rejection_name"
     t.bigint "rejection_reason_id"
     t.string "requested_by"
     t.bigint "revision", default: 0, null: false
-    t.string "sending_facility_code", limit: 16, null: false
+    t.string "sending_facility_code", limit: 16
     t.bigint "source_client_id"
     t.string "source_system", limit: 16
+    t.string "specimen_code", limit: 64
+    t.string "specimen_name"
     t.bigint "specimen_type_id"
     t.string "status", limit: 24, default: "requested", null: false
     t.string "tracking_number", limit: 32, null: false
@@ -318,10 +352,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_17_070000) do
     t.bigint "order_id", null: false
     t.datetime "received_at"
     t.datetime "rejected_at"
+    t.string "rejection_code", limit: 64
+    t.string "rejection_name"
     t.bigint "rejection_reason_id"
     t.text "remarks"
     t.string "state", limit: 12, default: "dispatched", null: false
-    t.string "to_facility_code", limit: 16, null: false
+    t.string "to_facility_code", limit: 16
     t.string "to_lab_code", limit: 24, null: false
     t.string "tracking_number", limit: 32, null: false
     t.datetime "updated_at", null: false
@@ -489,7 +525,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_17_070000) do
     t.datetime "acknowledged_at"
     t.string "acknowledged_by"
     t.datetime "created_at", null: false
-    t.bigint "indicator_id", null: false
+    t.string "indicator_code", limit: 64
+    t.bigint "indicator_id"
+    t.string "indicator_name"
     t.bigint "order_test_id", null: false
     t.datetime "recorded_at", null: false
     t.string "recorded_by"

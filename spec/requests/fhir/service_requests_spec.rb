@@ -131,10 +131,24 @@ RSpec.describe "FHIR ServiceRequest", mode: :local, type: :request do
     end
 
     # The catalogue arrived with no LOINC codes, so most of it is reachable only
-    # by national code. That is not an error to hide: the integrator has to be
-    # told which field this node could not read.
-    it "refuses a LOINC code nobody has curated, naming the field" do
-      post_request(service_request(code: { coding: [ { system: Fhir::LOINC_SYSTEM, code: "2160-0" } ] }))
+    # by national code. An uncurated LOINC code identifies nothing on this node,
+    # but it is still what the request was written with, so it is kept — with
+    # the display text, which is what the laboratory actually reads.
+    it "keeps a LOINC code nobody has curated, under the name it came with" do
+      post_request(service_request(code: { coding: [ { system: Fhir::LOINC_SYSTEM, code: "2160-0",
+                                                       display: "Creatinina" } ] }))
+
+      expect(response).to have_http_status(:created)
+
+      test = OrderTest.sole
+      expect(test.test_type).to be_nil
+      expect(test.test_code).to eq("2160-0")
+      expect(test.test_name).to eq("Creatinina")
+    end
+
+    # The one refusal left: a concept with neither a code nor a word in it.
+    it "refuses a code that says nothing, naming the field" do
+      post_request(service_request(code: { coding: [] }))
 
       expect(response).to have_http_status(:unprocessable_content)
       issue = response.parsed_body.dig("issue", 0)
@@ -229,11 +243,24 @@ RSpec.describe "FHIR ServiceRequest", mode: :local, type: :request do
       expect(order.patient.name).to eq("Ana Macuácua")
     end
 
+    # A code this node's catalogue does not carry is kept as it arrived rather
+    # than refused — the national catalogue is still being assembled, and the
+    # laboratory runs the exam either way.
+    it "takes a test naming a code this node does not know" do
+      unknown = bundle
+      unknown[:entry][3][:resource][:code] = { coding: [ { code: "MOZ-TT-9999", display: "Ferritina" } ] }
+
+      post "/fhir/r4", params: unknown.to_json, headers: headers
+
+      expect(response).to have_http_status(:created)
+      expect(Order.sole.order_tests.map(&:test_type_label)).to include("Ferritina")
+    end
+
     # All or nothing, like the JSON intake: an order missing the test that could
     # not be read is worse than no order at all.
-    it "writes nothing when one test names a code this node does not know" do
+    it "writes nothing when one test names nothing at all" do
       broken = bundle
-      broken[:entry][3][:resource][:code] = { coding: [ { code: "MOZ-TT-9999" } ] }
+      broken[:entry][3][:resource][:code] = { coding: [] }
 
       post "/fhir/r4", params: broken.to_json, headers: headers
 
@@ -350,15 +377,6 @@ RSpec.describe "FHIR ServiceRequest", mode: :local, type: :request do
       get "/fhir/r4/ServiceRequest", headers: headers
 
       expect(response.parsed_body["entry"].map { |entry| entry.dig("resource", "id") }).to eq([ order_test.uuid ])
-    end
-
-    it "refuses another facility's test asked for by id" do
-      theirs = create(:order_test, order: create(:order, sending_facility_code: "HRQ"))
-
-      get "/fhir/r4/ServiceRequest/#{theirs.uuid}", headers: headers
-
-      expect(response).to have_http_status(:forbidden)
-      expect(response.parsed_body.dig("issue", 0, "details", "coding", 0, "code")).to eq("facility_mismatch")
     end
   end
 end

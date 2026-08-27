@@ -21,7 +21,7 @@ class TestResultSerializer
     base.merge(
       tracking_number: @result.order_test.tracking_number,
       order_test_uuid: @result.order_test.uuid,
-      test_type: DictionaryReference.call(@result.order_test.test_type),
+      test_type: DictionaryReference.call(@result.order_test.test_type_reference),
       patient: PatientSerializer.call(@result.order_test.order.patient)
     )
   end
@@ -32,7 +32,7 @@ class TestResultSerializer
     {
       uuid: @result.uuid,
       revision: @result.revision,
-      indicator: DictionaryReference.call(@result.indicator),
+      indicator: DictionaryReference.call(@result.indicator_reference),
       value: @result.value,
       unit: @result.unit,
       recorded_at: @result.recorded_at&.iso8601,

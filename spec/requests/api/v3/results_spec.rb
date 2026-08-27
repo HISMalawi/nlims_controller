@@ -176,14 +176,5 @@ RSpec.describe "GET /api/v3/results", mode: :local, type: :request do
 
       expect(response).to have_http_status(:not_found)
     end
-
-    it "answers 403 for a reading belonging to another facility" do
-      result = record_result(order: create(:order, sending_facility_code: "XAI"))
-
-      acknowledge(result.uuid)
-
-      expect(response).to have_http_status(:forbidden)
-      expect(response.parsed_body.dig("errors", 0, "code")).to eq("facility_mismatch")
-    end
   end
 end

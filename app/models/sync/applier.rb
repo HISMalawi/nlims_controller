@@ -60,7 +60,6 @@ module Sync
       order.assign_attributes(
         tracking_number: json["tracking_number"],
         patient: upsert_patient_from(json["patient"]),
-        specimen_type: dictionary(SpecimenType, json["specimen_type"], "specimen_type"),
         status: status || json["status"],
         priority: json["priority"],
         sending_facility_code: json["sending_facility_code"],
@@ -75,6 +74,7 @@ module Sync
         status_actor: actor,
         status_reason: reason
       )
+      order.specimen_type_reference = term(json["specimen_type"], "specimen_types")
 
       order.save!
 
@@ -93,13 +93,13 @@ module Sync
 
       order_test.assign_attributes(
         order: order,
-        test_type: dictionary!(TestType, json["test_type"], "test_type"),
-        test_panel: dictionary(TestPanel, json["test_panel"], "test_panel"),
         status: json["status"],
         method_of_testing: json["method_of_testing"],
         replicated: true,
         status_actor: actor
       )
+      order_test.test_type_reference = term(json["test_type"], "test_types")
+      order_test.test_panel_reference = term(json["test_panel"], "test_panels")
 
       order_test.save!
       order_test
@@ -116,7 +116,7 @@ module Sync
 
     def change_order_status
       order = find_order!
-      order.rejection_reason = dictionary(RejectionReason, @payload["rejection_reason"], "rejection_reason") if
+      order.rejection_reason_reference = term(@payload["rejection_reason"], "rejection_reasons") if
         @event.type == OutboxEvent::SPECIMEN_REJECTED
 
       apply_status(order)
@@ -162,11 +162,11 @@ module Sync
       referral = Referral.find_by(uuid: json["uuid"]) ||
                  raise(Rejected.new(Rejected::UNKNOWN_AGGREGATE, "this node has no referral #{json['uuid']}"))
 
+      referral.rejection_reason_reference = term(json["rejection_reason"], "rejection_reasons")
       referral.update!(
         state: json["state"],
         received_at: json["received_at"],
         rejected_at: json["rejected_at"],
-        rejection_reason: dictionary(RejectionReason, json["rejection_reason"], "rejection_reason"),
         remarks: json["remarks"]
       )
 
@@ -181,7 +181,7 @@ module Sync
     # is work arriving, not work sent away. The national node keeps the status
     # the origin gave it, because from the capital the sample is simply out.
     def arriving_here?(json)
-      SislabSync.local? && json["to_facility_code"] == SislabSync.node_code
+      SislabSync.local? && json["to_lab_code"] == SislabSync.lab_code
     end
 
     def change_test_status
@@ -195,12 +195,12 @@ module Sync
       result = TestResult.new(
         uuid: @payload["uuid"],
         order_test: order_test,
-        indicator: dictionary!(Indicator, @payload["indicator"], "indicator"),
         value: @payload["value"],
         unit: @payload["unit"],
         recorded_at: @payload["recorded_at"],
         recorded_by: @payload["recorded_by"]
       )
+      result.indicator_reference = term(@payload["indicator"], "indicators")
       result.save!
 
       # The readings this one corrects were marked on the node that recorded it,
@@ -236,25 +236,18 @@ module Sync
         raise(Rejected.new(Rejected::UNKNOWN_AGGREGATE, "this node has no test #{uuid}"))
     end
 
-    def dictionary(model, reference, field)
-      return nil if reference.blank?
-
-      dictionary!(model, reference, field)
-    end
-
-    # A code the national dictionary does not have is the one rejection the plan
-    # names by example, and it is a real one: a node running an older dictionary
-    # can order a test that has since been retired and renumbered.
-    def dictionary!(model, reference, field)
-      raise Rejected.new(Rejected::MALFORMED, "#{field} is missing") if reference.blank?
-
-      entry = model.find_by(uuid: reference["uuid"]) ||
-              model.find_by(national_code: reference["national_code"])
-
-      entry || raise(Rejected.new(
-                       Rejected::UNKNOWN_DICTIONARY_ITEM,
-                       "#{field} #{reference['national_code'] || reference['uuid']} is not in this node's dictionary"
-                     ))
+    # A term as it arrived, linked to this node's dictionary where it can be.
+    #
+    # A term the receiving node does not carry used to reject the whole event —
+    # UNKNOWN_DICTIONARY_ITEM — and block that node's stream until somebody
+    # noticed. That was the right rule when a code could only come from the
+    # national catalogue. It is the wrong one now: local nodes order exams the
+    # catalogue has not reached, and a reading refused in the capital is a
+    # reading lost. The name travels with the code, so the national node stores
+    # what was measured either way and can link it when the catalogue catches
+    # up.
+    def term(json, entity_type)
+      Dictionary::Reference.resolve(entity_type, json)
     end
 
     def actor

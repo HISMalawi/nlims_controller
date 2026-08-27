@@ -9,7 +9,7 @@ module SislabSyncClient
   # EMR's methods and cannot reach for the laboratory's by accident.
   class Profile
     DICTIONARY_ENTITIES = %w[
-      departments specimen_types drugs organisms indicators test_types test_panels rejection_reasons
+      labs departments specimen_types drugs organisms indicators test_types test_panels rejection_reasons
     ].freeze
 
     attr_reader :connection
@@ -65,12 +65,15 @@ module SislabSyncClient
       ERB::Util.url_encode(value.to_s)
     end
 
+    # A term, as the node takes it. A bare string goes through untouched: the
+    # node reads it as a national code or as a name, whichever it turns out to
+    # be, and keeps it as written when it is neither — the national catalogue is
+    # still being assembled, and an exam it has not reached is still an exam.
     def reference(value, name)
       case value
       when nil then nil
-      when Hash then value
-      when String then { national_code: value }
-      else raise ArgumentError, "#{name} takes a national code or a hash, not #{value.class}"
+      when Hash, String then value
+      else raise ArgumentError, "#{name} takes a national code, a name or a hash, not #{value.class}"
       end
     end
   end

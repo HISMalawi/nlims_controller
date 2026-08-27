@@ -222,21 +222,34 @@ module Fhir
       return test.merge(reference) if reference
 
       raise InvalidRequest.new(
-        "não reconheço o código pedido; use o sistema #{Fhir.code_system('test_types')} " \
-        "ou um código LOINC já mapeado neste nó",
+        "o pedido não diz que exame é: indique um código do sistema " \
+        "#{Fhir.code_system('test_types')}, um código LOINC já mapeado neste nó, ou ao menos um nome",
         field: "ServiceRequest.code"
       )
     end
 
+    # What exam this is. A code this node's catalogue carries names an entry; a
+    # code it does not, or no code at all, is carried through under whatever the
+    # concept was written with. The display text is what a laboratory reads off
+    # the request, and while the national catalogue is being assembled it is
+    # often the only thing that identifies the exam at all.
     def resolve_test(concept)
-      codings = Array(concept.is_a?(Hash) ? concept[:coding] : nil)
-      return if codings.empty?
+      return unless concept.is_a?(Hash)
 
-      panel_first(
+      codings = Array(concept[:coding])
+      name = concept_name(concept)
+
+      resolved = panel_first(
         ->(entity_type, _model) { explicit_code(codings, entity_type) },
         ->(_entity_type, model) { loinc_code(codings, model) },
         ->(entity_type, _model) { bare_code(codings, entity_type) }
       )
+      return resolved.transform_values { |reference| reference.merge(name: name).compact } if resolved
+
+      code = codings.filter_map { |coding| coding[:code].presence }.first
+      return if code.blank? && name.blank?
+
+      { test_type: { national_code: code, name: name }.compact }
     end
 
     # Each strategy tried for a panel and then for a test type before the next
@@ -253,6 +266,12 @@ module Fhir
       nil
     end
 
+    # How a CodeableConcept says, in words, what it is: the concept's own text,
+    # or the first display any of its codings carries.
+    def concept_name(concept)
+      concept[:text].presence || Array(concept[:coding]).filter_map { |coding| coding[:display].presence }.first
+    end
+
     # ------------------------------------------------------------ terminology
 
     # A CodeableConcept turned into the `{ national_code: }` reference the rest
@@ -262,9 +281,11 @@ module Fhir
 
       codings = Array(concept[:coding])
       code = explicit_code(codings, entity_type) || loinc_code(codings, model) || bare_code(codings, entity_type)
-      return if code.blank?
+      code = codings.filter_map { |coding| coding[:code].presence }.first if code.blank?
+      name = concept_name(concept)
+      return if code.blank? && name.blank?
 
-      { national_code: code }
+      { national_code: code, name: name }.compact
     end
 
     def explicit_code(codings, entity_type)

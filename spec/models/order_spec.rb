@@ -16,11 +16,18 @@ RSpec.describe Order do
     expect(order.tracking_number).to eq("MZ-XAI-26229-0007")
   end
 
-  it "needs the codes that say where the sample came from and where it is going" do
+  # The laboratory that will run it is the one thing still required. The
+  # facility is derived from this node's entry in the register, and a node whose
+  # register has not arrived yet must still be able to take an order.
+  it "needs the laboratory that is going to run it" do
     order = build(:order, sending_facility_code: nil, receiving_lab_code: nil)
 
     expect(order).not_to be_valid
-    expect(order.errors.attribute_names).to include(:sending_facility_code, :receiving_lab_code)
+    expect(order.errors.attribute_names).to include(:receiving_lab_code)
+  end
+
+  it "takes an order raised before the register named its facility" do
+    expect(build(:order, sending_facility_code: nil)).to be_valid
   end
 
   it "refuses a priority nobody can act on" do

@@ -114,6 +114,32 @@ RSpec.describe "Ecrã de pedidos", type: :request do
       expect(response.body).to include("Amostra hemolisada")
     end
 
+    # Um termo guardado como chegou é legítimo enquanto o catálogo nacional
+    # não estiver consolidado, mas não é o mesmo que um termo catalogado — e
+    # quem está a olhar para o ecrã é quem pode tratar da diferença.
+    it "marca o exame que ficou fora do catálogo" do
+      order = create(:order)
+      order_test = order.order_tests.new(status_actor: "spec")
+      order_test.test_type_reference = { national_code: "MOZ-TT-9999", name: "Ferritina" }
+      order_test.save!
+
+      get order_path(order.tracking_number)
+
+      expect(response.body).to include("Ferritina")
+      expect(response.body).to include("MOZ-TT-9999")
+      expect(response.body).to include("fora do catálogo")
+    end
+
+    it "não marca o exame que o catálogo conhece" do
+      order = create(:order)
+      create(:order_test, order: order, test_type: create(:test_type, name: "Hemograma"))
+
+      get order_path(order.tracking_number)
+
+      expect(response.body).to include("Hemograma")
+      expect(response.body).not_to include("fora do catálogo")
+    end
+
     it "devolve o operador à lista quando o tracking number não existe" do
       get order_path("MZ-HCM-26229-9999")
 

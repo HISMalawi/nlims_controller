@@ -2,21 +2,33 @@
 
 # What an EMR sends to ask for tests, turned into records.
 #
-# Everything the EMR names is addressed by dictionary code, never by free text.
-# A code this node does not know is refused by name, so the integrator learns
-# that their dictionary is behind — the current system accepts the name it was
-# given and the test quietly becomes something nobody can report on.
+# Terms are matched against the dictionary and kept as they were written when
+# the match fails. The rule used to be the other way round — an unknown code
+# refused the whole request — and it was refusing real work, because the
+# national dictionary is still being assembled. What is stored now is enough to
+# link the term later: the code it arrived with, the name it arrived with, and
+# the entry when there was one.
 class OrderRequest
   def initialize(payload, api_client:)
     @payload = payload.to_h.deep_symbolize_keys
     @api_client = api_client
   end
 
-  # The facility the order is being raised for. Taken from the key when the
-  # payload leaves it out: the key already knows which facility it speaks for,
-  # and an EMR should not have to repeat it to be believed.
+  # The facility the order is being raised for. Read from the key, or from this
+  # node's own entry in the register — never from the payload. A client that
+  # sends one is not disbelieved so much as not consulted: it is describing
+  # something the node already knows, and the two disagreeing was a 403 that
+  # stopped integrations for a reason nobody could see from the outside.
   def facility_code
-    order_params[:sending_facility_code].presence || @api_client&.facility_code
+    @api_client&.facility_code.presence || SislabSync.facility_code
+  end
+
+  # The laboratory that will run the tests. Defaults to this node's own: a
+  # laboratory node receiving an order is, overwhelmingly, the laboratory that
+  # will do the work, and making every EMR say so was the commonest reason a
+  # first request failed.
+  def receiving_lab_code
+    order_params[:receiving_lab_code].presence || SislabSync.lab_code
   end
 
   def create!
@@ -44,24 +56,20 @@ class OrderRequest
     Array(@payload[:tests])
   end
 
-  # Everything that can be judged before a row is written. The dictionary
-  # lookups happen here too, so an order with one unknown test code writes
-  # nothing at all rather than an order that is missing a test.
+  # Everything that can be judged before a row is written. What remains after
+  # the dictionary stopped being a gate: a request has to ask for something, and
+  # each thing it asks for has to have a name.
   def validate!
     raise InvalidRequest.new("é preciso pedir pelo menos um teste", field: "tests") if test_params.empty?
-    raise InvalidRequest.new("o pedido tem de indicar o laboratório receptor", field: "order.receiving_lab_code") if
-      order_params[:receiving_lab_code].blank?
 
-    specimen_type
     resolved_tests
   end
 
   def build_order
-    Order.new(
+    order = Order.new(
       patient: Patient.upsert_from!(patient_params),
-      specimen_type: specimen_type,
       sending_facility_code: facility_code,
-      receiving_lab_code: order_params[:receiving_lab_code],
+      receiving_lab_code: receiving_lab_code,
       lab_code: order_params[:lab_code],
       priority: order_params[:priority].presence || Order::PRIORITIES.first,
       requested_by: order_params[:requested_by],
@@ -72,52 +80,54 @@ class OrderRequest
       source_client: @api_client,
       status_actor: @api_client&.name
     )
+
+    order.specimen_type_reference = Dictionary::Reference.resolve("specimen_types", order_params[:specimen_type])
+    order
   end
 
   def build_tests(order)
     resolved_tests.each do |test|
-      order.order_tests.create!(
-        test_type: test[:test_type],
-        test_panel: test[:test_panel],
-        method_of_testing: test[:method_of_testing],
-        status_actor: @api_client&.name
-      )
+      order_test = order.order_tests.new(method_of_testing: test[:method_of_testing],
+                                         status_actor: @api_client&.name)
+      order_test.test_type_reference = test[:test_type]
+      order_test.test_panel_reference = test[:test_panel] if test[:test_panel]
+      order_test.save!
     end
   end
 
-  def specimen_type
-    return @specimen_type if defined?(@specimen_type)
-
-    reference = order_params[:specimen_type]
-    @specimen_type = reference.blank? ? nil : Dictionary.entry!("specimen_types", reference, field: "order.specimen_type")
-  end
-
-  # A panel is expanded here rather than being stored as one row: the laboratory
-  # runs the tests inside it one at a time, and each has to be able to be
-  # rejected, referred or reported on its own. The panel is remembered on every
-  # test it produced, so it can still be reported as a whole.
+  # A panel this node knows is expanded here rather than stored as one row: the
+  # laboratory runs the tests inside it one at a time, and each has to be able
+  # to be rejected, referred or reported on its own. The panel is remembered on
+  # every test it produced, so it can still be reported as a whole.
+  #
+  # A panel this node does not know cannot be expanded, so it stands as a single
+  # test under the name it was asked for. The laboratory adds what it actually
+  # ran at the bench, which is what it would have had to do anyway.
   def resolved_tests
     @resolved_tests ||= test_params.flat_map.with_index do |test, index|
       if test[:test_panel].present?
-        expand_panel(test, index)
+        panel = Dictionary::Reference.resolve!("test_panels", test[:test_panel],
+                                               field: "tests[#{index}].test_panel",
+                                               message: "é preciso indicar o painel, por código ou por nome")
+        expand_panel(panel, test)
       else
-        [ { test_type: Dictionary.entry!("test_types", test[:test_type], field: "tests[#{index}].test_type"),
-            test_panel: nil, method_of_testing: test[:method_of_testing] } ]
+        reference = Dictionary::Reference.resolve!("test_types", test[:test_type],
+                                                   field: "tests[#{index}].test_type",
+                                                   message: "é preciso indicar o exame, por código ou por nome")
+        [ { test_type: reference, test_panel: nil, method_of_testing: test[:method_of_testing] } ]
       end
     end
   end
 
-  def expand_panel(test, index)
-    field = "tests[#{index}].test_panel"
-    panel = Dictionary.entry!("test_panels", test[:test_panel], field: field)
-    members = panel.test_types.active.to_a
+  def expand_panel(panel, test)
+    members = panel.known? ? panel.entry.test_types.active.to_a : []
 
-    if members.empty?
-      raise InvalidRequest.new("o painel #{panel.national_code} (#{panel.name}) não tem testes activos", field: field)
-    end
+    return [ { test_type: panel, test_panel: panel, method_of_testing: test[:method_of_testing] } ] if members.empty?
 
     members.map do |test_type|
-      { test_type: test_type, test_panel: panel, method_of_testing: test[:method_of_testing] }
+      { test_type: Dictionary::Reference.new(entry: test_type),
+        test_panel: panel,
+        method_of_testing: test[:method_of_testing] }
     end
   end
 end

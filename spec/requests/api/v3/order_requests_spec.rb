@@ -106,51 +106,101 @@ RSpec.describe "POST /api/v3/order-requests", mode: :local, type: :request do
     end
   end
 
-  describe "a dictionary the EMR has not caught up with" do
-    it "names the code it does not know" do
-      post_order(payload(tests: [ { test_type: { national_code: "MOZ-TT-9999" } } ]))
+  # The rule used to be that every term had to resolve to an active dictionary
+  # entry or the whole request was refused. The national catalogue is still
+  # being assembled, and that rule was refusing real work: a clinic could not
+  # order an exam the laboratory runs every day because the catalogue had not
+  # reached it. A term is now kept as it was written, with whatever code came
+  # with it, so it can be linked once the catalogue does.
+  describe "a term the dictionary does not carry" do
+    it "takes the order and keeps the code it was given" do
+      post_order(payload(tests: [ { test_type: { national_code: "MOZ-TT-9999", name: "Ferritina" } } ]))
 
-      expect(response).to have_http_status(:unprocessable_content)
+      expect(response).to have_http_status(:created)
 
-      error = response.parsed_body.dig("errors", 0)
-      expect(error["code"]).to eq("unprocessable")
-      expect(error["message"]).to include("MOZ-TT-9999")
-      expect(error["field"]).to eq("tests[0].test_type")
+      test = Order.sole.order_tests.sole
+      expect(test.test_type).to be_nil
+      expect(test.test_code).to eq("MOZ-TT-9999")
+      expect(test.test_name).to eq("Ferritina")
     end
 
-    it "names the position of the bad code among several tests" do
-      post_order(payload(tests: [
-                           { test_type: { national_code: test_type.national_code } },
-                           { test_type: { national_code: "MOZ-TT-9999" } }
-                         ]))
+    it "takes an exam named with nothing but its name" do
+      post_order(payload(tests: [ { test_type: "Ferritina" } ]))
 
-      expect(response.parsed_body.dig("errors", 0, "field")).to eq("tests[1].test_type")
+      expect(response).to have_http_status(:created)
+      expect(Order.sole.order_tests.sole.test_type_label).to eq("Ferritina")
     end
 
-    it "refuses a test that has been retired, rather than accepting it silently" do
+    # A name is the handle a laboratory works from, so a name that matches one
+    # active entry is the entry — no code needed on either side.
+    it "links an exam named only by name when the name is unambiguous" do
+      post_order(payload(tests: [ { test_type: "Hemograma" } ]))
+
+      expect(Order.sole.order_tests.sole.test_type).to eq(test_type)
+    end
+
+    it "takes a specimen type the dictionary does not carry" do
+      post_order(payload(order: { specimen_type: "Aspirado medular" }))
+
+      expect(response).to have_http_status(:created)
+      expect(Order.sole.specimen_type_label).to eq("Aspirado medular")
+    end
+
+    # A retired entry is still the closest thing this node knows to what was
+    # asked for, and refusing it would send the clinic back to paper.
+    it "links a test that has been retired rather than refusing it" do
       test_type.retire!(actor: "spec")
 
       post_order
 
-      expect(response).to have_http_status(:unprocessable_content)
-      expect(response.parsed_body.dig("errors", 0, "message")).to include("retired")
+      expect(response).to have_http_status(:created)
+      expect(Order.sole.order_tests.sole.test_type).to eq(test_type)
     end
 
-    it "refuses an unknown specimen type by name" do
-      post_order(payload(order: { specimen_type: { national_code: "MOZ-SP-9999" } }))
+    # A panel this node does not know cannot be expanded into its members, so it
+    # stands as one test under the name it was asked for, and the laboratory
+    # adds what it actually ran at the bench.
+    it "keeps an unknown panel as a single test" do
+      post_order(payload(tests: [ { test_panel: "Bioquímica completa" } ]))
 
-      expect(response.parsed_body.dig("errors", 0, "field")).to eq("order.specimen_type")
+      expect(response).to have_http_status(:created)
+
+      test = Order.sole.order_tests.sole
+      expect(test.test_name).to eq("Bioquímica completa")
+      expect(test.panel_name).to eq("Bioquímica completa")
     end
 
-    # Nothing is written when any part of the request is refused: an order
-    # missing one of its tests is worse than no order at all.
-    it "writes nothing at all when one code is bad" do
+    # The one refusal left. A test with nothing on it is not a loose end
+    # anybody can tie up later: nobody would know what was asked for.
+    it "refuses a test that names nothing at all, by position" do
       expect do
         post_order(payload(tests: [
                              { test_type: { national_code: test_type.national_code } },
-                             { test_type: { national_code: "MOZ-TT-9999" } }
+                             { method_of_testing: "PCR" }
                            ]))
       end.not_to change(Order, :count)
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(response.parsed_body.dig("errors", 0, "field")).to eq("tests[1].test_type")
+    end
+  end
+
+  describe "the codes the node fills in for itself" do
+    # The laboratory node receiving an order is, overwhelmingly, the laboratory
+    # that will do the work. Making every EMR say so was the commonest reason a
+    # first request failed.
+    it "takes the order to be for this laboratory when none is named" do
+      post_order(payload.tap { |body| body[:order].delete(:receiving_lab_code) })
+
+      expect(response).to have_http_status(:created)
+      expect(Order.sole.receiving_lab_code).to eq(SislabSync.lab_code)
+    end
+
+    it "uses the facility on the key, whatever the payload claims" do
+      post_order(payload(order: { sending_facility_code: "XAI" }))
+
+      expect(response).to have_http_status(:created)
+      expect(Order.sole.sending_facility_code).to eq("HCM")
     end
   end
 
@@ -171,14 +221,6 @@ RSpec.describe "POST /api/v3/order-requests", mode: :local, type: :request do
 
       expect(response).to have_http_status(:forbidden)
       expect(response.parsed_body.dig("errors", 0, "code")).to eq("insufficient_scope")
-    end
-
-    it "answers 403 for an order raised in another facility's name" do
-      post_order(payload(order: { sending_facility_code: "XAI" }))
-
-      expect(response).to have_http_status(:forbidden)
-      expect(response.parsed_body.dig("errors", 0, "code")).to eq("facility_mismatch")
-      expect(Order.count).to be_zero
     end
 
     it "answers 422 for a request with no tests on it" do
@@ -233,7 +275,7 @@ RSpec.describe "POST /api/v3/order-requests", mode: :local, type: :request do
     it "does not consume the key when the request was refused" do
       key = SecureRandom.uuid
 
-      post_order(payload(tests: [ { test_type: { national_code: "MOZ-TT-9999" } } ]), key: key)
+      post_order(payload(tests: [ { method_of_testing: "PCR" } ]), key: key)
       expect(response).to have_http_status(:unprocessable_content)
 
       post_order(payload, key: key)

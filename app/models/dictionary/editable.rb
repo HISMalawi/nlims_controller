@@ -30,6 +30,13 @@ module Dictionary
         Field.new(name: :unit, kind: :string),
         Field.new(name: :value_type, kind: :select, options: { collection: -> { Indicator::VALUE_TYPES } })
       ],
+      "labs" => [
+        Field.new(name: :facility_code, kind: :code),
+        Field.new(name: :facility_name, kind: :string),
+        Field.new(name: :district, kind: :string),
+        Field.new(name: :province, kind: :string),
+        Field.new(name: :phone, kind: :string)
+      ],
       "test_types" => [
         Field.new(name: :target_tat, kind: :string),
         Field.new(name: :performed_on_sex, kind: :select, options: { collection: -> { TestType::SEXES } }),

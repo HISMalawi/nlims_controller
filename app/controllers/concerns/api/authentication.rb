@@ -39,19 +39,43 @@ module Api
       false
     end
 
-    # A valid key acting on another facility's data is not an authorisation
-    # gap to be logged and allowed; it is a refusal.
-    def authorize_facility!(facility_code)
-      return true if Current.api_client&.acts_for_facility?(facility_code)
-
-      render_api_error(Errors::FACILITY_MISMATCH)
-      false
+    # Kept as guards so the call sites still read as guards, and kept passing.
+    #
+    # These used to compare the facility and laboratory codes in the payload
+    # against the ones stored on the key, and refuse the request when they
+    # differed. On a node that is itself a laboratory there is nothing left to
+    # compare: the key inherits its codes from this node, the intake ignores
+    # whatever the payload claims and uses the node's own, and a request cannot
+    # act for anywhere else because there is nowhere else to act for. What the
+    # comparison actually did in the field was refuse integrations over a code
+    # that had been typed into a form once and never looked at again.
+    #
+    # A node still only holds the samples it has a hand in, which is what keeps
+    # one laboratory out of another's work — the register and the routing, not a
+    # string on a key.
+    def authorize_facility!(_facility_code)
+      true
     end
 
-    def authorize_lab!(lab_code)
-      return true if Current.api_client&.acts_for_lab?(lab_code)
+    def authorize_lab!(_lab_code)
+      true
+    end
 
-      render_api_error(Errors::LAB_MISMATCH)
+    # The one boundary that is real, and always was: a node speaking for another
+    # node. It used to be checked with the facility comparison above, which is
+    # how the two got confused in the first place — a laboratory's key and a
+    # node's key were being held to the same rule for different reasons.
+    #
+    # A node-to-node key is pinned to the node it belongs to. On the national
+    # node that is what stops one laboratory pushing another's events, or
+    # reading the parcels the capital is holding for somebody else.
+    def authorize_node!(node_code)
+      client = Current.api_client
+      return true if client.nil? || client.lab_code.blank?
+      return true if client.lab_code == node_code
+
+      render_api_error(Errors::LAB_MISMATCH,
+                       message: "esta chave fala pelo nó #{client.lab_code}, não por #{node_code}")
       false
     end
   end

@@ -27,12 +27,48 @@ module SislabSync
       mode == "national"
     end
 
-    # The code this node is known by across the network. A local node uses its
-    # facility code; the national node is a single well-known code.
+    # The code this node is known by across the network. A local node is a
+    # laboratory and answers to its entry in the national register; the national
+    # node is a single well-known code.
     def node_code
-      @node_code ||= ENV.fetch("SISLAB_SYNC_NODE_CODE") do
-        national? ? "NATIONAL" : raise(InvalidMode, "SISLAB_SYNC_NODE_CODE is required in local mode")
-      end
+      @node_code ||= lab_code
+    end
+
+    # This node's laboratory code — the one thing an installation has to be
+    # told. It names an entry in the `labs` register the national node
+    # publishes, and everything else about this node is read from there.
+    #
+    # SISLAB_SYNC_NODE_CODE is still accepted: it is what every node deployed
+    # before the register was introduced sets, and it meant the same thing.
+    def lab_code
+      @lab_code ||= ENV["SISLAB_SYNC_LAB_CODE"].presence || ENV["SISLAB_SYNC_NODE_CODE"].presence ||
+                    (national? ? "NATIONAL" : raise(InvalidMode, "SISLAB_SYNC_LAB_CODE is required in local mode"))
+    end
+
+    # This node's own entry in the register, or nil before the register has been
+    # pulled. Not memoised: the register arrives over the feed like any other
+    # dictionary entry, and a node that read it once at boot would go on calling
+    # itself by a name the capital had already corrected.
+    def lab
+      return nil unless local?
+
+      Lab.find_by(national_code: lab_code)
+    rescue ActiveRecord::ActiveRecordError, NameError
+      # Asked before the schema exists — during a migration, or on a node whose
+      # database has not been created yet. The code alone is enough to boot.
+      nil
+    end
+
+    # The health facility this node's laboratory sits in. Falls back to the
+    # laboratory's own code so that tracking numbers, which are prefixed with
+    # it, are never left without one.
+    def facility_code
+      lab&.facility.presence || lab_code
+    end
+
+    # What this node calls itself on a screen.
+    def node_name
+      lab&.name.presence || lab_code
     end
 
     def version
@@ -58,7 +94,7 @@ module SislabSync
 
     # Test support: forget everything memoised from the environment.
     def reset!
-      @mode = @node_code = @version = @tls_terminated = nil
+      @mode = @node_code = @lab_code = @version = @tls_terminated = nil
     end
 
     private

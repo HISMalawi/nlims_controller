@@ -82,7 +82,8 @@ module Api
           return unless load_order
 
           rejection = rejection_params
-          reason = Dictionary.entry!("rejection_reasons", rejection[:reason], field: "reason")
+          reason = Dictionary::Reference.resolve!("rejection_reasons", rejection[:reason], field: "reason",
+                                                   message: "é preciso indicar o motivo da rejeição")
           @order.reject!(reason: reason, actor: actor, note: rejection[:note])
 
           render_data(OrderSerializer.call(@order, history: true))
@@ -97,19 +98,19 @@ module Api
         end
 
         def tests_params
-          params.permit(tests: [ :method_of_testing, { test_type: %i[national_code uuid] } ])
+          payload.permit(tests: [ :method_of_testing, { test_type: Dictionary::Reference::ATTRIBUTES } ])
         end
 
         def rejection_params
-          params.permit(:note, reason: %i[national_code uuid])
+          payload.permit(:note, reason: Dictionary::Reference::ATTRIBUTES)
         end
 
         def report_params
-          params.permit(
+          payload.permit(
             :final,
             results: [
               :value, :unit, :recorded_at, :recorded_by,
-              { test_type: %i[national_code uuid], indicator: %i[national_code uuid] }
+              { test_type: Dictionary::Reference::ATTRIBUTES, indicator: Dictionary::Reference::ATTRIBUTES }
             ]
           )
         end

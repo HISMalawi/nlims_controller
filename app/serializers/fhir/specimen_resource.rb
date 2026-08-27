@@ -24,7 +24,7 @@ module Fhir
         identifier: [ { system: Fhir.tracking_number_system, value: @order.tracking_number } ],
         accessionIdentifier: { system: Fhir.tracking_number_system, value: @order.tracking_number },
         status: Fhir::SPECIMEN_STATUS.fetch(@order.status, Fhir::SPECIMEN_STATUS_DEFAULT),
-        type: Fhir::CodeableConcept.call(@order.specimen_type),
+        type: Fhir::CodeableConcept.call(@order.specimen_type_reference),
         subject: Fhir::PatientResource.reference(@order.patient),
         receivedTime: @order.claimed_at&.iso8601,
         collection: collection,

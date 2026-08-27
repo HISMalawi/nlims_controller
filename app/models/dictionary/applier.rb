@@ -11,6 +11,7 @@ module Dictionary
     attr_reader :applied, :deferred, :resolved
 
     BASE_ATTRIBUTES = %i[national_code name short_name description status loinc_code moh_code].freeze
+    LAB_ATTRIBUTES = %i[facility_code facility_name district province phone].freeze
 
     def initialize
       @applied = Hash.new(0)
@@ -79,6 +80,8 @@ module Dictionary
         record.department = resolve("departments", entry.dig(:department, :national_code))
         record.target_tat = entry[:target_tat]
         record.performed_on_sex = entry[:performed_on_sex] if entry[:performed_on_sex].present?
+      when "labs"
+        record.assign_attributes(entry.slice(*LAB_ATTRIBUTES))
       end
     end
 

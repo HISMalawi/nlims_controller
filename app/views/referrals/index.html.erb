@@ -59,8 +59,8 @@
                 </td>
                 <td class="px-5 py-2.5">
                   <%= status_badge referral.state, scope: "referrals.states" %>
-                  <% if referral.rejection_reason %>
-                    <span class="block text-xs text-rose-700"><%= referral.rejection_reason.name %></span>
+                  <% if referral.rejection_reason_reference.present? %>
+                    <span class="block text-xs text-rose-700"><%= referral.rejection_reason_label %></span>
                   <% end %>
                 </td>
                 <td class="px-5 py-2.5 text-slate-600"><%= timestamp referral.dispatched_at %></td>

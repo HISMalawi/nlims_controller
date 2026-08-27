@@ -12,12 +12,10 @@ module Api
         def create
           return unless authorize_scope!("referrals:write")
           return unless load_order
-          return unless destination
 
           referral = Referral.dispatch!(
             order: @order,
-            to_facility_code: destination[:to_facility_code],
-            to_lab_code: destination[:to_lab_code],
+            to_lab_code: referral_params[:to_lab_code],
             courier: referral_params[:courier],
             remarks: referral_params[:remarks],
             actor: actor
@@ -46,7 +44,8 @@ module Api
           when Referral::RECEIVED
             referral.receive!(actor: actor, remarks: referral_params[:remarks])
           when Referral::REJECTED
-            reason = Dictionary.entry!("rejection_reasons", params[:reason], field: "reason")
+            reason = Dictionary::Reference.resolve!("rejection_reasons", payload[:reason], field: "reason",
+                                                     message: "é preciso indicar o motivo da rejeição")
             referral.reject!(reason: reason, actor: actor, remarks: referral_params[:remarks])
           else
             return render_api_error(Errors::UNPROCESSABLE,
@@ -61,21 +60,6 @@ module Api
           @order = Order.find_by_tracking_number!(referral_params[:tracking_number].to_s)
 
           authorize_lab!(@order.receiving_lab_code)
-        end
-
-        def destination
-          return @destination if defined?(@destination)
-
-          to_facility = referral_params[:to_facility_code].presence
-          to_lab = referral_params[:to_lab_code].presence
-          @destination = { to_facility_code: to_facility, to_lab_code: to_lab }
-
-          return @destination if to_facility && to_lab
-
-          render_api_error(Errors::UNPROCESSABLE,
-                           message: "é preciso indicar to_facility_code e to_lab_code",
-                           field: to_facility ? "to_lab_code" : "to_facility_code")
-          @destination = nil
         end
 
         def actor

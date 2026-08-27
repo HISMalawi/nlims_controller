@@ -8,6 +8,7 @@
 class OrderTest < ApplicationRecord
   include HasUuid
   include TracksStatus
+  include DictionaryTerms
 
   PENDING = "pending"
   IN_PROGRESS = "in_progress"
@@ -27,8 +28,14 @@ class OrderTest < ApplicationRecord
   )
 
   belongs_to :order
-  belongs_to :test_type
-  belongs_to :test_panel, optional: true
+
+  # The exam, as the request named it. The dictionary entry is filled in when
+  # this node knows the term and left empty when it does not — a laboratory can
+  # run an exam the national catalogue has not reached yet.
+  dictionary_term :test_type, entity: "test_types", name: :test_name, code: :test_code
+  dictionary_term :test_panel, entity: "test_panels", name: :panel_name, code: :panel_code
+
+  validate :test_is_named
 
   has_many :test_results, dependent: :destroy
 
@@ -40,10 +47,25 @@ class OrderTest < ApplicationRecord
     StatusEvent.for_entity(uuid)
   end
 
+  # What this test is called, whatever it is linked to.
+  def label
+    test_type_label
+  end
+
   # What this test currently says, one reading per indicator. Corrections are
   # excluded by pointing forward: a row that has been replaced names the row
   # that replaced it.
   def current_results
     test_results.current
+  end
+
+  private
+
+  # The one thing that is still required. A test with no exam on it is not a
+  # loose end anybody can tie up later — nobody would know what was asked for.
+  def test_is_named
+    return if test_type_reference.present?
+
+    errors.add(:base, "um teste tem de indicar o exame, por código ou por nome")
   end
 end

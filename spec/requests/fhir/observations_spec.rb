@@ -208,14 +208,5 @@ RSpec.describe "FHIR Observation", mode: :local, type: :request do
       expect(issue.dig("details", "text")).to include(correction.uuid)
       expect(result.reload).not_to be_acknowledged
     end
-
-    it "refuses another facility's reading" do
-      theirs = TestResult.record!(order_test: create(:order_test, order: create(:order, sending_facility_code: "HRQ")),
-                                  indicator: create(:indicator), value: "9.9", recorded_at: Time.current)
-
-      post "/fhir/r4/Observation/#{theirs.uuid}/$acknowledge", headers: headers
-
-      expect(response).to have_http_status(:forbidden)
-    end
   end
 end

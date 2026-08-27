@@ -5,6 +5,10 @@
 # instead of one cursor per entity type.
 module Dictionary
   ENTITIES = {
+    # The register of laboratories rides the dictionary feed rather than a
+    # channel of its own: it is a national list, replicated to every node, read
+    # by code — which is what the feed already does eight times over.
+    "labs" => "Lab",
     "departments" => "Department",
     "specimen_types" => "SpecimenType",
     "drugs" => "Drug",
@@ -42,34 +46,6 @@ module Dictionary
   class UnknownEntity < StandardError; end
 
   class << self
-    # The entry a client named, or a refusal that says which field named it.
-    #
-    # Clients address the dictionary by national code — the uuid is accepted
-    # because a client that stores uuids should not have to translate — and
-    # never by name. A code this node does not know means the client's
-    # dictionary is behind, which is worth saying plainly: the system this
-    # replaces accepted the name it was given, and the test quietly became
-    # something nobody could report on.
-    def entry!(entity_type, reference, field:)
-      # Permitted here rather than at each call site. A reference is always the
-      # same two keys, and a controller that forgets to permit them gets a 500
-      # from deep inside this method — which has now happened three times.
-      reference = reference.permit(:national_code, :uuid) if reference.respond_to?(:permit)
-      reference = (reference || {}).to_h.symbolize_keys
-      model = model_for!(entity_type)
-      code = reference[:national_code].presence
-      uuid = reference[:uuid].presence
-
-      raise InvalidRequest.new("é preciso indicar national_code ou uuid", field: field) if code.blank? && uuid.blank?
-
-      entry = code ? model.find_by(national_code: code) : model.find_by(uuid: uuid)
-      raise InvalidRequest.new("o código #{code || uuid} não existe no dicionário deste nó", field: field) if entry.nil?
-
-      return entry if entry.active?
-
-      raise InvalidRequest.new("#{entry.national_code} (#{entry.name}) não está activo no dicionário " \
-                               "(status: #{entry.status})", field: field)
-    end
     def links_for(entity_type)
       LINKS.fetch(entity_type.to_s, [])
     end

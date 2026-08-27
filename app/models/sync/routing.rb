@@ -25,14 +25,18 @@ module Sync
 
     private
 
-    # Everyone with a hand on this sample: the facility that took it, and every
-    # laboratory it has been referred to.
+    # Everyone with a hand on this sample: the laboratory that took it, and
+    # every laboratory it has been referred to.
+    #
+    # By laboratory code, because that is what a node answers to. It used to be
+    # by facility code, from the days when a node was a health facility and the
+    # laboratory inside it was a second code nobody could keep straight.
     def interested
       order = Order.find_by(uuid: @event.aggregate_uuid)
       return [] if order.nil?
 
-      codes = [ order.sending_facility_code ]
-      codes += Referral.where(order_id: order.id).pluck(:to_facility_code)
+      codes = [ order.receiving_lab_code ]
+      codes += Referral.where(order_id: order.id).pluck(:to_lab_code)
 
       codes.compact.uniq - [ @event.node_code ]
     end

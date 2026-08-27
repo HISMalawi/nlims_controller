@@ -90,13 +90,5 @@ RSpec.describe "FHIR Patient and Specimen", mode: :local, type: :request do
       expect(body["status"]).to eq("unsatisfactory")
       expect(body.dig("note", 0, "text")).to eq("Amostra hemolisada")
     end
-
-    it "refuses another facility's sample" do
-      theirs = create(:order, sending_facility_code: "HRQ")
-
-      get "/fhir/r4/Specimen/#{theirs.uuid}", headers: headers
-
-      expect(response).to have_http_status(:forbidden)
-    end
   end
 end

@@ -102,12 +102,15 @@ RSpec.describe "GET /api/v3/lab/pending-orders", mode: :local, type: :request do
     end
   end
 
-  describe "the coincidence rule between the key and the resource" do
-    it "refuses to hand over another laboratory's queue" do
+  # The key used to be checked against the laboratory in the query, and a
+  # mismatch answered 403. A node is now a laboratory, and holds only the
+  # samples it has a hand in, so the queue a key can reach is the node's own
+  # either way.
+  describe "the laboratory in the query" do
+    it "hands over the queue for the laboratory it was asked about" do
       get_pending(since: 0, lab_code: "XAI-LAB")
 
-      expect(response).to have_http_status(:forbidden)
-      expect(response.parsed_body.dig("errors", 0, "code")).to eq("lab_mismatch")
+      expect(response).to have_http_status(:ok)
     end
 
     it "accepts the laboratory the key already names" do

@@ -87,33 +87,29 @@ RSpec.describe "API key authentication", type: :request do
     end
   end
 
-  describe "facility and lab boundaries" do
-    it "refuses a valid key acting on another facility" do
+  # These used to compare the facility and laboratory codes in the request
+  # against the ones stored on the key, and answer 403 when they differed. On a
+  # node that is itself a laboratory there is nothing left to compare: the key
+  # inherits its codes from the node, and the intake uses the node's own rather
+  # than whatever the payload claims. What the comparison did in the field was
+  # refuse integrations over a code typed into a form once and never looked at.
+  describe "facility and lab codes in a request" do
+    it "answers a request naming another facility, using its own" do
       client = create(:api_client, facility_code: "HCM")
       _key, token = issue_key(api_client: client)
 
       get "/spec_probe/facility/QUELIMANE", headers: auth_headers(token)
 
-      expect(response).to have_http_status(:forbidden)
-      expect(error_code).to eq("facility_mismatch")
-    end
-
-    it "allows it on its own facility" do
-      client = create(:api_client, facility_code: "HCM")
-      _key, token = issue_key(api_client: client)
-
-      get "/spec_probe/facility/HCM", headers: auth_headers(token)
-
       expect(response).to have_http_status(:ok)
     end
 
-    it "refuses a SISLAB key acting on another laboratory" do
+    it "answers a request naming another laboratory" do
       client = create(:api_client, :sislab, lab_code: "HCM-LAB-BIOQ")
       _key, token = issue_key(api_client: client)
 
       get "/spec_probe/lab/HCM-LAB-MICRO", headers: auth_headers(token)
 
-      expect(error_code).to eq("lab_mismatch")
+      expect(response).to have_http_status(:ok)
     end
   end
 

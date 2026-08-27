@@ -103,7 +103,7 @@ class StatusEvent < ApplicationRecord
     when OutboxEvent::ORDER_CREATED then { order: OrderSerializer.call(snapshot) }
     when OutboxEvent::ORDER_TEST_ADDED then { test: OrderTestSerializer.call(snapshot) }
     when OutboxEvent::SPECIMEN_REJECTED
-      { rejection_reason: DictionaryReference.call(subject.rejection_reason) }
+      { rejection_reason: DictionaryReference.call(subject.rejection_reason_reference) }
     else {}
     end
   end
