@@ -170,9 +170,14 @@ RSpec.describe OutboxEvent, mode: :local do
       expect(event.last_error).to be_nil
     end
 
+    # The instant is pinned rather than read twice: the method reads the clock
+    # inside and the expectation read it again outside, so a tick between the
+    # two put the answer past the bound and failed the run at random.
     it "caps how long it will ever wait" do
-      expect(described_class::Backoff.next_attempt_at(50))
-        .to be <= (Time.current + described_class::Backoff::MAX + (described_class::Backoff::MAX / 4))
+      now = Time.current
+
+      expect(described_class::Backoff.next_attempt_at(50, now: now))
+        .to be <= (now + described_class::Backoff::MAX + (described_class::Backoff::MAX / 4))
     end
   end
 
