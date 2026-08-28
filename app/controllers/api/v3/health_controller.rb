@@ -6,7 +6,7 @@ module Api
     # health check finds out which node it is talking to. Not audited either —
     # a probe every ten seconds is noise, not evidence.
     class HealthController < Api::BaseController
-      skip_around_action :audit_request
+      skip_request_audit
       skip_before_action :authenticate_api_client!
       skip_before_action :enforce_rate_limit!
 

@@ -39,6 +39,39 @@ RSpec.describe "Request auditing", type: :request do
     expect(RequestAudit.last.error_code).to eq("insufficient_scope")
   end
 
+  # The trail is read to answer "is this integration working?", so a refusal
+  # recorded as a success is worse than no row at all. These two used to be
+  # written down as 200 with no error code: the audit ran inside the rescue
+  # handlers rather than outside them, and read the status before anything had
+  # set one. An EMR whose every order was refused looked, on this screen, like
+  # an EMR that was working.
+  it "records a refusal raised from a model, not the status nobody set" do
+    _key, token = issue_key(scopes: %w[orders:read])
+
+    get "/spec_probe/boom", headers: auth_headers(token)
+
+    expect(response).to have_http_status(:not_found)
+
+    audit = RequestAudit.last
+    expect(audit.path).to eq("/spec_probe/boom")
+    expect(audit.status).to eq(404)
+    expect(audit.error_code).to eq("not_found")
+  end
+
+  it "records an invalid record as the 422 the client received" do
+    _key, token = issue_key(scopes: %w[results:write])
+    order = create(:order)
+
+    patch "/spec_probe/orders/#{order.tracking_number}",
+          params: { status: "completed" }, headers: auth_headers(token)
+
+    expect(response).to have_http_status(:unprocessable_content)
+
+    audit = RequestAudit.last
+    expect(audit.status).to eq(422)
+    expect(audit.error_code).to eq("unprocessable")
+  end
+
   it "does not audit the health endpoint" do
     expect { get "/api/v3/health" }.not_to change(RequestAudit, :count)
   end
