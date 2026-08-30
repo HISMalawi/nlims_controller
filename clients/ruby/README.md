@@ -53,7 +53,6 @@ parecem todos com "não funciona".
 recibo = emr.create_order(
   patient: { national_id: "110100234567A", name: "Ana Macuácua", sex: "F", birthdate: "1991-04-12" },
   order: {
-    receiving_lab_code: "HCM-LAB",
     priority: "routine",
     requested_by: "Dr. J. Sitoe",
     specimen_type: "MOZ-SP-0001"     # o código nacional basta
@@ -67,7 +66,21 @@ recibo["tracking_number"]  # => o número que se escreve no tubo
 A resposta é um recibo e não o pedido: o número de seguimento é o que interessa
 guardar, e tudo o resto está a um `emr.order(tracking_number)` de distância.
 
-`sending_facility_code` não é preciso — a chave já sabe por que unidade fala.
+`sending_facility_code` não é preciso — a chave já sabe por que unidade fala. O
+laboratório também não: um nó é uma unidade sanitária, o pedido chega à unidade,
+e a bancada que o executar reclama-o.
+
+Um LIS submete em nome de um dos seus laboratórios e diz qual, no `lab:`. Um
+laboratório que o nó nunca viu é registado a partir daqui, e não recusado:
+
+```ruby
+emr.create_order(
+  lab: { code: "LAB01", name: "Laboratório de Bioquímica", phone: "840000111" },
+  patient: { ... },
+  order: { priority: "routine" },
+  tests: [ "MOZ-TT-0042" ]
+)
+```
 
 ### Repetir sem duplicar
 
@@ -117,12 +130,12 @@ que o `replaced_by_uuid` existe para evitar.
 ```ruby
 lab = SislabSyncClient.lab(base_url: ..., api_key: ...)
 
-lab.pending_orders(since: cursor).each_page do |pedidos, cursor|
+lab.pending_orders(since: cursor, lab_code: "LAB01").each_page do |pedidos, cursor|
   pedidos.each { |pedido| por_na_bancada(pedido) }
   guardar_cursor(cursor)
 end
 
-lab.claim(tn)                                            # fica com a amostra
+lab.claim(tn, lab_code: "LAB01")                         # fica com a amostra
 lab.transition(tn, status: "specimen_collected")
 lab.transition(tn, status: "in_progress")
 
@@ -132,6 +145,12 @@ lab.record_results(tn, final: true, actor: "Téc. M. Nhaca", results: [
 
 lab.transition(tn, status: "completed")                  # fechar é um passo próprio
 ```
+
+Um nó é uma unidade sanitária e tem várias bancadas. `lab_code` diz qual está a
+falar: no feed, restringe-o ao trabalho dessa bancada mais tudo o que ainda não
+foi reclamado; na reclamação, é quem fica com a amostra — e um pedido vindo de um
+EMR chegou sem laboratório nenhum, pelo que é aqui que ganha um. Sem `lab_code`,
+o feed devolve a unidade inteira.
 
 `final: true` termina as análises que aquelas leituras cobrem. Fechar o pedido é
 uma transição à parte: um laboratório pode ter mais a acrescentar a uma amostra
@@ -167,7 +186,7 @@ Cada recusa tem a sua classe, e cada classe traz o `code` do nó:
 | `Unauthenticated` | `unauthenticated` |
 | `InsufficientScope` | `insufficient_scope` |
 | `FacilityMismatch` | `facility_mismatch` |
-| `LabMismatch` | `lab_mismatch` |
+| `NodeMismatch` | `node_mismatch` |
 | `NotFound` | `not_found` |
 | `Conflict` | `conflict` |
 | `Unprocessable` | `unprocessable` |

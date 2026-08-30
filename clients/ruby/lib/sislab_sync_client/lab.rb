@@ -8,21 +8,34 @@ module SislabSyncClient
   # where most of them sit — so there is no callback to register here, and
   # nothing in this profile needs an address of its own.
   class Lab < Profile
-    # Everything for this laboratory that changed since the cursor — not only
-    # what is still open. An order cancelled at the clinic after the laboratory
-    # took it is exactly what the laboratory has to be told about, and a feed
-    # that hid it would leave a sample being worked on that nobody wants.
+    # Everything at this health facility that changed since the cursor — not
+    # only what is still open. An order cancelled at the clinic after the
+    # laboratory took it is exactly what the laboratory has to be told about,
+    # and a feed that hid it would leave a sample being worked on that nobody
+    # wants.
+    #
+    # A node is a health facility and holds several laboratories. Naming one in
+    # `lab_code` narrows the feed to its work plus everything still unclaimed;
+    # leaving it out gives the whole unit, which is what an installation that
+    # dispatches its own benches wants.
     def pending_orders(since: 0, lab_code: nil, limit: nil)
       params = lab_code ? { lab_code: lab_code } : {}
 
       Feed.new(connection, "/api/v3/lab/pending-orders", params, since: since, limit: limit)
     end
 
-    # Takes the sample. Two laboratories claiming the same one is settled by the
-    # node: the first wins, the second gets Conflict and knows at once that it
-    # is not theirs, rather than both working it up.
-    def claim(tracking_number)
-      connection.post("/api/v3/lab/orders/#{escape(tracking_number)}/claim").data
+    # Takes the sample, for one of the unit's laboratories. Two of them claiming
+    # the same one is settled by the node: the first wins, the second gets
+    # Conflict and knows at once that it is not theirs, rather than both working
+    # it up.
+    #
+    # `lab_code` is which bench is taking it. A sample raised by an EMR arrived
+    # with no laboratory on it, and this is where it acquires one, so the node
+    # refuses a claim that does not say.
+    def claim(tracking_number, lab_code: nil)
+      params = lab_code ? { lab_code: lab_code } : {}
+
+      connection.post("/api/v3/lab/orders/#{escape(tracking_number)}/claim", nil, params: params).data
     end
 
     # Moves the sample on. A transition the state machine does not allow is

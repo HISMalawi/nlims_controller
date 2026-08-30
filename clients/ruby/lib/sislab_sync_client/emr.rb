@@ -7,9 +7,14 @@ module SislabSyncClient
   #
   #   receipt = emr.create_order(
   #     patient: { national_id: "1234567890", name: "Ana Chirindza", sex: "F", birthdate: "1988-04-02" },
-  #     order: { sending_facility_code: "HCM", receiving_lab_code: "HCM-LAB", priority: "routine" },
+  #     order: { priority: "routine" },
   #     tests: [ { test_type: "HEM001" } ]
   #   )
+  #
+  # A LIS submitting on behalf of one of its own laboratories names it, and a
+  # laboratory the node has never seen is registered from what it says:
+  #
+  #   lab: { code: "LAB01", name: "Laboratório de Bioquímica" }
   #
   #   receipt["tracking_number"] # => the number written on the tube
   class Emr < Profile
@@ -22,12 +27,13 @@ module SislabSyncClient
     # laboratory drop mid-request; without the key, a retry is a second sample
     # nobody drew. Pass your own where you have an identifier of your own for
     # the request — then even a retry from a fresh process is recognised.
-    def create_order(patient:, order:, tests:, idempotency_key: nil)
+    def create_order(patient:, order:, tests:, lab: nil, idempotency_key: nil)
       body = {
         patient: patient,
+        lab: lab,
         order: normalise_order(order),
         tests: Array(tests).map { |test| normalise_test(test) }
-      }
+      }.compact
 
       connection.post("/api/v3/order-requests", body,
                       idempotency_key: idempotency_key || SecureRandom.uuid).data

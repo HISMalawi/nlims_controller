@@ -55,7 +55,7 @@ info:
     (`scopes`). Um nó local é um laboratório: a chave herda o código do
     laboratório e o da unidade sanitária do próprio nó, e os códigos que o corpo
     de um pedido declare são ignorados em favor desses. Só um cliente nó-a-nó
-    é recusado com `403 Forbidden` ao falar por outro nó (`lab_mismatch`).
+    é recusado com `403 Forbidden` ao falar por outro nó (`node_mismatch`).
 
     ## Termos Clínicos
 
@@ -609,11 +609,35 @@ paths:
                           last_used_at: { type: [string, "null"], format: date-time }
                       node:
                         type: object
-                        required: [mode, node_code]
+                        required: [mode, node_code, facility_code, labs]
                         additionalProperties: false
                         properties:
                           mode: { type: string, enum: [local, national] }
                           node_code: { type: string }
+                          facility_code:
+                            type: string
+                            description: >
+                              Código da unidade sanitária que este nó é. Igual a
+                              `node_code`: um nó é uma unidade sanitária.
+                          labs:
+                            type: array
+                            description: >
+                              Os laboratórios desta unidade, tal como o registo os
+                              conhece. É a lista de valores que o parâmetro
+                              `lab_code` pode tomar nas chamadas a este nó.
+                            items:
+                              type: object
+                              required: [code, name, national_code]
+                              additionalProperties: false
+                              properties:
+                                code:
+                                  type: string
+                                  description: >
+                                    O código a usar. É o nacional quando existe, e
+                                    o do LIS enquanto o nó nacional não nomear o
+                                    laboratório.
+                                name: { type: string }
+                                national_code: { type: [string, "null"] }
                   meta: { $ref: "#/components/schemas/Meta" }
                   errors: { $ref: "#/components/schemas/NoErrors" }
         "401": { $ref: "#/components/responses/Unauthenticated" }
@@ -825,11 +849,16 @@ paths:
     get:
       tags: [Laboratório]
       operationId: listPendingOrders
-      summary: Feed incremental de pedidos atribuídos ao laboratório
+      summary: Feed incremental de pedidos da unidade sanitária
       description: |
-        Retorna o fluxo de pedidos de análises destinados ao laboratório que
-        foram criados ou sofreram alterações de estado a partir do cursor
-        especificado (`since`).
+        Retorna o fluxo de pedidos de análises desta unidade sanitária que foram
+        criados ou sofreram alterações de estado a partir do cursor especificado
+        (`since`).
+
+        O âmbito é a unidade sanitária, porque o nó é a unidade sanitária.
+        Indicando `lab_code`, o feed reduz-se ao trabalho desse laboratório mais
+        tudo o que ainda não foi reclamado por nenhum; sem ele, devolve a unidade
+        inteira.
       x-node-mode: local
       x-scope: orders:read
       parameters:
@@ -838,7 +867,9 @@ paths:
         - name: lab_code
           in: query
           required: false
-          description: Código do laboratório de destino (obrigatório se a chave não estiver restrita a um único laboratório).
+          description: >
+            Código do laboratório que está a consultar. Facultativo: restringe o
+            feed a esse laboratório e ao que ainda está por reclamar.
           schema: { type: string }
       responses:
         "200":
@@ -858,7 +889,8 @@ paths:
                       - { $ref: "#/components/schemas/CursorMeta" }
                       - type: object
                         properties:
-                          lab_code: { type: string }
+                          facility_code: { type: string }
+                          lab_code: { type: [string, "null"] }
                   errors: { $ref: "#/components/schemas/NoErrors" }
         "401": { $ref: "#/components/responses/Unauthenticated" }
         "403": { $ref: "#/components/responses/Forbidden" }
@@ -871,14 +903,24 @@ paths:
       operationId: claimOrder
       summary: Atribuição de amostra/pedido ao laboratório
       description: |
-        Regista a receção física da amostra e atribui o seu processamento ao
-        laboratório autenticado. Operação concorrente protegida: tentativas de
-        reivindicação simultâneas resultam em `409 Conflict` para o segundo
+        Regista a receção física da amostra e atribui o seu processamento a um
+        dos laboratórios da unidade. Operação concorrente protegida: tentativas
+        de reivindicação simultâneas resultam em `409 Conflict` para o segundo
         requisitante.
+
+        É aqui que um pedido vindo do EMR ganha laboratório: chega à unidade sem
+        nenhum, e fica com o que o reclamar.
       x-node-mode: local
       x-scope: orders:read
       parameters:
         - $ref: "#/components/parameters/TrackingNumber"
+        - name: lab_code
+          in: query
+          required: false
+          description: >
+            Código do laboratório que está a receber a amostra. Obrigatório
+            enquanto o pedido não tiver laboratório atribuído.
+          schema: { type: string }
       responses:
         "200":
           description: Pedido atualizado com os dados de receção (`claimed_at` e `claimed_by_lab_code`).
@@ -1584,7 +1626,7 @@ components:
     Forbidden:
       description: |
         Acesso negado: permissões insuficientes (`insufficient_scope`) ou
-        chave a falar por outro nó (`lab_mismatch`).
+        chave a falar por outro nó (`node_mismatch`).
       content:
         application/json:
           schema: { $ref: "#/components/schemas/ErrorResponse" }
@@ -1631,7 +1673,7 @@ components:
     FhirForbidden:
       description: |
         Acesso negado: permissões insuficientes (`insufficient_scope`) ou
-        chave a falar por outro nó (`lab_mismatch`).
+        chave a falar por outro nó (`node_mismatch`).
       content:
         application/fhir+json:
           schema: { $ref: "#/components/schemas/OperationOutcome" }
@@ -1720,6 +1762,7 @@ components:
     DictionaryEntity:
       type: string
       enum:
+        - facilities
         - labs
         - departments
         - specimen_types
@@ -1736,7 +1779,7 @@ components:
       enum:
         - unauthenticated
         - insufficient_scope
-        - lab_mismatch
+        - node_mismatch
         - idempotency_key_required
         - idempotency_key_reused
         - rate_limited
@@ -1957,7 +2000,8 @@ components:
       description: Entidade central representativa do pedido de análises clínicas e amostra biológica.
       required:
         [uuid, revision, tracking_number, status, priority, claimed_at,
-         claimed_by_lab_code, sending_facility_code, receiving_lab_code, lab_code,
+         claimed_by_lab_code, sending_facility_code, receiving_facility_code,
+         receiving_lab_code, lab_code,
          specimen_type, collected_at, requested_by, order_location,
          clinical_history, source_system, patient, referral, created_at,
          updated_at, tests]
@@ -1974,9 +2018,14 @@ components:
         sending_facility_code:
           type: [string, "null"]
           description: Código da unidade sanitária requisitante.
-        receiving_lab_code:
+        receiving_facility_code:
           type: string
-          description: Código do laboratório destinatário do pedido.
+          description: Código da unidade sanitária que recebeu o pedido — o nó.
+        receiving_lab_code:
+          type: [string, "null"]
+          description: >
+            Código do laboratório que executa as análises. Nulo enquanto nenhum
+            dos laboratórios da unidade tiver reclamado a amostra.
         lab_code: { type: [string, "null"] }
         specimen_type: { $ref: "#/components/schemas/DictionaryReference" }
         collected_at: { type: [string, "null"], format: date-time }
@@ -2057,6 +2106,25 @@ components:
             sex: { type: [string, "null"] }
             birthdate: { type: [string, "null"], format: date }
             phone: { type: [string, "null"] }
+        lab:
+          type: object
+          description: >
+            O laboratório que está a submeter a amostra, como ele próprio se
+            descreve. Enviado pelo LIS: uma instância do mLab serve vários
+            laboratórios da mesma unidade sanitária, e é aqui que diz qual deles
+            está a falar. Um código que o nó nunca viu é registado com o nome que
+            vier neste bloco e anunciado ao nó nacional, que lhe atribui o código
+            nacional e o devolve pelo feed do dicionário. Um EMR não envia nada:
+            o pedido chega à unidade e espera que um laboratório o reclame.
+          required: [code]
+          properties:
+            code:
+              type: string
+              description: Código do laboratório no LIS de origem.
+            name: { type: string }
+            short_name: { type: string }
+            description: { type: string }
+            phone: { type: string }
         order:
           type: object
           properties:
@@ -2071,7 +2139,8 @@ components:
               type: string
               description: >
                 Código do laboratório que vai executar as análises. Facultativo:
-                na ausência é o próprio nó que recebe o pedido.
+                na ausência o pedido fica à espera de que um dos laboratórios da
+                unidade o reclame.
             lab_code: { type: string }
             priority: { $ref: "#/components/schemas/Priority" }
             requested_by: { type: string }
@@ -2104,7 +2173,11 @@ components:
         entity: { $ref: "#/components/schemas/DictionaryEntity" }
         revision: { type: integer }
         uuid: { $ref: "#/components/schemas/Uuid" }
-        national_code: { type: string }
+        national_code:
+          type: [string, "null"]
+          description: >
+            Código nacional da entrada. Nulo apenas em `labs`, num laboratório que
+            o nó local registou por sua conta e que o nó nacional ainda não nomeou.
         status:
           type: string
           description: Estado do ciclo de vida da entrada (`draft`, `active`, `retired`).
@@ -2143,7 +2216,11 @@ components:
         facility_code:
           type: [string, "null"]
           description: Unidade sanitária onde o laboratório está instalado (`labs`).
-        facility_name: { type: [string, "null"] }
+        source_code:
+          type: [string, "null"]
+          description: >
+            Código por que o LIS conhece o laboratório (`labs`). Único dentro de
+            uma unidade sanitária e sem significado fora dela.
         district: { type: [string, "null"] }
         province: { type: [string, "null"] }
         phone: { type: [string, "null"] }
@@ -2212,6 +2289,7 @@ components:
         - referral.dispatched
         - referral.received
         - referral.rejected
+        - lab.registered
 
     InboundEvent:
       description: Evento transacional de replicação acompanhado dos metadados de encaminhamento para o nó local.

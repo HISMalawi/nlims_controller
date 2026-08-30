@@ -926,6 +926,32 @@
             "description": "O registo de laboratorios que o no nacional publica e todos os nos replicam. E o que permite referir uma amostra indicando apenas to_lab_code: a unidade sanitaria de destino e lida daqui."
           },
           "response": []
+        },
+        {
+          "name": "Dicionario - unidades sanitarias",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v3/dictionary/facilities",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v3",
+                "dictionary",
+                "facilities"
+              ]
+            },
+            "description": "As unidades sanitarias do pais. Um no e uma unidade sanitaria; os laboratorios de /dictionary/labs apontam para uma destas entradas."
+          },
+          "response": []
         }
       ]
     },
@@ -999,7 +1025,7 @@
             "description": "Repare que nao leva `sending_facility_code`. Quando falta, o pedido usa a unidade da propria chave (app/models/order_request.rb:19) — o laboratorio nao tem de repetir aquilo que a chave ja diz.",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"patient\": {\n    \"national_id\": \"120000000999X\",\n    \"name\": \"Nelia Zandamela\",\n    \"sex\": \"F\",\n    \"birthdate\": \"1993-09-27\",\n    \"phone\": \"840000999\"\n  },\n  \"order\": {\n    \"receiving_lab_code\": \"{{lab_code}}\",\n    \"priority\": \"routine\",\n    \"requested_by\": \"Balcao do laboratorio\",\n    \"order_location\": \"Laboratorio\",\n    \"clinical_history\": \"Doente sem guia, pedido levantado no proprio laboratorio.\",\n    \"collected_at\": \"2026-08-18T09:30:00+02:00\",\n    \"specimen_type\": {\n      \"national_code\": \"MOZ-SP-0001\"\n    }\n  },\n  \"tests\": [\n    {\n      \"test_type\": {\n        \"national_code\": \"MOZ-TT-0001\"\n      }\n    }\n  ]\n}",
+              "raw": "{\n  \"patient\": {\n    \"national_id\": \"120000000999X\",\n    \"name\": \"Nelia Zandamela\",\n    \"sex\": \"F\",\n    \"birthdate\": \"1993-09-27\",\n    \"phone\": \"840000999\"\n  },\n  \"lab\": {\n    \"code\": \"LAB01\",\n    \"name\": \"Laboratorio de Bioquimica\",\n    \"phone\": \"840000111\"\n  },\n  \"order\": {\n    \"receiving_lab_code\": \"{{lab_code}}\",\n    \"priority\": \"routine\",\n    \"requested_by\": \"Balcao do laboratorio\",\n    \"order_location\": \"Laboratorio\",\n    \"clinical_history\": \"Doente sem guia, pedido levantado no proprio laboratorio.\",\n    \"collected_at\": \"2026-08-18T09:30:00+02:00\",\n    \"specimen_type\": {\n      \"national_code\": \"MOZ-SP-0001\"\n    }\n  },\n  \"tests\": [\n    {\n      \"test_type\": {\n        \"national_code\": \"MOZ-TT-0001\"\n      }\n    }\n  ]\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1057,7 +1083,7 @@
             "description": "Um painel em vez de testes soltos. Use `test_panel` no lugar de `test_type`.",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"patient\": {\n    \"national_id\": \"120000000888W\",\n    \"name\": \"Hercilio Banze\",\n    \"sex\": \"M\",\n    \"birthdate\": \"1971-01-15\",\n    \"phone\": \"840000888\"\n  },\n  \"order\": {\n    \"receiving_lab_code\": \"{{lab_code}}\",\n    \"priority\": \"routine\",\n    \"requested_by\": \"Balcao do laboratorio\",\n    \"collected_at\": \"2026-08-18T09:30:00+02:00\",\n    \"specimen_type\": {\n      \"national_code\": \"MOZ-SP-0001\"\n    }\n  },\n  \"tests\": [\n    {\n      \"test_panel\": {\n        \"national_code\": \"MOZ-TP-0001\"\n      }\n    }\n  ]\n}",
+              "raw": "{\n  \"patient\": {\n    \"national_id\": \"120000000888W\",\n    \"name\": \"Hercilio Banze\",\n    \"sex\": \"M\",\n    \"birthdate\": \"1971-01-15\",\n    \"phone\": \"840000888\"\n  },\n  \"lab\": {\n    \"code\": \"LAB01\",\n    \"name\": \"Laboratorio de Bioquimica\",\n    \"phone\": \"840000111\"\n  },\n  \"order\": {\n    \"receiving_lab_code\": \"{{lab_code}}\",\n    \"priority\": \"routine\",\n    \"requested_by\": \"Balcao do laboratorio\",\n    \"collected_at\": \"2026-08-18T09:30:00+02:00\",\n    \"specimen_type\": {\n      \"national_code\": \"MOZ-SP-0001\"\n    }\n  },\n  \"tests\": [\n    {\n      \"test_panel\": {\n        \"national_code\": \"MOZ-TP-0001\"\n      }\n    }\n  ]\n}",
               "options": {
                 "raw": {
                   "language": "json"

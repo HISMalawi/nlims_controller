@@ -39,8 +39,8 @@ module SislabSyncClient
     # answer against it and replays that answer rather than doing the work
     # twice, so a request that carries one can be retried after a dropped
     # connection without wondering whether it landed.
-    def post(path, body = nil, idempotency_key: nil)
-      request(method: :post, path: path, body: body, idempotency_key: idempotency_key)
+    def post(path, body = nil, params: {}, idempotency_key: nil)
+      request(method: :post, path: path, params: params, body: body, idempotency_key: idempotency_key)
     end
 
     def patch(path, body = nil)

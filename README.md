@@ -38,9 +38,11 @@ cp .env.local.example .env       # Para implantação de nó local (unidade sani
 cp .env.national.example .env    # Para implantação do nó nacional central
 ```
 
-No modo `local`, configure obrigatoriamente a variável `SISLAB_SYNC_LAB_CODE` com o código do laboratório no registo nacional (`labs`). É a única identidade que um nó tem de receber: a unidade sanitária, o nome e o distrito são lidos da entrada correspondente do registo, replicada do nó nacional, e as chaves emitidas no nó herdam-nos. Enquanto o registo não chegar, o próprio código serve de prefixo aos números de rastreio.
+No modo `local`, configure obrigatoriamente a variável `SISLAB_SYNC_FACILITY_CODE` com o código da unidade sanitária no registo nacional (`facilities`). É a única identidade que um nó tem de receber: **um nó é uma unidade sanitária**, e o nome, o distrito e a província são lidos da entrada correspondente do registo, replicada do nó nacional. As chaves emitidas no nó herdam a unidade. Enquanto o registo não chegar, o próprio código serve de prefixo aos números de rastreio.
 
-A variável anterior, `SISLAB_SYNC_NODE_CODE`, continua a ser lida e significa o mesmo, para nós instalados antes de o registo existir.
+Os laboratórios ficam por baixo. Uma instância do mLab serve vários, cada um com o seu código, e todos chegam à rede por este nó — ver [secção 6.4](#64-registo-nacional-de-unidades-e-laboratórios).
+
+A variável anterior, `SISLAB_SYNC_NODE_CODE`, continua a ser lida e significa o mesmo: o código por que o nó responde, que é agora o da unidade. `SISLAB_SYNC_LAB_CODE`, que nomeava um laboratório, é recusada em vez de lida — um nó a chamar-se por ela endereçaria as suas amostras a uma entrada do registo do tipo errado.
 
 ### 2.2. Inicialização dos Serviços
 
@@ -105,7 +107,9 @@ docker compose exec app bin/rails api_key:issue \
   CLIENT="EMR Unidade Central" SCOPES="orders:write,orders:read,results:read,dictionary:read"
 ```
 
-Não é preciso indicar códigos. Um nó local é um laboratório e sabe qual: a chave herda o código do laboratório (`SISLAB_SYNC_LAB_CODE`) e o da unidade sanitária que consta da entrada correspondente no registo nacional. Um pedido que declare outros códigos não é recusado — o nó usa os seus.
+Não é preciso indicar códigos. Um nó local é uma unidade sanitária e sabe qual: a chave herda o código da unidade (`SISLAB_SYNC_FACILITY_CODE`). Um pedido que declare outros códigos não é recusado — o nó usa o seu.
+
+A chave não carrega laboratório nenhum. Uma instância do mLab fala por todos os laboratórios da unidade com a mesma chave, e qual deles está a falar segue em cada pedido (`lab.code` na criação, `lab_code` no feed e na reclamação).
 
 ---
 
@@ -155,7 +159,7 @@ A chave utilizada pelo nó local deve ser previamente emitida no nó nacional pa
 | Variável | Obrigatoriedade | Descrição |
 | --- | --- | --- |
 | `SISLAB_SYNC_MODE` | Obrigatória | Define o modo de operação: `local` ou `national`. |
-| `SISLAB_SYNC_LAB_CODE` | Obrigatória em modo local | Código do laboratório no registo nacional (`labs`). Identifica o nó e prefixa os números de rastreio. |
+| `SISLAB_SYNC_FACILITY_CODE` | Obrigatória em modo local | Código da unidade sanitária no registo nacional (`facilities`). Identifica o nó e prefixa os números de rastreio. |
 | `SISLAB_SYNC_NATIONAL_URL` | Obrigatória em modo local | URL base de comunicação com o nó nacional central. |
 | `SISLAB_SYNC_NATIONAL_API_KEY` | Obrigatória em modo local | Token de autenticação Bearer para comunicação com o nó nacional. |
 | `SISLAB_SYNC_PUSH_BATCH` | Opcional | Quantidade máxima de eventos por lote de envio da outbox (padrão: 100). |
@@ -222,18 +226,38 @@ bin/rails api_key:revoke KEY=<uuid_ou_prefixo>
 
 Âmbitos estruturados: `orders:read`, `orders:write`, `results:read`, `results:write`, `referrals:write`, `dictionary:read`, `dictionary:write`, `sync:push`, `sync:pull`.
 
-### 6.4. Registo Nacional de Laboratórios
+### 6.4. Registo Nacional de Unidades e Laboratórios
 
-O nó nacional conhece todos os laboratórios do país e publica a lista pelo mesmo canal do dicionário — `labs` é uma entidade do catálogo como qualquer outra, com a mesma sequência de revisões, o mesmo cursor e os mesmos ecrãs. Cada entrada acrescenta ao tronco comum a unidade sanitária onde o laboratório está, o distrito, a província e um contacto.
+O nó nacional conhece todas as unidades sanitárias e todos os laboratórios do país, e publica as duas listas pelo mesmo canal do dicionário — `facilities` e `labs` são entidades do catálogo como qualquer outra, com a mesma sequência de revisões, o mesmo cursor e os mesmos ecrãs. A unidade sanitária carrega o distrito, a província e um contacto; o laboratório aponta para a unidade onde está e guarda o código por que o seu LIS o conhece.
 
-É esse registo que torna possível referenciar entre laboratórios sem ninguém escrever códigos:
+**Um nó é uma unidade sanitária, e os laboratórios ficam por baixo dele.** Uma instância do mLab serve vários laboratórios da mesma unidade, cada um com o seu código, e todos chegam à rede por este nó.
+
+#### Como um laboratório entra no registo
+
+Um laboratório novo não é escrito à mão em lado nenhum. Entra por onde trabalha:
+
+1. O mLab envia a primeira amostra e identifica-se no bloco `lab` do pedido: o seu código (`code`), o nome e, se quiser, o telefone.
+2. O nó local regista-o na mesma transacção em que cria a amostra — com o código do LIS em `source_code`, a unidade sanitária deste nó, e **sem código nacional**, porque só a capital os atribui. Nada é recusado: a amostra é aceite na mesma.
+3. O registo sobe ao nó nacional como o evento `lab.registered`, pela mesma outbox e pelas mesmas retentativas que os factos clínicos. Se a ligação à capital estiver em baixo, espera na fila.
+4. A capital aceita e publica sempre, atribui o código nacional (`MOZ-LAB-nnnn`) e devolve a entrada pelo feed do dicionário. O nó local reconhece-a como sua — pelo uuid, ou pelo par (unidade, código do LIS) — e passa a ter o laboratório com código nacional.
+
+Até esse regresso o laboratório trabalha na mesma; só não pode receber amostras referidas de outra unidade, porque para isso é preciso um código com que o país concorde.
+
+#### Para que serve
 
 - o pedido de encaminhamento indica apenas `to_lab_code`; a unidade sanitária de destino é lida do registo;
 - um código que o registo não conheça é recusado, porque uma encomenda endereçada a uma gralha nunca chega;
-- as chaves emitidas num nó herdam a unidade sanitária da entrada do próprio nó;
+- entre dois laboratórios da mesma unidade o código do LIS basta, e o encaminhamento resolve-se dentro do nó, sem passar pela capital;
+- as chaves emitidas num nó herdam a unidade sanitária do próprio nó — nunca um laboratório, porque uma chave do mLab fala por todos eles;
 - um nó que ainda não tenha recebido o registo continua a funcionar: usa o seu próprio código como prefixo dos números de rastreio e aceita qualquer destino.
 
-As entradas mantêm-se no nó nacional, pelos ecrãs do dicionário (**Dicionário** → *Laboratórios*), e chegam aos nós locais na sincronização seguinte.
+O mLab lê os laboratórios para os quais pode referenciar em `GET /api/v3/dictionary/labs` (âmbito `dictionary:read`), ou pelo feed incremental `GET /api/v3/dictionary/changes?entities=facilities,labs`.
+
+As entradas mantêm-se no nó nacional, pelos ecrãs do dicionário (**Dicionário** → *Unidades sanitárias* e *Laboratórios*), e chegam aos nós locais na sincronização seguinte.
+
+#### A que laboratório pertence uma amostra
+
+Um pedido vindo de um EMR chega **à unidade sanitária** e não a um laboratório: o clínico pede um exame à unidade, e qual bancada o executa decide-se na bancada. O pedido fica em `receiving_facility_code` sem `receiving_lab_code`, aparece no feed de todos os laboratórios da unidade, e ganha laboratório quando um deles o reclama (`POST /api/v3/lab/orders/{tracking_number}/claim?lab_code=…`). Um pedido vindo do mLab já traz o seu laboratório no bloco `lab`.
 
 ### 6.5. Gestão e Sincronização do Dicionário Nacional
 
@@ -332,11 +356,11 @@ Execução segmentada por modo operacional:
 ```bash
 # Execução da suite em modo Local:
 docker compose run --rm -e RAILS_ENV=test \
-  -e SISLAB_SYNC_MODE=local -e SISLAB_SYNC_LAB_CODE=LOCAL01 app bundle exec rspec
+  -e SISLAB_SYNC_MODE=local -e SISLAB_SYNC_FACILITY_CODE=LOCAL01 app bundle exec rspec
 
 # Execução da suite em modo Nacional:
 docker compose run --rm -e RAILS_ENV=test \
-  -e SISLAB_SYNC_MODE=national -e SISLAB_SYNC_LAB_CODE=NATIONAL app bundle exec rspec
+  -e SISLAB_SYNC_MODE=national -e SISLAB_SYNC_FACILITY_CODE=NATIONAL app bundle exec rspec
 ```
 
 ---
@@ -348,7 +372,7 @@ Requisitos de runtime: Ruby 3.3.8, MySQL 8.4 e Redis 7.
 ```bash
 bundle install
 
-export SISLAB_SYNC_MODE=local SISLAB_SYNC_LAB_CODE=DEV
+export SISLAB_SYNC_MODE=local SISLAB_SYNC_FACILITY_CODE=DEV
 export DATABASE_HOST=127.0.0.1 DATABASE_USER=root DATABASE_PASSWORD=...
 
 bin/rails db:prepare
@@ -388,7 +412,7 @@ Em ambiente `production` a aplicação requer um segredo, fornecido por uma das 
 | --- | --- | --- |
 | `RAILS_ENV` | `production` | |
 | `SISLAB_SYNC_MODE` | `local` \| `national` | |
-| `SISLAB_SYNC_LAB_CODE` | `HCM` | Obrigatória em modo `local`; identifica o laboratório no registo nacional e prefixa os números de rastreio. |
+| `SISLAB_SYNC_FACILITY_CODE` | `HCM` | Obrigatória em modo `local`; identifica a unidade sanitária no registo nacional e prefixa os números de rastreio. |
 | `SISLAB_SYNC_TLS_TERMINATED` | `true` | `false` se o nó for servido em HTTP simples (ver 8.5). |
 | `DATABASE_HOST`, `DATABASE_USER`, `DATABASE_PASSWORD`, `DATABASE_NAME` | | MySQL 8.4 com `transaction_isolation=READ-COMMITTED`. |
 | `REDIS_URL` | `redis://redis:6379/0` | Cache, limitação de taxa e filas Sidekiq. |
@@ -402,7 +426,7 @@ A especificação completa consta da [secção 5](#5-especificação-de-variáve
 docker run -d --name sislab_sync \
   -e RAILS_ENV=production \
   -e RAILS_MASTER_KEY="$(cat config/master.key)" \
-  -e SISLAB_SYNC_MODE=local -e SISLAB_SYNC_LAB_CODE=HCM \
+  -e SISLAB_SYNC_MODE=local -e SISLAB_SYNC_FACILITY_CODE=HCM \
   -e DATABASE_HOST=... -e DATABASE_USER=... -e DATABASE_PASSWORD=... \
   -e DATABASE_NAME=sislab_sync_production \
   -e REDIS_URL=redis://... \

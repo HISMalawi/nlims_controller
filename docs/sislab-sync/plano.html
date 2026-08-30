@@ -456,7 +456,7 @@
       <li><a href="#nacional">Integração: local &harr; nacional</a></li>
       <li><a href="#referenciamento">Referenciamento de amostras</a></li>
       <li><a href="#ui">Interface</a></li>
-      <li><a href="#passos">Os 12 passos</a></li>
+      <li><a href="#passos">Os passos</a></li>
       <li><a href="#riscos">Riscos</a></li>
       <li><a href="#ambito">Pressupostos e âmbito</a></li>
     </ol>
@@ -995,7 +995,7 @@ Idempotency-Key: 7f3c0b18-4d2e-4a91-9c65-2b8e1f0a7d34
   </div>
 
   <!-- ============================================================ -->
-  <h2 id="passos">10 · Os 12 passos</h2>
+  <h2 id="passos">10 · Os passos</h2>
   <p class="section-note">
     Uma semana por passo, sequencial, de 17/08 a 06/11/2026. Cada passo termina com algo demonstrável e com os commits
     indicados. Um passo só está fechado quando o critério de «feito quando» é verificável por outra pessoa.
@@ -1304,6 +1304,34 @@ Idempotency-Key: 7f3c0b18-4d2e-4a91-9c65-2b8e1f0a7d34
         <li>feat: add the sislab sync reference client gem</li>
         <li>docs: add installation and operations guide</li>
         <li>chore: rename the project to sislab sync and tag v2.0.0</li>
+      </ul>
+    </article>
+
+    <article class="step">
+      <div class="step-head">
+        <span class="step-no">S13</span>
+        <h3>O nó é a unidade sanitária</h3>
+        <span class="step-dates">30 ago</span>
+      </div>
+      <p class="goal">Corrigir a identidade do nó. S6 assumiu que uma instalação servia um laboratório; não serve — uma instância do mLab serve todos os laboratórios da unidade, cada um com o seu código, e todos chegam à rede pelo mesmo nó. A unidade sanitária passa a ser o que um nó é, e os laboratórios passam a viver por baixo dela.</p>
+      <p class="done"><b>Feito quando</b> uma instalação é identificada por <code>SISLAB_SYNC_FACILITY_CODE</code>, um laboratório desconhecido que envia a primeira amostra é registado sem recusar nada e recebe código nacional pela sincronização de rotina, um pedido do EMR chega à unidade sem laboratório e ganha-o na reclamação, e uma amostra passada entre duas bancadas da mesma unidade resolve-se no nó sem ir à capital.</p>
+      <ul class="check">
+        <li>Entidade de dicionário <code>facilities</code>, propriedade do nó nacional, no mesmo feed e na mesma sequência de revisões; <code>labs</code> aponta para ela</li>
+        <li><code>SISLAB_SYNC_FACILITY_CODE</code> é a identidade; <code>SISLAB_SYNC_LAB_CODE</code> é recusada com a indicação da renomeação</li>
+        <li>Bloco <code>lab</code> no pedido: código desconhecido é registado na mesma transacção, com <code>source_code</code> e sem código nacional</li>
+        <li>Evento <code>lab.registered</code> na outbox existente; o nó nacional aceita e publica sempre, e devolve o código nacional pelo feed do dicionário</li>
+        <li><code>orders.receiving_facility_code</code> obrigatório, <code>receiving_lab_code</code> facultativo; a reclamação atribui a bancada</li>
+        <li>Encaminhamento por unidade sanitária: <code>Sync::Routing</code>, <code>/sync/inbound</code>, <code>authorize_node!</code> e o heartbeat</li>
+        <li>Referenciamento entre bancadas da mesma unidade resolve-se no nó; sobe como evento, não é encaminhado de volta</li>
+        <li>Contrato, colecção Postman, gem de referência e README acompanham</li>
+      </ul>
+      <p class="commits-label">Commits</p>
+      <ul class="commits">
+        <li>feat(register): make the health facility a dictionary entity of its own</li>
+        <li>feat(identity): a node is a health facility, not a laboratory</li>
+        <li>feat(intake): register a laboratory the first time it sends a sample</li>
+        <li>feat(sync): route by health facility and settle internal handovers locally</li>
+        <li>docs: describe the facility register and the laboratories under it</li>
       </ul>
     </article>
 

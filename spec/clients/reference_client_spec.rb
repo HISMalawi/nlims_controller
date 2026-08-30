@@ -107,6 +107,38 @@ RSpec.describe SislabSyncClient, type: :request do
       expect(receipt["status"]).to eq(Order::REQUESTED)
     end
 
+    # A node is a health facility and holds several laboratories. A LIS says
+    # which of them is submitting; a laboratory the node has never seen is
+    # registered from what it says rather than refused.
+    it "registers the laboratory a LIS names for the first time" do
+      receipt = emr.create_order(
+        lab: { code: "LAB07", name: "Laboratório de Bioquímica" },
+        patient: { name: "Ana Macuácua" },
+        order: { specimen_type: specimen_type.national_code },
+        tests: [ test_type.national_code ]
+      )
+
+      expect(receipt["tracking_number"]).to be_present
+      expect(Lab.find_by!(facility_code: "HCM", source_code: "LAB07")).to be_local
+      expect(Order.find_by!(uuid: receipt["order_uuid"]).receiving_lab_code).to eq("LAB07")
+    end
+
+    # A clinician asks the unit, not a bench. The sample waits unclaimed, in
+    # every laboratory's feed, until one of them takes it.
+    it "leaves a sample nobody named a laboratory for to be claimed at the bench" do
+      receipt = emr.create_order(
+        patient: { name: "Ana Macuácua" },
+        order: { specimen_type: specimen_type.national_code },
+        tests: [ test_type.national_code ]
+      )
+
+      lab = lab_profile(%w[orders:read])
+      claimed = lab.claim(receipt["tracking_number"], lab_code: "HCM-MICRO")
+
+      expect(claimed["receiving_lab_code"]).to eq("HCM-MICRO")
+      expect(claimed["claimed_by_lab_code"]).to eq("HCM-MICRO")
+    end
+
     it "reaches the laboratory's queue" do
       tracking_number = request_a_sample["tracking_number"]
 
