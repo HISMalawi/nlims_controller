@@ -1,6 +1,6 @@
 {
   "meta": {
-    "taken_at": "2026-08-24T20:38:27+02:00",
+    "taken_at": "2026-08-30T11:32:08+02:00",
     "source": "root@127.0.0.1/mlab"
   },
   "departments": [
@@ -9448,6 +9448,30 @@
       "description": "Relação normalizada internacional",
       "test_indicator_type": 2,
       "value_type": "Numeric"
+    },
+    {
+      "id": 532,
+      "name": "Determine",
+      "unit": "",
+      "description": "Teste rápido Determine HIV-1/2 — 1.º ensaio do algoritmo (valor de referência: Negativo)",
+      "test_indicator_type": 0,
+      "value_type": "AutoComplete"
+    },
+    {
+      "id": 533,
+      "name": "Uni-Gold (Unigold)",
+      "unit": "",
+      "description": "Teste rápido Uni-Gold HIV — 2.º ensaio do algoritmo, confirmação (valor de referência: Negativo)",
+      "test_indicator_type": 0,
+      "value_type": "AutoComplete"
+    },
+    {
+      "id": 534,
+      "name": "Resultado Final",
+      "unit": "",
+      "description": "Conclusão do algoritmo de testagem rápida de HIV (valor de referência: Negativo)",
+      "test_indicator_type": 0,
+      "value_type": "AutoComplete"
     }
   ],
   "indicator_ranges": [
@@ -20000,6 +20024,106 @@
       "upper_range": null,
       "interpretation": "Invalid",
       "value": "Inválido"
+    },
+    {
+      "test_indicator_id": 532,
+      "min_age": null,
+      "max_age": null,
+      "sex": null,
+      "lower_range": null,
+      "upper_range": null,
+      "interpretation": "Positive",
+      "value": "Positivo"
+    },
+    {
+      "test_indicator_id": 532,
+      "min_age": null,
+      "max_age": null,
+      "sex": null,
+      "lower_range": null,
+      "upper_range": null,
+      "interpretation": "Negative",
+      "value": "Negativo"
+    },
+    {
+      "test_indicator_id": 532,
+      "min_age": null,
+      "max_age": null,
+      "sex": null,
+      "lower_range": null,
+      "upper_range": null,
+      "interpretation": "Invalid",
+      "value": "Inválido"
+    },
+    {
+      "test_indicator_id": 533,
+      "min_age": null,
+      "max_age": null,
+      "sex": null,
+      "lower_range": null,
+      "upper_range": null,
+      "interpretation": "Positive",
+      "value": "Positivo"
+    },
+    {
+      "test_indicator_id": 533,
+      "min_age": null,
+      "max_age": null,
+      "sex": null,
+      "lower_range": null,
+      "upper_range": null,
+      "interpretation": "Negative",
+      "value": "Negativo"
+    },
+    {
+      "test_indicator_id": 533,
+      "min_age": null,
+      "max_age": null,
+      "sex": null,
+      "lower_range": null,
+      "upper_range": null,
+      "interpretation": "Invalid",
+      "value": "Inválido"
+    },
+    {
+      "test_indicator_id": 534,
+      "min_age": null,
+      "max_age": null,
+      "sex": null,
+      "lower_range": null,
+      "upper_range": null,
+      "interpretation": "Positive",
+      "value": "Positivo"
+    },
+    {
+      "test_indicator_id": 534,
+      "min_age": null,
+      "max_age": null,
+      "sex": null,
+      "lower_range": null,
+      "upper_range": null,
+      "interpretation": "Negative",
+      "value": "Negativo"
+    },
+    {
+      "test_indicator_id": 534,
+      "min_age": null,
+      "max_age": null,
+      "sex": null,
+      "lower_range": null,
+      "upper_range": null,
+      "interpretation": "Indeterminate",
+      "value": "Indeterminado"
+    },
+    {
+      "test_indicator_id": 534,
+      "min_age": null,
+      "max_age": null,
+      "sex": null,
+      "lower_range": null,
+      "upper_range": null,
+      "interpretation": "Invalid",
+      "value": "Inválido"
     }
   ],
   "test_types": [
@@ -20837,8 +20961,8 @@
     },
     {
       "id": 138,
-      "name": "HIV",
-      "short_name": "hiv",
+      "name": "Teste de HIV",
+      "short_name": "HIV",
       "department_id": 4,
       "sex": "Both",
       "target_tat": "2 Hours"
@@ -22026,10 +22150,6 @@
       "indicator_id": 460
     },
     {
-      "test_type_id": 138,
-      "indicator_id": 432
-    },
-    {
       "test_type_id": 139,
       "indicator_id": 433
     },
@@ -22308,6 +22428,18 @@
     {
       "test_type_id": 258,
       "indicator_id": 98
+    },
+    {
+      "test_type_id": 138,
+      "indicator_id": 532
+    },
+    {
+      "test_type_id": 138,
+      "indicator_id": 533
+    },
+    {
+      "test_type_id": 138,
+      "indicator_id": 534
     }
   ],
   "test_type_specimen_links": [

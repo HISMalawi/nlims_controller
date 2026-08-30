@@ -271,19 +271,19 @@ Esta é a carga **inicial**. A partir daí o catálogo é propriedade do nó nac
 criados à mão na interface; `dictionary:snapshot` só volta a ser necessário para distribuir um catálogo
 mais recente do mLab numa nova release.
 
-| Entidade | Entradas na recolha de 2026-08-24 |
+| Entidade | Entradas na recolha de 2026-08-30 |
 | --- | --- |
 | Departamentos | 13 |
 | Tipos de espécime | 28 |
 | Fármacos | 30 |
 | Organismos | 224 |
-| Indicadores | 524 (3 recusados por não terem nome) |
-| Intervalos de referência | 1051 |
+| Indicadores | 527 (3 recusados por não terem nome) |
+| Intervalos de referência | 1061 |
 | Exames | 115 |
 | Painéis | 9 |
 | Motivos de rejeição | 10 (deste repositório, não do mLab) |
 
-O relatório de qualidade é gerado no fim da carga e não a bloqueia: a recolha de 2026-08-24 acusa 279
+O relatório de qualidade é gerado no fim da carga e não a bloqueia: a recolha de 2026-08-30 acusa 279
 nomes duplicados e 199 indicadores sem exame associado, herdados do mLab. `SKIP_BLOCKED=1` retém os
 exames sem indicadores ou sem espécime em rascunho, para serem corrigidos antes de chegarem aos
 laboratórios.
