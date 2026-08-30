@@ -77,7 +77,15 @@ module Sync
     rescue ActiveRecord::RecordNotUnique
       # Two copies of the batch arrived at once. Whichever lost the race is
       # looking at the row the winner wrote, which is the answer it wanted.
-      remember(InboundEvent.find_by!(event_uuid: event["event_uuid"]))
+      held = InboundEvent.find_by(event_uuid: event["event_uuid"])
+      return remember(held) if held
+
+      # Not the same event, then: the same position in the same stream under a
+      # different event_uuid, which the stream index refuses. Said plainly, so
+      # the sender can see it. It used to look the row up by event_uuid and
+      # find nothing, and the node was answered 404 for a batch it had sent.
+      refuse(event["event_uuid"], Rejected::INVALID,
+             "já existe um evento na posição #{event['sequence']} deste agregado")
     end
 
     # An event already held is accepted again — that is what idempotent means —

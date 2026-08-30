@@ -48,6 +48,11 @@ class Referral < ApplicationRecord
   # code and nothing else: the health facility, and the name that goes in the
   # history, are things the national register already published to this node.
   #
+  # A laboratory inside this unit may be one this node registered itself and the
+  # capital has not named yet, so its own LIS code counts as well as a national
+  # one — a bench cannot be told to wait for the capital before it can hand a
+  # sample to the bench next door.
+  #
   # A code the register does not carry is refused — but only once the register
   # has been pulled at all. On a node that has never received one, refusing
   # would be blaming the client for something missing at this end.
@@ -55,27 +60,39 @@ class Referral < ApplicationRecord
     code = to_lab_code.presence
     raise InvalidRequest.new("é preciso indicar o laboratório de destino", field: "to_lab_code") if code.nil?
 
-    lab = Lab.find_by(national_code: code)
+    lab = Lab.find_by_any_code(code, facility_code: SislabSync.facility_code)
 
     if lab.nil? && Lab.exists?
       raise InvalidRequest.new("o laboratório #{code} não consta do registo nacional deste nó",
                                field: "to_lab_code")
     end
 
-    { lab_code: code, facility_code: lab&.facility, label: lab&.label || code }
+    { lab_code: lab&.code || code, facility_code: lab&.facility_code, label: lab&.label || code }
   end
 
+  # A sample handed to another laboratory.
+  #
+  # Two of these look the same on the wire and are not the same thing. A sample
+  # going to another unit leaves: the order goes referred_out here, and the
+  # destination's node receives a copy of it through the capital. A sample going
+  # to the bench next door has not left the building — the two laboratories
+  # share this node and this database, and there is one order row, not two. So
+  # the status does not move; what moves is which laboratory the order is
+  # against, and the referral row is the record of the handover.
   def self.dispatch!(order:, to_lab_code:, courier: nil, remarks: nil, actor: nil)
     destination = resolve_destination!(to_lab_code)
+    internal = internal?(order, destination[:facility_code])
 
     transaction do
-      order.transition_to!(Order::REFERRED_OUT, actor: actor,
-                                                reason: "referida para #{destination[:label]}")
+      unless internal
+        order.transition_to!(Order::REFERRED_OUT, actor: actor,
+                                                  reason: "referida para #{destination[:label]}")
+      end
 
       create!(
         order: order,
         tracking_number: order.tracking_number,
-        from_facility_code: order.sending_facility_code,
+        from_facility_code: order.receiving_facility_code,
         from_lab_code: order.receiving_lab_code,
         to_facility_code: destination[:facility_code],
         to_lab_code: destination[:lab_code],
@@ -84,6 +101,13 @@ class Referral < ApplicationRecord
         dispatched_at: Time.current
       )
     end
+  end
+
+  # Whether the destination is a laboratory of the same unit. A destination the
+  # register cannot place is treated as elsewhere: assuming it were next door
+  # would keep a sample here that has actually gone away.
+  def self.internal?(order, to_facility_code)
+    to_facility_code.present? && to_facility_code == order.receiving_facility_code
   end
 
   # The sample physically arrived.
@@ -97,6 +121,10 @@ class Referral < ApplicationRecord
 
       if order.status == Order::REFERRED_IN
         order.transition_to!(Order::ACCEPTED, actor: actor, reason: "amostra referida recebida em #{to_lab_code}")
+      elsif internal?
+        # The sample never left the unit, so there is no status to restore —
+        # only the question of whose work it now is, which the handover settles.
+        order.update!(receiving_lab_code: to_lab_code, claimed_by_lab_code: to_lab_code)
       end
     end
   end
@@ -116,11 +144,17 @@ class Referral < ApplicationRecord
   # Where this sample went, as the register describes it — nil for a code the
   # register has not caught up with, which is what the stored codes are for.
   def destination
-    @destination ||= Lab.find_by(national_code: to_lab_code)
+    @destination ||= Lab.find_by_any_code(to_lab_code, facility_code: to_facility_code)
   end
 
   def destination_label
     destination&.label || to_lab_code
+  end
+
+  # A handover between two laboratories of the same unit: no transport, no
+  # capital, and one order row shared by both.
+  def internal?
+    to_facility_code.present? && to_facility_code == from_facility_code
   end
 
   def dispatched? = state == DISPATCHED

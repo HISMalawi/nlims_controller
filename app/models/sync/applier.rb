@@ -24,6 +24,7 @@ module Sync
       when OutboxEvent::TEST_RESULT_RECORDED then record_result
       when OutboxEvent::REFERRAL_DISPATCHED then dispatch_referral
       when OutboxEvent::REFERRAL_RECEIVED, OutboxEvent::REFERRAL_REJECTED then settle_referral
+      when OutboxEvent::LAB_REGISTERED then register_lab
       else
         raise Rejected.new(Rejected::UNKNOWN_TYPE, "#{@event.type} is not an event this node knows")
       end
@@ -63,6 +64,7 @@ module Sync
         status: status || json["status"],
         priority: json["priority"],
         sending_facility_code: json["sending_facility_code"],
+        receiving_facility_code: json["receiving_facility_code"].presence || json["sending_facility_code"],
         receiving_lab_code: json["receiving_lab_code"],
         lab_code: json["lab_code"],
         collected_at: json["collected_at"],
@@ -170,7 +172,19 @@ module Sync
         remarks: json["remarks"]
       )
 
+      hand_over_internally(referral) if referral.received? && referral.internal?
+
       referral
+    end
+
+    # A handover between two benches of one unit never leaves the node that
+    # holds it, so there is no second copy of the order to send and no status to
+    # change — only the fact that the work is now the other laboratory's. The
+    # capital would otherwise go on naming the bench that first took the sample
+    # as the one that ran it.
+    def hand_over_internally(referral)
+      referral.order.update!(receiving_lab_code: referral.to_lab_code,
+                             claimed_by_lab_code: referral.to_lab_code)
     end
 
     def referral_json
@@ -180,8 +194,44 @@ module Sync
     # A local node that is the destination holds the sample as referred_in: it
     # is work arriving, not work sent away. The national node keeps the status
     # the origin gave it, because from the capital the sample is simply out.
+    #
+    # By unit, not by laboratory: the node is the unit, and the parcel is for it
+    # whichever of its benches ends up opening it.
     def arriving_here?(json)
-      SislabSync.local? && json["to_lab_code"] == SislabSync.lab_code
+      SislabSync.local? && json["to_facility_code"] == SislabSync.facility_code
+    end
+
+    # A laboratory a node met for the first time, given the code the country
+    # will know it by.
+    #
+    # Accepted as it stands and published at once. The capital could hold these
+    # for approval, and deliberately does not: a laboratory that has already
+    # taken a sample exists whether or not anybody in the capital has looked at
+    # it, and the cost of a duplicate in the register is an afternoon's tidying,
+    # while the cost of a queue is a laboratory nobody can refer to.
+    #
+    # Matched on the uuid the node sent, and failing that on the pair the
+    # register is keyed by, so a node that registered a laboratory and was then
+    # rebuilt does not create a second entry for it.
+    def register_lab
+      lab = Lab.find_by(uuid: @payload["uuid"]) ||
+            Lab.find_by(facility_code: @payload["facility_code"], source_code: @payload["source_code"]) ||
+            Lab.new(uuid: @payload["uuid"])
+
+      lab.assign_attributes(
+        facility_code: @payload["facility_code"],
+        source_code: @payload["source_code"],
+        name: @payload["name"].presence || @payload["source_code"],
+        short_name: @payload["short_name"],
+        description: @payload["description"],
+        phone: @payload["phone"]
+      )
+      lab.status = DictionaryEntry::ACTIVE unless lab.retired?
+      lab.status_actor = actor
+      lab.status_reason = "registado por #{@event.node_code}"
+      lab.save!
+
+      lab
     end
 
     def change_test_status

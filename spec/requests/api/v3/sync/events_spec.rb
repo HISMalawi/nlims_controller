@@ -274,6 +274,61 @@ RSpec.describe "POST /api/v3/sync/events", mode: :national, type: :request do
     end
   end
 
+  # A laboratory a node met for the first time on an arriving sample. The capital
+  # accepts it as it stands and publishes it at once: a laboratory that has
+  # already taken a sample exists whether or not anybody here has looked at it,
+  # and the cost of a duplicate is an afternoon's tidying, while the cost of a
+  # queue is a laboratory nobody can refer to.
+  describe "a laboratory registering itself" do
+    let(:lab_uuid) { SecureRandom.uuid }
+
+    # The laboratory is its own aggregate, so its uuid is the aggregate's.
+    def lab_registered(uuid: lab_uuid, **overrides)
+      event(sequence: 1, type: OutboxEvent::LAB_REGISTERED, aggregate_uuid: uuid, payload: {
+              uuid: uuid, source_code: "LAB07", facility_code: "HCM",
+              name: "Laboratório de Bioquímica", phone: "840000111"
+            }.merge(overrides))
+    end
+
+    it "gives it the code the country will know it by, and publishes it" do
+      post_events([ lab_registered ])
+
+      expect(response).to have_http_status(:ok)
+      expect(accepted.length).to eq(1)
+
+      lab = Lab.find_by!(uuid: lab_uuid)
+      expect(lab.national_code).to start_with("MOZ-LAB-")
+      expect(lab.source_code).to eq("LAB07")
+      expect(lab.facility_code).to eq("HCM")
+      expect(lab).to be_active
+    end
+
+    # It goes back down the dictionary feed like any other entry, which is how
+    # the node that registered it learns the national code.
+    it "puts it on the dictionary feed" do
+      post_events([ lab_registered ])
+
+      entry = Dictionary.delta(0, entities: [ "labs" ])[:entries].sole
+      expect(entry).to include(source_code: "LAB07", facility_code: "HCM")
+    end
+
+    it "records who registered it" do
+      post_events([ lab_registered ])
+
+      change = DictionaryStatusChange.for_entity(lab_uuid).last
+      expect(change.reason).to include("HCM")
+    end
+
+    # A node rebuilt from the feed sends a new uuid for a laboratory the capital
+    # already holds. The pair the register is keyed on is what recognises it.
+    it "does not register the same laboratory twice under a second uuid" do
+      post_events([ lab_registered ])
+      post_events([ lab_registered(uuid: SecureRandom.uuid) ])
+
+      expect(Lab.where(facility_code: "HCM", source_code: "LAB07").count).to eq(1)
+    end
+  end
+
   describe "what it refuses" do
     it "answers 401 without a key" do
       post "/api/v3/sync/events",
@@ -292,13 +347,13 @@ RSpec.describe "POST /api/v3/sync/events", mode: :national, type: :request do
     end
 
     it "answers 403 for a node sending another node's events" do
-      pinned = create(:api_client, kind: "node", lab_code: "XAI-LAB")
+      pinned = create(:api_client, kind: "node", facility_code: "XAI")
       key = issue_key(api_client: pinned, scopes: %w[sync:push]).last
 
       post_events([ order_created ], node_code: "HCM", bearer: key)
 
       expect(response).to have_http_status(:forbidden)
-      expect(response.parsed_body.dig("errors", 0, "code")).to eq("lab_mismatch")
+      expect(response.parsed_body.dig("errors", 0, "code")).to eq("node_mismatch")
     end
 
     it "asks for the node code when the batch does not say" do

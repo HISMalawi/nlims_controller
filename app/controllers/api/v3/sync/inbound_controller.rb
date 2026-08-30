@@ -60,7 +60,7 @@ module Api
         def node_code
           return @node_code if defined?(@node_code)
 
-          @node_code = params[:node_code].presence || Current.api_client.lab_code.presence
+          @node_code = params[:node_code].presence || Current.api_client.facility_code.presence
           return @node_code if @node_code
 
           render_api_error(Errors::UNPROCESSABLE, message: "é preciso indicar node_code", field: "node_code")
