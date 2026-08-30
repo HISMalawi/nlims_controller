@@ -30,13 +30,16 @@ class ApiClient < ApplicationRecord
   private
 
   # Filled once, at issue, rather than read live: a key issued for this node
-  # should go on meaning what it meant even if the register later moves the
-  # laboratory to a different facility code, and the audit trail should show
-  # what was true when it was issued.
+  # should go on meaning what it meant even if the register later renames the
+  # unit, and the audit trail should show what was true when it was issued.
+  #
+  # Only the unit. A key used to carry a laboratory too, from when a node was
+  # one; an mLab instance speaks for every laboratory in the unit under a single
+  # key, so a laboratory on the key would be right for one of them and wrong for
+  # the rest. Which bench is asking travels with the request instead.
   def adopt_node_identity
     return unless SislabSync.local? && facility_scoped?
 
-    self.lab_code = SislabSync.lab_code if lab_code.blank?
     self.facility_code = SislabSync.facility_code if facility_code.blank?
   end
 end

@@ -13,7 +13,7 @@ module Fhir
     ISSUE_TYPES = {
       Api::Errors::UNAUTHENTICATED => "login",
       Api::Errors::INSUFFICIENT_SCOPE => "forbidden",
-      Api::Errors::LAB_MISMATCH => "forbidden",
+      Api::Errors::NODE_MISMATCH => "forbidden",
       Api::Errors::IDEMPOTENCY_KEY_REQUIRED => "required",
       Api::Errors::IDEMPOTENCY_KEY_REUSED => "duplicate",
       Api::Errors::RATE_LIMITED => "throttled",

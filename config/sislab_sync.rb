@@ -28,47 +28,53 @@ module SislabSync
     end
 
     # The code this node is known by across the network. A local node is a
-    # laboratory and answers to its entry in the national register; the national
-    # node is a single well-known code.
+    # health facility and answers to its entry in the national register; the
+    # national node is a single well-known code.
     def node_code
-      @node_code ||= lab_code
+      @node_code ||= facility_code
     end
 
-    # This node's laboratory code — the one thing an installation has to be
-    # told. It names an entry in the `labs` register the national node
+    # This node's health facility code — the one thing an installation has to be
+    # told. It names an entry in the `facilities` register the national node
     # publishes, and everything else about this node is read from there.
     #
-    # SISLAB_SYNC_NODE_CODE is still accepted: it is what every node deployed
-    # before the register was introduced sets, and it meant the same thing.
-    def lab_code
-      @lab_code ||= ENV["SISLAB_SYNC_LAB_CODE"].presence || ENV["SISLAB_SYNC_NODE_CODE"].presence ||
-                    (national? ? "NATIONAL" : raise(InvalidMode, "SISLAB_SYNC_LAB_CODE is required in local mode"))
+    # SISLAB_SYNC_NODE_CODE is still accepted: it has always meant "the code
+    # this node answers to", and that is now the unit. SISLAB_SYNC_LAB_CODE is
+    # refused rather than read, because it meant a laboratory, and a node
+    # quietly calling itself by one would address its samples to a register
+    # entry of the wrong kind.
+    def facility_code
+      @facility_code ||= fetch_facility_code
     end
 
     # This node's own entry in the register, or nil before the register has been
     # pulled. Not memoised: the register arrives over the feed like any other
     # dictionary entry, and a node that read it once at boot would go on calling
     # itself by a name the capital had already corrected.
-    def lab
+    def facility
       return nil unless local?
 
-      Lab.find_by(national_code: lab_code)
+      Facility.find_by(national_code: facility_code)
     rescue ActiveRecord::ActiveRecordError, NameError
       # Asked before the schema exists — during a migration, or on a node whose
       # database has not been created yet. The code alone is enough to boot.
       nil
     end
 
-    # The health facility this node's laboratory sits in. Falls back to the
-    # laboratory's own code so that tracking numbers, which are prefixed with
-    # it, are never left without one.
-    def facility_code
-      lab&.facility.presence || lab_code
+    # The laboratories inside this unit, as the register knows them. Includes the
+    # ones this node registered itself and the capital has not named yet: they
+    # are working laboratories, and the screens have to show them.
+    def labs
+      return Lab.none unless local?
+
+      Lab.in_facility(facility_code).ordered
+    rescue ActiveRecord::ActiveRecordError, NameError
+      []
     end
 
     # What this node calls itself on a screen.
     def node_name
-      lab&.name.presence || lab_code
+      facility&.name.presence || facility_code
     end
 
     def version
@@ -94,10 +100,24 @@ module SislabSync
 
     # Test support: forget everything memoised from the environment.
     def reset!
-      @mode = @node_code = @lab_code = @version = @tls_terminated = nil
+      @mode = @node_code = @facility_code = @version = @tls_terminated = nil
     end
 
     private
+
+    def fetch_facility_code
+      code = ENV["SISLAB_SYNC_FACILITY_CODE"].presence || ENV["SISLAB_SYNC_NODE_CODE"].presence
+      return code if code
+      return "NATIONAL" if national?
+
+      if ENV["SISLAB_SYNC_LAB_CODE"].present?
+        raise InvalidMode,
+              "SISLAB_SYNC_LAB_CODE names a laboratory; a node is a health facility. " \
+              "Set SISLAB_SYNC_FACILITY_CODE to this unit's code."
+      end
+
+      raise InvalidMode, "SISLAB_SYNC_FACILITY_CODE is required in local mode"
+    end
 
     def fetch_mode
       value = ENV.fetch("SISLAB_SYNC_MODE", nil)

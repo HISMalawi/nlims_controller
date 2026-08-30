@@ -61,58 +61,82 @@ RSpec.describe SislabSync do
     end
   end
 
-  # A node is a laboratory, and answers to its entry in the national register.
-  # The code is the one thing an installation has to be told; the facility, the
-  # name and the district are read from the register once it arrives.
-  describe ".lab_code" do
-    it "uses the configured laboratory code" do
-      with_env("SISLAB_SYNC_MODE" => "local", "SISLAB_SYNC_LAB_CODE" => "HCM-LAB-CENTRAL") do
-        expect(described_class.lab_code).to eq("HCM-LAB-CENTRAL")
-        expect(described_class.node_code).to eq("HCM-LAB-CENTRAL")
+  # A node is a health facility, and answers to its entry in the national
+  # register. The code is the one thing an installation has to be told; the
+  # name, the district and the province are read from the register once it
+  # arrives, and so are the laboratories inside the unit.
+  describe ".facility_code" do
+    it "uses the configured health facility code" do
+      with_env("SISLAB_SYNC_MODE" => "local", "SISLAB_SYNC_FACILITY_CODE" => "HCM") do
+        expect(described_class.facility_code).to eq("HCM")
+        expect(described_class.node_code).to eq("HCM")
       end
     end
 
-    # Every node deployed before the register existed sets this, and it meant
-    # the same thing.
+    # Every node deployed before the register existed sets this, and it has
+    # always meant "the code this node answers to".
     it "still accepts the old node code" do
-      with_env("SISLAB_SYNC_MODE" => "local", "SISLAB_SYNC_LAB_CODE" => nil,
+      with_env("SISLAB_SYNC_MODE" => "local", "SISLAB_SYNC_FACILITY_CODE" => nil,
                "SISLAB_SYNC_NODE_CODE" => "HCM") do
-        expect(described_class.lab_code).to eq("HCM")
+        expect(described_class.facility_code).to eq("HCM")
       end
     end
 
     # A local node without a code cannot address anything it pushes upwards, so
     # it must fail at boot rather than sync under a blank identity.
     it "requires a code in local mode" do
-      with_env("SISLAB_SYNC_MODE" => "local", "SISLAB_SYNC_LAB_CODE" => nil,
-               "SISLAB_SYNC_NODE_CODE" => nil) do
-        expect { described_class.lab_code }.to raise_error(described_class::InvalidMode, /LAB_CODE is required/)
+      with_env("SISLAB_SYNC_MODE" => "local", "SISLAB_SYNC_FACILITY_CODE" => nil,
+               "SISLAB_SYNC_NODE_CODE" => nil, "SISLAB_SYNC_LAB_CODE" => nil) do
+        expect { described_class.facility_code }
+          .to raise_error(described_class::InvalidMode, /FACILITY_CODE is required/)
+      end
+    end
+
+    # The old variable named a laboratory, and a node is not one. Reading it as
+    # a facility code would have the node addressing its samples to a register
+    # entry of the wrong kind, so it is refused with the rename in the message.
+    it "refuses the laboratory code left over from when a node was a laboratory" do
+      with_env("SISLAB_SYNC_MODE" => "local", "SISLAB_SYNC_FACILITY_CODE" => nil,
+               "SISLAB_SYNC_NODE_CODE" => nil, "SISLAB_SYNC_LAB_CODE" => "HCM-LAB") do
+        expect { described_class.facility_code }
+          .to raise_error(described_class::InvalidMode, /SISLAB_SYNC_FACILITY_CODE/)
       end
     end
 
     it "defaults to NATIONAL in national mode" do
-      with_env("SISLAB_SYNC_MODE" => "national", "SISLAB_SYNC_LAB_CODE" => nil,
+      with_env("SISLAB_SYNC_MODE" => "national", "SISLAB_SYNC_FACILITY_CODE" => nil,
                "SISLAB_SYNC_NODE_CODE" => nil) do
         expect(described_class.node_code).to eq("NATIONAL")
       end
     end
   end
 
-  describe ".facility_code" do
-    it "reads the health facility out of this node's entry in the register" do
-      with_env("SISLAB_SYNC_MODE" => "local", "SISLAB_SYNC_LAB_CODE" => "HCM-LAB-CENTRAL") do
-        create(:lab, national_code: "HCM-LAB-CENTRAL", facility_code: "HCM", name: "Laboratório Central")
+  describe ".facility" do
+    it "reads this node's name out of its entry in the register" do
+      with_env("SISLAB_SYNC_MODE" => "local", "SISLAB_SYNC_FACILITY_CODE" => "HCM") do
+        create(:facility, national_code: "HCM", name: "Hospital Central de Maputo")
 
-        expect(described_class.facility_code).to eq("HCM")
-        expect(described_class.node_name).to eq("Laboratório Central")
+        expect(described_class.node_name).to eq("Hospital Central de Maputo")
       end
     end
 
     # A node installed before the capital has published its entry still has to
-    # work, and its own code is a stable enough prefix for a tracking number.
-    it "falls back to the laboratory code before the register arrives" do
-      with_env("SISLAB_SYNC_MODE" => "local", "SISLAB_SYNC_LAB_CODE" => "HCM-LAB-CENTRAL") do
-        expect(described_class.facility_code).to eq("HCM-LAB-CENTRAL")
+    # work, and its own code is a stable enough thing to call itself.
+    it "calls itself by its code before the register arrives" do
+      with_env("SISLAB_SYNC_MODE" => "local", "SISLAB_SYNC_FACILITY_CODE" => "HCM") do
+        expect(described_class.facility).to be_nil
+        expect(described_class.node_name).to eq("HCM")
+      end
+    end
+  end
+
+  describe ".labs" do
+    it "lists the laboratories of this unit and nobody else's" do
+      with_env("SISLAB_SYNC_MODE" => "local", "SISLAB_SYNC_FACILITY_CODE" => "HCM") do
+        mine = create(:lab, facility_code: "HCM", name: "Laboratório Central")
+        create(:lab, facility_code: "HPM", name: "Laboratório Provincial")
+
+        expect(described_class.labs).to eq([ mine ])
       end
     end
   end

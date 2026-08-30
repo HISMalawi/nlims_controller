@@ -115,7 +115,9 @@ pt:
       status: Estado
       created_at: Registado
     fields:
+      receiving_facility: Unidade sanitária destinatária
       receiving_lab: Laboratório destinatário
+      unclaimed: por reclamar
       specimen_type: Tipo de amostra
       collected_at: Colhida em
       requested_by: Requisitado por
@@ -202,11 +204,12 @@ pt:
     never_used: nunca usada
     kind_is_fixed: O tipo não se altera depois de criado — mudá-lo re-escoparia as chaves já emitidas.
     node_identity_html: >-
-      As chaves emitidas aqui falam por %{lab} (%{code}), na unidade sanitária %{facility}.
-      Não é preciso indicar códigos: são os deste nó.
+      As chaves emitidas aqui falam pela unidade sanitária %{facility} (%{code}).
+      Não é preciso indicar códigos: são os deste nó. O laboratório que faz cada
+      chamada segue no pedido, porque uma instância do mLab serve vários.
     node_not_in_register: >-
-      Este laboratório ainda não consta do registo nacional replicado, pelo que a unidade
-      sanitária é, por agora, o próprio código do laboratório.
+      Esta unidade sanitária ainda não consta do registo nacional replicado, pelo que
+      o nó se identifica, por agora, apenas pelo seu código.
     facility_hint: Unidade sanitária por que o cliente fala.
     lab_hint: Laboratório por que o cliente fala.
     active_label: Cliente activo
@@ -325,6 +328,7 @@ pt:
     no_loinc: sem LOINC
     uncatalogued: fora do catálogo
     entities:
+      facilities: Unidades sanitárias
       labs: Laboratórios
       departments: Secções
       specimen_types: Tipos de amostra
@@ -352,7 +356,7 @@ pt:
       unit: Unidade
       value_type: Tipo de valor
       facility_code: Código da unidade sanitária
-      facility_name: Unidade sanitária
+      source_code: Código no LIS
       district: Distrito
       province: Província
       phone: Telefone
@@ -497,7 +501,7 @@ pt:
       unauthenticated: Chave de API em falta ou inválida
       insufficient_scope: A chave não tem permissão para esta operação
       facility_mismatch: A chave não pertence a esta unidade sanitária
-      lab_mismatch: A chave não pertence a este laboratório
+      node_mismatch: A chave não fala por este nó
       idempotency_key_required: O cabeçalho Idempotency-Key é obrigatório neste pedido
       idempotency_key_reused: Esta Idempotency-Key já foi usada com um conteúdo diferente
       rate_limited: Demasiados pedidos

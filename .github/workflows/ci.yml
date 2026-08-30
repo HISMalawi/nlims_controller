@@ -50,7 +50,7 @@ jobs:
     env:
       RAILS_ENV: test
       SISLAB_SYNC_MODE: ${{ matrix.mode }}
-      SISLAB_SYNC_NODE_CODE: CI${{ matrix.mode }}
+      SISLAB_SYNC_FACILITY_CODE: CI${{ matrix.mode }}
       DATABASE_HOST: 127.0.0.1
       DATABASE_USER: root
       DATABASE_PASSWORD: sislab

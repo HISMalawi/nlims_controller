@@ -35,16 +35,17 @@ RSpec.describe "Clientes e chaves na interface", type: :request do
       expect(response).to redirect_to(api_client_path(client))
     end
 
-    # O formulário deixou de perguntar os códigos: um nó é um laboratório, e
-    # sabe o seu próprio código e a unidade sanitária onde está.
+    # O formulário deixou de perguntar os códigos: um nó é uma unidade sanitária
+    # e sabe o seu próprio código. O laboratório não vai na chave — uma instância
+    # do mLab serve vários, e a chave seria certa para um e errada para os outros.
     it "dá ao cliente os códigos deste nó, sem os pedir a ninguém", mode: :local do
-      create(:lab, national_code: SislabSync.lab_code, facility_code: "HCM", name: "Laboratório Central")
+      create(:facility, national_code: SislabSync.facility_code, name: "Hospital Central de Maputo")
 
       post api_clients_path, params: { api_client: { name: "EMR sem casa", kind: "emr", active: "1" } }
 
       client = ApiClient.sole
-      expect(client.lab_code).to eq(SislabSync.lab_code)
-      expect(client.facility_code).to eq("HCM")
+      expect(client.facility_code).to eq(SislabSync.facility_code)
+      expect(client.lab_code).to be_nil
     end
 
     it "não deixa mudar o tipo depois de criado, porque isso re-escoparia as chaves já emitidas" do

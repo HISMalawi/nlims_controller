@@ -14,19 +14,16 @@ RSpec.describe ApiClient do
 
   # Issuing a key used to mean typing a facility code and a laboratory code into
   # a form, and the pair then decided whether the client's requests were
-  # answered. On a node that is itself a laboratory both are already known.
+  # answered. On a node that is a health facility the unit is already known, and
+  # the laboratory is not on the key at all: one mLab instance speaks for every
+  # laboratory in the unit, so a laboratory on the key would be right for one of
+  # them and wrong for the rest.
   describe "the identity it inherits", mode: :local do
-    it "takes this node's laboratory and facility, so the form need not ask" do
+    it "takes this node's unit, so the form need not ask" do
       client = create(:api_client, kind: "emr", facility_code: nil, lab_code: nil)
 
-      expect(client.lab_code).to eq(SislabSync.lab_code)
       expect(client.facility_code).to eq(SislabSync.facility_code)
-    end
-
-    it "reads the facility out of this node's entry in the register" do
-      create(:lab, national_code: SislabSync.lab_code, facility_code: "HCM", name: "Laboratório Central")
-
-      expect(create(:api_client, facility_code: nil).facility_code).to eq("HCM")
+      expect(client.lab_code).to be_nil
     end
 
     it "leaves alone a code that was given on purpose" do

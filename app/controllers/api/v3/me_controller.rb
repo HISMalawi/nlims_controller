@@ -27,7 +27,15 @@ module Api
                       },
                       node: {
                         mode: SislabSync.mode,
-                        node_code: SislabSync.node_code
+                        node_code: SislabSync.node_code,
+                        facility_code: SislabSync.facility_code,
+                        # The benches this unit holds, so an integrator can see
+                        # at a glance which `lab_code` values its calls may
+                        # carry — including the ones this node registered itself
+                        # and the capital has not named yet.
+                        labs: SislabSync.labs.map do |lab|
+                          { code: lab.code, name: lab.name, national_code: lab.national_code }
+                        end
                       }
                     })
       end

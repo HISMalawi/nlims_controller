@@ -41,10 +41,9 @@
       diagnose from the other end. %>
   <% if SislabSync.local? %>
     <div class="rounded-md border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
-      <p><%= t("api_clients.node_identity_html", lab: tag.span(SislabSync.node_name, class: "font-medium"),
-                                                 code: tag.span(SislabSync.lab_code, class: "font-mono"),
-                                                 facility: tag.span(SislabSync.facility_code, class: "font-mono")) %></p>
-      <% if SislabSync.lab.nil? %>
+      <p><%= t("api_clients.node_identity_html", facility: tag.span(SislabSync.node_name, class: "font-medium"),
+                                                 code: tag.span(SislabSync.facility_code, class: "font-mono")) %></p>
+      <% if SislabSync.facility.nil? %>
         <p class="mt-1 text-xs text-amber-700"><%= t("api_clients.node_not_in_register") %></p>
       <% end %>
     </div>

@@ -60,7 +60,7 @@ RSpec.describe "POST /api/v3/nodes/heartbeat", mode: :national, type: :request d
   end
 
   it "answers 403 for a node reporting under another node's code" do
-    pinned = create(:api_client, kind: "node", lab_code: "XAI-LAB")
+    pinned = create(:api_client, kind: "node", facility_code: "XAI")
 
     beat({}, bearer: issue_key(api_client: pinned, scopes: %w[sync:push]).last)
 

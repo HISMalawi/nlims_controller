@@ -64,7 +64,8 @@ RSpec.describe "Dicionário na interface", type: :request do
     # graça: é o que o nó nacional mantém e o que os nós locais consultam para
     # saber para onde podem referir uma amostra.
     it "lista o registo de laboratórios como mais uma entidade" do
-      create(:lab, name: "Laboratório Central de Maputo", facility_name: "Hospital Central de Maputo")
+      create(:facility, national_code: "HCM", name: "Hospital Central de Maputo")
+      create(:lab, name: "Laboratório Central de Maputo", facility_code: "HCM")
 
       get dictionary_path
 

@@ -30,19 +30,32 @@ end
 module Seeds
   PASSWORD = "palavra-passe-demo"
 
-  # This node is a laboratory. Its own code is what it answers to; the health
-  # facility comes from the register seeded below.
-  LAB = SislabSync.lab_code
-  FACILITY = "HCM"
+  # This node is a health facility. Its own code is what it answers to, and the
+  # laboratories inside it are the register entries that point at it.
+  FACILITY = SislabSync.facility_code
 
-  # The register the capital publishes, as this node holds it. Two entries is
-  # enough to show what it is for: this node, and somewhere to refer a sample to.
-  REGISTER = [
-    { national_code: LAB, name: "Laboratório Central", facility_code: FACILITY,
-      facility_name: "Hospital Central de Maputo", district: "KaMpfumo", province: "Maputo Cidade" },
-    { national_code: "HPM-LAB", name: "Laboratório do Hospital Provincial", facility_code: "HPM",
-      facility_name: "Hospital Provincial da Matola", district: "Matola", province: "Maputo Província" }
+  # The register the capital publishes, as this node holds it. Enough to show
+  # what it is for: this unit with two benches — so a handover between them can
+  # be demonstrated without a second node — and somewhere else to refer to.
+  FACILITIES = [
+    { national_code: FACILITY, name: "Hospital Central de Maputo",
+      district: "KaMpfumo", province: "Maputo Cidade" },
+    { national_code: "HPM", name: "Hospital Provincial da Matola",
+      district: "Matola", province: "Maputo Província" }
   ].freeze
+
+  REGISTER = [
+    { national_code: "#{FACILITY}-LAB", source_code: "LAB01", name: "Laboratório Central",
+      facility_code: FACILITY },
+    { national_code: "#{FACILITY}-MICRO", source_code: "LAB02",
+      name: "Laboratório de Microbiologia", facility_code: FACILITY },
+    { national_code: "HPM-LAB", source_code: "LAB01",
+      name: "Laboratório do Hospital Provincial", facility_code: "HPM" }
+  ].freeze
+
+  # The bench that takes the demo samples. The other one exists so a handover
+  # inside a unit has somewhere to go.
+  LAB = "#{FACILITY}-LAB"
 
   # Where the demo credentials are written instead of being printed.
   #

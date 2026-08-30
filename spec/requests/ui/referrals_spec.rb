@@ -12,7 +12,8 @@ RSpec.describe "Ecrã de amostras referidas", type: :request do
     create(:lab, national_code: to_lab, facility_code: "HPM", name: "Laboratório Provincial")
 
     order = create(:order, sending_facility_code: SislabSync.facility_code,
-                           receiving_lab_code: SislabSync.lab_code)
+                           receiving_facility_code: SislabSync.facility_code,
+                           receiving_lab_code: "#{SislabSync.facility_code}-LAB")
     order.transition_to!(Order::ACCEPTED)
     order.transition_to!(Order::SPECIMEN_COLLECTED)
     order.transition_to!(Order::IN_PROGRESS)

@@ -90,7 +90,7 @@ RUN bundle exec bootsnap precompile -j 1 app/ lib/
 # the assets are the same either way. It is deliberately not an ENV — the whole
 # point of this image is that one build runs as either kind of node, and the
 # real mode arrives from the environment at run time.
-RUN SECRET_KEY_BASE_DUMMY=1 SISLAB_SYNC_MODE=local SISLAB_SYNC_LAB_CODE=BUILD \
+RUN SECRET_KEY_BASE_DUMMY=1 SISLAB_SYNC_MODE=local SISLAB_SYNC_FACILITY_CODE=BUILD \
     ./bin/rails assets:precompile
 
 
