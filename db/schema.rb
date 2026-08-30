@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_27_090100) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_30_090200) do
   create_table "api_clients", charset: "utf8mb4", collation: "utf8mb4_unicode_ci", force: :cascade do |t|
     t.boolean "active", default: true, null: false
     t.datetime "created_at", null: false
@@ -79,7 +79,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_27_090100) do
     t.string "entity_type", limit: 32, null: false
     t.string "entity_uuid", limit: 36, null: false
     t.string "from_status", limit: 12
-    t.string "national_code", limit: 32, null: false
+    t.string "national_code", limit: 32
     t.string "reason"
     t.bigint "revision"
     t.string "to_status", limit: 12, null: false
@@ -119,6 +119,29 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_27_090100) do
     t.index ["api_client_id"], name: "index_external_mappings_on_api_client_id"
     t.index ["entity_uuid"], name: "index_external_mappings_on_entity_uuid"
     t.index ["system", "api_client_id", "entity_type", "external_code"], name: "idx_external_mappings_lookup", unique: true, length: { external_code: 100 }
+  end
+
+  create_table "facilities", charset: "utf8mb4", collation: "utf8mb4_unicode_ci", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.datetime "deleted_at"
+    t.text "description"
+    t.string "district"
+    t.string "loinc_code", limit: 32
+    t.string "moh_code", limit: 32
+    t.string "name", null: false
+    t.string "national_code", limit: 32
+    t.string "phone", limit: 32
+    t.string "province"
+    t.bigint "revision", default: 0, null: false
+    t.string "short_name"
+    t.string "status", limit: 12, default: "draft", null: false
+    t.datetime "updated_at", null: false
+    t.string "uuid", limit: 36, null: false
+    t.index ["national_code"], name: "index_facilities_on_national_code", unique: true
+    t.index ["province", "district"], name: "index_facilities_on_province_and_district"
+    t.index ["revision"], name: "index_facilities_on_revision"
+    t.index ["status", "revision"], name: "index_facilities_on_status_and_revision"
+    t.index ["uuid"], name: "index_facilities_on_uuid", unique: true
   end
 
   create_table "idempotent_requests", charset: "utf8mb4", collation: "utf8mb4_unicode_ci", force: :cascade do |t|
@@ -203,20 +226,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_27_090100) do
     t.datetime "created_at", null: false
     t.datetime "deleted_at"
     t.text "description"
-    t.string "district"
     t.string "facility_code", limit: 16
-    t.string "facility_name"
     t.string "loinc_code", limit: 32
     t.string "moh_code", limit: 32
     t.string "name", null: false
-    t.string "national_code", limit: 32, null: false
+    t.string "national_code", limit: 32
     t.string "phone", limit: 32
-    t.string "province"
     t.bigint "revision", default: 0, null: false
     t.string "short_name"
+    t.string "source_code", limit: 64
     t.string "status", limit: 12, default: "draft", null: false
     t.datetime "updated_at", null: false
     t.string "uuid", limit: 36, null: false
+    t.index ["facility_code", "source_code"], name: "index_labs_on_facility_and_source_code", unique: true
     t.index ["facility_code"], name: "index_labs_on_facility_code"
     t.index ["national_code"], name: "index_labs_on_national_code", unique: true
     t.index ["revision"], name: "index_labs_on_revision"
@@ -271,7 +293,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_27_090100) do
     t.string "order_location"
     t.bigint "patient_id", null: false
     t.string "priority", limit: 12, default: "routine", null: false
-    t.string "receiving_lab_code", limit: 24, null: false
+    t.string "receiving_facility_code", limit: 16, null: false
+    t.string "receiving_lab_code", limit: 24
     t.string "rejection_code", limit: 64
     t.string "rejection_name"
     t.bigint "rejection_reason_id"
@@ -288,6 +311,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_27_090100) do
     t.datetime "updated_at", null: false
     t.string "uuid", limit: 36, null: false
     t.index ["patient_id"], name: "index_orders_on_patient_id"
+    t.index ["receiving_facility_code", "revision"], name: "index_orders_on_receiving_facility_code_and_revision"
+    t.index ["receiving_facility_code", "status"], name: "index_orders_on_receiving_facility_code_and_status"
     t.index ["receiving_lab_code", "revision"], name: "index_orders_on_receiving_lab_code_and_revision"
     t.index ["receiving_lab_code", "status"], name: "index_orders_on_receiving_lab_code_and_status"
     t.index ["rejection_reason_id"], name: "index_orders_on_rejection_reason_id"

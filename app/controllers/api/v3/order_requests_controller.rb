@@ -29,6 +29,10 @@ module Api
       def order_request_params
         payload.permit(
           patient: %i[national_id name sex birthdate phone],
+          # How a LIS names the laboratory the sample is being taken in. An mLab
+          # instance holds several under one key, and a laboratory the node has
+          # never seen is registered from this block rather than refused.
+          lab: %i[code name short_name description phone],
           order: [
             :sending_facility_code, :receiving_lab_code, :lab_code, :priority, :requested_by,
             :order_location, :clinical_history, :collected_at,

@@ -18,6 +18,7 @@ FactoryBot.define do
     patient
     specimen_type
     sending_facility_code { "HCM" }
+    receiving_facility_code { "HCM" }
     receiving_lab_code { "HCM-LAB" }
     lab_code { "HCM-LAB-BIOQ" }
     priority { "routine" }

@@ -12,31 +12,38 @@ module Api
         MAX_LIMIT = 500
         DEFAULT_LIMIT = 100
 
-        # Everything for this laboratory that changed since the cursor — not
-        # only what is still open. An order cancelled at the clinic after the
-        # laboratory took it is exactly what that laboratory has to be told
-        # about, and a feed that hid it would leave a sample being worked on
-        # that nobody wants.
+        # Everything at this unit that changed since the cursor — not only what
+        # is still open. An order cancelled at the clinic after the laboratory
+        # took it is exactly what that laboratory has to be told about, and a
+        # feed that hid it would leave a sample being worked on that nobody
+        # wants.
+        #
+        # The unit is the scope, because the node is the unit. An mLab instance
+        # polling for one of its benches sends `lab_code` and gets that bench's
+        # work plus everything still unclaimed; sending nothing gets the whole
+        # unit, which is what an instance that dispatches its own benches wants.
         def pending
           return unless authorize_scope!("orders:read")
-          return unless lab_code
-          return unless authorize_lab!(lab_code)
 
           orders = feed.limit(limit).to_a
           next_cursor = orders.last&.revision || cursor
 
           render_data(
             orders.map { |order| OrderSerializer.call(order) },
-            meta: { cursor: cursor, next_cursor: next_cursor,
+            meta: { cursor: cursor, next_cursor: next_cursor, facility_code: facility_code,
                     lab_code: lab_code, has_more: more_after?(next_cursor, orders) }
           )
         end
 
+        # Taking the sample. The laboratory says which of the unit's benches is
+        # taking it: an order raised by an EMR arrived at the unit with no
+        # laboratory on it, and this is where it acquires one.
         def claim
           return unless authorize_scope!("orders:read")
           return unless load_order
+          return unless claiming_lab
 
-          @order.claim!(lab_code: @order.receiving_lab_code, actor: Current.api_client.name)
+          @order.claim!(lab_code: claiming_lab, actor: Current.api_client.name)
 
           render_data(OrderSerializer.call(@order))
         rescue Order::AlreadyClaimed => e
@@ -118,13 +125,27 @@ module Api
         def load_order
           @order = Order.find_by_tracking_number!(params[:tracking_number])
 
-          authorize_lab!(@order.receiving_lab_code)
+          authorize_facility!(@order.receiving_facility_code)
         end
 
+        # Scoped to the unit, and narrowed to one bench when the caller names
+        # one. Unclaimed work stays in every bench's feed: until somebody takes
+        # it, it is nobody's and anybody's.
         def feed
-          Order.changed_since(cursor)
-               .for_lab(lab_code)
-               .includes(:patient, :specimen_type, order_tests: %i[test_type test_panel])
+          scope = Order.changed_since(cursor).for_facility(facility_code)
+          scope = scope.where(receiving_lab_code: lab_codes + [ nil ]) if lab_code.present?
+
+          scope.includes(:patient, :specimen_type, order_tests: %i[test_type test_panel])
+        end
+
+        # Every code the named laboratory is known by — its own and, once the
+        # capital has named it, the national one. Samples keep the code they
+        # were written with, so asking by one of them must find both.
+        def lab_codes
+          @lab_codes ||= begin
+            known = ::Lab.find_by_any_code(lab_code, facility_code: facility_code)
+            known&.codes.presence || [ lab_code ]
+          end
         end
 
         def more_after?(next_cursor, orders)
@@ -133,17 +154,34 @@ module Api
           feed.unscope(:includes).where(revision: ((next_cursor + 1)..)).exists?
         end
 
-        # The key knows which laboratory it speaks for, so the parameter is only
-        # there for a client that speaks for several — and it still has to
-        # match the key.
-        def lab_code
-          return @lab_code if defined?(@lab_code)
+        # The unit this key speaks for. Filled onto the key when it was issued,
+        # so a client never sends it and never gets it wrong.
+        def facility_code
+          @facility_code ||= Current.api_client&.facility_code.presence || SislabSync.facility_code
+        end
 
-          @lab_code = params[:lab_code].presence || Current.api_client.lab_code
-          return @lab_code if @lab_code.present?
+        # Which bench, when the caller names one. Optional everywhere it is read
+        # for a feed: an mLab instance holds several laboratories under one key,
+        # and which of them is asking is its business, not the key's.
+        def lab_code
+          @lab_code ||= params[:lab_code].presence
+        end
+
+        # Which bench is taking the sample. Required, because this is the one
+        # place the answer is written down and inferring it would write the
+        # wrong laboratory onto somebody's result.
+        def claiming_lab
+          return @claiming_lab if defined?(@claiming_lab)
+
+          # Written down canonically: the national code where the register has
+          # one, so a result is not filed under a code that only means anything
+          # inside one mLab instance.
+          named = lab_code && ::Lab.find_by_any_code(lab_code, facility_code: facility_code)
+          @claiming_lab = named&.code || lab_code || @order.receiving_lab_code.presence
+          return @claiming_lab if @claiming_lab
 
           render_api_error(Errors::UNPROCESSABLE,
-                           message: "esta chave não está associada a um laboratório; indique lab_code",
+                           message: "indique lab_code: o laboratório que está a receber a amostra",
                            field: "lab_code")
           nil
         end

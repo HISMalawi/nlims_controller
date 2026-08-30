@@ -12,7 +12,7 @@ RSpec.describe "GET /api/v3/lab/pending-orders", mode: :local, type: :request do
   end
 
   describe "pulling the work" do
-    it "hands over the orders addressed to this laboratory, oldest first" do
+    it "hands over the orders raised at this unit, oldest first" do
       first = create(:order, receiving_lab_code: "HCM-LAB")
       second = create(:order, receiving_lab_code: "HCM-LAB")
 
@@ -24,17 +24,50 @@ RSpec.describe "GET /api/v3/lab/pending-orders", mode: :local, type: :request do
       expect(data.map { |order| order["tracking_number"] })
         .to eq([ first.tracking_number, second.tracking_number ])
       expect(response.parsed_body.dig("meta", "next_cursor")).to eq(second.revision)
-      expect(response.parsed_body.dig("meta", "lab_code")).to eq("HCM-LAB")
+      expect(response.parsed_body.dig("meta", "facility_code")).to eq("HCM")
     end
 
-    it "leaves another laboratory's work alone" do
+    # The node is the unit, not one bench in it: a sample another unit is
+    # working is nothing to do with this installation, however it is addressed.
+    it "leaves another unit's work alone" do
       mine = create(:order, receiving_lab_code: "HCM-LAB")
-      create(:order, receiving_lab_code: "XAI-LAB")
+      create(:order, receiving_facility_code: "XAI", receiving_lab_code: "XAI-LAB")
 
       get_pending(since: 0)
 
       expect(response.parsed_body["data"].map { |order| order["tracking_number"] })
         .to eq([ mine.tracking_number ])
+    end
+
+    # A sample keeps the code it was written with. A laboratory registered here
+    # takes samples under its LIS code and, from the day the capital names it,
+    # under the national one — and both are its work. Without this, the day the
+    # capital catches up is the day a bench's older samples vanish from its
+    # queue.
+    it "finds the bench's work under every code it has been written as" do
+      lab = Lab.register_local!(source_code: "LAB07", facility_code: "HCM", name: "Bioquímica")
+      early = create(:order, receiving_lab_code: "LAB07")
+      lab.update!(national_code: "MOZ-LAB-0042")
+      later = create(:order, receiving_lab_code: "MOZ-LAB-0042")
+
+      get_pending(since: 0, lab_code: "MOZ-LAB-0042")
+
+      expect(response.parsed_body["data"].map { |order| order["tracking_number"] })
+        .to eq([ early.tracking_number, later.tracking_number ])
+    end
+
+    # An mLab instance polling for one of its benches wants that bench's work
+    # and whatever is still going spare, and not the bench next door's.
+    it "narrows to one bench when asked, keeping what nobody has claimed" do
+      mine = create(:order, receiving_lab_code: "HCM-LAB")
+      unclaimed = create(:order, receiving_lab_code: nil)
+      create(:order, receiving_lab_code: "HCM-MICRO")
+
+      get_pending(since: 0, lab_code: "HCM-LAB")
+
+      expect(response.parsed_body["data"].map { |order| order["tracking_number"] })
+        .to eq([ mine.tracking_number, unclaimed.tracking_number ])
+      expect(response.parsed_body.dig("meta", "lab_code")).to eq("HCM-LAB")
     end
 
     it "carries the tests, the patient and the sample the laboratory needs" do
@@ -108,24 +141,24 @@ RSpec.describe "GET /api/v3/lab/pending-orders", mode: :local, type: :request do
   # either way.
   describe "the laboratory in the query" do
     it "hands over the queue for the laboratory it was asked about" do
-      get_pending(since: 0, lab_code: "XAI-LAB")
+      get_pending(since: 0, lab_code: "HCM-MICRO")
 
       expect(response).to have_http_status(:ok)
     end
 
-    it "accepts the laboratory the key already names" do
-      get_pending(since: 0, lab_code: "HCM-LAB")
+    # One mLab instance holds several laboratories under one key, so which of
+    # them is asking is its business and not the key's. Leaving it out is the
+    # normal thing to do, not an omission to be refused.
+    it "gives the whole unit when no laboratory is named" do
+      bioq = create(:order, receiving_lab_code: "HCM-LAB")
+      micro = create(:order, receiving_lab_code: "HCM-MICRO")
+
+      get_pending(since: 0)
 
       expect(response).to have_http_status(:ok)
-    end
-
-    it "asks for a laboratory when the key does not name one" do
-      unpinned = issue_key(api_client: create(:api_client, :node), scopes: %w[orders:read])
-
-      get_pending(since: 0, bearer: unpinned.last)
-
-      expect(response).to have_http_status(:unprocessable_content)
-      expect(response.parsed_body.dig("errors", 0, "field")).to eq("lab_code")
+      expect(response.parsed_body["data"].map { |order| order["tracking_number"] })
+        .to eq([ bioq.tracking_number, micro.tracking_number ])
+      expect(response.parsed_body.dig("meta", "lab_code")).to be_nil
     end
 
     it "answers 401 without a key" do

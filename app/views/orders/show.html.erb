@@ -134,7 +134,12 @@
     <%= panel t(".sample") do %>
       <dl class="divide-y divide-slate-100">
         <%= render "orders/field", label: t("orders.columns.facility"), value: mono(@order.sending_facility_code) %>
-        <%= render "orders/field", label: t("orders.fields.receiving_lab"), value: mono(@order.receiving_lab_code) %>
+        <%= render "orders/field", label: t("orders.fields.receiving_facility"),
+              value: mono(@order.receiving_facility_code) %>
+        <%# Em branco enquanto nenhuma das bancadas da unidade tiver reclamado a
+            amostra — que é como um pedido do EMR começa. %>
+        <%= render "orders/field", label: t("orders.fields.receiving_lab"),
+              value: @order.receiving_lab_code.present? ? mono(@order.receiving_lab_code) : t("orders.fields.unclaimed") %>
         <%= render "orders/field", label: t("orders.fields.specimen_type"), value: @order.specimen_type_label %>
         <%= render "orders/field", label: t("orders.fields.collected_at"), value: timestamp(@order.collected_at) %>
         <%= render "orders/field", label: t("orders.fields.requested_by"), value: @order.requested_by %>

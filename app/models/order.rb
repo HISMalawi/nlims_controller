@@ -50,7 +50,7 @@ class Order < ApplicationRecord
   has_many :referrals, dependent: :destroy
 
   validates :tracking_number, presence: true
-  validates :receiving_lab_code, presence: true
+  validates :receiving_facility_code, presence: true
   validates :priority, inclusion: { in: PRIORITIES }
 
   # Runs inside the transaction Active Record opens around the save, which is
@@ -60,8 +60,19 @@ class Order < ApplicationRecord
   before_save :assign_revision
 
   scope :for_lab, ->(lab_code) { where(receiving_lab_code: lab_code) }
+  # The unit that received the sample — this node. Not the unit that raised it:
+  # that is `sending_facility_code`, and it is what the EMR feed is scoped by
+  # (`TestResult.for_facility`). The two are the same on the node that took the
+  # sample and different on the one it was referred to, which is the whole point
+  # of keeping both.
+  scope :for_facility, ->(facility_code) { where(receiving_facility_code: facility_code) }
   scope :open, -> { where.not(status: [ COMPLETED, REJECTED, CANCELLED ]) }
   scope :unclaimed, -> { where(claimed_at: nil) }
+
+  # Raised at the unit and not yet taken by any of its laboratories. This is
+  # what an mLab bench polls: a clinician asks the unit for a test, and which
+  # laboratory runs it is settled by whichever one claims it.
+  scope :unassigned, -> { where(receiving_lab_code: nil) }
 
   # What a laboratory polls for. Everything that changed, not only what is still
   # open: an order cancelled at the clinic after the laboratory took it is
@@ -92,10 +103,15 @@ class Order < ApplicationRecord
   #
   # Taking the work is also accepting it, so the claim moves the status too, and
   # the history gets the entry an operator would look for.
+  #
+  # Claiming is also how an order raised by an EMR acquires its laboratory. It
+  # arrived at the unit with none — the clinician asked the unit, not a bench —
+  # and the bench that takes it is the one that will run it.
   def claim!(lab_code:, actor: nil)
     self.class.transaction do
       taken = self.class.unclaimed.where(id: id)
-                  .update_all(claimed_at: Time.current, claimed_by_lab_code: lab_code)
+                  .update_all(claimed_at: Time.current, claimed_by_lab_code: lab_code,
+                              receiving_lab_code: receiving_lab_code.presence || lab_code)
 
       raise AlreadyClaimed, "#{tracking_number} já foi reclamado por #{reload.claimed_by_lab_code}" if taken.zero?
 
@@ -152,11 +168,12 @@ class Order < ApplicationRecord
   def assign_tracking_number
     return if tracking_number.present?
 
-    # The facility that collected the sample, or the laboratory that took it in
-    # when the register has not told this node its facility yet. Either is a
+    # The unit that collected the sample, or the one working it. Either is a
     # stable prefix; what matters is that a sample is never left without a
-    # number, because the number is what the clinic writes on the tube.
-    prefix = sending_facility_code.presence || receiving_lab_code.presence
+    # number, because the number is what the clinic writes on the tube. The
+    # laboratory is deliberately not a fallback — an order raised by an EMR has
+    # none until a bench claims it, and a number cannot wait for that.
+    prefix = sending_facility_code.presence || receiving_facility_code.presence
 
     # Nothing to build a number from yet. Leaving it unset lets the presence
     # validation say so, which is a far more useful answer than the generator's

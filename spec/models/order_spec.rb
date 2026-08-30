@@ -16,14 +16,19 @@ RSpec.describe Order do
     expect(order.tracking_number).to eq("MZ-XAI-26229-0007")
   end
 
-  # The laboratory that will run it is the one thing still required. The
-  # facility is derived from this node's entry in the register, and a node whose
-  # register has not arrived yet must still be able to take an order.
-  it "needs the laboratory that is going to run it" do
-    order = build(:order, sending_facility_code: nil, receiving_lab_code: nil)
+  # The unit that received it is the one thing still required — that is the node
+  # itself, so it is always known. The laboratory is not: a clinician asks the
+  # unit for a test, and which bench runs it is settled when one of them claims
+  # the sample.
+  it "needs the unit that received it" do
+    order = build(:order, receiving_facility_code: nil)
 
     expect(order).not_to be_valid
-    expect(order.errors.attribute_names).to include(:receiving_lab_code)
+    expect(order.errors.attribute_names).to include(:receiving_facility_code)
+  end
+
+  it "takes an order no laboratory has claimed yet" do
+    expect(build(:order, receiving_lab_code: nil)).to be_valid
   end
 
   it "takes an order raised before the register named its facility" do

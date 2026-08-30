@@ -84,6 +84,7 @@ RSpec.describe TrackingNumber do
                 patient: patient,
                 specimen_type: specimen_type,
                 sending_facility_code: "HCM",
+                receiving_facility_code: "HCM",
                 receiving_lab_code: "HCM-LAB",
                 priority: "routine"
               ).tracking_number

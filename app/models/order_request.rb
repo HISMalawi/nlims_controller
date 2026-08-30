@@ -23,12 +23,45 @@ class OrderRequest
     @api_client&.facility_code.presence || SislabSync.facility_code
   end
 
-  # The laboratory that will run the tests. Defaults to this node's own: a
-  # laboratory node receiving an order is, overwhelmingly, the laboratory that
-  # will do the work, and making every EMR say so was the commonest reason a
-  # first request failed.
+  # The laboratory that will run the tests, or nil.
+  #
+  # Nil is the ordinary case for an EMR: a clinician asks the unit for a test
+  # and which bench runs it is decided at the bench, when a laboratory claims
+  # the sample. It used to default to the node's own laboratory, from the days
+  # when a node was one — there is no such thing to default to now.
+  #
+  # A LIS says so, because it is the laboratory: it sends its own code, and the
+  # register learns of it here if this is the first time.
   def receiving_lab_code
-    order_params[:receiving_lab_code].presence || SislabSync.lab_code
+    return @receiving_lab_code if defined?(@receiving_lab_code)
+
+    @receiving_lab_code = performing_lab&.code || order_params[:receiving_lab_code].presence
+  end
+
+  # The laboratory's entry in the register, registering it if this node has
+  # never seen it.
+  #
+  # A code on its own is not enough to register anything — there would be no
+  # name to put on it — so a bare `receiving_lab_code` is looked up and, when it
+  # matches nothing, simply kept as it was written. That is what the rest of the
+  # intake does with a term the dictionary does not carry.
+  def performing_lab
+    return @performing_lab if defined?(@performing_lab)
+
+    code = (lab_params[:code].presence || order_params[:receiving_lab_code].presence)
+    return @performing_lab = nil if code.blank?
+
+    known = Lab.find_by_any_code(code, facility_code: facility_code)
+    return @performing_lab = known if known
+    return @performing_lab = nil if lab_params[:name].blank? && lab_params[:code].blank?
+
+    @performing_lab = Lab.register_local!(
+      source_code: code,
+      facility_code: facility_code,
+      name: lab_params[:name],
+      phone: lab_params[:phone],
+      description: lab_params[:description]
+    )
   end
 
   def create!
@@ -52,6 +85,13 @@ class OrderRequest
     @payload[:order] || {}
   end
 
+  # Who is sending the sample, as the sender describes itself. An mLab instance
+  # serves several laboratories and names the one at hand here; an EMR sends
+  # nothing and the sample arrives at the unit unclaimed.
+  def lab_params
+    @lab_params ||= (@payload[:lab] || {}).to_h.symbolize_keys
+  end
+
   def test_params
     Array(@payload[:tests])
   end
@@ -69,6 +109,7 @@ class OrderRequest
     order = Order.new(
       patient: Patient.upsert_from!(patient_params),
       sending_facility_code: facility_code,
+      receiving_facility_code: facility_code,
       receiving_lab_code: receiving_lab_code,
       lab_code: order_params[:lab_code],
       priority: order_params[:priority].presence || Order::PRIORITIES.first,

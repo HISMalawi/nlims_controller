@@ -28,10 +28,16 @@ class OutboxEvent < ApplicationRecord
   REFERRAL_RECEIVED = "referral.received"
   REFERRAL_REJECTED = "referral.rejected"
 
+  # A laboratory this node met for the first time on an arriving sample. Not a
+  # clinical fact, but it travels the same road for the same reason: it was
+  # written here, the capital has to have it, and the link to the capital is
+  # down as often as it is up.
+  LAB_REGISTERED = "lab.registered"
+
   TYPES = [
     PATIENT_UPSERTED, ORDER_CREATED, ORDER_STATUS_CHANGED, ORDER_TEST_ADDED,
     TEST_STATUS_CHANGED, TEST_RESULT_RECORDED, SPECIMEN_REJECTED,
-    REFERRAL_DISPATCHED, REFERRAL_RECEIVED, REFERRAL_REJECTED
+    REFERRAL_DISPATCHED, REFERRAL_RECEIVED, REFERRAL_REJECTED, LAB_REGISTERED
   ].freeze
 
   # Two writers can read the same highest sequence for one aggregate and both

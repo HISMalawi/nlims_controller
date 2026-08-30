@@ -9,8 +9,8 @@ RSpec.describe "POST /api/v3/lab/orders/{tn}/claim", mode: :local, type: :reques
 
   let(:order) { create(:order, receiving_lab_code: "HCM-LAB") }
 
-  def claim(tracking_number: order.tracking_number, bearer: token)
-    post "/api/v3/lab/orders/#{tracking_number}/claim", headers: auth_headers(bearer)
+  def claim(tracking_number: order.tracking_number, bearer: token, **query)
+    post "/api/v3/lab/orders/#{tracking_number}/claim", params: query, headers: auth_headers(bearer)
   end
 
   it "takes the sample and accepts it in one movement" do
@@ -55,6 +55,43 @@ RSpec.describe "POST /api/v3/lab/orders/{tn}/claim", mode: :local, type: :reques
 
       expect(order.reload.claimed_at).to eq(claimed_at)
       expect(order.status).to eq(Order::ACCEPTED)
+    end
+  end
+
+  # A sample raised by an EMR arrived at the unit with no laboratory on it: the
+  # clinician asked the unit, and which bench runs it is decided at the bench.
+  # This is where it acquires one.
+  describe "a sample no laboratory has yet" do
+    let(:order) { create(:order, receiving_lab_code: nil) }
+
+    it "is assigned to the bench that takes it" do
+      claim(lab_code: "HCM-MICRO")
+
+      expect(response).to have_http_status(:ok)
+      expect(order.reload.receiving_lab_code).to eq("HCM-MICRO")
+      expect(order.claimed_by_lab_code).to eq("HCM-MICRO")
+    end
+
+    # Filed under the code the country agrees on, not the one that only means
+    # something inside one mLab instance.
+    it "writes down the national code when the register has one" do
+      Lab.register_local!(source_code: "LAB07", facility_code: "HCM", name: "Bioquímica")
+        .update!(national_code: "MOZ-LAB-0042")
+
+      claim(lab_code: "LAB07")
+
+      expect(order.reload.receiving_lab_code).to eq("MOZ-LAB-0042")
+    end
+
+    # Inferring it would write the wrong laboratory onto somebody's result, and
+    # there is nothing to infer it from: one key speaks for every bench in the
+    # unit.
+    it "asks which bench is taking it, rather than guessing" do
+      claim
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(response.parsed_body.dig("errors", 0, "field")).to eq("lab_code")
+      expect(order.reload).not_to be_claimed
     end
   end
 

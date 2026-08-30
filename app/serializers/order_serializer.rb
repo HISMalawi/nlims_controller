@@ -33,6 +33,7 @@ class OrderSerializer
       claimed_at: @order.claimed_at&.iso8601,
       claimed_by_lab_code: @order.claimed_by_lab_code,
       sending_facility_code: @order.sending_facility_code,
+      receiving_facility_code: @order.receiving_facility_code,
       receiving_lab_code: @order.receiving_lab_code,
       lab_code: @order.lab_code,
       specimen_type: DictionaryReference.call(@order.specimen_type_reference),

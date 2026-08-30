@@ -185,15 +185,76 @@ RSpec.describe "POST /api/v3/order-requests", mode: :local, type: :request do
     end
   end
 
+  # An mLab instance serves several laboratories of the same unit, each under its
+  # own code, and says which one is speaking in the `lab` block. A laboratory the
+  # node has never seen is registered from what that block says rather than
+  # refused: it has already taken the sample, so it exists.
+  describe "the laboratory sending the sample" do
+    def post_from_lab(lab, order: {})
+      post_order(payload(order: order).merge(lab: lab))
+    end
+
+    it "registers a laboratory it has never seen, and takes the sample" do
+      post_from_lab({ code: "LAB07", name: "Laboratório de Bioquímica", phone: "840000111" })
+
+      expect(response).to have_http_status(:created)
+
+      lab = Lab.find_by!(facility_code: "HCM", source_code: "LAB07")
+      expect(lab.name).to eq("Laboratório de Bioquímica")
+      expect(lab.phone).to eq("840000111")
+      expect(lab).to be_local
+      expect(Order.sole.receiving_lab_code).to eq("LAB07")
+    end
+
+    # Only the capital issues national codes; this is how it hears of the
+    # laboratory at all.
+    it "announces the new laboratory to the capital" do
+      post_from_lab({ code: "LAB07", name: "Laboratório de Bioquímica" })
+
+      lab = Lab.find_by!(source_code: "LAB07")
+      event = OutboxEvent.find_by(type: OutboxEvent::LAB_REGISTERED, aggregate_uuid: lab.uuid)
+
+      expect(event.payload).to include("source_code" => "LAB07", "facility_code" => "HCM")
+    end
+
+    it "registers it once, however many samples arrive from it" do
+      2.times { post_from_lab({ code: "LAB07", name: "Laboratório de Bioquímica" }) }
+
+      expect(Lab.where(source_code: "LAB07").count).to eq(1)
+      expect(OutboxEvent.where(type: OutboxEvent::LAB_REGISTERED).count).to eq(1)
+    end
+
+    it "uses the national code once the capital has named the laboratory" do
+      create(:lab, national_code: "MOZ-LAB-0042", facility_code: "HCM", source_code: "LAB07")
+
+      post_from_lab({ code: "LAB07", name: "Laboratório de Bioquímica" })
+
+      expect(Order.sole.receiving_lab_code).to eq("MOZ-LAB-0042")
+      expect(OutboxEvent.where(type: OutboxEvent::LAB_REGISTERED)).to be_empty
+    end
+
+    # A code on its own is not enough to register anything — there would be no
+    # name to put on it — so it is kept as written, the way an unknown
+    # dictionary term is.
+    it "keeps a bare code it cannot place, rather than inventing a laboratory" do
+      post_order(payload(order: { receiving_lab_code: "LAB99" }))
+
+      expect(response).to have_http_status(:created)
+      expect(Order.sole.receiving_lab_code).to eq("LAB99")
+      expect(Lab.where(source_code: "LAB99")).to be_empty
+    end
+  end
+
   describe "the codes the node fills in for itself" do
-    # The laboratory node receiving an order is, overwhelmingly, the laboratory
-    # that will do the work. Making every EMR say so was the commonest reason a
-    # first request failed.
-    it "takes the order to be for this laboratory when none is named" do
+    # A clinician asks the unit for a test; which bench runs it is settled at the
+    # bench, when one of them claims the sample. It used to default to the
+    # node's own laboratory, from when a node was one.
+    it "leaves the order at the unit when no laboratory is named" do
       post_order(payload.tap { |body| body[:order].delete(:receiving_lab_code) })
 
       expect(response).to have_http_status(:created)
-      expect(Order.sole.receiving_lab_code).to eq(SislabSync.lab_code)
+      expect(Order.sole.receiving_facility_code).to eq(api_client.facility_code)
+      expect(Order.sole.receiving_lab_code).to be_nil
     end
 
     it "uses the facility on the key, whatever the payload claims" do

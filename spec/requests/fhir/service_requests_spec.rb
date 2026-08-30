@@ -278,11 +278,16 @@ RSpec.describe "FHIR ServiceRequest", mode: :local, type: :request do
   end
 
   describe "refusals" do
-    it "says which field is missing when nobody is named to perform the test" do
+    # `performer` used to be required, from when a node was a single laboratory
+    # and there was exactly one right answer. A ServiceRequest comes from a
+    # clinician asking the health facility for a test; the sample arrives at the
+    # unit unclaimed and the laboratory that takes it is the one that runs it.
+    it "takes a request that names nobody to perform the test" do
       post_request(service_request.except(:performer))
 
-      expect(response).to have_http_status(:unprocessable_content)
-      expect(response.parsed_body.dig("issue", 0, "expression")).to eq([ "ServiceRequest.performer" ])
+      expect(response).to have_http_status(:created)
+      expect(Order.sole.receiving_lab_code).to be_nil
+      expect(Order.sole.receiving_facility_code).to eq(api_client.facility_code)
     end
 
     it "answers an OperationOutcome, not the JSON API's envelope, when the key is unknown" do

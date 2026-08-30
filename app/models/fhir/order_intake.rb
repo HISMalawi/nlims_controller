@@ -190,18 +190,18 @@ module Fhir
       }.compact
     end
 
-    # Which laboratory is being asked. FHIR has no better place for it than
-    # `performer`, and there is no sensible default: an order with nobody to
-    # perform it is one that sits in a queue no laboratory is polling.
+    # Which laboratory is being asked, when the requester names one. FHIR has no
+    # better place for it than `performer`.
+    #
+    # Optional, and usually absent. A ServiceRequest comes from a clinician, who
+    # is asking the health facility for a test rather than assigning a bench;
+    # the sample arrives at the unit unclaimed and the laboratory that takes it
+    # is the one that runs it. This used to be required, from when a node was a
+    # single laboratory and there was exactly one right answer.
     def receiving_lab_code
       code = Array(leader[:performer]).filter_map { |performer| performer.dig(:identifier, :value) }.first
       code = Array(leader[:performer]).filter_map { |performer| performer[:display] }.first if code.blank?
-      return code if code.present?
-
-      raise InvalidRequest.new(
-        "o pedido tem de indicar o laboratório receptor em `performer.identifier`",
-        field: "ServiceRequest.performer"
-      )
+      code.presence
     end
 
     def specimen_resource
