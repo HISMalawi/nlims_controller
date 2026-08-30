@@ -43,16 +43,29 @@ module Dictionary
       when "indicators" then indicator_extras
       when "test_types" then test_type_extras
       when "labs" then lab_extras
+      when "facilities" then facility_extras
       else {}
       end
     end
 
-    # Where the laboratory is. A node that receives this can address a referral
-    # to it without being told anything else about it.
+    # Which unit the laboratory belongs to, and what its own LIS calls it. The
+    # unit's district and province are not repeated here: they travel on the
+    # facility entry, and a node that has this one has that one too.
+    #
+    # `source_code` goes out because it is how the node that registered the
+    # laboratory recognises the capital's answer as its own.
     def lab_extras
       {
         facility_code: @record.facility_code,
-        facility_name: @record.facility_name,
+        source_code: @record.source_code,
+        phone: @record.phone
+      }
+    end
+
+    # Where the unit is. A node that receives this can address a referral to any
+    # laboratory in it without being told anything else.
+    def facility_extras
+      {
         district: @record.district,
         province: @record.province,
         phone: @record.phone

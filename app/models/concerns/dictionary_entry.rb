@@ -70,6 +70,18 @@ module DictionaryEntry
     end
   end
 
+  # Whether this node is the one that names the entry. True everywhere by
+  # default: the dictionary is written in the capital and replicated outwards,
+  # so a record being saved at all means the capital is saving it.
+  #
+  # Overridden by an entity a local node may create before the capital has heard
+  # of it — a laboratory met on an arriving sample. Leaving that one to take a
+  # code here would hand out a national code the country never issued, and two
+  # nodes would sooner or later issue the same one to different laboratories.
+  def assign_national_code?
+    true
+  end
+
   def draft?    = status == DRAFT
   def active?   = status == ACTIVE
   def retired?  = status == RETIRED
@@ -98,6 +110,7 @@ module DictionaryEntry
 
   def assign_national_code
     return if national_code.present?
+    return unless assign_national_code?
     raise "#{self.class} has no national_code_prefix" if national_code_prefix.blank?
 
     number = Sequence.next!("national_code:#{national_code_prefix}")

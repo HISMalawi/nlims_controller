@@ -32,7 +32,10 @@ module Dictionary
       ],
       "labs" => [
         Field.new(name: :facility_code, kind: :code),
-        Field.new(name: :facility_name, kind: :string),
+        Field.new(name: :source_code, kind: :code),
+        Field.new(name: :phone, kind: :string)
+      ],
+      "facilities" => [
         Field.new(name: :district, kind: :string),
         Field.new(name: :province, kind: :string),
         Field.new(name: :phone, kind: :string)

@@ -11,7 +11,8 @@ module Dictionary
     attr_reader :applied, :deferred, :resolved
 
     BASE_ATTRIBUTES = %i[national_code name short_name description status loinc_code moh_code].freeze
-    LAB_ATTRIBUTES = %i[facility_code facility_name district province phone].freeze
+    LAB_ATTRIBUTES = %i[facility_code source_code phone].freeze
+    FACILITY_ATTRIBUTES = %i[district province phone].freeze
 
     def initialize
       @applied = Hash.new(0)
@@ -53,7 +54,8 @@ module Dictionary
 
       model = Dictionary.model_for!(entity_type)
 
-      record = model.find_by(uuid: entry[:uuid]) || model.new(uuid: entry[:uuid])
+      record = model.find_by(uuid: entry[:uuid]) || adopt_local(model, entity_type, entry) ||
+               model.new(uuid: entry[:uuid])
       record.assign_attributes(entry.slice(*BASE_ATTRIBUTES))
       record.deleted_at = entry[:deleted_at]
       record.replicated_revision = entry[:revision]
@@ -71,6 +73,24 @@ module Dictionary
       @applied[entity_type] += 1
     end
 
+    # The capital's answer to a laboratory this node registered itself.
+    #
+    # It normally arrives under the uuid this node sent up, and the line above
+    # finds it. This is for the node that registered a laboratory and was then
+    # rebuilt from the feed: the uuid is gone, but the pair the register is
+    # keyed on is not, and matching on it is what stops the rebuild ending with
+    # two rows for one laboratory.
+    def adopt_local(model, entity_type, entry)
+      return nil unless entity_type == "labs"
+      return nil if entry[:source_code].blank?
+
+      local = model.find_by(facility_code: entry[:facility_code], source_code: entry[:source_code])
+      return nil if local.nil?
+
+      local.uuid = entry[:uuid]
+      local
+    end
+
     def assign_extras(record, entity_type, entry)
       case entity_type
       when "indicators"
@@ -82,6 +102,8 @@ module Dictionary
         record.performed_on_sex = entry[:performed_on_sex] if entry[:performed_on_sex].present?
       when "labs"
         record.assign_attributes(entry.slice(*LAB_ATTRIBUTES))
+      when "facilities"
+        record.assign_attributes(entry.slice(*FACILITY_ATTRIBUTES))
       end
     end
 

@@ -5,9 +5,12 @@
 # instead of one cursor per entity type.
 module Dictionary
   ENTITIES = {
-    # The register of laboratories rides the dictionary feed rather than a
-    # channel of its own: it is a national list, replicated to every node, read
-    # by code — which is what the feed already does eight times over.
+    # The register of health facilities and the laboratories inside them rides
+    # the dictionary feed rather than a channel of its own: it is a national
+    # list, replicated to every node, read by code — which is what the feed
+    # already does eight times over. Facilities come first so that a first sync
+    # applies a unit before the laboratories that point at it.
+    "facilities" => "Facility",
     "labs" => "Lab",
     "departments" => "Department",
     "specimen_types" => "SpecimenType",

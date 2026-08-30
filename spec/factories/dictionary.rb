@@ -15,12 +15,22 @@ FactoryBot.define do
     status { DictionaryEntry::RETIRED }
   end
 
+  factory :facility do
+    dictionary_defaults
+    sequence(:name) { |n| "Unidade Sanitária #{n}" }
+    province { "Maputo Cidade" }
+    district { "KaMpfumo" }
+  end
+
+  # A laboratory as the register publishes it: named by the capital. The kind a
+  # local node registers itself has no national code and is built through
+  # Lab.register_local!, which is the only thing that makes one.
   factory :lab do
     dictionary_defaults
     sequence(:name) { |n| "Laboratório #{n}" }
+    sequence(:national_code) { |n| format("MOZ-LAB-%04d", n) }
     sequence(:facility_code) { |n| "US#{n}" }
-    sequence(:facility_name) { |n| "Unidade Sanitária #{n}" }
-    province { "Maputo Cidade" }
+    sequence(:source_code) { |n| "LAB#{n}" }
   end
 
   factory :department do
