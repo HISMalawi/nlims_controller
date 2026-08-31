@@ -37,3 +37,8 @@
 # Ignore Docker-related files
 /.dockerignore
 /Dockerfile*
+
+# Knowledge graph and assistant configuration: development tooling only.
+/graphify-out
+/.claude
+/CLAUDE.md

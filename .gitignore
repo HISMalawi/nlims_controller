@@ -32,3 +32,12 @@
 
 # Local compose adjustments (this node runs RAILS_ENV=production).
 /docker-compose.override.yml
+
+# Knowledge graph (graphify). The graph itself is committed; what is derived
+# from it, machine-local or rewritten on every run is not.
+/graphify-out/cache/
+/graphify-out/20[0-9][0-9]-[0-9][0-9]-[0-9][0-9]/
+/graphify-out/graph.html
+/graphify-out/cost.json
+/graphify-out/.graphify_root
+/graphify-out/.graphify_python
