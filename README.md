@@ -69,7 +69,7 @@ Resposta estruturada:
   "data": {
     "mode": "local",
     "node_code": "HCM",
-    "version": "2.0.0-dev",
+    "version": "2.0.0-rc1",
     "time": "2026-08-18T11:40:00Z"
   },
   "meta": {},
