@@ -33,11 +33,11 @@
     <% end %>
   </div>
 
-  <%# The two code boxes that used to be here are gone. A node is a laboratory
-      and knows its own code, and the health facility comes from its entry in
-      the national register — so an EMR being connected here belongs to this
-      laboratory by construction. Stating it is useful; asking for it was not,
-      and a mistyped code refused the integration with a 403 nobody could
+  <%# No code boxes on a local node. The node is a health facility, knows its
+      own code and reads its name from the national register, so an EMR
+      connected here belongs to this unit by construction; which laboratory is
+      asking travels with each request. Stating the codes is useful, asking for
+      them is not — a mistyped one refuses the integration with a 403 nobody can
       diagnose from the other end. %>
   <% if SislabSync.local? %>
     <div class="rounded-md border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">

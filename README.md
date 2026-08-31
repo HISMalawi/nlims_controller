@@ -42,7 +42,7 @@ No modo `local`, configure obrigatoriamente a variável `SISLAB_SYNC_FACILITY_CO
 
 Os laboratórios ficam por baixo. Uma instância do mLab serve vários, cada um com o seu código, e todos chegam à rede por este nó — ver [secção 6.4](#64-registo-nacional-de-unidades-e-laboratórios).
 
-A variável anterior, `SISLAB_SYNC_NODE_CODE`, continua a ser lida e significa o mesmo: o código por que o nó responde, que é agora o da unidade. `SISLAB_SYNC_LAB_CODE`, que nomeava um laboratório, é recusada em vez de lida — um nó a chamar-se por ela endereçaria as suas amostras a uma entrada do registo do tipo errado.
+`SISLAB_SYNC_NODE_CODE` é lida como sinónimo: significa o código por que o nó responde, que é o da unidade. `SISLAB_SYNC_LAB_CODE` nomeia um laboratório e não serve de identidade a um nó — uma instalação que a tenha configurada não arranca, e deve passar a `SISLAB_SYNC_FACILITY_CODE` com o código da unidade.
 
 ### 2.2. Inicialização dos Serviços
 
@@ -261,7 +261,7 @@ Um pedido vindo de um EMR chega **à unidade sanitária** e não a um laboratór
 
 ### 6.5. Gestão e Sincronização do Dicionário Nacional
 
-O catálogo é uma referência, não uma barreira. Um exame, painel, tipo de amostra, indicador ou motivo de rejeição pode ser indicado por `national_code`, por `uuid` ou por nome, e um termo que o nó não reconheça é aceite e guardado tal como chegou — com o nome e o código com que veio, sem entrada de dicionário associada. A ligação faz-se mais tarde, quando o catálogo alcançar o termo, sem reintroduzir a leitura. O mesmo vale na sincronização: o nó nacional deixou de bloquear a fila de um nó por um código que ainda não tenha.
+O catálogo é uma referência, não uma barreira. Um exame, painel, tipo de amostra, indicador ou motivo de rejeição pode ser indicado por `national_code`, por `uuid` ou por nome, e um termo que o nó não reconheça é aceite e guardado tal como chegou — com o nome e o código com que veio, sem entrada de dicionário associada. A ligação faz-se mais tarde, quando o catálogo alcançar o termo, sem reintroduzir a leitura. O mesmo vale na sincronização: o nó nacional não bloqueia a fila de um nó por um código que ainda não tenha.
 
 A única recusa que resta é a de um termo que não indique nada — um teste sem exame, uma leitura sem indicador —, porque nesse caso ninguém saberia o que foi pedido ou medido.
 

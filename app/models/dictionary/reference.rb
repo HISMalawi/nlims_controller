@@ -61,9 +61,9 @@ module Dictionary
       #
       # Strong parameters drop a key whose declared shape is a hash when a
       # string arrives instead — silently, so an order sent with
-      # `"specimen_type": "Sangue total"` used to be created with no specimen
-      # type and nothing said so. Now that a name on its own is a legitimate way
-      # to name a term, the string has to survive as far as the permit list.
+      # `"specimen_type": "Sangue total"` would be created with no specimen type
+      # and nothing would say so. A name on its own is a legitimate way to name
+      # a term, so the string has to survive as far as the permit list.
       def expand(params)
         case params
         when ActionController::Parameters

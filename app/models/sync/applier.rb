@@ -204,11 +204,10 @@ module Sync
     # A laboratory a node met for the first time, given the code the country
     # will know it by.
     #
-    # Accepted as it stands and published at once. The capital could hold these
-    # for approval, and deliberately does not: a laboratory that has already
-    # taken a sample exists whether or not anybody in the capital has looked at
-    # it, and the cost of a duplicate in the register is an afternoon's tidying,
-    # while the cost of a queue is a laboratory nobody can refer to.
+    # Accepted as it stands and published at once, with no approval step: a
+    # laboratory that has already taken a sample exists whether or not anybody
+    # in the capital has looked at it, and a duplicate in the register costs an
+    # afternoon's tidying where a queue costs a laboratory nobody can refer to.
     #
     # Matched on the uuid the node sent, and failing that on the pair the
     # register is keyed by, so a node that registered a laboratory and was then
@@ -288,14 +287,13 @@ module Sync
 
     # A term as it arrived, linked to this node's dictionary where it can be.
     #
-    # A term the receiving node does not carry used to reject the whole event —
-    # UNKNOWN_DICTIONARY_ITEM — and block that node's stream until somebody
-    # noticed. That was the right rule when a code could only come from the
-    # national catalogue. It is the wrong one now: local nodes order exams the
-    # catalogue has not reached, and a reading refused in the capital is a
-    # reading lost. The name travels with the code, so the national node stores
-    # what was measured either way and can link it when the catalogue catches
-    # up.
+    # A term the receiving node does not carry is stored, not refused. Local
+    # nodes order exams the national catalogue has not reached, a reading
+    # refused in the capital is a reading lost, and refusing the event
+    # (UNKNOWN_DICTIONARY_ITEM) would block that node's whole stream until
+    # somebody noticed. The name travels with the code, so the national node
+    # stores what was measured either way and can link it when the catalogue
+    # catches up.
     def term(json, entity_type)
       Dictionary::Reference.resolve(entity_type, json)
     end

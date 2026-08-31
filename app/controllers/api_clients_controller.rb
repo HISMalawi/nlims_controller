@@ -51,9 +51,9 @@ class ApiClientsController < ApplicationController
   # client makes, so it is set once at creation and not editable afterwards:
   # changing it would silently re-scope keys that are already in the field.
   def client_params
-    # The codes are no longer offered by the form on a local node: they come
-    # from the node itself. They stay permitted for the national node, which
-    # issues keys on behalf of laboratories other than its own.
+    # A local node fills the codes from its own identity, so the form does not
+    # offer them. They stay permitted for the national node, which issues keys
+    # on behalf of units other than its own.
     permitted = params.require(:api_client).permit(:name, :kind, :facility_code, :lab_code, :active)
     permitted.delete(:kind) if @client&.persisted?
     permitted

@@ -1331,6 +1331,7 @@ Idempotency-Key: 7f3c0b18-4d2e-4a91-9c65-2b8e1f0a7d34
         <li><code>orders.receiving_facility_code</code> obrigatório, <code>receiving_lab_code</code> facultativo; a reclamação atribui a bancada</li>
         <li>Encaminhamento por unidade sanitária: <code>Sync::Routing</code>, <code>/sync/inbound</code>, <code>authorize_node!</code> e o heartbeat</li>
         <li>Referenciamento entre bancadas da mesma unidade resolve-se no nó; sobe como evento, não é encaminhado de volta</li>
+        <li><code>specimen_collected</code> facultativo: uma bancada que não colheu passa de <code>accepted</code> a <code>in_progress</code></li>
         <li>Contrato, colecção Postman, gem de referência e README acompanham</li>
       </ul>
       <p class="commits-label">Commits</p>
@@ -1339,7 +1340,8 @@ Idempotency-Key: 7f3c0b18-4d2e-4a91-9c65-2b8e1f0a7d34
         <li>feat(identity): a node is a health facility, not a laboratory</li>
         <li>feat(intake): register a laboratory the first time it sends a sample</li>
         <li>feat(sync): route by health facility and settle internal handovers locally</li>
-        <li>docs: describe the facility register and the laboratories under it</li>
+        <li>docs(api): describe the facility register, and teach the client gem about it</li>
+        <li>feat(lifecycle): start work on a sample the ward already collected</li>
       </ul>
     </article>
 

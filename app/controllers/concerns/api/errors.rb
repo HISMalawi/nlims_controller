@@ -7,8 +7,8 @@ module Api
     UNAUTHENTICATED = "unauthenticated"
     INSUFFICIENT_SCOPE = "insufficient_scope"
     # A key acting for a node other than its own. There is no facility
-    # equivalent any more: a node is a laboratory, and a request no longer
-    # names a facility this node could disagree with.
+    # equivalent: a node is a health facility, so a request never names a
+    # facility this node could disagree with.
     NODE_MISMATCH = "node_mismatch"
     IDEMPOTENCY_KEY_REQUIRED = "idempotency_key_required"
     IDEMPOTENCY_KEY_REUSED = "idempotency_key_reused"

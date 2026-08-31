@@ -2,11 +2,11 @@
 
 # How a transactional row points at a clinical term.
 #
-# Every such row used to hold nothing but a foreign key, which meant the row
-# could not exist until the dictionary did. Each term declared here keeps three
-# columns instead — the key, the name and the code — so a term the dictionary
-# already carries is linked, a term it does not is still written down, and the
-# two read the same way from the outside.
+# Each term declared here keeps three columns rather than a foreign key alone —
+# the key, the name and the code — so a term the dictionary already carries is
+# linked, a term it does not is still written down, and the two read the same
+# way from the outside. A row can therefore exist before the dictionary carries
+# what it names.
 #
 #   dictionary_term :test_type, entity: "test_types", name: :test_name, code: :test_code
 #

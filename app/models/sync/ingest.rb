@@ -81,9 +81,9 @@ module Sync
       return remember(held) if held
 
       # Not the same event, then: the same position in the same stream under a
-      # different event_uuid, which the stream index refuses. Said plainly, so
-      # the sender can see it. It used to look the row up by event_uuid and
-      # find nothing, and the node was answered 404 for a batch it had sent.
+      # different event_uuid, which the stream index refuses. Named as what it
+      # is, so a sender refilling a position it has already filled can see why
+      # instead of reading a 404 for a batch it has just sent.
       refuse(event["event_uuid"], Rejected::INVALID,
              "já existe um evento na posição #{event['sequence']} deste agregado")
     end

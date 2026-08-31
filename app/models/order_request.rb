@@ -3,11 +3,11 @@
 # What an EMR sends to ask for tests, turned into records.
 #
 # Terms are matched against the dictionary and kept as they were written when
-# the match fails. The rule used to be the other way round — an unknown code
-# refused the whole request — and it was refusing real work, because the
-# national dictionary is still being assembled. What is stored now is enough to
-# link the term later: the code it arrived with, the name it arrived with, and
-# the entry when there was one.
+# the match fails. The national dictionary is still being assembled, so a code
+# it does not carry is ordinary work rather than a mistake, and refusing the
+# request over one would refuse the sample. What is stored is enough to link the
+# term later: the code it arrived with, the name it arrived with, and the entry
+# when there was one.
 class OrderRequest
   def initialize(payload, api_client:)
     @payload = payload.to_h.deep_symbolize_keys
@@ -17,8 +17,8 @@ class OrderRequest
   # The facility the order is being raised for. Read from the key, or from this
   # node's own entry in the register — never from the payload. A client that
   # sends one is not disbelieved so much as not consulted: it is describing
-  # something the node already knows, and the two disagreeing was a 403 that
-  # stopped integrations for a reason nobody could see from the outside.
+  # something the node already knows, and refusing the request when the two
+  # disagree stops an integration for a reason nobody can see from the outside.
   def facility_code
     @api_client&.facility_code.presence || SislabSync.facility_code
   end
@@ -27,8 +27,9 @@ class OrderRequest
   #
   # Nil is the ordinary case for an EMR: a clinician asks the unit for a test
   # and which bench runs it is decided at the bench, when a laboratory claims
-  # the sample. It used to default to the node's own laboratory, from the days
-  # when a node was one — there is no such thing to default to now.
+  # the sample. There is nothing to fall back on — a node holds several
+  # laboratories, and choosing one of them would write the wrong bench onto
+  # somebody's result.
   #
   # A LIS says so, because it is the laboratory: it sends its own code, and the
   # register learns of it here if this is the first time.

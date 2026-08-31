@@ -39,24 +39,18 @@ module Api
       false
     end
 
-    # Kept as guards so the call sites still read as guards, and kept passing.
+    # Guards that always pass, kept so the call sites read as guards.
     #
-    # These used to compare the facility and laboratory codes in the payload
-    # against the ones stored on the key, and refuse the request when they
-    # differed. There is nothing left to compare: the key inherits its unit from
-    # this node, the intake ignores whatever the payload claims and uses the
-    # node's own, and a request cannot act for anywhere else because there is
-    # nowhere else to act for. What the comparison actually did in the field was
-    # refuse integrations over a code that had been typed into a form once and
-    # never looked at again.
+    # There is nothing here to compare. A key carries the unit of the node that
+    # issued it, and the intake writes that unit onto the order rather than the
+    # one the payload claims, so a request cannot act for anywhere else. A
+    # laboratory cannot be checked here at all: one mLab instance speaks for
+    # every laboratory in the unit under a single key, so a code on the key
+    # would be right for one bench and wrong for the rest.
     #
-    # The laboratory in particular cannot be checked this way any more: one mLab
-    # instance holds several laboratories under one key, so a key that named one
-    # of them would be wrong for the rest.
-    #
-    # A node still only holds the samples it has a hand in, which is what keeps
-    # one unit out of another's work — the register and the routing, not a
-    # string on a key.
+    # What keeps one unit out of another's work is that a node only holds the
+    # samples it has a hand in — the register and the routing, not a string on
+    # a key.
     def authorize_facility!(_facility_code)
       true
     end
@@ -65,13 +59,9 @@ module Api
       true
     end
 
-    # The one boundary that is real, and always was: a node speaking for another
-    # node. It used to be checked with the facility comparison above, which is
-    # how the two got confused in the first place — an integration's key and a
-    # node's key were being held to the same rule for different reasons.
-    #
-    # A node-to-node key is pinned to the health facility it belongs to. On the
-    # national node that is what stops one unit pushing another's events, or
+    # The one boundary that is real: a node speaking for another node. A
+    # node-to-node key is pinned to the health facility it belongs to, which on
+    # the national node is what stops one unit pushing another's events, or
     # reading the parcels the capital is holding for somebody else.
     def authorize_node!(node_code)
       client = Current.api_client
