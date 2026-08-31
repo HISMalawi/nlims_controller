@@ -69,7 +69,7 @@ Resposta estruturada:
   "data": {
     "mode": "local",
     "node_code": "HCM",
-    "version": "2.0.0-rc1",
+    "version": "4.0.0",
     "time": "2026-08-18T11:40:00Z"
   },
   "meta": {},
@@ -390,7 +390,7 @@ Em produção utiliza-se a imagem final do `Dockerfile`, distinta do estágio `d
 ### 8.1. Construção da Imagem
 
 ```bash
-docker build -t sislab_sync:2.0.0 .
+docker build -t sislab_sync:4.0.0 .
 ```
 
 A mesma imagem serve ambos os tipos de nó. O modo de operação é lido do ambiente em tempo de execução e não é fixado na construção.
@@ -430,13 +430,13 @@ docker run -d --name sislab_sync \
   -e DATABASE_HOST=... -e DATABASE_USER=... -e DATABASE_PASSWORD=... \
   -e DATABASE_NAME=sislab_sync_production \
   -e REDIS_URL=redis://... \
-  -p 127.0.0.1:3000:3000 sislab_sync:2.0.0
+  -p 127.0.0.1:3000:3000 sislab_sync:4.0.0
 ```
 
 Em modo `local`, um processo Sidekiq adicional executa o despacho da outbox, a receção de amostras referidas e a sincronização do dicionário (ver [secção 5.3](#53-agendamento-de-trabalhos-em-segundo-plano-modo-local)). Utiliza a mesma imagem e o mesmo conjunto de variáveis:
 
 ```bash
-docker run -d --name sislab_sync_worker <mesmas variáveis> sislab_sync:2.0.0 bundle exec sidekiq
+docker run -d --name sislab_sync_worker <mesmas variáveis> sislab_sync:4.0.0 bundle exec sidekiq
 ```
 
 ### 8.5. Terminação TLS
@@ -473,7 +473,7 @@ A variável não desativa proteção alguma que o transporte já possua: alinha 
 | Efémero (manutenção) | Não migra; requer invocação explícita. |
 
 ```bash
-docker run --rm <variáveis> sislab_sync:2.0.0 bin/rails db:prepare
+docker run --rm <variáveis> sislab_sync:4.0.0 bin/rails db:prepare
 ```
 
 ### 8.7. Primeiro Arranque
