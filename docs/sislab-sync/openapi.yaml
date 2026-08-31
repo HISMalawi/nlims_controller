@@ -16,7 +16,7 @@ openapi: 3.1.0
 
 info:
   title: SISLAB Sync
-  version: 2.0.0-rc1
+  version: 4.0.0
   summary: API REST para pedidos, resultados e sincronização de dados laboratoriais.
   description: |
     Interface de comunicação entre o sistema de registo clínico (**EMR**), o

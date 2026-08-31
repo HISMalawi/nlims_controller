@@ -1296,7 +1296,7 @@ Idempotency-Key: 7f3c0b18-4d2e-4a91-9c65-2b8e1f0a7d34
         <span class="step-dates">2 – 6 nov</span>
       </div>
       <p class="goal">Entregar às equipas do SISLAB e dos EMR tudo o que precisam para integrar sem perguntar nada.</p>
-      <p class="done"><b>Feito quando</b> existe um OpenAPI 3.1 validado em CI, um cliente de referência que percorre os três perfis contra um nó de teste, um guia de instalação seguido com sucesso por alguém de fora da equipa, e a tag <code>v2.0.0</code> publicada.</p>
+      <p class="done"><b>Feito quando</b> existe um OpenAPI 3.1 validado em CI, um cliente de referência que percorre os três perfis contra um nó de teste, um guia de instalação seguido com sucesso por alguém de fora da equipa, e a tag <code>v4.0.0</code> publicada.</p>
       <ul class="check">
         <li>OpenAPI 3.1 gerado a partir dos testes, validado em CI, servido em <code>/api-docs</code></li>
         <li>Colecção de exemplos <code>curl</code> por perfil de cliente</li>
@@ -1304,14 +1304,14 @@ Idempotency-Key: 7f3c0b18-4d2e-4a91-9c65-2b8e1f0a7d34
         <li>Guia de integração para cada uma das três fronteiras</li>
         <li>Guia de instalação e operação: Docker, backups, rotação de chaves, recuperação da outbox</li>
         <li>Teste de carga com 10 000 pedidos e 30 000 resultados sincronizados</li>
-        <li>Renomeação concluída em repositório, imagens, serviços e README; tag <code>v2.0.0</code></li>
+        <li>Renomeação concluída em repositório, imagens, serviços e README; tag <code>v4.0.0</code></li>
       </ul>
       <p class="commits-label">Commits</p>
       <ul class="commits">
         <li>docs: publish the openapi contract and integration guides</li>
         <li>feat: add the sislab sync reference client gem</li>
         <li>docs: add installation and operations guide</li>
-        <li>chore: rename the project to sislab sync and tag v2.0.0</li>
+        <li>chore: rename the project to sislab sync and tag v4.0.0</li>
       </ul>
     </article>
 
@@ -1398,7 +1398,7 @@ Idempotency-Key: 7f3c0b18-4d2e-4a91-9c65-2b8e1f0a7d34
             <tr>
               <td>Um único programador</td>
               <td>S10 e S11 são os passos mais pesados e podem escorregar</td>
-              <td>Se houver atraso, S11 reduz-se ao painel do nó, pesquisa de pedidos e gestão de chaves; os restantes ecrãs saem depois da v2.0.0</td>
+              <td>Se houver atraso, S11 reduz-se ao painel do nó, pesquisa de pedidos e gestão de chaves; os restantes ecrãs saem depois da v4.0.0</td>
               <td class="num">S10, S11</td>
             </tr>
           </tbody>
@@ -1414,7 +1414,7 @@ Idempotency-Key: 7f3c0b18-4d2e-4a91-9c65-2b8e1f0a7d34
   <ul class="plain">
     <li>Ruby 3.3+, Rails 8, MySQL 8, Redis e Sidekiq mantidos como base técnica</li>
     <li>O identificador do doente é o NID de Moçambique</li>
-    <li>O trabalho decorre na branch <code>v2</code>; <code>main</code> fica intocada até à tag <code>v2.0.0</code></li>
+    <li>O trabalho decorre na branch <code>v2</code> e é integrado em <code>main</code> na entrega; a numeração continua a linhagem de tags do repositório, que já vai em <code>v3.2.8</code>, pelo que a primeira versão do SISLAB Sync é a <code>v4.0.0</code></li>
     <li>CI com RSpec, RuboCop e Brakeman obrigatórios em cada passo</li>
     <li>Não há migração de dados históricos, porque o NLIMS não está em produção</li>
     <li>TLS terminado por um proxy à frente da aplicação, em ambos os modos</li>
