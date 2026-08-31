@@ -1,0 +1,2727 @@
+# Contrato da API do SISLAB Sync.
+#
+# Este documento é a especificação formal de referência da API. É validado
+# continuamente em CI contra as rotas da aplicação e as respostas produzidas
+# pela suite de testes. Ver spec/contracts/openapi_spec.rb.
+#
+# Cada nó expõe apenas os endpoints correspondentes ao seu modo de operação.
+# O atributo `x-node-mode` especifica a disponibilidade de cada operação:
+# `local` (nó de unidade sanitária), `national` (nó nacional) ou `both` (ambos).
+#
+# A fachada HL7 FHIR R4 servida em `/fhir/r4` não é descrita aqui: os seus
+# recursos têm forma própria e recurso de erro próprio, e o seu contrato é o
+# CapabilityStatement gerado em `GET /fhir/r4/metadata` — a única rota da
+# fachada presente neste documento, para que seja descoberta a partir dele.
+openapi: 3.1.0
+
+info:
+  title: SISLAB Sync
+  version: 2.0.0-rc1
+  summary: API REST para pedidos, resultados e sincronização de dados laboratoriais.
+  description: |
+    Interface de comunicação entre o sistema de registo clínico (**EMR**), o
+    sistema de gestão laboratorial (**SISLAB**) e a rede de replicação e
+    sincronização de **nós locais e nacional**.
+
+    Os endpoints REST nativos utilizam o prefixo `/api/v3`. As respostas seguem
+    uma estrutura padronizada composta pelos campos `data`, `meta` e `errors`.
+
+    ## Fachada HL7 FHIR R4
+
+    Um nó local serve ainda uma fachada **HL7 FHIR R4** em `/fhir/r4`, destinada
+    a sistemas EMR que já falam FHIR. Projeta os mesmos pedidos, amostras e
+    leituras — `ServiceRequest`, `DiagnosticReport`, `Observation`, `Patient` e
+    `Specimen` — e toda a escrita reentra na mesma admissão que liga os termos
+    ao catálogo e expande painéis. Autenticação, âmbitos, limitação de taxa,
+    idempotência e trilho de auditoria são os descritos neste documento: são
+    propriedades do nó, não do dialeto.
+
+    O que difere é a forma das respostas — recursos FHIR em
+    `application/fhir+json` e `OperationOutcome` em vez do envelope
+    `data`/`meta`/`errors`. Por isso a fachada não é descrita aqui: o seu
+    contrato é o `CapabilityStatement` em `GET /fhir/r4/metadata`, gerado a
+    partir das constantes que os controladores utilizam e, portanto, incapaz de
+    divergir do que o nó realmente serve.
+
+    ## Autenticação
+
+    A autenticação é realizada via token estático no cabeçalho HTTP `Authorization`:
+
+    ```
+    Authorization: Bearer <api_key>
+    ```
+
+    Cada chave está associada a um cliente específico e a um conjunto de âmbitos
+    (`scopes`). Um nó local é um laboratório: a chave herda o código do
+    laboratório e o da unidade sanitária do próprio nó, e os códigos que o corpo
+    de um pedido declare são ignorados em favor desses. Só um cliente nó-a-nó
+    é recusado com `403 Forbidden` ao falar por outro nó (`node_mismatch`).
+
+    ## Termos Clínicos
+
+    Exames, painéis, tipos de amostra, indicadores e motivos de rejeição são
+    indicados por `national_code`, por `uuid` ou por `name` — e uma cadeia de
+    texto simples vale por `{ "name": "..." }`.
+
+    Um termo que o nó não reconheça **não** é recusado. O catálogo nacional está
+    em consolidação, e recusar o exame que um laboratório executa todos os dias
+    por a lista ainda lá não ter chegado impede o trabalho em vez de o proteger.
+    O termo fica guardado com o nome e o código com que chegou, é devolvido
+    dessa forma (`uuid` nulo, `national_code` nulo se não tiver sido indicado) e
+    pode ser ligado ao catálogo mais tarde sem que a leitura seja reintroduzida.
+    A única recusa que resta é a de um termo que não indique nada.
+
+    ## Paginação por Cursores
+
+    Os feeds incrementais de dados (resultados, pedidos pendentes, alterações de
+    dicionário e eventos de sincronização) utilizam paginação sequencial baseada
+    no parâmetro `since`, que representa a revisão numérica da alteração. O
+    valor de `meta.next_cursor` retornado na resposta deve ser fornecido como
+    `since` no pedido subsequente até que `meta.has_more` seja `false`.
+
+    ## Tratamento de Erros
+
+    Em caso de erro, o campo `errors` conterá um ou mais objetos de erro com o
+    código programático estável em `code` (ver enum `ErrorCode`) e a descrição
+    técnica em `message`.
+  contact:
+    name: MISAU — Direcção de Informação para a Saúde
+    url: https://github.com/MISAU-DIS/nlims_controller
+  license:
+    name: MIT
+
+servers:
+  - url: http://localhost:3000
+    description: Servidor local de desenvolvimento
+  - url: https://{host}
+    description: Servidor de produção / nó implantado
+    variables:
+      host:
+        default: sislab.example.mz
+        description: Nome de domínio ou endereço IP do nó (local ou nacional)
+
+security:
+  - apiKey: []
+
+tags:
+  - name: Nó
+    description: Diagnóstico, identificação e metadados de autenticação do nó.
+  - name: EMR
+    description: Submissão de pedidos de análises e consulta de resultados pelo sistema clínico.
+  - name: Laboratório
+    description: Gestão do fluxo de trabalho laboratorial, registo de resultados e encaminhamento de amostras.
+  - name: Dicionário
+    description: Consulta e sincronização do catálogo e dados mestre nacionais.
+  - name: Sincronização
+    description: Protocolo de replicação transacional entre nós locais e o nó nacional.
+  - name: FHIR
+    description: |
+      Fachada HL7 FHIR R4 para sistemas EMR, servida em `/fhir/r4` por nós
+      locais. Descrita pelo seu próprio CapabilityStatement, não por este
+      documento.
+
+paths:
+  /fhir/r4/metadata:
+    get:
+      tags: [FHIR]
+      operationId: fhirCapabilityStatement
+      summary: Contrato da fachada FHIR R4
+      description: |
+        Retorna o `CapabilityStatement` que descreve a fachada HL7 FHIR R4
+        servida por este nó: recursos, interações, parâmetros de pesquisa,
+        operações e sistemas de codificação utilizados.
+
+        Não requer autenticação, pela mesma razão que `/api-docs` não requer —
+        é o que uma equipa lê antes de possuir uma chave.
+      x-node-mode: local
+      security: []
+      responses:
+        "200":
+          description: CapabilityStatement do nó.
+          content:
+            application/fhir+json:
+              schema: { $ref: "#/components/schemas/CapabilityStatement" }
+
+  /fhir/r4:
+    post:
+      tags: [FHIR]
+      operationId: fhirTransaction
+      summary: Submissão de várias análises numa única amostra
+      description: |
+        Aceita um `Bundle` de tipo `transaction` contendo um `Patient`, um
+        `Specimen` e um `ServiceRequest` por análise, agrupados pelo campo
+        `requisition`. Cada grupo de `requisition` origina um pedido.
+
+        A operação é atómica: se qualquer entrada for inválida, nenhum registo
+        é escrito. Um código que o catálogo do nó não tenha **não** torna a
+        entrada inválida — é guardado como chegou, com o `display` por nome (ver
+        *Termos Clínicos*); inválida é a análise que não identifica exame
+        nenhum. Bundles de tipo `batch` são rejeitados, por prometerem
+        independência entre entradas que esta admissão não oferece.
+
+        A chave de idempotência é o cabeçalho `Idempotency-Key` ou, na sua
+        ausência, o `identifier` do primeiro recurso do Bundle.
+      x-node-mode: local
+      x-scope: orders:write
+      parameters:
+        - $ref: "#/components/parameters/FhirIdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/fhir+json:
+            schema: { $ref: "#/components/schemas/FhirBundle" }
+      responses:
+        "201":
+          description: Bundle `transaction-response` com os ServiceRequest criados.
+          headers:
+            Idempotent-Replay:
+              description: Presente com o valor `true` quando a resposta é retornada a partir de uma execução idempotente anterior.
+              schema: { type: string, enum: ["true"] }
+          content:
+            application/fhir+json:
+              schema: { $ref: "#/components/schemas/FhirBundle" }
+        "400": { $ref: "#/components/responses/FhirIdempotencyKeyRequired" }
+        "401": { $ref: "#/components/responses/FhirUnauthenticated" }
+        "403": { $ref: "#/components/responses/FhirForbidden" }
+        "422": { $ref: "#/components/responses/FhirUnprocessable" }
+        "429": { $ref: "#/components/responses/FhirRateLimited" }
+
+  /fhir/r4/ServiceRequest:
+    post:
+      tags: [FHIR]
+      operationId: fhirCreateServiceRequest
+      summary: Pedido de uma análise clínica
+      description: |
+        Cria um pedido com a análise indicada em `code`. O doente e a amostra
+        são fornecidos em `contained` e referenciados por `#id`, ou, tratando-se
+        de doente já conhecido do nó, por `subject.identifier`.
+
+        `code` é aceite no sistema nacional
+        (`.../CodeSystem/test-types`), em LOINC — apenas onde o
+        mapeamento já tenha sido curado — ou como código `MOZ-` sem sistema
+        declarado. Um código de painel expande-se nas análises constituintes e a
+        resposta passa a ser um `Bundle` de tipo `collection`.
+
+        Um `code` que não corresponda a nenhuma entrada do catálogo deste nó é
+        aceite na mesma: fica guardado com o código e o `display` (ou o `text`
+        do conceito) com que chegou, e é devolvido como um `coding` sem
+        `system`, que é o que este nó pode afirmar sobre ele. Só é recusado um
+        `code` que não traga nem código nem palavra nenhuma.
+
+        `performer` identifica o laboratório receptor; na sua ausência é o
+        próprio nó. A unidade sanitária é sempre a do nó, nunca a do corpo.
+
+        A chave de idempotência é o cabeçalho `Idempotency-Key` ou, na sua
+        ausência, o `identifier` do pedido.
+      x-node-mode: local
+      x-scope: orders:write
+      parameters:
+        - $ref: "#/components/parameters/FhirIdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/fhir+json:
+            schema: { $ref: "#/components/schemas/FhirServiceRequest" }
+      responses:
+        "201":
+          description: |
+            O ServiceRequest criado, ou um Bundle `collection` com os vários
+            criados quando o código pedido era um painel.
+          headers:
+            Location:
+              description: URL do ServiceRequest criado. Ausente quando a resposta é um Bundle.
+              schema: { type: string }
+            Idempotent-Replay:
+              description: Presente com o valor `true` quando a resposta é retornada a partir de uma execução idempotente anterior.
+              schema: { type: string, enum: ["true"] }
+          content:
+            application/fhir+json:
+              schema:
+                oneOf:
+                  - { $ref: "#/components/schemas/FhirServiceRequest" }
+                  - { $ref: "#/components/schemas/FhirBundle" }
+        "400": { $ref: "#/components/responses/FhirIdempotencyKeyRequired" }
+        "401": { $ref: "#/components/responses/FhirUnauthenticated" }
+        "403": { $ref: "#/components/responses/FhirForbidden" }
+        "422": { $ref: "#/components/responses/FhirUnprocessable" }
+        "429": { $ref: "#/components/responses/FhirRateLimited" }
+    get:
+      tags: [FHIR]
+      operationId: fhirSearchServiceRequest
+      summary: Pesquisa de análises pedidas
+      description: |
+        Devolve um `Bundle` de tipo `searchset`. Os resultados são restritos à
+        unidade sanitária da chave: uma pesquisa que abranja outra unidade
+        devolve um bundle vazio, não um erro.
+      x-node-mode: local
+      x-scope: orders:read
+      parameters:
+        - $ref: "#/components/parameters/FhirRequisition"
+        - $ref: "#/components/parameters/FhirIdentifier"
+        - $ref: "#/components/parameters/FhirPatient"
+        - $ref: "#/components/parameters/FhirPatientIdentifier"
+        - $ref: "#/components/parameters/FhirServiceRequestStatus"
+        - $ref: "#/components/parameters/FhirCount"
+      responses:
+        "200":
+          description: Bundle `searchset` de ServiceRequest.
+          content:
+            application/fhir+json:
+              schema: { $ref: "#/components/schemas/FhirBundle" }
+        "401": { $ref: "#/components/responses/FhirUnauthenticated" }
+        "403": { $ref: "#/components/responses/FhirForbidden" }
+        "429": { $ref: "#/components/responses/FhirRateLimited" }
+
+  /fhir/r4/ServiceRequest/{id}:
+    get:
+      tags: [FHIR]
+      operationId: fhirReadServiceRequest
+      summary: Leitura de uma análise pedida
+      description: |
+        `id` é o uuid da análise. As análises de uma mesma amostra partilham o
+        campo `requisition`, que é o número de rastreio.
+      x-node-mode: local
+      x-scope: orders:read
+      parameters:
+        - $ref: "#/components/parameters/FhirId"
+      responses:
+        "200":
+          description: O ServiceRequest.
+          content:
+            application/fhir+json:
+              schema: { $ref: "#/components/schemas/FhirServiceRequest" }
+        "401": { $ref: "#/components/responses/FhirUnauthenticated" }
+        "403": { $ref: "#/components/responses/FhirForbidden" }
+        "404": { $ref: "#/components/responses/FhirNotFound" }
+        "429": { $ref: "#/components/responses/FhirRateLimited" }
+
+  /fhir/r4/DiagnosticReport:
+    get:
+      tags: [FHIR]
+      operationId: fhirSearchDiagnosticReport
+      summary: Pesquisa de relatórios de análises
+      description: |
+        Devolve um `Bundle` de tipo `searchset`. Cada relatório traz as leituras
+        atuais em `contained`, poupando uma chamada por leitura.
+      x-node-mode: local
+      x-scope: results:read
+      parameters:
+        - $ref: "#/components/parameters/FhirIdentifier"
+        - $ref: "#/components/parameters/FhirPatient"
+        - $ref: "#/components/parameters/FhirPatientIdentifier"
+        - $ref: "#/components/parameters/FhirDiagnosticReportStatus"
+        - $ref: "#/components/parameters/FhirCount"
+      responses:
+        "200":
+          description: Bundle `searchset` de DiagnosticReport.
+          content:
+            application/fhir+json:
+              schema: { $ref: "#/components/schemas/FhirBundle" }
+        "401": { $ref: "#/components/responses/FhirUnauthenticated" }
+        "403": { $ref: "#/components/responses/FhirForbidden" }
+        "429": { $ref: "#/components/responses/FhirRateLimited" }
+
+  /fhir/r4/DiagnosticReport/{id}:
+    get:
+      tags: [FHIR]
+      operationId: fhirReadDiagnosticReport
+      summary: Leitura do relatório de uma análise
+      description: |
+        `id` é o uuid da análise, o mesmo do ServiceRequest correspondente. O
+        estado `corrected` indica que uma leitura foi substituída depois de a
+        análise ter terminado — a análise não reabre.
+      x-node-mode: local
+      x-scope: results:read
+      parameters:
+        - $ref: "#/components/parameters/FhirId"
+      responses:
+        "200":
+          description: O DiagnosticReport, com as leituras atuais em `contained`.
+          content:
+            application/fhir+json:
+              schema: { $ref: "#/components/schemas/FhirDiagnosticReport" }
+        "401": { $ref: "#/components/responses/FhirUnauthenticated" }
+        "403": { $ref: "#/components/responses/FhirForbidden" }
+        "404": { $ref: "#/components/responses/FhirNotFound" }
+        "429": { $ref: "#/components/responses/FhirRateLimited" }
+
+  /fhir/r4/Observation:
+    get:
+      tags: [FHIR]
+      operationId: fhirSearchObservation
+      summary: Feed incremental de leituras
+      description: |
+        Devolve um `Bundle` de tipo `searchset` com tudo o que mudou depois da
+        revisão indicada em `_since`.
+
+        `_since` é uma revisão sequencial atribuída por contador com bloqueio,
+        não um timestamp: uma leitura cuja transação demore a confirmar nunca
+        fica atrás de um cursor já avançado. O cliente segue `link[next]` até
+        este deixar de existir e retém a última revisão para a ronda seguinte.
+
+        As correções circulam neste mesmo feed: a leitura substituída volta a
+        mover-se e chega com `status: entered-in-error` e a extensão
+        `replaced-by` a identificar a substituta.
+      x-node-mode: local
+      x-scope: results:read
+      parameters:
+        - $ref: "#/components/parameters/FhirSince"
+        - $ref: "#/components/parameters/FhirIdentifier"
+        - $ref: "#/components/parameters/FhirPatient"
+        - $ref: "#/components/parameters/FhirPatientIdentifier"
+        - $ref: "#/components/parameters/FhirCount"
+      responses:
+        "200":
+          description: Bundle `searchset` de Observation, com `link[next]` enquanto houver mais.
+          content:
+            application/fhir+json:
+              schema: { $ref: "#/components/schemas/FhirBundle" }
+        "401": { $ref: "#/components/responses/FhirUnauthenticated" }
+        "403": { $ref: "#/components/responses/FhirForbidden" }
+        "429": { $ref: "#/components/responses/FhirRateLimited" }
+
+  /fhir/r4/Observation/{id}:
+    get:
+      tags: [FHIR]
+      operationId: fhirReadObservation
+      summary: Leitura de um resultado
+      description: |
+        Indicadores numéricos são emitidos em `valueQuantity`, e os restantes em
+        `valueString`. `valueQuantity` não declara `system` UCUM: as unidades do
+        dicionário são as do laboratório e rotulá-las como UCUM convidaria um
+        cliente a converter entre unidades que apenas se assemelham.
+      x-node-mode: local
+      x-scope: results:read
+      parameters:
+        - $ref: "#/components/parameters/FhirId"
+      responses:
+        "200":
+          description: A Observation.
+          content:
+            application/fhir+json:
+              schema: { $ref: "#/components/schemas/FhirObservation" }
+        "401": { $ref: "#/components/responses/FhirUnauthenticated" }
+        "403": { $ref: "#/components/responses/FhirForbidden" }
+        "404": { $ref: "#/components/responses/FhirNotFound" }
+        "429": { $ref: "#/components/responses/FhirRateLimited" }
+
+  /fhir/r4/Observation/{id}/$acknowledge:
+    post:
+      tags: [FHIR]
+      operationId: fhirAcknowledgeObservation
+      summary: Confirmação de arquivamento de um resultado
+      description: |
+        Regista que o sistema clínico arquivou a leitura. É uma operação e não
+        um campo do recurso porque a confirmação diz respeito apenas a estes
+        dois sistemas.
+
+        Confirmar uma leitura já substituída por uma correção é recusado com
+        `409`, identificando a substituta: arquivar um valor que entretanto foi
+        corrigido é precisamente o erro que o modelo de substituição existe para
+        impedir.
+
+        A confirmação não altera a revisão da leitura — caso contrário o cursor
+        do cliente avançaria por causa da sua própria confirmação, sem fim.
+      x-node-mode: local
+      x-scope: results:read
+      parameters:
+        - $ref: "#/components/parameters/FhirId"
+      responses:
+        "200":
+          description: A Observation, já com a extensão `acknowledged-at`.
+          content:
+            application/fhir+json:
+              schema: { $ref: "#/components/schemas/FhirObservation" }
+        "401": { $ref: "#/components/responses/FhirUnauthenticated" }
+        "403": { $ref: "#/components/responses/FhirForbidden" }
+        "404": { $ref: "#/components/responses/FhirNotFound" }
+        "409": { $ref: "#/components/responses/FhirConflict" }
+        "429": { $ref: "#/components/responses/FhirRateLimited" }
+
+  /fhir/r4/Patient:
+    get:
+      tags: [FHIR]
+      operationId: fhirSearchPatient
+      summary: Pesquisa de doentes por identificador nacional
+      description: |
+        Restrita a doentes com amostras da unidade sanitária da chave. O
+        parâmetro `identifier` é obrigatório na prática: sem ele a pesquisa
+        devolve um bundle vazio, porque este nó é um sistema laboratorial e não
+        um registo nacional de doentes.
+      x-node-mode: local
+      x-scope: orders:read
+      parameters:
+        - $ref: "#/components/parameters/FhirIdentifier"
+        - $ref: "#/components/parameters/FhirCount"
+      responses:
+        "200":
+          description: Bundle `searchset` de Patient.
+          content:
+            application/fhir+json:
+              schema: { $ref: "#/components/schemas/FhirBundle" }
+        "401": { $ref: "#/components/responses/FhirUnauthenticated" }
+        "403": { $ref: "#/components/responses/FhirForbidden" }
+        "429": { $ref: "#/components/responses/FhirRateLimited" }
+
+  /fhir/r4/Patient/{id}:
+    get:
+      tags: [FHIR]
+      operationId: fhirReadPatient
+      summary: Leitura de um doente
+      description: |
+        `id` é o uuid do doente. Doentes sem identificador nacional têm
+        `identifier` vazio: um identificador nunca é inventado.
+      x-node-mode: local
+      x-scope: orders:read
+      parameters:
+        - $ref: "#/components/parameters/FhirId"
+      responses:
+        "200":
+          description: O Patient.
+          content:
+            application/fhir+json:
+              schema: { $ref: "#/components/schemas/FhirPatient" }
+        "401": { $ref: "#/components/responses/FhirUnauthenticated" }
+        "403": { $ref: "#/components/responses/FhirForbidden" }
+        "404": { $ref: "#/components/responses/FhirNotFound" }
+        "429": { $ref: "#/components/responses/FhirRateLimited" }
+
+  /fhir/r4/Specimen/{id}:
+    get:
+      tags: [FHIR]
+      operationId: fhirReadSpecimen
+      summary: Leitura de uma amostra
+      description: |
+        `id` é o uuid do pedido: neste sistema um pedido corresponde a uma
+        amostra, pelo que o Specimen é projetado a partir do pedido e partilha o
+        seu uuid. Uma amostra recusada pelo laboratório apresenta o estado
+        `unsatisfactory` e o motivo em `note`.
+      x-node-mode: local
+      x-scope: orders:read
+      parameters:
+        - $ref: "#/components/parameters/FhirId"
+      responses:
+        "200":
+          description: O Specimen.
+          content:
+            application/fhir+json:
+              schema: { $ref: "#/components/schemas/FhirSpecimen" }
+        "401": { $ref: "#/components/responses/FhirUnauthenticated" }
+        "403": { $ref: "#/components/responses/FhirForbidden" }
+        "404": { $ref: "#/components/responses/FhirNotFound" }
+        "429": { $ref: "#/components/responses/FhirRateLimited" }
+
+  /api/v3/health:
+    get:
+      tags: [Nó]
+      operationId: health
+      summary: Verificação de estado operacional do nó
+      description: |
+        Retorna o estado operacional do nó, modo de execução (`local` ou
+        `national`), versão e timestamp atual do servidor. Não requer
+        autenticação.
+      x-node-mode: both
+      security: []
+      responses:
+        "200":
+          description: Estado operacional do nó.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, meta, errors]
+                additionalProperties: false
+                properties:
+                  data:
+                    type: object
+                    required: [mode, node_code, version, time]
+                    additionalProperties: false
+                    properties:
+                      mode:
+                        type: string
+                        enum: [local, national]
+                      node_code:
+                        type: string
+                        description: Identificador do nó (código da unidade sanitária ou nó nacional).
+                      version:
+                        type: string
+                        description: Versão do software em execução.
+                      time:
+                        type: string
+                        format: date-time
+                        description: Timestamp UTC atual do servidor.
+                  meta: { $ref: "#/components/schemas/Meta" }
+                  errors: { $ref: "#/components/schemas/NoErrors" }
+
+  /api/v3/me:
+    get:
+      tags: [Nó]
+      operationId: me
+      summary: Consulta de informações do cliente autenticado
+      description: |
+        Retorna os metadados do cliente associado à chave de API utilizada no
+        pedido, incluindo âmbitos de permissão e unidade sanitária vinculada.
+      x-node-mode: both
+      responses:
+        "200":
+          description: Metadados do cliente e da chave de API.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, meta, errors]
+                additionalProperties: false
+                properties:
+                  data:
+                    type: object
+                    required: [client, key, node]
+                    additionalProperties: false
+                    properties:
+                      client:
+                        type: object
+                        required: [uuid, name, kind, facility_code, lab_code]
+                        additionalProperties: false
+                        properties:
+                          uuid: { $ref: "#/components/schemas/Uuid" }
+                          name: { type: string }
+                          kind:
+                            type: string
+                            enum: [emr, sislab, node, ui]
+                          facility_code:
+                            type: [string, "null"]
+                            description: Código da unidade sanitária vinculada ao cliente.
+                          lab_code:
+                            type: [string, "null"]
+                            description: Código do laboratório vinculado ao cliente, quando aplicável.
+                      key:
+                        type: object
+                        required: [uuid, token, scopes, expires_at, last_used_at]
+                        additionalProperties: false
+                        properties:
+                          uuid: { $ref: "#/components/schemas/Uuid" }
+                          token:
+                            type: string
+                            description: Prefixo público identificador da chave de API.
+                          scopes:
+                            type: array
+                            items: { $ref: "#/components/schemas/Scope" }
+                          expires_at: { type: [string, "null"], format: date-time }
+                          last_used_at: { type: [string, "null"], format: date-time }
+                      node:
+                        type: object
+                        required: [mode, node_code, facility_code, labs]
+                        additionalProperties: false
+                        properties:
+                          mode: { type: string, enum: [local, national] }
+                          node_code: { type: string }
+                          facility_code:
+                            type: string
+                            description: >
+                              Código da unidade sanitária que este nó é. Igual a
+                              `node_code`: um nó é uma unidade sanitária.
+                          labs:
+                            type: array
+                            description: >
+                              Os laboratórios desta unidade, tal como o registo os
+                              conhece. É a lista de valores que o parâmetro
+                              `lab_code` pode tomar nas chamadas a este nó.
+                            items:
+                              type: object
+                              required: [code, name, national_code]
+                              additionalProperties: false
+                              properties:
+                                code:
+                                  type: string
+                                  description: >
+                                    O código a usar. É o nacional quando existe, e
+                                    o do LIS enquanto o nó nacional não nomear o
+                                    laboratório.
+                                name: { type: string }
+                                national_code: { type: [string, "null"] }
+                  meta: { $ref: "#/components/schemas/Meta" }
+                  errors: { $ref: "#/components/schemas/NoErrors" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+
+  /api/v3/order-requests:
+    post:
+      tags: [EMR]
+      operationId: createOrderRequest
+      summary: Criação de pedido de análises clínicas
+      description: |
+        Cria um novo pedido de análises associado a um paciente e retorna o
+        respetivo `tracking_number` para identificação da amostra e seguimento
+        do ciclo de vida.
+
+        Quando especificado um painel (`test_panel`), este é automaticamente
+        expandido nas análises constituintes.
+
+        **Requer o cabeçalho HTTP `Idempotency-Key`**. Pedidos repetidos com a
+        mesma chave retornam a resposta original sem duplicar o registo.
+      x-node-mode: local
+      x-scope: orders:write
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/OrderRequest" }
+      responses:
+        "201":
+          description: Pedido de análises criado com sucesso.
+          headers:
+            Idempotent-Replay:
+              description: Presente com o valor `true` quando a resposta é retornada a partir de uma execução idempotente anterior.
+              schema: { type: string, enum: ["true"] }
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, meta, errors]
+                additionalProperties: false
+                properties:
+                  data:
+                    type: object
+                    required: [tracking_number, order_uuid, status]
+                    additionalProperties: false
+                    properties:
+                      tracking_number: { $ref: "#/components/schemas/TrackingNumber" }
+                      order_uuid: { $ref: "#/components/schemas/Uuid" }
+                      status: { $ref: "#/components/schemas/OrderStatus" }
+                  meta: { $ref: "#/components/schemas/Meta" }
+                  errors: { $ref: "#/components/schemas/NoErrors" }
+        "400": { $ref: "#/components/responses/IdempotencyKeyRequired" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/Unprocessable" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+
+  /api/v3/orders/{tracking_number}:
+    get:
+      tags: [EMR]
+      operationId: showOrder
+      summary: Consulta de pedido por número de rastreio
+      description: |
+        Retorna os dados cadastrais do pedido, informações do paciente e lista
+        de análises solicitadas.
+      x-node-mode: local
+      x-scope: orders:read
+      parameters:
+        - $ref: "#/components/parameters/TrackingNumber"
+      responses:
+        "200":
+          description: Detalhes do pedido e das respetivas análises.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OrderResponse" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+
+  /api/v3/orders/{tracking_number}/results:
+    get:
+      tags: [EMR]
+      operationId: showOrderResults
+      summary: Consulta de resultados detalhados de um pedido
+      description: |
+        Retorna o pedido de análises incluindo todas as medições e valores de
+        resultados registados para cada análise.
+      x-node-mode: local
+      x-scope: results:read
+      parameters:
+        - $ref: "#/components/parameters/TrackingNumber"
+      responses:
+        "200":
+          description: O pedido, com as leituras de cada análise.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OrderWithResultsResponse" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+
+  /api/v3/results:
+    get:
+      tags: [EMR]
+      operationId: listResults
+      summary: Resultados novos, por cursor
+      description: |
+        Como um EMR recolhe resultados sem lhe dizerem onde         Retorna os detalhes do pedido e as respetivas medições de resultados
+        associadas a cada análise.
+      x-node-mode: local
+      x-scope: results:read
+      parameters:
+        - $ref: "#/components/parameters/TrackingNumber"
+      responses:
+        "200":
+          description: Pedido com as medições de resultado de cada análise.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OrderWithResultsResponse" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+
+  /api/v3/results:
+    get:
+      tags: [EMR]
+      operationId: listResults
+      summary: Feed incremental de resultados de análises
+      description: |
+        Retorna medições de resultados registadas ou atualizadas a partir do
+        cursor de revisão especificado (`since`), permitindo sincronização
+        incremental pelo sistema clínico sem necessidade de consulta individual
+        por pedido.
+      x-node-mode: local
+      x-scope: results:read
+      parameters:
+        - $ref: "#/components/parameters/Since"
+        - $ref: "#/components/parameters/Limit"
+        - name: patient_national_id
+        - name: patient_national_id
+          in: query
+          required: false
+          description: Filtra os resultados pelo NID do paciente.
+          schema: { type: string }
+      responses:
+        "200":
+          description: Lista de medições de resultados registadas desde o cursor.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, meta, errors]
+                additionalProperties: false
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/TestResultWithContext" }
+                  meta: { $ref: "#/components/schemas/CursorMeta" }
+                  errors: { $ref: "#/components/schemas/NoErrors" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+
+  /api/v3/results/{uuid}/acknowledge:
+    post:
+      tags: [EMR]
+      operationId: acknowledgeResult
+      summary: Confirmação de integração/leitura de resultado
+      description: |
+        Regista a confirmação de que o resultado foi recebido e integrado no
+        registo clínico do paciente.
+
+        Leituras que tenham sido previamente retificadas/substituídas são
+        rejeitadas com `409 Conflict`, indicando o identificador da leitura
+        atualizada em `replaced_by_uuid`.
+      x-node-mode: local
+      x-scope: results:read
+      parameters:
+        - name: uuid
+          in: path
+          required: true
+          description: Identificador único (`uuid`) do resultado.
+          schema: { $ref: "#/components/schemas/Uuid" }
+      responses:
+        "200":
+          description: Resultado atualizado com a data/hora de confirmação (`acknowledged_at`).
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, meta, errors]
+                additionalProperties: false
+                properties:
+                  data: { $ref: "#/components/schemas/TestResult" }
+                  meta: { $ref: "#/components/schemas/Meta" }
+                  errors: { $ref: "#/components/schemas/NoErrors" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+
+  /api/v3/lab/pending-orders:
+    get:
+      tags: [Laboratório]
+      operationId: listPendingOrders
+      summary: Feed incremental de pedidos da unidade sanitária
+      description: |
+        Retorna o fluxo de pedidos de análises desta unidade sanitária que foram
+        criados ou sofreram alterações de estado a partir do cursor especificado
+        (`since`).
+
+        O âmbito é a unidade sanitária, porque o nó é a unidade sanitária.
+        Indicando `lab_code`, o feed reduz-se ao trabalho desse laboratório mais
+        tudo o que ainda não foi reclamado por nenhum; sem ele, devolve a unidade
+        inteira.
+      x-node-mode: local
+      x-scope: orders:read
+      parameters:
+        - $ref: "#/components/parameters/Since"
+        - $ref: "#/components/parameters/Limit"
+        - name: lab_code
+          in: query
+          required: false
+          description: >
+            Código do laboratório que está a consultar. Facultativo: restringe o
+            feed a esse laboratório e ao que ainda está por reclamar.
+          schema: { type: string }
+      responses:
+        "200":
+          description: Lista de pedidos atualizados desde o cursor fornecido.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, meta, errors]
+                additionalProperties: false
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/Order" }
+                  meta:
+                    allOf:
+                      - { $ref: "#/components/schemas/CursorMeta" }
+                      - type: object
+                        properties:
+                          facility_code: { type: string }
+                          lab_code: { type: [string, "null"] }
+                  errors: { $ref: "#/components/schemas/NoErrors" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/Unprocessable" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+
+  /api/v3/lab/orders/{tracking_number}/claim:
+    post:
+      tags: [Laboratório]
+      operationId: claimOrder
+      summary: Atribuição de amostra/pedido ao laboratório
+      description: |
+        Regista a receção física da amostra e atribui o seu processamento a um
+        dos laboratórios da unidade. Operação concorrente protegida: tentativas
+        de reivindicação simultâneas resultam em `409 Conflict` para o segundo
+        requisitante.
+
+        É aqui que um pedido vindo do EMR ganha laboratório: chega à unidade sem
+        nenhum, e fica com o que o reclamar.
+      x-node-mode: local
+      x-scope: orders:read
+      parameters:
+        - $ref: "#/components/parameters/TrackingNumber"
+        - name: lab_code
+          in: query
+          required: false
+          description: >
+            Código do laboratório que está a receber a amostra. Obrigatório
+            enquanto o pedido não tiver laboratório atribuído.
+          schema: { type: string }
+      responses:
+        "200":
+          description: Pedido atualizado com os dados de receção (`claimed_at` e `claimed_by_lab_code`).
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OrderResponse" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "422":
+          description: Transição de estado inválida para o estado atual da amostra.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+
+  /api/v3/lab/orders/{tracking_number}/status:
+    patch:
+      tags: [Laboratório]
+      operationId: transitionOrder
+      summary: Transição de estado do pedido de análises
+      description: |
+        Executa uma transição no ciclo de vida da amostra de acordo com as regras
+        estritas da máquina de estados.
+
+        `specimen_collected` é opcional: uma amostra colhida na enfermaria chega
+        ao laboratório já colhida, e passa de `accepted` directamente a
+        `in_progress`. O laboratório que colhe regista-o, e nesse caso o passo
+        tem de vir antes de `in_progress`.
+      x-node-mode: local
+      x-scope: results:write
+      parameters:
+        - $ref: "#/components/parameters/TrackingNumber"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status:
+                  allOf:
+                    - { $ref: "#/components/schemas/OrderStatus" }
+                  description: Estado de destino da transição.
+                reason:
+                  type: string
+                  description: Justificação técnica da mudança de estado.
+                actor:
+                  type: string
+                  description: Identificação do operador/técnico responsável.
+      responses:
+        "200":
+          description: Pedido no novo estado operacional com histórico de auditoria.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OrderWithHistoryResponse" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/Unprocessable" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+
+  /api/v3/lab/orders/{tracking_number}/results:
+    post:
+      tags: [Laboratório]
+      operationId: recordResults
+      summary: Registo de medições e resultados analíticos
+      description: |
+        Regista resultados parciais ou definitivos para os indicadores das
+        análises solicitadas. O parâmetro `final: true` conclui formalmente as
+        análises correspondentes. Retificações criam novas medições encadeadas
+        através de `replaced_by_uuid`.
+      x-node-mode: local
+      x-scope: results:write
+      parameters:
+        - $ref: "#/components/parameters/TrackingNumber"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [results]
+              properties:
+                final:
+                  type: boolean
+                  default: false
+                  description: Indica se estas medições finalizam as análises correspondentes.
+                actor: { type: string }
+                results:
+                  type: array
+                  minItems: 1
+                  items:
+                    type: object
+                    required: [test_type, indicator]
+                    properties:
+                      test_type:
+                        allOf: [{ $ref: "#/components/schemas/DictionaryRef" }]
+                        description: Análise correspondente no catálogo nacional.
+                      indicator:
+                        allOf: [{ $ref: "#/components/schemas/DictionaryRef" }]
+                        description: Indicador/parâmetro medido.
+                      value:
+                        type: [string, number, "null"]
+                        description: Valor apurado pelo instrumento ou técnico.
+                      unit: { type: [string, "null"] }
+                      recorded_at:
+                        type: string
+                        format: date-time
+                        description: Timestamp da medição.
+                      recorded_by: { type: string }
+      responses:
+        "200":
+          description: Pedido atualizado com as medições registadas.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OrderWithResultsResponse" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/Unprocessable" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+
+  /api/v3/lab/orders/{tracking_number}/tests:
+    post:
+      tags: [Laboratório]
+      operationId: addTests
+      summary: Adição de análises reflexas ou confirmatórias
+      description: |
+        Adiciona análises analíticas complementares a uma amostra já registada
+        sob o mesmo número de rastreio.
+      x-node-mode: local
+      x-scope: results:write
+      parameters:
+        - $ref: "#/components/parameters/TrackingNumber"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [tests]
+              properties:
+                actor: { type: string }
+                tests:
+                  type: array
+                  minItems: 1
+                  items:
+                    type: object
+                    required: [test_type]
+                    properties:
+                      test_type: { $ref: "#/components/schemas/DictionaryRef" }
+                      method_of_testing: { type: string }
+      responses:
+        "201":
+          description: Análises adicionadas com sucesso.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, meta, errors]
+                additionalProperties: false
+                properties:
+                  data: { $ref: "#/components/schemas/Order" }
+                  meta:
+                    type: object
+                    required: [added]
+                    properties:
+                      added:
+                        type: integer
+                        description: Quantidade de novas análises integradas.
+                  errors: { $ref: "#/components/schemas/NoErrors" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/Unprocessable" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+
+  /api/v3/lab/orders/{tracking_number}/reject:
+    post:
+      tags: [Laboratório]
+      operationId: rejectOrder
+      summary: Rejeição técnica de amostra
+      description: |
+        Regista a rejeição técnica de uma amostra não conforme. O motivo é
+        obrigatório, mas não tem de constar do dicionário nacional: um motivo
+        que o nó não conheça fica guardado como chegou (ver *Termos Clínicos*).
+      x-node-mode: local
+      x-scope: results:write
+      parameters:
+        - $ref: "#/components/parameters/TrackingNumber"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              properties:
+                reason:
+                  allOf: [{ $ref: "#/components/schemas/DictionaryRef" }]
+                  description: Código padronizado de motivo de rejeição (`rejection_reasons`).
+                note:
+                  type: string
+                  description: Observações técnicas complementares.
+                actor: { type: string }
+      responses:
+        "200":
+          description: Pedido rejeitado e arquivado no histórico.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OrderWithHistoryResponse" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/Unprocessable" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+
+  /api/v3/lab/referrals:
+    post:
+      tags: [Laboratório]
+      operationId: dispatchReferral
+      summary: Encaminhamento de amostra para laboratório de referência
+      description: |
+        Regista a saída em trânsito de uma amostra referida para processamento
+        num laboratório de escalão superior ou especializado.
+      x-node-mode: local
+      x-scope: referrals:write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [tracking_number, to_lab_code]
+              properties:
+                tracking_number: { $ref: "#/components/schemas/TrackingNumber" }
+                to_lab_code:
+                  type: string
+                  description: >
+                    Código do laboratório de destino, tal como consta do registo
+                    nacional (`labs`) que este nó replica.
+                to_facility_code:
+                  type: string
+                  description: >
+                    Ignorado: a unidade sanitária de destino é lida do registo.
+                    Aceite para que clientes escritos contra o contrato anterior
+                    continuem a funcionar.
+                courier:
+                  type: string
+                  description: Identificação do responsável pelo transporte / estafeta.
+                remarks: { type: string }
+                actor: { type: string }
+      responses:
+        "201":
+          description: Registo de remessa em trânsito criado com sucesso.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ReferralResponse" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/Unprocessable" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+
+  /api/v3/lab/referrals/{uuid}:
+    patch:
+      tags: [Laboratório]
+      operationId: settleReferral
+      summary: Conclusão de trânsito de amostra referida (receção ou recusa)
+      description: |
+        Atualiza o estado de uma remessa de amostra referida no laboratório de
+        destino, registando a receção efetiva (`received`) ou a recusa na
+        triagem (`rejected`).
+      x-node-mode: local
+      x-scope: referrals:write
+      parameters:
+        - name: uuid
+          in: path
+          required: true
+          description: Identificador único (`uuid`) da remessa.
+          schema: { $ref: "#/components/schemas/Uuid" }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [state]
+              properties:
+                state:
+                  type: string
+                  enum: [received, rejected]
+                reason:
+                  allOf: [{ $ref: "#/components/schemas/DictionaryRef" }]
+                  description: Motivo de recusa (obrigatório quando `state` é `rejected`).
+                remarks: { type: string }
+                actor: { type: string }
+      responses:
+        "200":
+          description: Remessa atualizada no estado final de trânsito.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ReferralResponse" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "422": { $ref: "#/components/responses/Unprocessable" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+
+  /api/v3/dictionary/changes:
+    get:
+      tags: [Dicionário]
+      operationId: dictionaryChanges
+      summary: Feed incremental de alterações do dicionário
+      description: |
+        Retorna o histórico de alterações nas entidades do catálogo nacional
+        a partir do cursor de revisão especificado (`since`). As entidades
+        partilham uma sequência unificada de revisões para permitir consumo
+        sequencial consistente.
+      x-node-mode: both
+      x-scope: dictionary:read
+      parameters:
+        - $ref: "#/components/parameters/Since"
+        - $ref: "#/components/parameters/DictionaryLimit"
+        - name: entities
+          in: query
+          required: false
+          description: Filtro por entidades específicas (lista separada por vírgulas).
+          schema: { type: string }
+          example: test_types,indicators
+      responses:
+        "200":
+          description: Lista de entradas alteradas a partir do cursor, ordenadas por revisão.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DictionaryFeedResponse" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/Unprocessable" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+
+  /api/v3/dictionary/{entity_type}:
+    get:
+      tags: [Dicionário]
+      operationId: dictionaryEntity
+      summary: Consulta do catálogo ativo por entidade
+      description: |
+        Retorna a listagem direta de todas as entradas em estado ativo da
+        entidade especificada no catálogo nacional.
+      x-node-mode: both
+      x-scope: dictionary:read
+      parameters:
+        - name: entity_type
+          in: path
+          required: true
+          description: Identificador da entidade do catálogo.
+          schema: { $ref: "#/components/schemas/DictionaryEntity" }
+        - $ref: "#/components/parameters/Since"
+        - $ref: "#/components/parameters/DictionaryLimit"
+      responses:
+        "200":
+          description: Entradas ativas da entidade solicitada.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, meta, errors]
+                additionalProperties: false
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/DictionaryEntry" }
+                  meta:
+                    type: object
+                    required: [cursor, next_cursor]
+                    properties:
+                      cursor: { type: integer }
+                      next_cursor: { type: integer }
+                  errors: { $ref: "#/components/schemas/NoErrors" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/Unprocessable" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+
+  /api/v3/sync/events:
+    post:
+      tags: [Sincronização]
+      operationId: pushEvents
+      summary: Envio de lote de eventos de sincronização
+      description: |
+        Recebe e processa eventos transacionais originados num nó local para
+        agregação no nó nacional.
+
+        A entrega garante semântica *at-least-once*, sendo o armazenamento
+        idempotente através de `event_uuid`. A aplicação no estado transacional
+        ocorre de forma estritamente sequencial com base no número de sequência
+        (`sequence`) de cada agregado.
+      x-node-mode: national
+      x-scope: sync:push
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [node_code, events]
+              properties:
+                node_code:
+                  type: string
+                  description: Código do nó emissor dos eventos (deve corresponder à chave de API).
+                events:
+                  type: array
+                  maxItems: 500
+                  items: { $ref: "#/components/schemas/SyncEvent" }
+      responses:
+        "200":
+          description: Resultado do processamento do lote de eventos.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, meta, errors]
+                additionalProperties: false
+                properties:
+                  data:
+                    type: object
+                    required: [accepted, rejected]
+                    additionalProperties: false
+                    properties:
+                      accepted:
+                        type: array
+                        description: Lista de `event_uuid` integrados com sucesso ou já existentes (idempotência).
+                        items: { $ref: "#/components/schemas/Uuid" }
+                      rejected:
+                        type: array
+                        description: Lista de eventos não aceites com respetivo código e mensagem de erro.
+                        items:
+                          type: object
+                          required: [event_uuid, code, message]
+                          properties:
+                            event_uuid: { $ref: "#/components/schemas/Uuid" }
+                            code: { type: [string, "null"] }
+                            message: { type: [string, "null"] }
+                  meta:
+                    type: object
+                    required: [node_code, received]
+                    properties:
+                      node_code: { type: string }
+                      received:
+                        type: integer
+                        description: Quantidade total de eventos recebidos no lote.
+                  errors: { $ref: "#/components/schemas/NoErrors" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/Unprocessable" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+
+  /api/v3/sync/inbound:
+    get:
+      tags: [Sincronização]
+      operationId: inboundEvents
+      summary: Consulta de eventos pendentes de entrega ao nó local
+      description: |
+        Retorna o fluxo de eventos transacionais gerados noutros nós e
+        destinados a este nó local (ex.: amostras referidas encaminhadas para a
+        unidade ou resultados retornados).
+      x-node-mode: national
+      x-scope: sync:pull
+      parameters:
+        - name: node_code
+          in: query
+          required: false
+          description: Código do nó destinatário (deve corresponder à chave de API autenticada).
+          schema: { type: string }
+        - $ref: "#/components/parameters/Since"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: Eventos pendentes de sincronização para o nó local, ordenados por revisão.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, meta, errors]
+                additionalProperties: false
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/InboundEvent" }
+                  meta:
+                    allOf:
+                      - { $ref: "#/components/schemas/CursorMeta" }
+                      - type: object
+                        properties:
+                          node_code: { type: string }
+                  errors: { $ref: "#/components/schemas/NoErrors" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/Unprocessable" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+
+  /api/v3/nodes/heartbeat:
+    post:
+      tags: [Sincronização]
+      operationId: heartbeat
+      summary: Registo de sinal de atividade (heartbeat) do nó
+      description: |
+        Notifica o nó nacional sobre o estado de funcionamento do nó local,
+        versão em execução, métricas da fila de envio e estado dos cursores de
+        dicionário.
+      x-node-mode: national
+      x-scope: sync:push
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [node_code]
+              properties:
+                node_code: { type: string }
+                name:
+                  type: string
+                  description: Nome descritivo da unidade sanitária.
+                version:
+                  type: string
+                  description: Versão do software em execução.
+                dictionary_cursor:
+                  type: integer
+                  description: Última revisão do dicionário sincronizada pelo nó.
+                outbox_pending:
+                  type: integer
+                  description: Quantidade de eventos na fila pendente de envio.
+                outbox_failing:
+                  type: integer
+                  description: Quantidade de eventos em estado de falha na fila de envio.
+                last_error:
+                  type: string
+                  description: Descrição do último erro registado na sincronização.
+      responses:
+        "200":
+          description: Confirmação do batimento cardíaco com metadados do estado nacional do catálogo.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, meta, errors]
+                additionalProperties: false
+                properties:
+                  data:
+                    type: object
+                    required: [node_code, last_seen_at, dictionary_cursor]
+                    additionalProperties: false
+                    properties:
+                      node_code: { type: string }
+                      last_seen_at: { type: string, format: date-time }
+                      dictionary_cursor:
+                        type: integer
+                        description: Última revisão disponível no catálogo nacional.
+                  meta: { $ref: "#/components/schemas/Meta" }
+                  errors: { $ref: "#/components/schemas/NoErrors" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/Unprocessable" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+
+components:
+  securitySchemes:
+    apiKey:
+      type: http
+      scheme: bearer
+      description: |
+        Autenticação via token estático no cabeçalho `Authorization: Bearer <api_key>`.
+
+  parameters:
+    TrackingNumber:
+      name: tracking_number
+      in: path
+      required: true
+      description: Número de rastreio único nacional atribuído à amostra.
+      schema: { $ref: "#/components/schemas/TrackingNumber" }
+
+    Since:
+      name: since
+      in: query
+      required: false
+      description: |
+        Cursor numérico de revisão a partir do qual retornar alterações incrementais (exclusivo).
+      schema: { type: integer, minimum: 0, default: 0 }
+
+    Limit:
+      name: limit
+      in: query
+      required: false
+      description: Quantidade máxima de registos por resposta.
+      schema: { type: integer, minimum: 1, maximum: 500, default: 100 }
+
+    DictionaryLimit:
+      name: limit
+      in: query
+      required: false
+      description: Quantidade máxima de entradas do catálogo por resposta.
+      schema: { type: integer, minimum: 1, maximum: 1000, default: 500 }
+
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      description: |
+        Identificador único da operação para garantia de idempotência no processamento.
+      schema: { type: string, minLength: 1 }
+
+    FhirId:
+      name: id
+      in: path
+      required: true
+      description: Identificador da instância do recurso (uuid).
+      schema: { $ref: "#/components/schemas/Uuid" }
+
+    FhirIdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: false
+      description: |
+        Chave de idempotência. Opcional apenas porque, na sua ausência, é usado
+        o `identifier` do recurso submetido — um dos dois tem de existir, sob
+        pena de `400`.
+      schema: { type: string, minLength: 1 }
+
+    FhirIdentifier:
+      name: identifier
+      in: query
+      required: false
+      description: |
+        Pesquisa por identificador, no formato `system|valor`, `|valor` ou
+        apenas `valor`. Para pedidos, relatórios e leituras é o número de
+        rastreio; para doentes é o identificador nacional.
+      schema: { type: string }
+
+    FhirRequisition:
+      name: requisition
+      in: query
+      required: false
+      description: Número de rastreio que agrupa as análises de uma mesma amostra.
+      schema: { type: string }
+
+    FhirPatient:
+      name: patient
+      in: query
+      required: false
+      description: Referência ao doente, como `Patient/{uuid}` ou apenas o uuid.
+      schema: { type: string }
+
+    FhirPatientIdentifier:
+      name: patient.identifier
+      in: query
+      required: false
+      description: Identificador nacional do doente, no formato `system|valor` ou apenas `valor`.
+      schema: { type: string }
+
+    FhirServiceRequestStatus:
+      name: status
+      in: query
+      required: false
+      description: |
+        Estado FHIR do pedido. Cada valor corresponde a vários estados nativos:
+        `active` cobre todo o percurso anterior a um estado terminal, e
+        `revoked` cobre tanto o cancelamento na consulta como a recusa da
+        amostra pelo laboratório. O estado nativo é publicado na extensão
+        `order-status`.
+      schema: { type: string, enum: [active, completed, revoked, unknown] }
+
+    FhirDiagnosticReportStatus:
+      name: status
+      in: query
+      required: false
+      description: |
+        Estado FHIR do relatório. `corrected` não é pesquisável por ser uma
+        propriedade das leituras e não da análise.
+      schema: { type: string, enum: [registered, partial, final, cancelled, unknown] }
+
+    FhirSince:
+      name: _since
+      in: query
+      required: false
+      description: |
+        Cursor de revisão. Devolve o que mudou depois desta revisão. Omitido ou
+        `0`, devolve desde o início.
+      schema: { type: integer, minimum: 0 }
+
+    FhirCount:
+      name: _count
+      in: query
+      required: false
+      description: Número máximo de recursos por bundle.
+      schema: { type: integer, minimum: 1, maximum: 500, default: 100 }
+
+  responses:
+    Unauthenticated:
+      description: Token de autenticação em falta, inválido, revogado ou expirado.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorResponse" }
+    Forbidden:
+      description: |
+        Acesso negado: permissões insuficientes (`insufficient_scope`) ou
+        chave a falar por outro nó (`node_mismatch`).
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorResponse" }
+    NotFound:
+      description: Recurso não encontrado no nó.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorResponse" }
+    Conflict:
+      description: |
+        Conflito no estado concorrente do recurso (ex.: amostra já
+        reivindicada, remessa previamente concluída ou resultado substituído).
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorResponse" }
+    Unprocessable:
+      description: |
+        Entidade não processável devido a violação de regras de validação ou
+        inconsistência nos parâmetros submetidos.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorResponse" }
+    IdempotencyKeyRequired:
+      description: Cabeçalho HTTP `Idempotency-Key` não fornecido no pedido.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorResponse" }
+    RateLimited:
+      description: |
+        Limite de taxa de requisições excedido para a chave de API na janela temporal.
+      headers:
+        Retry-After:
+          description: Tempo de espera em segundos até a reabertura da janela de taxa.
+          schema: { type: string }
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+    FhirUnauthenticated:
+      description: Token de autenticação em falta, inválido, revogado ou expirado.
+      content:
+        application/fhir+json:
+          schema: { $ref: "#/components/schemas/OperationOutcome" }
+    FhirForbidden:
+      description: |
+        Acesso negado: permissões insuficientes (`insufficient_scope`) ou
+        chave a falar por outro nó (`node_mismatch`).
+      content:
+        application/fhir+json:
+          schema: { $ref: "#/components/schemas/OperationOutcome" }
+    FhirNotFound:
+      description: Recurso não encontrado no nó.
+      content:
+        application/fhir+json:
+          schema: { $ref: "#/components/schemas/OperationOutcome" }
+    FhirConflict:
+      description: |
+        Conflito de estado: a leitura já foi substituída por uma correção
+        (`conflict`).
+      content:
+        application/fhir+json:
+          schema: { $ref: "#/components/schemas/OperationOutcome" }
+    FhirUnprocessable:
+      description: |
+        Conteúdo inválido: termo que não identifica nada, campo obrigatório em
+        falta, ou reutilização de chave de idempotência com conteúdo diferente.
+        Um código que o catálogo do nó não tenha não é motivo de recusa.
+        `issue[0].expression` identifica o campo.
+      content:
+        application/fhir+json:
+          schema: { $ref: "#/components/schemas/OperationOutcome" }
+    FhirIdempotencyKeyRequired:
+      description: |
+        Nem o cabeçalho `Idempotency-Key` nem o `identifier` do recurso foram
+        fornecidos, pelo que a submissão não pode ser repetida com segurança.
+      content:
+        application/fhir+json:
+          schema: { $ref: "#/components/schemas/OperationOutcome" }
+    FhirRateLimited:
+      description: Limite de pedidos por minuto excedido para esta chave.
+      content:
+        application/fhir+json:
+          schema: { $ref: "#/components/schemas/OperationOutcome" }
+
+  schemas:
+    Uuid:
+      type: string
+      format: uuid
+      description: Identificador universal único (UUID v4) globalmente persistente entre nós.
+
+    TrackingNumber:
+      type: string
+      description: |
+        Número de rastreio único nacional atribuído à amostra pelo nó de origem.
+      example: HCM26000123
+
+    Scope:
+      type: string
+      enum:
+        - orders:read
+        - orders:write
+        - results:read
+        - results:write
+        - referrals:write
+        - dictionary:read
+        - dictionary:write
+        - sync:push
+        - sync:pull
+
+    OrderStatus:
+      type: string
+      description: Estado operacional da amostra no fluxo de processamento laboratorial.
+      enum:
+        - requested
+        - accepted
+        - specimen_collected
+        - in_progress
+        - referred_out
+        - referred_in
+        - completed
+        - rejected
+        - cancelled
+
+    TestStatus:
+      type: string
+      description: Estado de execução individual de cada análise associada ao pedido.
+      enum: [pending, in_progress, completed, rejected, cancelled]
+
+    Priority:
+      type: string
+      enum: [routine, urgent, stat]
+
+    DictionaryEntity:
+      type: string
+      enum:
+        - facilities
+        - labs
+        - departments
+        - specimen_types
+        - drugs
+        - organisms
+        - indicators
+        - test_types
+        - test_panels
+        - rejection_reasons
+
+    ErrorCode:
+      type: string
+      description: Código programático padronizado de identificação do erro.
+      enum:
+        - unauthenticated
+        - insufficient_scope
+        - node_mismatch
+        - idempotency_key_required
+        - idempotency_key_reused
+        - rate_limited
+        - not_found
+        - conflict
+        - unprocessable
+
+    Meta:
+      type: object
+      description: Metadados contextuais da resposta da API.
+
+    NoErrors:
+      type: array
+      maxItems: 0
+      description: Lista vazia em respostas processadas com sucesso.
+
+    CursorMeta:
+      type: object
+      required: [cursor, next_cursor, has_more]
+      properties:
+        cursor:
+          type: integer
+          description: Cursor numérico de revisão fornecido no pedido.
+        next_cursor:
+          type: integer
+          description: Cursor numérico de revisão a utilizar no pedido seguinte.
+        has_more:
+          type: boolean
+          description: Indicador booleano de existência de registos adicionais posteriores.
+
+    ErrorResponse:
+      type: object
+      required: [data, meta, errors]
+      additionalProperties: false
+      properties:
+        data:
+          type: "null"
+          description: Campo nulo em respostas de erro.
+        meta: { $ref: "#/components/schemas/Meta" }
+        errors:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            required: [code, message]
+            additionalProperties: false
+            properties:
+              code: { $ref: "#/components/schemas/ErrorCode" }
+              message:
+                type: string
+                description: Descrição legível do erro.
+              field:
+                type: string
+                description: Nome do campo associado ao erro de validação, quando aplicável.
+
+    DictionaryRef:
+      description: |
+        Termo clínico, indicado por `national_code`, por `uuid` ou por `name`.
+
+        O catálogo nacional ainda está em consolidação, pelo que um termo que
+        este nó não conheça **não** é recusado: fica registado com o nome e o
+        código com que chegou, e é ligado ao catálogo mais tarde, sem que a
+        leitura tenha de ser reintroduzida. Uma cadeia de texto simples é aceite
+        como forma abreviada de `{ "name": "..." }`.
+      oneOf:
+        - type: string
+          minLength: 1
+        - type: object
+          minProperties: 1
+          properties:
+            national_code: { type: string }
+            uuid: { $ref: "#/components/schemas/Uuid" }
+            name: { type: string }
+
+    DictionaryReference:
+      type: [object, "null"]
+      description: |
+        Termo clínico tal como o registo o guarda.
+
+        `name` está sempre presente. `uuid` é nulo quando o termo não
+        corresponde a nenhuma entrada do catálogo deste nó, e `national_code`
+        é nulo quando o pedido também não indicou nenhum — é o caso de um termo
+        indicado apenas por nome, enquanto o catálogo nacional não estiver
+        consolidado.
+      required: [uuid, national_code, name]
+      additionalProperties: false
+      properties:
+        uuid:
+          oneOf: [{ $ref: "#/components/schemas/Uuid" }, { type: "null" }]
+        national_code: { type: [string, "null"] }
+        name: { type: string }
+
+    Patient:
+      type: object
+      required: [uuid, national_id, name, sex, birthdate, phone]
+      additionalProperties: false
+      properties:
+        uuid: { $ref: "#/components/schemas/Uuid" }
+        national_id:
+          type: [string, "null"]
+          description: Número de Identificação do Doente (NID).
+        name: { type: string }
+        sex: { type: string }
+        birthdate: { type: [string, "null"], format: date }
+        phone: { type: [string, "null"] }
+
+    TestResult:
+      type: object
+      description: Registo de medição e valor apurado para um indicador analítico.
+      required:
+        [uuid, revision, indicator, value, unit, recorded_at, recorded_by,
+         replaced_by_uuid, acknowledged_at]
+      properties:
+        uuid: { $ref: "#/components/schemas/Uuid" }
+        revision:
+          type: integer
+          description: Posição sequencial da medição no feed de resultados.
+        indicator: { $ref: "#/components/schemas/DictionaryReference" }
+        value: { type: [string, "null"] }
+        unit: { type: [string, "null"] }
+        recorded_at: { type: [string, "null"], format: date-time }
+        recorded_by: { type: [string, "null"] }
+        replaced_by_uuid:
+          type: [string, "null"]
+          description: Identificador da medição retificativa que substitui este valor, quando aplicável.
+        acknowledged_at:
+          type: [string, "null"]
+          format: date-time
+          description: Timestamp de confirmação de integração no registo clínico.
+
+    TestResultWithContext:
+      description: |
+        Medição de resultado analítico enriquecida com os metadados contextuais do pedido e paciente.
+      allOf:
+        - { $ref: "#/components/schemas/TestResult" }
+        - type: object
+          required: [tracking_number, order_test_uuid, test_type, patient]
+          properties:
+            tracking_number: { $ref: "#/components/schemas/TrackingNumber" }
+            order_test_uuid: { $ref: "#/components/schemas/Uuid" }
+            test_type: { $ref: "#/components/schemas/DictionaryReference" }
+            patient: { $ref: "#/components/schemas/Patient" }
+
+    OrderTest:
+      type: object
+      description: Registo de análise laboratorial solicitada para a amostra.
+      required:
+        [uuid, status, test_type, test_panel, method_of_testing, created_at, updated_at]
+      properties:
+        uuid: { $ref: "#/components/schemas/Uuid" }
+        status: { $ref: "#/components/schemas/TestStatus" }
+        test_type: { $ref: "#/components/schemas/DictionaryReference" }
+        test_panel:
+          allOf: [{ $ref: "#/components/schemas/DictionaryReference" }]
+          description: Painel analítico de origem, quando aplicável.
+        method_of_testing: { type: [string, "null"] }
+        created_at: { type: [string, "null"], format: date-time }
+        updated_at: { type: [string, "null"], format: date-time }
+        results:
+          type: array
+          description: Lista de medições e resultados associados a esta análise.
+          items: { $ref: "#/components/schemas/TestResult" }
+
+    Referral:
+      type: [object, "null"]
+      description: Dados de encaminhamento e trânsito da amostra entre laboratórios.
+      required:
+        [uuid, tracking_number, state, from_facility_code, from_lab_code,
+         to_facility_code, to_lab_code, dispatched_at, received_at, rejected_at,
+         rejection_reason, courier, remarks]
+      additionalProperties: false
+      properties:
+        uuid: { $ref: "#/components/schemas/Uuid" }
+        tracking_number: { $ref: "#/components/schemas/TrackingNumber" }
+        state:
+          type: string
+          enum: [dispatched, received, rejected]
+        from_facility_code: { type: [string, "null"] }
+        from_lab_code: { type: [string, "null"] }
+        to_facility_code:
+          type: [string, "null"]
+          description: >
+            Unidade sanitária de destino, lida do registo de laboratórios. Nula
+            enquanto o registo não tiver chegado a este nó.
+        to_lab_code: { type: string }
+        dispatched_at: { type: [string, "null"], format: date-time }
+        received_at: { type: [string, "null"], format: date-time }
+        rejected_at: { type: [string, "null"], format: date-time }
+        rejection_reason: { $ref: "#/components/schemas/DictionaryReference" }
+        courier: { type: [string, "null"] }
+        remarks: { type: [string, "null"] }
+
+    StatusEvent:
+      type: object
+      description: Registo de auditoria de transição de estado da amostra ou análise.
+      required:
+        [uuid, entity, entity_uuid, tracking_number, from_status, to_status,
+         actor, reason, created_at]
+      additionalProperties: false
+      properties:
+        uuid: { $ref: "#/components/schemas/Uuid" }
+        entity:
+          type: string
+          description: Entidade alvo da mutação de estado (`orders` ou `order_tests`).
+          enum: [orders, order_tests]
+        entity_uuid: { $ref: "#/components/schemas/Uuid" }
+        tracking_number: { $ref: "#/components/schemas/TrackingNumber" }
+        from_status:
+          type: [string, "null"]
+          description: Estado anterior da entidade.
+        to_status: { type: string }
+        actor: { type: [string, "null"] }
+        reason: { type: [string, "null"] }
+        created_at: { type: [string, "null"], format: date-time }
+
+    Order:
+      type: object
+      description: Entidade central representativa do pedido de análises clínicas e amostra biológica.
+      required:
+        [uuid, revision, tracking_number, status, priority, claimed_at,
+         claimed_by_lab_code, sending_facility_code, receiving_facility_code,
+         receiving_lab_code, lab_code,
+         specimen_type, collected_at, requested_by, order_location,
+         clinical_history, source_system, patient, referral, created_at,
+         updated_at, tests]
+      properties:
+        uuid: { $ref: "#/components/schemas/Uuid" }
+        revision:
+          type: integer
+          description: Posição sequencial do registo no feed de pedidos do laboratório.
+        tracking_number: { $ref: "#/components/schemas/TrackingNumber" }
+        status: { $ref: "#/components/schemas/OrderStatus" }
+        priority: { $ref: "#/components/schemas/Priority" }
+        claimed_at: { type: [string, "null"], format: date-time }
+        claimed_by_lab_code: { type: [string, "null"] }
+        sending_facility_code:
+          type: [string, "null"]
+          description: Código da unidade sanitária requisitante.
+        receiving_facility_code:
+          type: string
+          description: Código da unidade sanitária que recebeu o pedido — o nó.
+        receiving_lab_code:
+          type: [string, "null"]
+          description: >
+            Código do laboratório que executa as análises. Nulo enquanto nenhum
+            dos laboratórios da unidade tiver reclamado a amostra.
+        lab_code: { type: [string, "null"] }
+        specimen_type: { $ref: "#/components/schemas/DictionaryReference" }
+        collected_at: { type: [string, "null"], format: date-time }
+        requested_by:
+          type: [string, "null"]
+          description: Identificação do profissional clínico requisitante.
+        order_location: { type: [string, "null"] }
+        clinical_history: { type: [string, "null"] }
+        source_system: { type: [string, "null"] }
+        patient: { $ref: "#/components/schemas/Patient" }
+        referral: { $ref: "#/components/schemas/Referral" }
+        created_at: { type: [string, "null"], format: date-time }
+        updated_at: { type: [string, "null"], format: date-time }
+        tests:
+          type: array
+          items: { $ref: "#/components/schemas/OrderTest" }
+        history:
+          type: array
+          description: Histórico cronológico de transições de estado associadas.
+          items: { $ref: "#/components/schemas/StatusEvent" }
+
+    OrderResponse:
+      type: object
+      required: [data, meta, errors]
+      additionalProperties: false
+      properties:
+        data: { $ref: "#/components/schemas/Order" }
+        meta: { $ref: "#/components/schemas/Meta" }
+        errors: { $ref: "#/components/schemas/NoErrors" }
+
+    OrderWithResultsResponse:
+      type: object
+      required: [data, meta, errors]
+      additionalProperties: false
+      properties:
+        data:
+          allOf: [{ $ref: "#/components/schemas/Order" }]
+          description: Pedido de análises incluindo medições e resultados analíticos.
+        meta: { $ref: "#/components/schemas/Meta" }
+        errors: { $ref: "#/components/schemas/NoErrors" }
+
+    OrderWithHistoryResponse:
+      type: object
+      required: [data, meta, errors]
+      additionalProperties: false
+      properties:
+        data:
+          allOf: [{ $ref: "#/components/schemas/Order" }]
+          description: Pedido de análises incluindo histórico completo de transições de estado.
+        meta: { $ref: "#/components/schemas/Meta" }
+        errors: { $ref: "#/components/schemas/NoErrors" }
+
+    ReferralResponse:
+      type: object
+      required: [data, meta, errors]
+      additionalProperties: false
+      properties:
+        data: { $ref: "#/components/schemas/Referral" }
+        meta: { $ref: "#/components/schemas/Meta" }
+        errors: { $ref: "#/components/schemas/NoErrors" }
+
+    OrderRequest:
+      type: object
+      description: Payload para criação de pedido de análises clínicas.
+      required: [patient, order, tests]
+      properties:
+        patient:
+          type: object
+          required: [name]
+          properties:
+            national_id:
+              type: [string, "null"]
+              description: >
+                Número de Identificação do Doente (NID). Admite nulo: nem todo o
+                doente tem um, e nesse caso cada pedido cria um registo de doente
+                próprio, em vez de os agrupar todos sob um identificador vazio.
+            name: { type: string }
+            sex: { type: [string, "null"] }
+            birthdate: { type: [string, "null"], format: date }
+            phone: { type: [string, "null"] }
+        lab:
+          type: object
+          description: >
+            O laboratório que está a submeter a amostra, como ele próprio se
+            descreve. Enviado pelo LIS: uma instância do mLab serve vários
+            laboratórios da mesma unidade sanitária, e é aqui que diz qual deles
+            está a falar. Um código que o nó nunca viu é registado com o nome que
+            vier neste bloco e anunciado ao nó nacional, que lhe atribui o código
+            nacional e o devolve pelo feed do dicionário. Um EMR não envia nada:
+            o pedido chega à unidade e espera que um laboratório o reclame.
+          required: [code]
+          properties:
+            code:
+              type: string
+              description: Código do laboratório no LIS de origem.
+            name: { type: string }
+            short_name: { type: string }
+            description: { type: string }
+            phone: { type: string }
+        order:
+          type: object
+          properties:
+            sending_facility_code:
+              type: string
+              description: >
+                Código da unidade sanitária emissora. Ignorado: o nó usa o da
+                chave, ou o da sua própria entrada no registo de laboratórios.
+                Aceite para que clientes escritos contra o contrato anterior
+                continuem a funcionar.
+            receiving_lab_code:
+              type: string
+              description: >
+                Código do laboratório que vai executar as análises. Facultativo:
+                na ausência o pedido fica à espera de que um dos laboratórios da
+                unidade o reclame.
+            lab_code: { type: string }
+            priority: { $ref: "#/components/schemas/Priority" }
+            requested_by: { type: string }
+            order_location: { type: string }
+            clinical_history: { type: string }
+            collected_at: { type: string, format: date-time }
+            specimen_type:
+              allOf: [{ $ref: "#/components/schemas/DictionaryRef" }]
+              description: Referência a uma entrada ativa de `specimen_types`.
+        tests:
+          type: array
+          minItems: 1
+          description: Lista de análises ou painéis analíticos solicitados.
+          items:
+            type: object
+            minProperties: 1
+            properties:
+              test_type: { $ref: "#/components/schemas/DictionaryRef" }
+              test_panel: { $ref: "#/components/schemas/DictionaryRef" }
+              method_of_testing: { type: string }
+
+    DictionaryEntry:
+      type: object
+      description: Estrutura de dados de uma entrada do catálogo mestre nacional.
+      required:
+        [entity, revision, uuid, national_code, status, name, short_name,
+         description, loinc_code, moh_code, deleted_at]
+      additionalProperties: false
+      properties:
+        entity: { $ref: "#/components/schemas/DictionaryEntity" }
+        revision: { type: integer }
+        uuid: { $ref: "#/components/schemas/Uuid" }
+        national_code:
+          type: [string, "null"]
+          description: >
+            Código nacional da entrada. Nulo apenas em `labs`, num laboratório que
+            o nó local registou por sua conta e que o nó nacional ainda não nomeou.
+        status:
+          type: string
+          description: Estado do ciclo de vida da entrada (`draft`, `active`, `retired`).
+          enum: [draft, active, retired]
+        name: { type: string }
+        short_name: { type: [string, "null"] }
+        description: { type: [string, "null"] }
+        loinc_code: { type: [string, "null"] }
+        moh_code: { type: [string, "null"] }
+        deleted_at: { type: [string, "null"], format: date-time }
+        unit: { type: [string, "null"] }
+        value_type: { type: [string, "null"] }
+        ranges:
+          type: array
+          description: Intervalos de referência fisiológicos para indicadores numéricos.
+          items:
+            type: object
+            required: [age_min, age_max, sex, range_lower, range_upper, interpretation, value]
+            additionalProperties: false
+            properties:
+              age_min: { type: [integer, "null"] }
+              age_max: { type: [integer, "null"] }
+              sex: { type: [string, "null"] }
+              range_lower:
+                type: [string, "null"]
+                description: Limite inferior do intervalo (armazenado como string para precisão decimal).
+              range_upper: { type: [string, "null"] }
+              interpretation: { type: [string, "null"] }
+              value: { type: [string, "null"] }
+        department:
+          type: [object, "null"]
+          required: [national_code]
+          additionalProperties: false
+          properties:
+            national_code: { type: string }
+        facility_code:
+          type: [string, "null"]
+          description: Unidade sanitária onde o laboratório está instalado (`labs`).
+        source_code:
+          type: [string, "null"]
+          description: >
+            Código por que o LIS conhece o laboratório (`labs`). Único dentro de
+            uma unidade sanitária e sem significado fora dela.
+        district: { type: [string, "null"] }
+        province: { type: [string, "null"] }
+        phone: { type: [string, "null"] }
+        target_tat:
+          type: [string, "null"]
+          description: Tempo de resposta esperado (Turnaround Time).
+        performed_on_sex: { type: [string, "null"] }
+        specimen_types: { $ref: "#/components/schemas/DictionaryLinks" }
+        indicators: { $ref: "#/components/schemas/DictionaryLinks" }
+        organisms: { $ref: "#/components/schemas/DictionaryLinks" }
+        drugs: { $ref: "#/components/schemas/DictionaryLinks" }
+        test_types: { $ref: "#/components/schemas/DictionaryLinks" }
+
+    DictionaryLinks:
+      type: array
+      description: Lista de referências a entradas associadas por código nacional.
+      items:
+        type: object
+        required: [national_code]
+        additionalProperties: false
+        properties:
+          national_code: { type: string }
+
+    DictionaryFeedResponse:
+      type: object
+      required: [data, meta, errors]
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          items: { $ref: "#/components/schemas/DictionaryEntry" }
+        meta: { $ref: "#/components/schemas/CursorMeta" }
+        errors: { $ref: "#/components/schemas/NoErrors" }
+
+    SyncEvent:
+      type: object
+      description: Evento transacional de mutação de estado de agregado para replicação entre nós.
+      required: [event_uuid, aggregate_uuid, sequence, type, occurred_at, payload]
+      properties:
+        event_uuid:
+          allOf: [{ $ref: "#/components/schemas/Uuid" }]
+          description: Identificador universal único do evento para garantia de idempotência.
+        aggregate_uuid:
+          allOf: [{ $ref: "#/components/schemas/Uuid" }]
+          description: Identificador do agregado de domínio associado.
+        sequence:
+          type: integer
+          minimum: 1
+          description: Número sequencial estrito do evento no âmbito do respetivo agregado.
+        type: { $ref: "#/components/schemas/SyncEventType" }
+        occurred_at: { type: string, format: date-time }
+        payload:
+          type: object
+          description: Dados específicos associados ao tipo de evento.
+
+    SyncEventType:
+      type: string
+      enum:
+        - patient.upserted
+        - order.created
+        - order.status_changed
+        - order.test_added
+        - test.status_changed
+        - test.result_recorded
+        - specimen.rejected
+        - referral.dispatched
+        - referral.received
+        - referral.rejected
+        - lab.registered
+
+    InboundEvent:
+      description: Evento transacional de replicação acompanhado dos metadados de encaminhamento para o nó local.
+      allOf:
+        - { $ref: "#/components/schemas/SyncEvent" }
+        - type: object
+          required: [revision, node_code]
+          properties:
+            revision:
+              type: integer
+              description: Posição sequencial de revisão no feed de entrega.
+            node_code:
+              type: string
+              description: Código do nó originador do evento.
+
+    # ------------------------------------------------------------------ FHIR
+    #
+    # A forma destes recursos é normalizada pelo HL7, não por este documento. O
+    # que aqui se declara é o subconjunto que este nó garante emitir e aceitar —
+    # o suficiente para um cliente saber com o que conta antes de chamar. Copiar
+    # a definição completa de sete recursos FHIR para YAML seria uma duplicação
+    # que divergiria dos serializers na primeira alteração, e a especificação
+    # HL7 continua a ser a referência para tudo o que não esteja aqui.
+    #
+    # Por isso `additionalProperties` fica aberto em todos: um recurso FHIR é
+    # extensível por construção.
+
+    FhirCodeableConcept:
+      type: object
+      description: |
+        Conceito codificado. Para um termo ligado ao catálogo, este nó emite
+        dois `coding` por esta ordem: o código nacional, sempre presente, e
+        LOINC, presente apenas onde o mapeamento tenha sido curado.
+
+        Para um termo que o catálogo não tenha, emite o código com que o pedido
+        chegou **sem `system`** — não há sistema que este nó possa nomear sem o
+        inventar — ou, não havendo código, apenas `text`. Na admissão, qualquer
+        destas formas é aceite.
+      properties:
+        coding:
+          type: array
+          items:
+            type: object
+            properties:
+              system: { type: string }
+              code: { type: string }
+              display: { type: string }
+        text: { type: string }
+
+    FhirExtension:
+      type: array
+      description: |
+        Extensões deste nó, para o que o vocabulário do FHIR não distingue:
+        `order-status` e `test-status` (estados nativos), `test-panel` (painel de
+        origem), `revision` (revisão da leitura), `replaced-by` (leitura que
+        substituiu esta) e `acknowledged-at`.
+      items:
+        type: object
+        required: [url]
+        properties:
+          url: { type: string }
+          valueCode: { type: string }
+          valueString: { type: string }
+          valueInteger: { type: integer }
+          valueDateTime: { type: string, format: date-time }
+          valueCodeableConcept: { $ref: "#/components/schemas/FhirCodeableConcept" }
+
+    FhirServiceRequest:
+      type: object
+      description: |
+        Uma análise pedida. As análises de uma mesma amostra partilham
+        `requisition`, que é o número de rastreio — o mesmo agrupamento que o
+        HL7 v2 designa por número de grupo do requisitante.
+      required: [resourceType, status, intent, code, subject]
+      properties:
+        resourceType: { type: string, const: ServiceRequest }
+        id: { $ref: "#/components/schemas/Uuid" }
+        meta: { type: object }
+        extension: { $ref: "#/components/schemas/FhirExtension" }
+        identifier: { type: array, items: { type: object } }
+        requisition:
+          type: object
+          description: Número de rastreio que agrupa as análises da amostra.
+          properties:
+            system: { type: string }
+            value: { $ref: "#/components/schemas/TrackingNumber" }
+        status: { type: string, enum: [active, completed, revoked, unknown] }
+        intent: { type: string }
+        priority: { type: string, enum: [routine, urgent, asap, stat] }
+        category: { type: array, items: { $ref: "#/components/schemas/FhirCodeableConcept" } }
+        code: { $ref: "#/components/schemas/FhirCodeableConcept" }
+        orderDetail: { type: array, items: { type: object } }
+        subject: { type: object }
+        specimen: { type: array, items: { type: object } }
+        authoredOn: { type: string, format: date-time }
+        requester: { type: object }
+        performer:
+          type: array
+          description: Laboratório receptor. Obrigatório na admissão.
+          items: { type: object }
+        locationCode: { type: array, items: { type: object } }
+        note: { type: array, items: { type: object } }
+        contained:
+          type: array
+          description: Patient e Specimen submetidos com o pedido, referenciados por `#id`.
+          items: { type: object }
+
+    FhirDiagnosticReport:
+      type: object
+      description: |
+        O que uma análise diz. Um relatório por análise e não por amostra: um
+        painel de três pode ter uma concluída, uma em curso e uma rejeitada.
+      required: [resourceType, status, code, subject]
+      properties:
+        resourceType: { type: string, const: DiagnosticReport }
+        id: { $ref: "#/components/schemas/Uuid" }
+        meta: { type: object }
+        extension: { $ref: "#/components/schemas/FhirExtension" }
+        identifier: { type: array, items: { type: object } }
+        basedOn: { type: array, items: { type: object } }
+        status:
+          type: string
+          enum: [registered, partial, final, corrected, cancelled, unknown]
+          description: |
+            `corrected` indica que uma leitura foi substituída depois de a
+            análise ter terminado. A análise não reabre — uma correção é uma
+            linha nova, não uma segunda execução.
+        category: { type: array, items: { $ref: "#/components/schemas/FhirCodeableConcept" } }
+        code: { $ref: "#/components/schemas/FhirCodeableConcept" }
+        subject: { type: object }
+        specimen: { type: array, items: { type: object } }
+        effectiveDateTime: { type: string, format: date-time }
+        issued: { type: string, format: date-time }
+        performer: { type: array, items: { type: object } }
+        result:
+          type: array
+          description: Referências às leituras atuais. Leituras substituídas não constam.
+          items: { type: object }
+        contained:
+          type: array
+          description: As leituras atuais, incluídas para poupar uma chamada por leitura.
+          items: { $ref: "#/components/schemas/FhirObservation" }
+        conclusion:
+          type: string
+          description: Motivo, quando a análise foi rejeitada e nada produziu.
+
+    FhirObservation:
+      type: object
+      description: |
+        Uma leitura contra um indicador. Nada aqui é reescrito: uma correção é
+        uma linha nova, e a leitura corrigida passa a `entered-in-error` com a
+        extensão `replaced-by` a identificar a substituta.
+
+        Indicadores numéricos são emitidos em `valueQuantity` e os restantes em
+        `valueString`; exatamente uma das duas está presente.
+      required: [resourceType, status, code, subject]
+      properties:
+        resourceType: { type: string, const: Observation }
+        id: { $ref: "#/components/schemas/Uuid" }
+        meta: { type: object }
+        extension: { $ref: "#/components/schemas/FhirExtension" }
+        identifier: { type: array, items: { type: object } }
+        basedOn: { type: array, items: { type: object } }
+        status: { type: string, enum: [final, entered-in-error] }
+        category: { type: array, items: { $ref: "#/components/schemas/FhirCodeableConcept" } }
+        code: { $ref: "#/components/schemas/FhirCodeableConcept" }
+        subject: { type: object }
+        specimen: { type: object }
+        effectiveDateTime:
+          type: string
+          format: date-time
+          description: Momento da colheita, não do registo — é o que a pergunta clínica exige.
+        issued: { type: string, format: date-time }
+        performer: { type: array, items: { type: object } }
+        valueQuantity:
+          type: object
+          description: |
+            Sem `system` UCUM: as unidades do dicionário são as do laboratório, e
+            rotulá-las como UCUM convidaria à conversão entre unidades que apenas
+            se assemelham.
+          required: [value]
+          properties:
+            value: { type: number }
+            unit: { type: string }
+        valueString: { type: string }
+        referenceRange:
+          type: array
+          description: Apenas os intervalos aplicáveis ao sexo e idade deste doente.
+          items: { type: object }
+
+    FhirPatient:
+      type: object
+      required: [resourceType, identifier]
+      properties:
+        resourceType: { type: string, const: Patient }
+        id: { $ref: "#/components/schemas/Uuid" }
+        identifier:
+          type: array
+          description: |
+            Vazio para doentes sem identificador nacional. Um identificador
+            nunca é inventado.
+          items: { type: object }
+        active: { type: boolean }
+        name:
+          type: array
+          description: |
+            Emitido apenas como `text`. Este sistema guarda o nome como uma
+            cadeia única, e reparti-lo por `family`/`given` colocaria nomes
+            errados em campos estruturados.
+          items: { type: object }
+        telecom: { type: array, items: { type: object } }
+        gender: { type: string, enum: [female, male, other, unknown] }
+        birthDate: { type: string, format: date }
+
+    FhirSpecimen:
+      type: object
+      description: |
+        A amostra. Não existe tabela de amostras: um pedido é uma amostra, pelo
+        que o Specimen partilha o uuid do pedido.
+      required: [resourceType, status]
+      properties:
+        resourceType: { type: string, const: Specimen }
+        id: { $ref: "#/components/schemas/Uuid" }
+        identifier: { type: array, items: { type: object } }
+        accessionIdentifier:
+          type: object
+          properties:
+            system: { type: string }
+            value: { $ref: "#/components/schemas/TrackingNumber" }
+        status:
+          type: string
+          enum: [available, unsatisfactory, entered-in-error]
+          description: |
+            `unsatisfactory` quando o laboratório recusou a amostra; o motivo
+            escolhido pelo operador consta em `note`.
+        type: { $ref: "#/components/schemas/FhirCodeableConcept" }
+        subject: { type: object }
+        receivedTime: { type: string, format: date-time }
+        collection: { type: object }
+        note: { type: array, items: { type: object } }
+
+    FhirBundle:
+      type: object
+      description: |
+        Conjunto de recursos numa só resposta, ou submissão transacional numa só
+        chamada. A paginação faz-se por `link`, e o cursor dentro do link `next`
+        é uma revisão, não um deslocamento — um deslocamento desloca-se quando
+        uma linha é inserida atrás dele.
+      required: [resourceType, type]
+      properties:
+        resourceType: { type: string, const: Bundle }
+        type:
+          type: string
+          enum: [searchset, collection, transaction, transaction-response]
+        total: { type: integer }
+        link:
+          type: array
+          items:
+            type: object
+            required: [relation, url]
+            properties:
+              relation: { type: string, enum: [self, next] }
+              url: { type: string }
+        entry:
+          type: array
+          items:
+            type: object
+            properties:
+              fullUrl: { type: string }
+              resource: { type: object }
+              search: { type: object }
+              response:
+                type: object
+                properties:
+                  status: { type: string }
+                  location: { type: string }
+
+    OperationOutcome:
+      type: object
+      description: |
+        A única forma que o FHIR tem para uma recusa. Cada `issue` transporta
+        dois códigos: o do FHIR em `code`, para clientes genéricos, e o código
+        estável deste nó em `details.coding[0].code` — o mesmo enum `ErrorCode`
+        publicado para a API em `/api/v3`. Um integrador não deve ter de
+        aprender dois vocabulários de erro.
+      required: [resourceType, issue]
+      properties:
+        resourceType: { type: string, const: OperationOutcome }
+        issue:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            required: [severity, code, details]
+            properties:
+              severity: { type: string, enum: [fatal, error, warning, information] }
+              code:
+                type: string
+                description: Código do vocabulário do FHIR.
+                enum: [login, forbidden, required, duplicate, throttled, not-found, conflict, invalid, processing]
+              details:
+                type: object
+                required: [coding, text]
+                properties:
+                  coding:
+                    type: array
+                    items:
+                      type: object
+                      required: [system, code]
+                      properties:
+                        system: { type: string }
+                        code: { $ref: "#/components/schemas/ErrorCode" }
+                  text: { type: string }
+              expression:
+                type: array
+                description: Campo que originou a recusa.
+                items: { type: string }
+
+    # A forma do CapabilityStatement é normalizada pelo HL7, não por este
+    # documento. O que aqui se declara é o subconjunto que este nó garante
+    # emitir — o suficiente para um cliente decidir se fala com a fachada antes
+    # de a chamar. `additionalProperties` fica aberto de propósito: um recurso
+    # FHIR é extensível, e fechá-lo faria deste esquema uma cópia à mão que
+    # divergiria do gerador na primeira extensão acrescentada.
+    CapabilityStatement:
+      type: object
+      description: |
+        Contrato da fachada HL7 FHIR R4 deste nó, gerado a partir das constantes
+        que os controladores utilizam. Ver a especificação HL7 para a definição
+        completa do recurso.
+      required: [resourceType, status, kind, fhirVersion, format, rest]
+      properties:
+        resourceType:
+          type: string
+          const: CapabilityStatement
+        id: { type: string }
+        url:
+          type: string
+          description: URL canónico deste CapabilityStatement.
+        version:
+          type: string
+          description: Versão do software em execução no nó, igual à reportada em `/api/v3/health`.
+        name: { type: string }
+        title: { type: string }
+        status:
+          type: string
+          enum: [draft, active, retired, unknown]
+        date: { type: string, format: date }
+        publisher: { type: string }
+        kind:
+          type: string
+          enum: [instance, capability, requirements]
+        software:
+          type: object
+          properties:
+            name: { type: string }
+            version: { type: string }
+        implementation:
+          type: object
+          properties:
+            description: { type: string }
+            url: { type: string }
+        fhirVersion:
+          type: string
+          const: 4.0.1
+        format:
+          type: array
+          description: Formatos de serialização aceites pela fachada.
+          items: { type: string }
+        rest:
+          type: array
+          minItems: 1
+          description: |
+            Capacidades REST do servidor: recursos servidos com as suas
+            interações e parâmetros de pesquisa, interações ao nível do sistema
+            (`transaction`) e operações declaradas (`$acknowledge`).
+          items:
+            type: object
+            required: [mode, resource]
+            properties:
+              mode:
+                type: string
+                enum: [client, server]
+              documentation: { type: string }
+              security: { type: object }
+              resource:
+                type: array
+                items:
+                  type: object
+                  required: [type, interaction]
+                  properties:
+                    type:
+                      type: string
+                      description: Nome do recurso FHIR servido.
+                    profile: { type: string }
+                    documentation: { type: string }
+                    interaction:
+                      type: array
+                      items:
+                        type: object
+                        required: [code]
+                        properties:
+                          code: { type: string }
+                          documentation: { type: string }
+                    searchParam:
+                      type: array
+                      items:
+                        type: object
+                        required: [name, type]
+                        properties:
+                          name: { type: string }
+                          type: { type: string }
+                          documentation: { type: string }
+              interaction:
+                type: array
+                items:
+                  type: object
+                  required: [code]
+                  properties:
+                    code: { type: string }
+                    documentation: { type: string }
+              operation:
+                type: array
+                items:
+                  type: object
+                  required: [name, definition]
+                  properties:
+                    name: { type: string }
+                    definition: { type: string }
+                    documentation: { type: string }

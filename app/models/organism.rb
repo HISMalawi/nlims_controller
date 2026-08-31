@@ -1,22 +1,18 @@
 # frozen_string_literal: true
 
-# This is the model for the organism table
+# An organism a culture can isolate.
 class Organism < ApplicationRecord
-  include Codeable
+  include DictionaryEntry
 
-  has_many :organism_drugs, dependent: :restrict_with_error, class_name: 'OrganismDrug'
+  self.national_code_prefix = "OR"
+
+  has_many :organism_drugs, dependent: :destroy
   has_many :drugs, through: :organism_drugs
-  has_many :testtype_organisms, class_name: 'TesttypeOrganism'
-  has_paper_trail
 
-  NLIMS_CODE_PREFIX = 'ORG'
+  has_many :test_type_organisms, dependent: :destroy
+  has_many :test_types, through: :test_type_organisms
 
-  def as_json(options = {})
-    super(options.merge(
-      except: %i[],
-      include: {
-        drugs: {}
-      }
-    ))
+  def self.delta_includes
+    [ :drugs ]
   end
 end

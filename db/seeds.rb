@@ -1,268 +1,395 @@
-# puts 'creating default user account--------------'
-# password_has = BCrypt::Password.create("knock_knock")
-# username = 'admin'
-# app_name = 'nlims'
-# location = 'lilongwe'
-# partner = 'api_admin'
-# token = 'xxxxxxx'
-# token_expiry_time = '000000000'
+# frozen_string_literal: true
 
-# User.create(password: password_has,
-# 			username: username,
-# 			app_name: app_name,
-# 			partner: partner,
-# 			location: location,
-# 			token: token,
-# 			token_expiry_time: token_expiry_time
-# 		)
+# A node with something on it.
+#
+# The interface built in S11 is mostly empty on a fresh database, which makes it
+# impossible to show anyone and easy to believe is broken. This fills a
+# development node with a small but real dataset: a dictionary that hangs
+# together, orders at every stage of their lifecycle, a referred sample, and an
+# outbox with something stuck in it.
+#
+# Real, not fabricated: orders are raised through OrderRequest and walked with
+# `transition_to!`, exactly as the EMR and the SISLAB would drive them. That is
+# what produces the status history, the revisions and the outbox rows the
+# screens are actually reading — a seed that wrote those tables directly would
+# show a system that cannot happen.
+#
+# Development only, and enforced rather than intended.
+#
+# Production nodes get their dictionary from the national one and their orders
+# from the laboratory. The test database has to start empty, or every spec runs
+# against a dictionary it did not create — `db:prepare` seeds whenever it
+# creates a database, so this file runs in the test environment unless it says
+# otherwise, and the failures that follow point at the spec rather than here.
 
-# puts '-------------done----------'
-measure_types = {
-  'Numeric' => {
-    description: 'A numeric measurement type',
-    structure: {
-      type: 'ranges',
-      parameters: [
-        { name: 'Age Range', type: 'range', values: [{ min: 'number' }, { max: 'number' }] },
-        { name: 'Measure Range', type: 'range', values: [{ min: 'number' }, { max: 'number' }] },
-        { name: 'Interpretation', type: 'string', values: 'interpretation' },
-        { name: 'Sex', type: 'options', values: %w[Male Female Both] }
-      ]
-    }
-  },
-  'Free Text' => {
-    description: 'A freely entered text value',
-    structure: {
-      type: 'free_text'
-    }
-  },
-  'AlphaNumeric' => {
-    description: 'A combination of letters and numbers',
-    structure: {
-      type: 'options',
-      parameters: [
-        { name: 'value', type: 'string', values: 'value' },
-        { name: 'Interpretation', type: 'string', values: 'interpretation' }
-      ]
-    }
-  },
-  'Rich Text' => {
-    description: 'Formatted text with styling options',
-    structure: {
-      type: 'rich_text'
-    }
-  },
-  'AutoComplete' => {
-    description: 'A combination of letters and numbers',
-    structure: {
-      type: 'options',
-      parameters: [
-        { name: 'value', type: 'string', values: 'value' },
-        { name: 'Interpretation', type: 'string', values: 'interpretation' }
-      ]
-    }
-  }
-}
-
-measure_types.each do |name, attrs|
-  MeasureType.find_or_create_by(name:).update(attrs)
+unless Rails.env.development?
+  warn "db/seeds.rb makes demo data for development only — skipped in #{Rails.env}."
+  return
 end
 
-def specimen
-   MlabBase.find_by_sql('SELECT * FROM specimen').each do |specimen_mlab|
-     specimen = SpecimenType.find_or_create_by!(
-        name: specimen_mlab['name']
-      )
-        specimen.update_columns(
-          description: specimen_mlab['description'],
-          iblis_mapping_name: specimen_mlab['name'],
-          preferred_name: specimen_mlab['name'],
-          nlims_code: "NLIMS_SP_#{specimen.id.to_s.rjust(4, '0')}_MWI"
-          )
-   end
-end
+module Seeds
+  PASSWORD = "palavra-passe-demo"
 
-def test_panels
-  MlabBase.find_by_sql("SELECT tp.* FROM test_panels tp WHERE tp.name NOT LIKE '%(cancer%'	AND tp.name NOT LIKE '%(paeds%'").each do |test_panel|
-    test_types_panels = MlabBase.find_by_sql("SELECT tt.* FROM test_types tt INNER JOIN test_type_panel_mappings ttp ON ttp.test_type_id=tt.id WHERE ttp.test_panel_id=#{test_panel['id']}")
-    t_panel = PanelType.find_or_create_by!(name: test_panel['name'])
-    t_panel.update_columns(
-      description: test_panel['description'],
-      short_name: test_panel['short_name'],
-      preferred_name: test_panel['name'],
-      nlims_code: "NLIMS_TP_#{t_panel.id.to_s.rjust(4, '0')}_MWI"
-    )
-    t_panel.test_types = TestType.where(name: test_types_panels.pluck('name').uniq)
-  end
-end
+  # This node is a health facility. Its own code is what it answers to, and the
+  # laboratories inside it are the register entries that point at it.
+  FACILITY = SislabSync.facility_code
 
-def specimen_test_type_mappings(test_type_id, nlims_testtype)
-  test_type_specimen = MlabBase.find_by_sql("
-		SELECT s.* FROM specimen_test_type_mappings sptm INNER JOIN
-		specimen s ON sptm.specimen_id=s.id WHERE test_type_id=#{test_type_id}
-	")
-  specimen_types = SpecimenType.where(name: test_type_specimen.pluck('name'))
-  nlims_testtype.specimen_types = specimen_types
-end
+  # The register the capital publishes, as this node holds it. Enough to show
+  # what it is for: this unit with two benches — so a handover between them can
+  # be demonstrated without a second node — and somewhere else to refer to.
+  FACILITIES = [
+    { national_code: FACILITY, name: "Hospital Central de Maputo",
+      district: "KaMpfumo", province: "Maputo Cidade" },
+    { national_code: "HPM", name: "Hospital Provincial da Matola",
+      district: "Matola", province: "Maputo Província" }
+  ].freeze
 
-def test_types
-  MlabBase.find_by_sql(
-     "SELECT tt.*, et.value, et.unit FROM test_types tt INNER JOIN expected_tats et on et.test_type_id = tt.id
-		 	WHERE tt.name NOT LIKE '%(cancer%'	AND tt.name NOT LIKE '%(paeds%' AND tt.name NOT IN
-			('q', 'ss', 'cs', 'n', 'pll', 'fd', 'nn', 'lk', 'zz', 'll', 'try', 'tr', 'TT')"
-   ).each do |test_type|
-     nlims_testtype = TestType.find_by(name: test_type['name'])
-     if test_type['name'] == 'GeneXpert'
-       gx = TestType.where(name: 'GeneXpert')
-       gx.last.delete if gx.count > 1
-     end
+  REGISTER = [
+    { national_code: "#{FACILITY}-LAB", source_code: "LAB01", name: "Laboratório Central",
+      facility_code: FACILITY },
+    { national_code: "#{FACILITY}-MICRO", source_code: "LAB02",
+      name: "Laboratório de Microbiologia", facility_code: FACILITY },
+    { national_code: "HPM-LAB", source_code: "LAB01",
+      name: "Laboratório do Hospital Provincial", facility_code: "HPM" }
+  ].freeze
 
-     if nlims_testtype
-           nlims_testtype.update_columns(
-                  iblis_mapping_name: test_type['name'],
-                  can_be_done_on_sex: test_type['sex'],
-                  preferred_name: test_type['name'],
-                  targetTAT: "#{test_type['value']} #{test_type['unit']}",
-                  nlims_code: "NLIMS_TT_#{nlims_testtype.id.to_s.rjust(4, '0')}_MWI"
-                )
-     else
-       department = MlabBase.find_by_sql("SELECT * FROM departments where id=#{test_type['department_id']}").first
-       test_category_id = TestCategory.find_by(name: department['name'])&.id
-       next unless test_category_id
+  # The bench that takes the demo samples. The other one exists so a handover
+  # inside a unit has somewhere to go.
+  LAB = "#{FACILITY}-LAB"
 
-       nlims_testtype = TestType.find_or_create_by!(
-           name: test_type['name'],
-           short_name: test_type['short_name'],
-           targetTAT: "#{test_type['value']} #{test_type['unit']}",
-           can_be_done_on_sex: test_type['sex'],
-           iblis_mapping_name: test_type['name'],
-           preferred_name: test_type['name'],
-           test_category_id:
-         )
-     end
-     measures(test_type['id'], nlims_testtype)
-     specimen_test_type_mappings(test_type['id'], nlims_testtype)
-     testtype_organism(test_type['id'], nlims_testtype)
-   end
-end
+  # Where the demo credentials are written instead of being printed.
+  #
+  # bin/docker-entrypoint runs db:prepare, and db:prepare seeds whenever it
+  # creates a database — so `docker compose up` on a fresh volume runs this
+  # file, and anything it puts on stdout goes into the container log, gets
+  # shipped wherever logs are shipped, and is pasted into chats and issues
+  # along with the rest of the boot output. An API key is a bearer token: it
+  # is the whole credential, and it works for anybody who reads it.
+  CREDENTIALS_PATH = "tmp/demo_credentials.txt"
 
-def drugs
-  MlabBase.find_by_sql('SELECT * FROM drugs').each do |nlims_drug|
-    drug = Drug.find_or_create_by!(name: nlims_drug['name'])
-    drug.update_columns(
-      description: nlims_drug['description'],
-      short_name: nlims_drug['short_name'],
-      preferred_name: nlims_drug['name'],
-      nlims_code: "NLIMS_DRG_#{drug.id.to_s.rjust(4, '0')}_MWI"
-      )
-  end
-end
+  # A demo key that outlives the demo is a live credential nobody remembers
+  # issuing. This one stops working on its own.
+  KEY_LIFETIME = 30.days
 
-def organisms
-  MlabBase.find_by_sql(
-     'SELECT * FROM organisms'
-   ).each do |organism|
-     nlims_organism = Organism.find_or_create_by!(name: organism['name'])
-     nlims_organism.update_columns(
-                   nlims_code: "NLIMS_ORG_#{nlims_organism.id.to_s.rjust(4, '0')}_MWI",
-                   short_name: organism['short_name'],
-                   description: organism['description'],
-                   preferred_name: organism['name']
-                 )
+  class << self
+    def call
+      say "Semeando o nó #{SislabSync.node_code} (#{SislabSync.mode})"
 
-     organism_drug_mappings(organism['id'], nlims_organism)
-   end
-end
+      users
+      register
+      client = api_client
+      dictionary
 
-def organism_drug_mappings(organism_id, nlims_organism)
-  drug_organims = MlabBase.find_by_sql("
-		SELECT d.* FROM drug_organism_mappings drgo INNER JOIN
-		drugs d ON drgo.drug_id=d.id WHERE organism_id=#{organism_id}
-	")
-  nlims_organism.drugs = Drug.where(name: drug_organims.pluck('name'))
-end
-
-def testtype_organism(test_type_id, nlims_testtype)
-    testtype_organims = MlabBase.find_by_sql("
-      SELECT o.* FROM test_type_organism_mappings ttom INNER JOIN
-      organisms o ON ttom.organism_id=o.id WHERE test_type_id=#{test_type_id}
-    ")
-    nlims_testtype.organisms = Organism.where(name: testtype_organims.pluck('name'))
-end
-
-def measures(test_type_id, nlims_testtype)
-  measures = MlabBase.find_by_sql("SELECT
-      ti.id,
-      ti.name,
-      ti.unit,
-      ti.description,
-      tt.name AS test_name,
-      CASE ti.test_indicator_type
-          WHEN 0 THEN 'AutoComplete'
-          WHEN 1 THEN 'Free Text'
-          WHEN 2 THEN 'Numeric'
-          WHEN 3 THEN 'AlphaNumeric'
-          ELSE 'Rich Text'
-      END AS test_indicator_type_name
-  FROM
-      test_indicators ti
-          INNER JOIN test_type_indicator_mappings ttm
-              ON ttm.test_indicators_id = ti.id
-          INNER JOIN test_types tt
-              ON tt.id = ttm.test_types_id
-              AND tt.id = #{test_type_id} AND ti.name IS NOT NULL AND ti.name <>''")
-    nlims_measures = []
-    measures.each do |measure|
-      m = Measure.find_by(name: measure['name'], unit: measure['unit'])
-      if m.nil?
-        m = Measure.create!(
-          name: measure['name'],
-          unit: measure['unit'],
-          measure_type_id: MeasureType.find_by(name: measure['test_indicator_type_name']).id,
-          description: measure['description'],
-          iblis_mapping_name: measure['name'],
-          preferred_name: measure['name']
-        )
+      if Order.exists?
+        say "  já há pedidos — nada de novo a semear"
+      else
+        orders(client)
+        referral if SislabSync.local?
+        stuck_event if SislabSync.local?
       end
-      m.update_columns(
-        unit: measure['unit'],
-        nlims_code: m.nlims_code || "NLIMS_TI_#{m.id.to_s.rjust(4, '0')}_MWI",
-        measure_type_id: MeasureType.find_by(name: measure['test_indicator_type_name']).id,
-        description: measure['description'],
-        iblis_mapping_name: measure['name'],
-        preferred_name: measure['name']
-      )
-      nlims_measures << m.id
-      measure_ranges(measure['id'], m)
-    end
-    nlims_testtype.measures = Measure.where(id: nlims_measures)
-end
 
-def measure_ranges(measure_id, nlims_measure)
-  measure_ranges = MlabBase.find_by_sql("select * from test_indicator_ranges where test_indicator_id = #{measure_id}")
-  nlims_measure_ranges = []
-  measure_ranges.each do |measure_range|
-    nlims_measure_range = MeasureRange.find_or_create_by!(
-      measures_id: nlims_measure.id,
-      age_min: measure_range['min_age'],
-      age_max: measure_range['max_age'],
-      sex: measure_range['sex'],
-      range_lower: measure_range['lower_range'],
-      range_upper: measure_range['upper_range'],
-      interpretation: measure_range['interpretation'],
-      value: measure_range['value']
-    )
-    nlims_measure_ranges << nlims_measure_range.id
+      nodes if SislabSync.national?
+
+      write_credentials
+    end
+
+    private
+
+    # The secrets go to a file on the node, readable by whoever ran the seed and
+    # nobody else. The log gets the path.
+    def write_credentials
+      path = Rails.root.join(CREDENTIALS_PATH)
+      FileUtils.mkdir_p(path.dirname)
+
+      File.open(path, File::WRONLY | File::CREAT | File::TRUNC, 0o600) do |file|
+        file.puts "Credenciais de demonstração — #{SislabSync.node_code} (#{SislabSync.mode})"
+        file.puts "Geradas por db/seeds.rb em #{Time.current.iso8601}. Não são para nenhum nó real."
+        file.puts
+        User.order(:id).each { |user| file.puts "  #{user.role.ljust(9)} #{user.email}  #{PASSWORD}" }
+
+        file.puts
+
+        if @issued_token
+          file.puts "  chave do EMR de demonstração (expira #{@issued_expiry.to_date}):"
+          file.puts "  #{@issued_token}"
+        else
+          # Re-running must not look as though the key were lost, and cannot
+          # reprint it: only its digest was ever stored.
+          file.puts "  o EMR de demonstração já tinha uma chave válida — este ficheiro não a pode repetir."
+          file.puts "  Revogue-a na interface e volte a correr db:seed para obter outra."
+        end
+      end
+
+      File.chmod(0o600, path)
+
+      say "Pronto. Credenciais em #{CREDENTIALS_PATH} (não passam pelo log)."
+    end
+
+    # find_or_create so re-running does not reset a password somebody is using.
+    def users
+      [
+        { name: "Ana Machava", email: "ana@#{domain}", role: User::ADMIN },
+        { name: "Bento Cossa", email: "bento@#{domain}", role: User::OPERATOR }
+      ].each do |attributes|
+        next if User.exists?(email: attributes[:email])
+
+        User.create!(**attributes, password: PASSWORD, facility_code: FACILITY)
+        say "  utilizador #{attributes[:email]} (#{attributes[:role]})"
+      end
+    end
+
+    # An EMR to raise the orders as, so they carry a source and an actor rather
+    # than appearing from nowhere.
+    def api_client
+      client = ApiClient.find_or_create_by!(name: "EMR de demonstração") do |record|
+        record.kind = "emr"
+        record.facility_code = FACILITY
+        record.active = true
+      end
+
+      if client.api_keys.usable.none?
+        @issued_expiry = KEY_LIFETIME.from_now
+
+        key, @issued_token = ApiKey.issue!(
+          api_client: client,
+          scopes: %w[orders:write orders:read results:read dictionary:read],
+          expires_at: @issued_expiry,
+          issued_by: "db:seed"
+        )
+
+        # The prefix identifies the key without being the key. It is what is
+        # already shown on the interface, and it is enough to revoke by.
+        say "  chave do EMR de demonstração emitida (#{key.prefix}), expira #{@issued_expiry.to_date}"
+      end
+
+      client
+    end
+
+    # Who else is out there. On a real node this arrives from the capital down
+    # the dictionary feed like any other entry; seeding it here is what lets a
+    # development node refer a sample and issue a key without inventing codes.
+    def register
+      created = REGISTER.count do |attributes|
+        next false if Lab.exists?(national_code: attributes[:national_code])
+
+        Lab.create!(**attributes, status: DictionaryEntry::ACTIVE, status_actor: "registo de demonstração")
+        true
+      end
+
+      say(created.zero? ? "  registo de laboratórios já semeado" : "  registo: #{created} laboratórios")
+    end
+
+    # Small, but linked the way the real catalogue is: a test with no indicators
+    # reports nothing and a test with no specimen type cannot be collected, and
+    # both are exactly what the quality report holds a promotion back for.
+    def dictionary
+      return say("  dicionário já tem entradas") if TestType.exists?
+      return national_catalogue if SislabSync.national? && Dictionary::SnapshotSource.available?
+
+      bioquimica = Department.create!(name: "Bioquímica", status: DictionaryEntry::ACTIVE)
+      hematologia = Department.create!(name: "Hematologia", status: DictionaryEntry::ACTIVE)
+
+      blood = specimen("Sangue total")
+      serum = specimen("Soro")
+      urine = specimen("Urina")
+
+      haemoglobin = indicator("Hemoglobina", unit: "g/dL", lower: 12, upper: 16)
+      leucocytes = indicator("Leucócitos", unit: "10³/µL", lower: 4, upper: 11)
+      glucose = indicator("Glicemia", unit: "mg/dL", lower: 70, upper: 110)
+      creatinine = indicator("Creatinina", unit: "mg/dL", lower: 0.6, upper: 1.2)
+
+      hemogram = test_type("Hemograma completo", department: hematologia,
+                           specimens: [ blood ], indicators: [ haemoglobin, leucocytes ])
+      glycaemia = test_type("Glicemia em jejum", department: bioquimica,
+                            specimens: [ serum, blood ], indicators: [ glucose ])
+      renal = test_type("Função renal", department: bioquimica,
+                        specimens: [ serum ], indicators: [ creatinine ])
+
+      panel = TestPanel.create!(name: "Painel básico de admissão", status: DictionaryEntry::ACTIVE)
+      panel.test_types << [ hemogram, glycaemia ]
+
+      # Left as a draft on purpose: the promotion screen needs something to
+      # promote, and the quality report something to hold back — this one has
+      # neither indicators nor specimen types.
+      TestType.create!(name: "Urocultura", department: bioquimica, status: DictionaryEntry::DRAFT)
+      urine
+
+      [ "Amostra hemolisada", "Volume insuficiente", "Tubo mal identificado", "Amostra recebida sem requisição" ]
+        .each { |name| RejectionReason.create!(name: name, status: DictionaryEntry::ACTIVE) }
+
+      say "  dicionário: #{Dictionary.published_counts.values.sum} entradas publicadas, 1 rascunho, #{renal.national_code} inclusive"
+    end
+
+    # The national node owns the catalogue, so a national demo gets the real
+    # one — the same entries `rake dictionary:seed` puts on a node being stood
+    # up — and the orders below are raised against it. A local node keeps the
+    # four tests invented here: its dictionary arrives from the capital, and a
+    # small one is easier to read on the screens.
+    def national_catalogue
+      seed = Dictionary::Seed.new(actor: "semente de demonstração").call
+
+      # Left as a draft on purpose, as below: the promotion screen needs
+      # something to promote.
+      TestType.create!(name: "Urocultura", department: Department.active.first, status: DictionaryEntry::DRAFT)
+
+      say "  dicionário: #{seed.published} entradas do catálogo mLab publicadas, 1 rascunho"
+    end
+
+    def specimen(name)
+      SpecimenType.create!(name: name, status: DictionaryEntry::ACTIVE)
+    end
+
+    def indicator(name, unit:, lower:, upper:)
+      Indicator.create!(name: name, unit: unit, value_type: "Numeric", status: DictionaryEntry::ACTIVE).tap do |record|
+        record.indicator_ranges.create!(sex: "Both", range_lower: lower, range_upper: upper,
+                                        interpretation: "Normal")
+      end
+    end
+
+    def test_type(name, department:, specimens:, indicators:)
+      TestType.create!(name: name, department: department, target_tat: "24h",
+                       status: DictionaryEntry::ACTIVE).tap do |record|
+        record.specimen_types << specimens
+        record.indicators << indicators
+      end
+    end
+
+    # One order per stage, so every status badge on the orders screen has
+    # something behind it and the history on the detail screen is a real walk
+    # rather than a single row.
+    def orders(client)
+      raise_order(client, patient: :ana)
+
+      accepted = raise_order(client, patient: :bento)
+      accepted.claim!(lab_code: LAB, actor: "Lab. de Bioquímica")
+
+      collected = raise_order(client, patient: :carla)
+      collected.claim!(lab_code: LAB, actor: "Lab. de Bioquímica")
+      collected.transition_to!(Order::SPECIMEN_COLLECTED, actor: "tec. Mabjaia")
+
+      running = raise_order(client, patient: :david, priority: "urgent")
+      walk_to_in_progress(running)
+
+      completed = raise_order(client, patient: :elsa)
+      walk_to_in_progress(completed)
+      report(completed)
+      completed.transition_to!(Order::COMPLETED, actor: "Dra. Sitoe", reason: "todos os testes concluídos")
+
+      rejected = raise_order(client, patient: :fatima)
+      rejected.claim!(lab_code: LAB, actor: "Lab. de Bioquímica")
+      rejected.reject!(reason: RejectionReason.active.first, actor: "tec. Mabjaia",
+                       note: "recebida à temperatura ambiente")
+
+      say "  #{Order.count} pedidos, #{OrderTest.count} testes, #{TestResult.count} resultados"
+    end
+
+    def walk_to_in_progress(order)
+      order.claim!(lab_code: LAB, actor: "Lab. de Bioquímica")
+      order.transition_to!(Order::SPECIMEN_COLLECTED, actor: "tec. Mabjaia")
+      order.transition_to!(Order::IN_PROGRESS, actor: "tec. Mabjaia")
+    end
+
+    # Values inside the reference ranges seeded above, so a reader can see the
+    # ranges doing their job rather than a column of numbers meaning nothing.
+    VALUES = { "Hemoglobina" => "13.4", "Leucócitos" => "7.2", "Glicemia" => "92", "Creatinina" => "0.9" }.freeze
+
+    def report(order)
+      order.order_tests.each do |order_test|
+        order_test.transition_to!(OrderTest::IN_PROGRESS, actor: "tec. Mabjaia")
+
+        order_test.test_type.indicators.each do |indicator|
+          TestResult.record!(
+            order_test: order_test,
+            indicator: indicator,
+            value: VALUES.fetch(indicator.name, "normal"),
+            unit: indicator.unit,
+            recorded_by: "tec. Mabjaia"
+          )
+        end
+
+        order_test.transition_to!(OrderTest::COMPLETED, actor: "Dra. Sitoe")
+      end
+    end
+
+    PATIENTS = {
+      ana: { name: "Ana Cristina Mondlane", sex: "F", birthdate: Date.new(1991, 4, 12), national_id: "110100200001A" },
+      bento: { name: "Bento José Cossa", sex: "M", birthdate: Date.new(1978, 11, 3), national_id: "110100200002B" },
+      carla: { name: "Carla Nhantumbo", sex: "F", birthdate: Date.new(2015, 6, 21) },
+      david: { name: "David Chirindza", sex: "M", birthdate: Date.new(1965, 1, 30), national_id: "110100200004D" },
+      elsa: { name: "Elsa Muianga", sex: "F", birthdate: Date.new(1988, 9, 9), national_id: "110100200005E" },
+      fatima: { name: "Fátima Bié", sex: "F", birthdate: Date.new(2001, 2, 14) },
+      gilda: { name: "Gilda Tembe", sex: "F", birthdate: Date.new(1995, 7, 7), national_id: "110100200007G" }
+    }.freeze
+
+    def raise_order(client, patient:, priority: "routine", tests: nil)
+      tests ||= [ { test_panel: { national_code: TestPanel.active.first.national_code } } ]
+
+      OrderRequest.new({
+        patient: PATIENTS.fetch(patient),
+        order: {
+          sending_facility_code: FACILITY,
+          receiving_lab_code: LAB,
+          priority: priority,
+          requested_by: "Dr. J. Sitoe",
+          order_location: "Consulta externa",
+          specimen_type: { national_code: SpecimenType.active.first.national_code },
+          collected_at: Time.current
+        },
+        tests: tests
+      }, api_client: client).create!
+    end
+
+    # A sample sent to another laboratory and still in transit, so the referrals
+    # screen has a transport time to be waiting on.
+    def referral
+      order = raise_order(ApiClient.find_by(name: "EMR de demonstração"), patient: :gilda)
+      walk_to_in_progress(order)
+
+      Referral.dispatch!(order: order, to_lab_code: "HPM-LAB",
+                         courier: "Transporte provincial", remarks: "Caixa isotérmica, saída às 07h30")
+
+      say "  1 amostra referida para HPM-LAB, ainda em trânsito"
+    end
+
+    # Something for the sync queue to show. The national node is unreachable on
+    # a standalone development node, which is precisely the condition an
+    # operator opens that screen in.
+    def stuck_event
+      event = OutboxEvent.pending.order(:id).first
+      return if event.nil?
+
+      event.mark_failed!("Errno::ECONNREFUSED: não foi possível ligar ao nó nacional")
+      SyncCursor.for(SyncCursor::HEARTBEAT)
+                .record_failure!("Errno::ECONNREFUSED: não foi possível ligar ao nó nacional")
+
+      say "  1 evento retido na fila de sincronização, com erro"
+    end
+
+    # The national node's own screen needs nodes on it, and one of them needs to
+    # have gone quiet.
+    def nodes
+      return say("  nós já registados") if Node.exists?
+
+      Node.heard_from!("HCM", name: "Hospital Central de Maputo", version: SislabSync.version,
+                              dictionary_cursor: Dictionary.cursor, outbox_pending: 0)
+      Node.heard_from!("HPM", name: "Hospital Provincial de Matola", version: SislabSync.version,
+                              dictionary_cursor: [ Dictionary.cursor - 4, 0 ].max, outbox_pending: 12)
+
+      silent = Node.heard_from!("HPQ", name: "Hospital Provincial de Quelimane", version: "1.9.2",
+                                       dictionary_cursor: 0, outbox_pending: 143, outbox_failing: 143)
+      silent.update_column(:last_seen_at, 2.days.ago)
+
+      say "  3 nós, 1 sem contacto há dois dias"
+    end
+
+    def domain
+      SislabSync.national? ? "misau.gov.mz" : "#{SislabSync.node_code.downcase}.gov.mz"
+    end
+
+    def say(message)
+      puts message
+    end
   end
 end
 
-puts 'Importing specimen'
-specimen
-puts 'Importing test types'
-test_types
-puts 'Importing drugs'
-drugs
-puts 'Importing organisms'
-organisms
-puts 'Importing test panels'
-test_panels
+Seeds.call

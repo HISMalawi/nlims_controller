@@ -1,16 +1,11 @@
 # frozen_string_literal: true
 
-# This is the model for the specimen type table
+# What the sample is: sangue total, urina, expectoração.
 class SpecimenType < ApplicationRecord
-  include Codeable
+  include DictionaryEntry
 
-  has_paper_trail
-  has_many :specimen, dependent: :restrict_with_error, class_name: 'Speciman'
-  has_many :testtype_specimentypes, class_name: 'TesttypeSpecimentype'
+  self.national_code_prefix = "SP"
 
-  NLIMS_CODE_PREFIX = 'SP'
-
-  def self.get_specimen_type_id(type)
-    SpecimenType.find_by(name: type)&.id || SpecimenType.find_by(preferred_name: type)&.id
-  end
+  has_many :test_type_specimen_types, dependent: :destroy
+  has_many :test_types, through: :test_type_specimen_types
 end

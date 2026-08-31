@@ -1,47 +1,59 @@
-require_relative 'boot'
+require_relative "boot"
 
-require 'rails'
+require "rails"
 # Pick the frameworks you want:
-require 'active_model/railtie'
-require 'active_job/railtie'
-require 'active_record/railtie'
-require 'action_controller/railtie'
-require 'action_mailer/railtie'
-require 'action_view/railtie'
-require 'action_cable/engine'
-# require "sprockets/railtie"
+require "active_model/railtie"
+require "active_job/railtie"
+require "active_record/railtie"
+# require "active_storage/engine"
+require "action_controller/railtie"
+require "action_mailer/railtie"
+# require "action_mailbox/engine"
+# require "action_text/engine"
+require "action_view/railtie"
+require "action_cable/engine"
 # require "rails/test_unit/railtie"
 
 # Require the gems listed in Gemfile, including any gems
 # you've limited to :test, :development, or :production.
 Bundler.require(*Rails.groups)
 
-module Nlims
+# Defines SislabSync.mode / .local? / .national?. Required rather than
+# autoloaded so the run mode is usable from initializers and config/routes.rb.
+require_relative "sislab_sync"
+
+module SislabSync
   class Application < Rails::Application
     # Initialize configuration defaults for originally generated Rails version.
-    config.load_defaults 5.1
-    config.load_defaults 7.1
-    # Add the custom folder to the autoload paths
-    config.autoload_paths += %W[#{config.root}/app/]
+    config.load_defaults 8.1
 
-    # Settings in config/environments/* take precedence over those specified here.
-    # Application configuration should go into files in config/initializers
-    # -- all .rb files in that directory are automatically loaded.
-    config.session_store :cookie_store, key: '_interslice_session'
+    # Portuguese is the working language of every deployment; the locale files
+    # exist so a second language stays possible without touching the views.
+    config.i18n.default_locale = :pt
+    config.i18n.available_locales = %i[pt en]
+    config.i18n.fallbacks = [ :pt ]
 
-    # Required for all session management (regardless of session_store)
-    config.middleware.use ActionDispatch::Cookies
+    config.time_zone = "Africa/Maputo"
+    config.active_record.default_timezone = :utc
 
-    config.middleware.use config.session_store, config.session_options
+    config.active_job.queue_adapter = :sidekiq
 
-    # Skip views, helpers and assets when generating a new resource.
+    config.api_only = false
 
-    # Only loads a smaller set of middleware suitable for API only apps.
-    # Middleware like session, flash, cookies can be added back manually.
-    # Skip views, helpers and assets when generating a new resource.
-    config.api_only = true
-    config.time_zone = 'Africa/Blantyre' # Your local time zone
-    config.active_record.default_timezone = :local
-    config.active_record.time_zone_aware_attributes = false
+    # Please, add to the `ignore` list any other `lib` subdirectories that do
+    # not contain `.rb` files, or that should not be reloaded or eager loaded.
+    # Common ones are `templates`, `generators`, or `middleware`, for example.
+    config.autoload_lib(ignore: %w[assets tasks])
+
+    # Configuration for the application, engines, and railties goes here.
+    #
+    # These settings can be overridden in specific environments using the files
+    # in config/environments, which are processed later.
+    #
+    # config.time_zone = "Central Time (US & Canada)"
+    # config.eager_load_paths << Rails.root.join("extras")
+
+    # Don't generate system test files.
+    config.generators.system_tests = nil
   end
 end

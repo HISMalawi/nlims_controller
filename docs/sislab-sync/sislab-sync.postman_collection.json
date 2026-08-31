@@ -1,0 +1,1291 @@
+{
+  "info": {
+    "name": "SISLAB Sync — no local HCM",
+    "_postman_id": "sislab-sync-hcm-local",
+    "description": "Dados de teste para o no local, para confirmar que o que se cria aqui chega ao no nacional.\n\n## Antes de comecar\n\nCrie no **no local** (nao no nacional) um cliente em Clientes e chaves:\n\n- Tipo: `emr`\n- Unidade sanitaria: `HCM`\n- Laboratorio: em branco\n- Ambitos: `orders:write`, `orders:read`, `results:read`, `results:write`, `dictionary:read`\n\nO tipo nao se altera depois de criado. Deixar o laboratorio em branco e o que permite a esta mesma chave fazer tambem o papel do SISLAB na pasta 2 — um cliente sem lab_code vale para qualquer laboratorio (app/models/api_client.rb).\n\nCole a chave na variavel `api_key` da coleccao.\n\n## Ordem\n\nPasta 1 cria os pedidos e guarda sozinha o `tracking_number` do ultimo. A pasta 2 usa-o. Correr a pasta 1 inteira e depois a 2 gera a serie completa de eventos na outbox.\n\n## Onde ver o resultado\n\n- Neste no: ecra **Fila de sincronizacao**, ou `docker compose logs -f sidekiq`\n- No nacional: ecra **Nos**, onde o HCM aparece com o que ja entregou\n\nO envio e do sidekiq, em ciclo. Nao ha nada a chamar a mao para o forcar.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{api_key}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "national_url",
+      "value": "http://100.119.116.50:3100",
+      "type": "string"
+    },
+    {
+      "key": "api_key",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "lab_code",
+      "value": "HCM-LAB",
+      "type": "string"
+    },
+    {
+      "key": "tracking_number",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "referral_uuid",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "lab_api_key",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "0 — Verificacao",
+      "description": "Confirma que o no responde e que a chave e a certa antes de criar seja o que for.",
+      "item": [
+        {
+          "name": "Health (sem chave)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v3/health",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v3",
+                "health"
+              ]
+            },
+            "description": "Nao pede autenticacao. Mostra o modo do no e o node_code.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Me — quem e esta chave",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v3/me",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v3",
+                "me"
+              ]
+            },
+            "description": "Devolve o cliente e os ambitos da chave. Se der 401, a chave em {{api_key}} esta errada; se faltar um ambito, aparece aqui antes de rebentar noutro sitio."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200', () => pm.response.to.have.status(200));",
+                  "console.log(JSON.stringify(pm.response.json().data));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "1 — Criar pedidos (papel de EMR)",
+      "description": "Cada pedido escreve na outbox: patient.upserted + order.created. Enviar varias vezes cria pedidos novos — o Idempotency-Key usa {{$guid}}, portanto muda a cada envio.",
+      "item": [
+        {
+          "name": "Pedido 1 — Hemograma completo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v3/order-requests",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v3",
+                "order-requests"
+              ]
+            },
+            "description": "Guarda o tracking_number na variavel da coleccao. As chamadas seguintes usam-no.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patient\": {\n    \"national_id\": \"120000000123T\",\n    \"name\": \"Alzira Muianga\",\n    \"sex\": \"F\",\n    \"birthdate\": \"1990-04-12\",\n    \"phone\": \"840000123\"\n  },\n  \"order\": {\n    \"receiving_lab_code\": \"{{lab_code}}\",\n    \"priority\": \"routine\",\n    \"requested_by\": \"Dr. Alberto Nhaca\",\n    \"order_location\": \"Consulta externa\",\n    \"clinical_history\": \"Dados de teste para verificar a sincronizacao com o no nacional.\",\n    \"collected_at\": \"2026-08-18T09:00:00+02:00\",\n    \"specimen_type\": {\n      \"national_code\": \"MOZ-SP-0001\"\n    }\n  },\n  \"tests\": [\n    {\n      \"test_type\": {\n        \"national_code\": \"MOZ-TT-0001\"\n      }\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const b = pm.response.json();",
+                  "if (b.data && b.data.tracking_number) {",
+                  "  pm.collectionVariables.set('tracking_number', b.data.tracking_number);",
+                  "  console.log('tracking_number =', b.data.tracking_number);",
+                  "}",
+                  "pm.test('201 criado', () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Pedido 2 — Glicemia em jejum (urgente)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v3/order-requests",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v3",
+                "order-requests"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patient\": {\n    \"national_id\": \"120000000456K\",\n    \"name\": \"Faustino Chirindza\",\n    \"sex\": \"M\",\n    \"birthdate\": \"1978-11-30\",\n    \"phone\": \"840000456\"\n  },\n  \"order\": {\n    \"receiving_lab_code\": \"{{lab_code}}\",\n    \"priority\": \"urgent\",\n    \"requested_by\": \"Dr. Alberto Nhaca\",\n    \"order_location\": \"Consulta externa\",\n    \"clinical_history\": \"Dados de teste para verificar a sincronizacao com o no nacional.\",\n    \"collected_at\": \"2026-08-18T09:00:00+02:00\",\n    \"specimen_type\": {\n      \"national_code\": \"MOZ-SP-0002\"\n    }\n  },\n  \"tests\": [\n    {\n      \"test_type\": {\n        \"national_code\": \"MOZ-TT-0002\"\n      }\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const b = pm.response.json();",
+                  "if (b.data && b.data.tracking_number) {",
+                  "  pm.collectionVariables.set('tracking_number', b.data.tracking_number);",
+                  "  console.log('tracking_number =', b.data.tracking_number);",
+                  "}",
+                  "pm.test('201 criado', () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Pedido 3 — Funcao renal (stat)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v3/order-requests",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v3",
+                "order-requests"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patient\": {\n    \"national_id\": \"120000000789M\",\n    \"name\": \"Rosalina Cossa\",\n    \"sex\": \"F\",\n    \"birthdate\": \"1965-02-08\",\n    \"phone\": \"840000789\"\n  },\n  \"order\": {\n    \"receiving_lab_code\": \"{{lab_code}}\",\n    \"priority\": \"stat\",\n    \"requested_by\": \"Dr. Alberto Nhaca\",\n    \"order_location\": \"Consulta externa\",\n    \"clinical_history\": \"Dados de teste para verificar a sincronizacao com o no nacional.\",\n    \"collected_at\": \"2026-08-18T09:00:00+02:00\",\n    \"specimen_type\": {\n      \"national_code\": \"MOZ-SP-0003\"\n    }\n  },\n  \"tests\": [\n    {\n      \"test_type\": {\n        \"national_code\": \"MOZ-TT-0003\"\n      }\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const b = pm.response.json();",
+                  "if (b.data && b.data.tracking_number) {",
+                  "  pm.collectionVariables.set('tracking_number', b.data.tracking_number);",
+                  "  console.log('tracking_number =', b.data.tracking_number);",
+                  "}",
+                  "pm.test('201 criado', () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Pedido 4 — dois testes de uma vez",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v3/order-requests",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v3",
+                "order-requests"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patient\": {\n    \"national_id\": \"120000000321P\",\n    \"name\": \"Ivandro Sitoe\",\n    \"sex\": \"M\",\n    \"birthdate\": \"2001-07-19\",\n    \"phone\": \"840000321\"\n  },\n  \"order\": {\n    \"receiving_lab_code\": \"{{lab_code}}\",\n    \"priority\": \"routine\",\n    \"requested_by\": \"Dr. Alberto Nhaca\",\n    \"order_location\": \"Consulta externa\",\n    \"clinical_history\": \"Dados de teste para verificar a sincronizacao com o no nacional.\",\n    \"collected_at\": \"2026-08-18T09:00:00+02:00\",\n    \"specimen_type\": {\n      \"national_code\": \"MOZ-SP-0001\"\n    }\n  },\n  \"tests\": [\n    {\n      \"test_type\": {\n        \"national_code\": \"MOZ-TT-0001\"\n      }\n    },\n    {\n      \"test_type\": {\n        \"national_code\": \"MOZ-TT-0002\"\n      }\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const b = pm.response.json();",
+                  "if (b.data && b.data.tracking_number) {",
+                  "  pm.collectionVariables.set('tracking_number', b.data.tracking_number);",
+                  "  console.log('tracking_number =', b.data.tracking_number);",
+                  "}",
+                  "pm.test('201 criado', () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Pedido 5 — exame que o catalogo ainda nao tem",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v3/order-requests",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v3",
+                "order-requests"
+              ]
+            },
+            "description": "O catalogo nacional esta em consolidacao. Um exame que o no nao reconheca nao e recusado: fica guardado com o nome e o codigo com que chegou, e e ligado ao catalogo mais tarde. Um termo pode ser indicado por national_code, por uuid, por name, ou por uma cadeia de texto simples — que vale por { \"name\": \"...\" }.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patient\": {\n    \"national_id\": \"120000000654R\",\n    \"name\": \"Telma Nhantumbo\",\n    \"sex\": \"F\",\n    \"birthdate\": \"1988-03-05\"\n  },\n  \"order\": {\n    \"receiving_lab_code\": \"{{lab_code}}\",\n    \"priority\": \"routine\",\n    \"requested_by\": \"Dr. Alberto Nhaca\",\n    \"clinical_history\": \"Exame fora do catalogo nacional, indicado por nome.\",\n    \"specimen_type\": \"Sangue total\"\n  },\n  \"tests\": [\n    {\n      \"test_type\": \"Ferritina serica\"\n    },\n    {\n      \"test_type\": {\n        \"national_code\": \"MOZ-TT-9999\",\n        \"name\": \"Vitamina D 25-OH\"\n      }\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const b = pm.response.json();",
+                  "if (b.data && b.data.tracking_number) {",
+                  "  pm.collectionVariables.set('tracking_number', b.data.tracking_number);",
+                  "  console.log('tracking_number =', b.data.tracking_number);",
+                  "}",
+                  "pm.test('201 criado', () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2 — Percurso do laboratorio (papel de SISLAB)",
+      "description": "Cada passo escreve mais um evento na outbox. A ordem segue a maquina de estados de app/models/order.rb: requested -> accepted -> specimen_collected -> in_progress -> completed. specimen_collected e o unico passo que se pode saltar, para a amostra que ja chegou colhida da enfermaria: accepted -> in_progress vale. Saltar qualquer outro devolve 422, de proposito.",
+      "item": [
+        {
+          "name": "Fila do laboratorio",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v3/lab/pending-orders?lab_code={{lab_code}}&limit=50",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v3",
+                "lab",
+                "pending-orders"
+              ],
+              "query": [
+                {
+                  "key": "lab_code",
+                  "value": "{{lab_code}}"
+                },
+                {
+                  "key": "limit",
+                  "value": "50"
+                }
+              ]
+            },
+            "description": "Tudo o que mudou desde o cursor. Passe since=<next_cursor> para paginar."
+          },
+          "response": []
+        },
+        {
+          "name": "Reclamar o pedido",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v3/lab/orders/{{tracking_number}}/claim",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v3",
+                "lab",
+                "orders",
+                "{{tracking_number}}",
+                "claim"
+              ]
+            },
+            "description": "requested -> accepted. Reclamar duas vezes devolve 409 conflict.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"actor\": \"Tec. Sofia Matola\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Amostra colhida",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v3/lab/orders/{{tracking_number}}/status",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v3",
+                "lab",
+                "orders",
+                "{{tracking_number}}",
+                "status"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"specimen_collected\",\n  \"actor\": \"Tec. Sofia Matola\",\n  \"reason\": \"amostra recebida no laboratorio\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Em analise",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v3/lab/orders/{{tracking_number}}/status",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v3",
+                "lab",
+                "orders",
+                "{{tracking_number}}",
+                "status"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"in_progress\",\n  \"actor\": \"Tec. Sofia Matola\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Registar resultados (final)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v3/lab/orders/{{tracking_number}}/results",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v3",
+                "lab",
+                "orders",
+                "{{tracking_number}}",
+                "results"
+              ]
+            },
+            "description": "Escreve test.result_recorded por cada leitura. final=true fecha o teste; uma leitura num teste ainda pendente poe-no em in_progress sozinha.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"final\": true,\n  \"actor\": \"Tec. Sofia Matola\",\n  \"results\": [\n    {\n      \"test_type\": {\n        \"national_code\": \"MOZ-TT-0001\"\n      },\n      \"indicator\": {\n        \"national_code\": \"MOZ-TI-0001\"\n      },\n      \"value\": \"12.4\",\n      \"unit\": \"g/dL\",\n      \"recorded_at\": \"2026-08-18T11:20:00+02:00\",\n      \"recorded_by\": \"Tec. Sofia Matola\"\n    },\n    {\n      \"test_type\": {\n        \"national_code\": \"MOZ-TT-0001\"\n      },\n      \"indicator\": {\n        \"national_code\": \"MOZ-TI-0002\"\n      },\n      \"value\": \"7.8\",\n      \"unit\": \"10^9/L\",\n      \"recorded_at\": \"2026-08-18T11:20:00+02:00\",\n      \"recorded_by\": \"Tec. Sofia Matola\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Acrescentar um teste nao pedido",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v3/lab/orders/{{tracking_number}}/tests",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v3",
+                "lab",
+                "orders",
+                "{{tracking_number}}",
+                "tests"
+              ]
+            },
+            "description": "Um teste que o clinico nao pediu mas o laboratorio correu. Vai para a mesma amostra e para o mesmo tracking number. Escreve order.test_added.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"actor\": \"Tec. Sofia Matola\",\n  \"tests\": [\n    {\n      \"test_type\": {\n        \"national_code\": \"MOZ-TT-0002\"\n      },\n      \"method_of_testing\": \"reflexo\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "3 — Caminho alternativo: rejeitar a amostra",
+      "description": "Use num pedido acabado de criar, logo apos reclamar. So se pode rejeitar a partir de accepted.",
+      "item": [
+        {
+          "name": "Rejeitar a amostra",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v3/lab/orders/{{tracking_number}}/reject",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v3",
+                "lab",
+                "orders",
+                "{{tracking_number}}",
+                "reject"
+              ]
+            },
+            "description": "Escreve specimen.rejected. Motivos: MOZ-RJ-0001 hemolisada, MOZ-RJ-0002 volume insuficiente, MOZ-RJ-0003 tubo mal identificado.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"actor\": \"Tec. Sofia Matola\",\n  \"reason\": {\n    \"national_code\": \"MOZ-RJ-0001\"\n  },\n  \"note\": \"Amostra hemolisada, repetir colheita.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "4 — Consultar (papel de EMR)",
+      "item": [
+        {
+          "name": "Ver o pedido",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v3/orders/{{tracking_number}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v3",
+                "orders",
+                "{{tracking_number}}"
+              ]
+            },
+            "description": ""
+          },
+          "response": []
+        },
+        {
+          "name": "Ver os resultados do pedido",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v3/orders/{{tracking_number}}/results",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v3",
+                "orders",
+                "{{tracking_number}}",
+                "results"
+              ]
+            },
+            "description": ""
+          },
+          "response": []
+        },
+        {
+          "name": "Resultados por entregar",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v3/results?limit=50",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v3",
+                "results"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "50"
+                }
+              ]
+            },
+            "description": "A fila que o EMR consome. Depois de ler, confirmar com o acknowledge abaixo."
+          },
+          "response": []
+        },
+        {
+          "name": "Confirmar a recepcao de um resultado",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v3/results/:uuid/acknowledge",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v3",
+                "results",
+                ":uuid",
+                "acknowledge"
+              ]
+            },
+            "description": "Substitua :uuid pelo uuid de um resultado devolvido acima."
+          },
+          "response": []
+        },
+        {
+          "name": "Dicionario — o que mudou",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v3/dictionary/changes?since=0&limit=50",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v3",
+                "dictionary",
+                "changes"
+              ],
+              "query": [
+                {
+                  "key": "since",
+                  "value": "0"
+                },
+                {
+                  "key": "limit",
+                  "value": "50"
+                }
+              ]
+            },
+            "description": "O mesmo cursor que o nó local usa para puxar do nacional."
+          },
+          "response": []
+        },
+        {
+          "name": "Dicionario — tipos de teste",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v3/dictionary/test_types",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v3",
+                "dictionary",
+                "test_types"
+              ]
+            },
+            "description": ""
+          },
+          "response": []
+        },
+        {
+          "name": "Dicionario — registo de laboratorios",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v3/dictionary/labs",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v3",
+                "dictionary",
+                "labs"
+              ]
+            },
+            "description": "O registo de laboratorios que o no nacional publica e todos os nos replicam. E o que permite referir uma amostra indicando apenas to_lab_code: a unidade sanitaria de destino e lida daqui."
+          },
+          "response": []
+        },
+        {
+          "name": "Dicionario - unidades sanitarias",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v3/dictionary/facilities",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v3",
+                "dictionary",
+                "facilities"
+              ]
+            },
+            "description": "As unidades sanitarias do pais. Um no e uma unidade sanitaria; os laboratorios de /dictionary/labs apontam para uma destas entradas."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "5 — Confirmar que chegou ao nacional",
+      "description": "O push e feito pelo sidekiq deste no, nao por si. Estas chamadas so servem para ver o outro lado.",
+      "item": [
+        {
+          "name": "Health do no nacional",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{national_url}}/api/v3/health",
+              "host": [
+                "{{national_url}}"
+              ],
+              "path": [
+                "api",
+                "v3",
+                "health"
+              ]
+            },
+            "description": "Trocado para {{national_url}}. Nao pede chave.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "6 — O laboratorio sozinho, sem EMR",
+      "description": "Nenhum controlador da API verifica o tipo do cliente: o que decide e o ambito da chave e a unidade/laboratorio a que ela esta presa. Um cliente `sislab` com `orders:write` cria pedidos como qualquer EMR — e o caso do doente que chega ao balcao do laboratorio sem guia.\n\nA diferenca fica gravada: o `source_system` do pedido passa a `sislab` em vez de `emr`, por isso o no nacional distingue quem o criou.\n\nPara correr esta pasta com uma chave propria, crie um segundo cliente do tipo `sislab`, unidade `HCM`, laboratorio `HCM-LAB`, com os ambitos `orders:write`, `orders:read`, `results:write`, `referrals:write`, `dictionary:read`, e ponha a chave em `lab_api_key`. Com a chave unica da coleccao tambem funciona.",
+      "item": [
+        {
+          "name": "Pedido criado pelo balcao do laboratorio",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v3/order-requests",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v3",
+                "order-requests"
+              ]
+            },
+            "description": "Repare que nao leva `sending_facility_code`. Quando falta, o pedido usa a unidade da propria chave (app/models/order_request.rb:19) — o laboratorio nao tem de repetir aquilo que a chave ja diz.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patient\": {\n    \"national_id\": \"120000000999X\",\n    \"name\": \"Nelia Zandamela\",\n    \"sex\": \"F\",\n    \"birthdate\": \"1993-09-27\",\n    \"phone\": \"840000999\"\n  },\n  \"lab\": {\n    \"code\": \"LAB01\",\n    \"name\": \"Laboratorio de Bioquimica\",\n    \"phone\": \"840000111\"\n  },\n  \"order\": {\n    \"receiving_lab_code\": \"{{lab_code}}\",\n    \"priority\": \"routine\",\n    \"requested_by\": \"Balcao do laboratorio\",\n    \"order_location\": \"Laboratorio\",\n    \"clinical_history\": \"Doente sem guia, pedido levantado no proprio laboratorio.\",\n    \"collected_at\": \"2026-08-18T09:30:00+02:00\",\n    \"specimen_type\": {\n      \"national_code\": \"MOZ-SP-0001\"\n    }\n  },\n  \"tests\": [\n    {\n      \"test_type\": {\n        \"national_code\": \"MOZ-TT-0001\"\n      }\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const b = pm.response.json();",
+                  "if (b.data && b.data.tracking_number) {",
+                  "  pm.collectionVariables.set('tracking_number', b.data.tracking_number);",
+                  "  console.log('tracking_number =', b.data.tracking_number);",
+                  "}",
+                  "pm.test('201 criado', () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Pedido por um painel inteiro",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v3/order-requests",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v3",
+                "order-requests"
+              ]
+            },
+            "description": "Um painel em vez de testes soltos. Use `test_panel` no lugar de `test_type`.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patient\": {\n    \"national_id\": \"120000000888W\",\n    \"name\": \"Hercilio Banze\",\n    \"sex\": \"M\",\n    \"birthdate\": \"1971-01-15\",\n    \"phone\": \"840000888\"\n  },\n  \"lab\": {\n    \"code\": \"LAB01\",\n    \"name\": \"Laboratorio de Bioquimica\",\n    \"phone\": \"840000111\"\n  },\n  \"order\": {\n    \"receiving_lab_code\": \"{{lab_code}}\",\n    \"priority\": \"routine\",\n    \"requested_by\": \"Balcao do laboratorio\",\n    \"collected_at\": \"2026-08-18T09:30:00+02:00\",\n    \"specimen_type\": {\n      \"national_code\": \"MOZ-SP-0001\"\n    }\n  },\n  \"tests\": [\n    {\n      \"test_panel\": {\n        \"national_code\": \"MOZ-TP-0001\"\n      }\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const b = pm.response.json();",
+                  "if (b.data && b.data.tracking_number) {",
+                  "  pm.collectionVariables.set('tracking_number', b.data.tracking_number);",
+                  "  console.log('tracking_number =', b.data.tracking_number);",
+                  "}",
+                  "pm.test('201 criado', () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Referir a amostra para outro laboratorio",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v3/lab/referrals",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v3",
+                "lab",
+                "referrals"
+              ]
+            },
+            "description": "So a partir de `in_progress` — a referencia poe o pedido em `referred_out`. Corra antes os passos da pasta 2 ate 'Em analise'. Escreve referral.dispatched. Guarda o uuid em {{referral_uuid}}.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tracking_number\": \"{{tracking_number}}\",\n  \"to_lab_code\": \"HPM-LAB\",\n  \"courier\": \"Motorista Chico\",\n  \"remarks\": \"Sem reagente hoje, enviado para o HPM.\",\n  \"actor\": \"Tec. Sofia Matola\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const b = pm.response.json();",
+                  "if (b.data && b.data.uuid) {",
+                  "  pm.collectionVariables.set('referral_uuid', b.data.uuid);",
+                  "  console.log('referral_uuid =', b.data.uuid);",
+                  "}",
+                  "pm.test('201 criado', () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Destino: recebi a amostra",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v3/lab/referrals/{{referral_uuid}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v3",
+                "lab",
+                "referrals",
+                "{{referral_uuid}}"
+              ]
+            },
+            "description": "O laboratorio que recebeu diz o que aconteceu ao pacote. Escreve referral.received.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"state\": \"received\",\n  \"remarks\": \"Amostra chegou intacta.\",\n  \"actor\": \"Tec. do HPM\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Destino: recuso a amostra",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v3/lab/referrals/{{referral_uuid}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v3",
+                "lab",
+                "referrals",
+                "{{referral_uuid}}"
+              ]
+            },
+            "description": "Alternativa ao anterior — um dos dois, nao os dois. `state` so aceita `received` ou `rejected`. Escreve referral.rejected.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"state\": \"rejected\",\n  \"reason\": \"MOZ-RJ-0002\",\n  \"remarks\": \"Volume insuficiente para repetir.\",\n  \"actor\": \"Tec. do HPM\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Fechar o pedido",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v3/lab/orders/{{tracking_number}}/status",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v3",
+                "lab",
+                "orders",
+                "{{tracking_number}}",
+                "status"
+              ]
+            },
+            "description": "`final: true` nos resultados fecha os testes, nao o pedido. Fechar o pedido e este passo. Vale a partir de `in_progress` ou de `referred_out`.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"completed\",\n  \"actor\": \"Tec. Sofia Matola\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

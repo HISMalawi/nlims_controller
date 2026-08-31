@@ -1,0 +1,104 @@
+<% content_for :title, t(".title") %>
+
+<div class="flex flex-wrap items-start justify-between gap-3">
+  <div>
+    <h1 class="text-2xl font-semibold tracking-tight"><%= t(".title") %></h1>
+    <p class="mt-2 max-w-prose text-sm text-slate-600"><%= t(".lede") %></p>
+  </div>
+
+  <% if @failing.positive? %>
+    <%= button_to t(".retry_all", count: @failing), retry_all_sync_events_path,
+          class: "rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white hover:bg-slate-800" %>
+  <% end %>
+</div>
+
+<div class="mt-6 grid gap-4 sm:grid-cols-3">
+  <%= stat t(".pending"), @pending, tone: @pending.zero? ? :good : :waiting %>
+  <%= stat t(".failing"), @failing, tone: @failing.zero? ? :neutral : :bad %>
+  <%= stat t(".last_contact"),
+        @heartbeat.last_synced_at ? time_ago(@heartbeat.last_synced_at) : t("dashboard.sync.never_short"),
+        tone: @heartbeat.healthy? ? :neutral : :bad %>
+</div>
+
+<% if @heartbeat.last_error.present? %>
+  <div class="mt-4 rounded-md border border-rose-300 bg-rose-50 px-4 py-3">
+    <p class="text-sm font-medium text-rose-900"><%= t(".link_error") %></p>
+    <p class="mt-1 font-mono text-xs text-rose-800"><%= @heartbeat.last_error %></p>
+  </div>
+<% end %>
+
+<div class="mt-6 flex flex-wrap gap-2 text-sm">
+  <% SyncQueueController::FILTERS.each do |filter| %>
+    <%= link_to t(".filters.#{filter}"), sync_queue_path(filter: filter),
+          class: "rounded-full border px-3 py-1 #{@filter == filter ? "border-slate-900 bg-slate-900 text-white" : "border-slate-300 bg-white text-slate-600 hover:border-slate-400"}" %>
+  <% end %>
+</div>
+
+<div class="mt-4">
+  <%= panel do %>
+    <% if @events.empty? %>
+      <%= render "shared/empty", message: t(".none") %>
+    <% else %>
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-slate-200 text-sm">
+          <thead class="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+            <tr>
+              <th class="px-5 py-2.5"><%= t(".columns.occurred") %></th>
+              <th class="px-5 py-2.5"><%= t(".columns.type") %></th>
+              <th class="px-5 py-2.5"><%= t(".columns.sample") %></th>
+              <th class="px-5 py-2.5"><%= t(".columns.attempts") %></th>
+              <th class="px-5 py-2.5"><%= t(".columns.state") %></th>
+              <th class="px-5 py-2.5"></th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            <% @events.each do |event| %>
+              <tr class="align-top hover:bg-slate-50">
+                <td class="px-5 py-2.5 text-slate-600"><%= timestamp event.occurred_at %></td>
+                <td class="px-5 py-2.5 font-mono text-xs text-slate-700"><%= event.type %></td>
+                <td class="px-5 py-2.5">
+                  <% tracking_number = event.payload["tracking_number"] %>
+                  <% if tracking_number.present? %>
+                    <%= link_to tracking_number, order_path(tracking_number),
+                          class: "font-mono text-xs tabular text-slate-900 underline-offset-2 hover:underline" %>
+                  <% else %>
+                    <span class="font-mono text-xs text-slate-400"><%= event.aggregate_uuid.first(8) %>…</span>
+                  <% end %>
+                  <span class="block font-mono text-xs text-slate-400"><%= t(".sequence", n: event.sequence) %></span>
+                </td>
+                <td class="px-5 py-2.5 tabular text-slate-600"><%= event.attempts %></td>
+                <td class="px-5 py-2.5">
+                  <% if event.delivered? %>
+                    <%= badge t(".states.delivered"), tone: :good %>
+                    <span class="block text-xs text-slate-500"><%= timestamp event.delivered_at %></span>
+                  <% elsif event.attempts.positive? %>
+                    <%= badge t(".states.failing"), tone: :bad %>
+                    <% if event.next_attempt_at %>
+                      <span class="block text-xs text-slate-500">
+                        <%= t(".next_attempt", when: l(event.next_attempt_at, format: :short)) %>
+                      </span>
+                    <% end %>
+                  <% else %>
+                    <%= badge t(".states.pending"), tone: :neutral %>
+                  <% end %>
+
+                  <% if event.last_error.present? %>
+                    <span class="mt-1 block max-w-md font-mono text-xs text-rose-700"><%= event.last_error %></span>
+                  <% end %>
+                </td>
+                <td class="px-5 py-2.5 text-right">
+                  <% unless event.delivered? %>
+                    <%= button_to t(".retry"), retry_sync_event_path(event),
+                          class: "rounded-md border border-slate-300 bg-white px-2 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50" %>
+                  <% end %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+
+      <%= render "shared/pagination", page: @page, pages: @pages, query: request.query_parameters %>
+    <% end %>
+  <% end %>
+</div>

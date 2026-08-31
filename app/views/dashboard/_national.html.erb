@@ -1,0 +1,32 @@
+<%# The national node has no outbox and nobody to push to. What it watches is
+    the other direction: who has stopped talking to it, and what it could not
+    make sense of when they did. %>
+<div class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+  <%= stat t("dashboard.stats.nodes"), status.nodes %>
+
+  <%= stat t("dashboard.stats.stale_nodes"), status.stale_nodes,
+        tone: status.stale_nodes.zero? ? :good : :bad,
+        hint: t("dashboard.stats.stale_after", period: distance_of_time_in_words(Node::STALE_AFTER)) %>
+
+  <%= stat t("dashboard.stats.nodes_behind"), status.nodes_behind,
+        tone: status.nodes_behind.zero? ? :neutral : :waiting,
+        hint: t("dashboard.stats.nodes_behind_hint") %>
+
+  <%= stat t("dashboard.stats.events_recent"), status.events_received_recently, hint: t("dashboard.stats.last_24h") %>
+</div>
+
+<div class="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+  <%= stat t("dashboard.stats.inbound_pending"), status.inbound_pending,
+        hint: t("dashboard.stats.inbound_pending_hint") %>
+
+  <%= stat t("dashboard.stats.inbound_stalled"), status.inbound_stalled,
+        tone: status.inbound_stalled.zero? ? :neutral : :bad,
+        hint: t("dashboard.stats.inbound_stalled_hint") %>
+
+  <%= stat t("dashboard.stats.inbound_rejected"), status.inbound_rejected,
+        tone: status.inbound_rejected.zero? ? :neutral : :bad %>
+
+  <%= stat t("dashboard.stats.dictionary_drafts"), status.dictionary_drafts,
+        tone: status.dictionary_drafts.zero? ? :neutral : :waiting,
+        hint: t("dashboard.stats.dictionary_drafts_hint") %>
+</div>

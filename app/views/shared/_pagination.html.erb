@@ -1,0 +1,21 @@
+<%# `query` is request.query_parameters, so paging keeps whatever filters the
+    operator set instead of quietly dropping them. %>
+<% if pages > 1 %>
+  <nav class="flex items-center justify-between border-t border-slate-200 px-5 py-3 text-sm">
+    <% if page > 1 %>
+      <%= link_to t("pagination.previous"), "#{request.path}?#{query.merge(page: page - 1).to_query}",
+            class: "rounded-md px-2 py-1 text-slate-600 hover:bg-slate-100 hover:text-slate-900" %>
+    <% else %>
+      <span></span>
+    <% end %>
+
+    <span class="text-slate-500"><%= t("pagination.of", page: page, pages: pages) %></span>
+
+    <% if page < pages %>
+      <%= link_to t("pagination.next"), "#{request.path}?#{query.merge(page: page + 1).to_query}",
+            class: "rounded-md px-2 py-1 text-slate-600 hover:bg-slate-100 hover:text-slate-900" %>
+    <% else %>
+      <span></span>
+    <% end %>
+  </nav>
+<% end %>

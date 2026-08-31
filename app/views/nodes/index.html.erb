@@ -1,0 +1,71 @@
+<% content_for :title, t(".title") %>
+
+<h1 class="text-2xl font-semibold tracking-tight"><%= t(".title") %></h1>
+<p class="mt-2 max-w-prose text-sm text-slate-600"><%= t(".lede") %></p>
+
+<div class="mt-6 grid gap-4 sm:grid-cols-3">
+  <%= stat t(".registered"), @nodes.size %>
+  <%= stat t(".stale"), @stale, tone: @stale.zero? ? :good : :bad,
+        hint: t(".stale_hint", period: distance_of_time_in_words(Node::STALE_AFTER)) %>
+  <%= stat t(".dictionary_revision"), @cursor, hint: t(".dictionary_revision_hint") %>
+</div>
+
+<div class="mt-6">
+  <%= panel do %>
+    <% if @nodes.empty? %>
+      <%= render "shared/empty", message: t(".none"), hint: t(".none_hint") %>
+    <% else %>
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-slate-200 text-sm">
+          <thead class="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+            <tr>
+              <th class="px-5 py-2.5"><%= t(".columns.node") %></th>
+              <th class="px-5 py-2.5"><%= t(".columns.last_seen") %></th>
+              <th class="px-5 py-2.5"><%= t(".columns.version") %></th>
+              <th class="px-5 py-2.5"><%= t(".columns.dictionary_lag") %></th>
+              <th class="px-5 py-2.5"><%= t(".columns.outbox") %></th>
+              <th class="px-5 py-2.5"><%= t(".columns.last_error") %></th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            <% @nodes.each do |node| %>
+              <% lag = @cursor - node.dictionary_cursor %>
+              <tr class="align-top <%= "bg-rose-50/40" if node.stale? %>">
+                <td class="px-5 py-2.5">
+                  <span class="font-mono text-sm font-medium text-slate-900"><%= node.node_code %></span>
+                  <% if node.name.present? %>
+                    <span class="block text-xs text-slate-500"><%= node.name %></span>
+                  <% end %>
+                </td>
+                <td class="px-5 py-2.5">
+                  <% if node.stale? %>
+                    <%= badge t(".states.stale"), tone: :bad %>
+                  <% else %>
+                    <%= badge t(".states.live"), tone: :good %>
+                  <% end %>
+                  <span class="block text-xs text-slate-600"><%= time_ago node.last_seen_at, blank: t(".never") %></span>
+                </td>
+                <td class="px-5 py-2.5 font-mono text-xs text-slate-600"><%= node.version %></td>
+                <td class="px-5 py-2.5">
+                  <span class="tabular <%= lag.positive? ? "text-amber-700" : "text-slate-600" %>">
+                    <%= lag.positive? ? t(".behind_by", n: lag) : t(".up_to_date") %>
+                  </span>
+                  <span class="block font-mono text-xs text-slate-400"><%= node.dictionary_cursor %></span>
+                </td>
+                <td class="px-5 py-2.5">
+                  <span class="tabular <%= node.outbox_pending.positive? ? "text-amber-700" : "text-slate-600" %>">
+                    <%= node.outbox_pending %>
+                  </span>
+                  <% if node.outbox_failing.positive? %>
+                    <span class="block text-xs text-rose-700"><%= t(".failing", n: node.outbox_failing) %></span>
+                  <% end %>
+                </td>
+                <td class="px-5 py-2.5 max-w-xs font-mono text-xs text-rose-700"><%= node.last_error %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% end %>
+  <% end %>
+</div>

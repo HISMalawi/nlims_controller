@@ -1,2 +1,0 @@
-class TestOrganism < ApplicationRecord
-end

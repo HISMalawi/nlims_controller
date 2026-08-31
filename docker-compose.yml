@@ -1,0 +1,82 @@
+# One node. Which node it is comes entirely from .env:
+#
+#   cp .env.local.example .env      # a facility node
+#   cp .env.national.example .env   # the national node
+#   docker compose up
+#
+# Running a local and a national node side by side (needed from S9 onwards) is
+# done by giving each its own directory and COMPOSE_PROJECT_NAME.
+
+name: ${COMPOSE_PROJECT_NAME:-sislab_sync}
+
+x-app: &app
+  build:
+    context: .
+    target: development
+  env_file: .env
+  environment:
+    DATABASE_HOST: mysql
+    REDIS_URL: redis://redis:6379/0
+  # Only the code is mounted. Gems stay in the image: a named volume for them
+  # keeps whatever was installed the first time, so adding a gem to the Gemfile
+  # would fail at boot with the rebuild looking successful.
+  volumes:
+    - .:/rails
+  depends_on:
+    mysql:
+      condition: service_healthy
+    redis:
+      condition: service_healthy
+
+services:
+  app:
+    <<: *app
+    ports:
+      - "${APP_PORT:-3000}:3000"
+    command: ./bin/rails server -b 0.0.0.0 -p 3000
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:3000/api/v3/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 40s
+
+  sidekiq:
+    <<: *app
+    command: bundle exec sidekiq
+
+  # Tailwind compiles into app/assets/builds, which is on the mounted volume, so
+  # the watcher is a service of its own rather than something the web process
+  # has to remember to start. In production the build happens once, in the image.
+  css:
+    <<: *app
+    command: bundle exec rails tailwindcss:watch[always]
+
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DATABASE_PASSWORD:-sislab}
+      MYSQL_DATABASE: ${DATABASE_NAME:-sislab_sync_development}
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - mysql:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-p${DATABASE_PASSWORD:-sislab}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  mysql:
+  redis:
+

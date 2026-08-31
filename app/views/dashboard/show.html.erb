@@ -1,0 +1,20 @@
+<% content_for :title, t(".title") %>
+
+<div class="flex flex-wrap items-baseline justify-between gap-2">
+  <h1 class="text-2xl font-semibold tracking-tight"><%= t(".title") %></h1>
+  <p class="text-sm text-slate-500">
+    <%= SislabSync.node_code %> · <%= t("modes.#{SislabSync.mode}") %> · v<%= SislabSync.version %>
+  </p>
+</div>
+
+<%= render SislabSync.national? ? "dashboard/national" : "dashboard/local", status: @status %>
+
+<div class="mt-8">
+  <%= panel t(".recent_orders"), actions: link_to(t(".all_orders"), orders_path, class: "text-sm font-medium text-slate-600 hover:text-slate-900") do %>
+    <% if @recent_orders.empty? %>
+      <%= render "shared/empty", message: t(".no_orders") %>
+    <% else %>
+      <%= render "orders/table", orders: @recent_orders %>
+    <% end %>
+  <% end %>
+</div>

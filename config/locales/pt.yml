@@ -1,0 +1,524 @@
+pt:
+  app_name: SISLAB Sync
+
+  modes:
+    local: Nó local
+    national: Nó nacional
+
+  nav:
+    dashboard: Painel
+    orders: Pedidos
+    referrals: Amostras referidas
+    dictionary: Dicionário
+    sync_queue: Fila de sincronização
+    nodes: Nós
+    api_clients: Clientes e chaves
+    audits: Auditoria
+
+  auth:
+    sign_out: Terminar sessão
+    sign_in_required: Inicie sessão para continuar.
+    admin_required: Esta operação exige uma conta de administrador.
+    invalid_credentials: Endereço ou palavra-passe incorrectos.
+    too_many_attempts: Demasiadas tentativas. Aguarde alguns minutos.
+    signed_in: Sessão iniciada. Bem-vindo(a), %{name}.
+    signed_out: Sessão terminada.
+
+  time_ago: há %{distance}
+  cancel: Cancelar
+  save: Guardar
+
+  errors:
+    not_found: Não foi encontrado.
+
+  users:
+    email: Endereço de correio electrónico
+    password: Palavra-passe
+    roles:
+      operator: Operador
+      admin: Administrador
+
+  sessions:
+    new:
+      title: Iniciar sessão
+      submit: Entrar
+      no_self_service: >-
+        As contas são criadas pelo administrador do nó. As chaves de API são
+        outra coisa e não servem para entrar aqui.
+
+  pagination:
+    previous: ← Anteriores
+    next: Seguintes →
+    of: Página %{page} de %{pages}
+
+  dashboard:
+    show:
+      title: Painel do nó
+      recent_orders: Últimos pedidos
+      all_orders: Ver todos
+      no_orders: Ainda não há pedidos neste nó.
+    sync:
+      reachable: Este nó está a comunicar com o nó nacional.
+      unreachable: Este nó não está a conseguir comunicar com o nó nacional.
+      never: Este nó ainda nunca comunicou com o nó nacional.
+      last_contact: Último contacto
+      never_short: nunca
+    stats:
+      outbox_pending: Eventos por enviar
+      outbox_failing: Eventos com erro
+      outbox_failing_hint: Já tentaram e falharam
+      oldest: O mais antigo há %{age}
+      dictionary_cursor: Cursor do dicionário
+      inbound_cursor: Cursor de entrada
+      synced_at: 'Sincronizado: %{when}'
+      open_orders: Pedidos em curso
+      orders_recent: Pedidos novos
+      last_24h: Últimas 24 horas
+      referrals_in_transit: Amostras em trânsito
+      dictionary_entries: Entradas activas no dicionário
+      nodes: Nós registados
+      stale_nodes: Nós sem contacto
+      stale_after: Sem notícias há mais de %{period}
+      nodes_behind: Nós com atraso
+      nodes_behind_hint: Com eventos por entregar
+      events_recent: Eventos recebidos
+      inbound_pending: Eventos à espera
+      inbound_pending_hint: À espera do evento anterior
+      inbound_stalled: Eventos parados
+      inbound_stalled_hint: À espera há mais de uma hora
+      inbound_rejected: Eventos recusados
+      dictionary_drafts: Rascunhos por promover
+      dictionary_drafts_hint: Ainda não visíveis para os nós locais
+
+  patients:
+    name: Nome
+    national_id: NID
+    sex: Sexo
+    birthdate: Data de nascimento
+    age: "%{years} anos"
+    sexes:
+      F: Feminino
+      M: Masculino
+      Unknown: Desconhecido
+
+  status_events:
+    entities:
+      orders: pedido
+      order_tests: teste
+
+  orders:
+    columns:
+      tracking_number: Tracking number
+      patient: Doente
+      tests: Testes
+      facility: Unidade
+      status: Estado
+      created_at: Registado
+    fields:
+      receiving_facility: Unidade sanitária destinatária
+      receiving_lab: Laboratório destinatário
+      unclaimed: por reclamar
+      specimen_type: Tipo de amostra
+      collected_at: Colhida em
+      requested_by: Requisitado por
+      claimed_by: Reclamado por
+      source: Origem
+      uuid: UUID
+    search:
+      label: Procurar
+      placeholder: Tracking number, NID ou nome do doente
+      submit: Procurar
+      clear: Limpar
+      any_status: Qualquer estado
+      from: De
+      to: Até
+    priorities:
+      routine: Rotina
+      urgent: Urgente
+      stat: Imediato
+    statuses:
+      requested: Pedido
+      accepted: Aceite
+      specimen_collected: Amostra colhida
+      in_progress: Em execução
+      referred_out: Referida para fora
+      referred_in: Recebida por referência
+      completed: Concluído
+      rejected: Rejeitado
+      cancelled: Cancelado
+    index:
+      title: Pedidos
+      results:
+        zero: Nenhum pedido
+        one: 1 pedido
+        other: "%{count} pedidos"
+      none_found: Nenhum pedido corresponde a esta pesquisa.
+      none_found_hint: O tracking number e o NID têm de estar exactos; o nome procura pelo início.
+      none_yet: Ainda não há pedidos neste nó.
+    show:
+      heading: Pedido
+      rejected: Amostra rejeitada
+      tests: Testes
+      no_tests: Este pedido ainda não tem testes.
+      referrals: Referências
+      history: Histórico
+      history_hint: Tudo o que aconteceu sob este tracking number, incluindo os testes.
+      patient: Doente
+      sample: Amostra
+
+  order_tests:
+    statuses:
+      pending: Por executar
+      in_progress: Em execução
+      completed: Concluído
+      rejected: Rejeitado
+      cancelled: Cancelado
+
+  referrals:
+    dispatched_at: Enviada
+    transport_time: Tempo de transporte
+    states:
+      dispatched: Em trânsito
+      received: Recebida
+      rejected: Rejeitada
+    index:
+      title: Amostras referidas
+      lede: >-
+        Amostras entregues a outro laboratório. A diferença entre o envio e a
+        recepção é o tempo de transporte — a métrica que hoje ninguém consegue medir.
+      outstanding: Em trânsito
+      outstanding_hint: Enviadas e ainda não recebidas
+      average_transport: Tempo médio de transporte
+      average_transport_hint: Sobre as que chegaram
+      total: Total listadas
+      route: Percurso
+      none: Nenhuma amostra referida corresponde a este filtro.
+      in_transit_for: em trânsito há %{age}
+      filters:
+        all: Todas
+        any_direction: Ambos os sentidos
+        out: Enviadas daqui
+        in: Recebidas aqui
+
+  api_clients:
+    never_used: nunca usada
+    kind_is_fixed: O tipo não se altera depois de criado — mudá-lo re-escoparia as chaves já emitidas.
+    node_identity_html: >-
+      As chaves emitidas aqui falam pela unidade sanitária %{facility} (%{code}).
+      Não é preciso indicar códigos: são os deste nó. O laboratório que faz cada
+      chamada segue no pedido, porque uma instância do mLab serve vários.
+    node_not_in_register: >-
+      Esta unidade sanitária ainda não consta do registo nacional replicado, pelo que
+      o nó se identifica, por agora, apenas pelo seu código.
+    facility_hint: Unidade sanitária por que o cliente fala.
+    lab_hint: Laboratório por que o cliente fala.
+    active_label: Cliente activo
+    columns:
+      name: Nome
+      kind: Tipo
+      scope: Âmbito
+      facility: Unidade
+      lab: Laboratório
+      keys: Chaves
+      last_used: Última utilização
+      state: Estado
+    kinds:
+      emr: EMR
+      sislab: SISLAB
+      node: Nó
+      ui: Interface
+    states:
+      active: Activo
+      inactive: Inactivo
+    index:
+      title: Clientes e chaves
+      lede: Os sistemas autorizados a chamar este nó, e as chaves com que o fazem.
+      new: Novo cliente
+      none: Ainda não há clientes registados neste nó.
+      none_hint: Um EMR, um SISLAB ou outro nó só consegue chamar este nó com uma chave emitida aqui.
+    new:
+      title: Novo cliente
+    edit:
+      title: "Editar %{name}"
+    create:
+      created: "%{name} criado."
+    update:
+      updated: "%{name} actualizado."
+    show:
+      edit: Editar
+      issue_key: Emitir chave
+      keys: Chaves
+      keys_hint: Só o resumo criptográfico é guardado. Uma chave perdida substitui-se, não se recupera.
+      no_keys: Este cliente ainda não tem chaves.
+      recent_requests: Últimos pedidos
+      all_requests: Ver tudo
+      no_requests: Este cliente ainda não chamou este nó.
+
+  api_keys:
+    rotate: Rodar
+    revoke: Revogar
+    revoke_confirm: "Revogar a chave %{prefix}? O sistema que a usa deixa de conseguir chamar este nó."
+    expires_on: "Expira a %{date}"
+    columns:
+      key: Chave
+      scopes: Permissões
+      issued: Emitida
+      last_used: Última utilização
+      state: Estado
+      expires: Validade
+    states:
+      live: Válida
+      revoked: Revogada
+      expired: Expirada
+    scopes:
+      orders_read: Ler pedidos e o seu estado
+      orders_write: Criar pedidos
+      results_read: Ler resultados
+      results_write: Publicar resultados
+      referrals_write: Referir amostras para outro laboratório
+      dictionary_read: Ler o dicionário
+      dictionary_write: Alterar o dicionário
+      sync_push: Enviar eventos para o nó nacional
+      sync_pull: Receber eventos do nó nacional
+    new:
+      title: Emitir chave
+      lede: A chave é mostrada uma única vez. Só o seu resumo criptográfico fica guardado aqui.
+      scopes: Permissões
+      scopes_hint: Estão pré-seleccionadas as que um cliente deste tipo costuma precisar. Retire as que não forem necessárias.
+      expires_on: Expira em
+      expires_on_hint: Em branco, a chave não expira. Uma data obriga a rodá-la.
+      submit: Emitir
+    create:
+      no_scopes: Uma chave sem permissões não serve para nada. Escolha pelo menos uma.
+    created:
+      title: Chave emitida
+      for_client: "Para %{name}."
+      rotated_from: "Substitui a chave %{prefix}, que continua válida — revogue-a depois de o sistema passar a usar a nova."
+      secret: Chave
+      copy: Copiar
+      copied: Copiada
+      shown_once: Não volta a ser mostrada.
+      no_expiry: Sem validade
+      done: Concluído
+
+  audits:
+    anonymous: sem chave
+    columns:
+      at: Quando
+      client: Cliente
+      request: Pedido
+      status: Resposta
+      duration: Duração
+      ip: Origem
+    index:
+      title: Auditoria
+      lede: >-
+        Um registo por pedido, seja qual for o resultado. Os recusados são os mais
+        úteis: é assim que se vê uma chave a ser sondada ou uma integração apontada ao nó errado.
+      any_client: Todos os clientes
+      only_failures: Só os recusados
+      apply: Filtrar
+      results:
+        zero: Nenhum pedido
+        one: 1 pedido
+        other: "%{count} pedidos"
+      none: Nenhum pedido corresponde a este filtro.
+
+  dictionary:
+    no_loinc: sem LOINC
+    uncatalogued: fora do catálogo
+    entities:
+      facilities: Unidades sanitárias
+      labs: Laboratórios
+      departments: Secções
+      specimen_types: Tipos de amostra
+      drugs: Antibióticos
+      organisms: Organismos
+      indicators: Indicadores
+      test_types: Testes
+      test_panels: Painéis
+      rejection_reasons: Motivos de rejeição
+    statuses:
+      draft: Rascunho
+      active: Activo
+      retired: Retirado
+    columns:
+      national_code: Código nacional
+      name: Nome
+      loinc: LOINC
+      revision: Revisão
+    fields:
+      name: Nome
+      short_name: Nome abreviado
+      description: Descrição
+      moh_code: Código do MISAU
+      loinc_code: Código LOINC
+      unit: Unidade
+      value_type: Tipo de valor
+      facility_code: Código da unidade sanitária
+      source_code: Código no LIS
+      district: Distrito
+      province: Província
+      phone: Telefone
+      target_tat: Tempo de resposta previsto
+      performed_on_sex: Executado em
+      department_id: Secção
+    hints:
+      loinc_code: >-
+        O código LOINC internacional. Sem ele este item não significa nada fora
+        do país, e nenhuma interface FHIR ou HL7 o consegue traduzir.
+      moh_code: Código interno do MISAU, se existir. Não substitui o LOINC.
+      short_name: O que aparece num boletim estreito ou numa etiqueta.
+    issues:
+      duplicate_name: entradas com o nome repetido
+      test_type_without_indicators: testes sem indicadores — não reportam nada
+      test_type_without_specimen_types: testes sem tipo de amostra — não se conseguem colher
+      test_type_without_department: testes sem secção
+      indicator_without_test_type: indicadores que não pertencem a nenhum teste
+      numeric_indicator_without_range: indicadores numéricos sem intervalo de referência
+      invalid_range: intervalos de referência inválidos
+      specimen_type_without_test_types: tipos de amostra que nenhum teste usa
+      drug_without_organisms: antibióticos que nenhum organismo testa
+      organism_without_test_types: organismos que nenhum teste isola
+      test_panel_without_test_types: painéis vazios
+    index:
+      title: Dicionário
+      lede_national: >-
+        Este nó é o dono do dicionário. O que for activado aqui desce até todos
+        os laboratórios do país; o que for retirado desaparece deles.
+      lede_local: >-
+        Réplica do dicionário nacional. Só se altera no nó nacional — um código
+        inventado aqui não existiria para mais ninguém.
+      promote_all: Promover rascunhos
+      promote_confirm: >-
+        Activar todos os rascunhos que estejam utilizáveis? Passam a ser visíveis
+        em todos os laboratórios do país.
+      revision: Revisão actual
+      revision_hint: Onde um nó totalmente actualizado deixaria o cursor
+      local_cursor: Cursor deste nó
+      local_cursor_hint: 'Sincronizado: %{when}'
+      loinc: Cobertura LOINC
+      loinc_hint: "%{covered} de %{total} entradas curáveis"
+      quality: Problemas que travam a promoção
+      entity: Entidade
+    show:
+      new: Nova entrada
+      edit: Editar
+      activate: Activar
+      retire: Retirar
+      retire_confirm: >-
+        Retirar %{name}? Deixa de poder ser pedido, e os nós locais são
+        informados de que saiu.
+      total: Entradas listadas
+      loinc_coverage: Cobertura LOINC
+      loinc_hint: "%{covered} de %{total} entradas activas"
+      search: Procurar
+      search_placeholder: Nome, código nacional, MISAU ou LOINC
+      any_status: Qualquer estado
+      apply: Filtrar
+      none: Nenhuma entrada corresponde a este filtro.
+
+  dictionary_entries:
+    new:
+      title: Nova entrada
+      lede: >-
+        Nasce como rascunho e não sai deste nó até ser activada. O código
+        nacional é atribuído ao gravar.
+    create:
+      created: "%{code} — %{name} criado como rascunho."
+    update:
+      updated: "%{code} actualizado."
+    activate:
+      activated: "%{code} activado. Já viaja para os nós locais."
+    retire:
+      retired: "%{code} retirado."
+    promote:
+      promoted: "%{promoted} entradas activadas, %{held_back} retidas por não estarem utilizáveis."
+
+  sync_queue:
+    index:
+      title: Fila de sincronização
+      lede: >-
+        Tudo o que aconteceu neste nó e tem de chegar ao nacional. Nada é
+        apagado: um evento entregue é a prova de que seguiu, e um falhado fica
+        onde alguém o possa ver.
+      retry_all: Reprocessar os %{count} com erro
+      pending: Por enviar
+      failing: Com erro
+      last_contact: Último contacto
+      link_error: O nó nacional não está a ser alcançado
+      none: Nada nesta lista.
+      retry: Reprocessar
+      sequence: "sequência %{n}"
+      next_attempt: "Nova tentativa: %{when}"
+      filters:
+        pending: Por enviar
+        failing: Com erro
+        delivered: Entregues
+      columns:
+        occurred: Aconteceu
+        type: Evento
+        sample: Amostra
+        attempts: Tentativas
+        state: Estado
+      states:
+        pending: Em fila
+        failing: Com erro
+        delivered: Entregue
+    retry:
+      queued: Evento %{uuid} recolocado na fila.
+    retry_all:
+      queued_all: "%{count} eventos recolocados na fila."
+
+  nodes:
+    index:
+      title: Nós
+      lede: Os nós locais que já falaram com este, e há quanto tempo não o fazem.
+      registered: Nós registados
+      stale: Sem contacto
+      stale_hint: Sem notícias há mais de %{period}
+      dictionary_revision: Revisão do dicionário
+      dictionary_revision_hint: A revisão que um nó actualizado deveria ter
+      none: Nenhum nó falou ainda com este.
+      none_hint: Um nó aparece aqui no primeiro heartbeat que enviar.
+      never: nunca
+      behind_by: "%{n} revisões atrás"
+      up_to_date: Actualizado
+      failing: "%{n} com erro"
+      columns:
+        node: Nó
+        last_seen: Último contacto
+        version: Versão
+        dictionary_lag: Dicionário
+        outbox: Por entregar
+        last_error: Último erro
+      states:
+        live: Activo
+        stale: Sem contacto
+
+  api:
+    errors:
+      unauthenticated: Chave de API em falta ou inválida
+      insufficient_scope: A chave não tem permissão para esta operação
+      facility_mismatch: A chave não pertence a esta unidade sanitária
+      node_mismatch: A chave não fala por este nó
+      idempotency_key_required: O cabeçalho Idempotency-Key é obrigatório neste pedido
+      idempotency_key_reused: Esta Idempotency-Key já foi usada com um conteúdo diferente
+      rate_limited: Demasiados pedidos
+      not_found: Recurso não encontrado
+      conflict: O recurso já foi criado ou reclamado
+      unprocessable: Pedido inválido
+
+  activerecord:
+    models:
+      user: Utilizador
+      api_client: Cliente
+      api_key: Chave de API
+      order: Pedido
+      referral: Amostra referida
+    attributes:
+      user:
+        name: Nome
+        email: Endereço de correio electrónico
+        password: Palavra-passe
+        role: Perfil

@@ -1,0 +1,26 @@
+# Omakase Ruby styling for Rails, plus the RSpec cops.
+inherit_gem: { rubocop-rails-omakase: rubocop.yml }
+
+plugins:
+  - rubocop-rspec
+
+AllCops:
+  NewCops: enable
+  Exclude:
+    - bin/**/*
+    - db/schema.rb
+    - legacy/**/*
+    - vendor/**/*
+    - tmp/**/*
+
+# Long, descriptive example names read better than short ones in a spec list.
+RSpec/ExampleLength:
+  Enabled: false
+
+RSpec/MultipleExpectations:
+  Enabled: false
+
+# spec/sislab_sync_spec.rb describes the SislabSync module, not a class file
+# under app/, so the file-path cop does not apply.
+RSpec/SpecFilePathFormat:
+  Enabled: false

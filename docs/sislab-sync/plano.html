@@ -1,0 +1,1438 @@
+<title>SISLAB Sync v2</title>
+
+<style>
+  :root {
+    --ground: #F2F4F2;
+    --surface: #FFFFFF;
+    --surface-2: #E9EDEA;
+    --ink: #14201C;
+    --ink-2: #4E5C57;
+    --ink-3: #78867F;
+    --line: #D6DDD8;
+    --line-strong: #B9C4BE;
+    --accent: #0E6B58;
+    --accent-soft: #DCEDE7;
+    --signal: #9E4A16;
+    --signal-soft: #F3E5D9;
+
+    --font-head: "Iowan Old Style", Charter, "Bitstream Charter", "Sitka Text", Cambria, Georgia, serif;
+    --font-body: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --font-mono: ui-monospace, SFMono-Regular, "JetBrains Mono", Menlo, Consolas, monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #0E1412;
+      --surface: #151D1A;
+      --surface-2: #1D2724;
+      --ink: #E4EAE6;
+      --ink-2: #9DAAA5;
+      --ink-3: #74827D;
+      --line: #26332E;
+      --line-strong: #38473F;
+      --accent: #55C3A5;
+      --accent-soft: #12302A;
+      --signal: #DE9358;
+      --signal-soft: #33231A;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ground: #0E1412;
+    --surface: #151D1A;
+    --surface-2: #1D2724;
+    --ink: #E4EAE6;
+    --ink-2: #9DAAA5;
+    --ink-3: #74827D;
+    --line: #26332E;
+    --line-strong: #38473F;
+    --accent: #55C3A5;
+    --accent-soft: #12302A;
+    --signal: #DE9358;
+    --signal-soft: #33231A;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    margin: 0;
+    padding: 0 0 6rem;
+  }
+
+  main {
+    display: grid;
+    grid-template-columns:
+      [full-start] minmax(1.25rem, 1fr)
+      [content-start] minmax(0, 840px) [content-end]
+      minmax(1.25rem, 1fr) [full-end];
+    row-gap: 0;
+  }
+
+  main > * { grid-column: content; }
+  main > .wide { grid-column: full; }
+  .wide > .wide-inner { max-width: 1160px; margin-inline: auto; }
+
+  /* ---------- typography ---------- */
+
+  h1, h2, h3, h4 { font-family: var(--font-head); font-weight: 600; text-wrap: balance; margin: 0; }
+
+  h1 { font-size: clamp(2.4rem, 6vw, 3.4rem); line-height: 1.05; letter-spacing: -0.015em; }
+
+  h2 {
+    font-size: 1.7rem;
+    line-height: 1.2;
+    margin: 4.5rem 0 0.4rem;
+    padding-top: 1.6rem;
+    border-top: 1px solid var(--line-strong);
+  }
+
+  h3 { font-size: 1.18rem; line-height: 1.3; margin: 2.4rem 0 0.5rem; }
+  h4 { font-size: 1rem; line-height: 1.35; margin: 1.6rem 0 0.4rem; }
+
+  p { margin: 0.85rem 0; }
+  p, li { max-width: 68ch; }
+
+  a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 3px; }
+  a:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 3px; }
+
+  strong { font-weight: 650; }
+
+  code, .mono { font-family: var(--font-mono); font-size: 0.855em; }
+
+  p > code, li > code, td > code, dd > code {
+    background: var(--surface-2);
+    border-radius: 3px;
+    padding: 0.1em 0.35em;
+  }
+
+  .eyebrow {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    font-weight: 650;
+    color: var(--ink-3);
+    margin: 0;
+  }
+
+  .lede { font-size: 1.12rem; color: var(--ink-2); max-width: 62ch; }
+
+  .section-note { color: var(--ink-2); margin-top: 0; }
+
+  /* ---------- masthead ---------- */
+
+  header.masthead { padding: 4.5rem 0 0; }
+
+  .masthead .eyebrow { color: var(--accent); }
+
+  .masthead h1 { margin: 0.7rem 0 0; }
+
+  .rename {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.6rem;
+    margin: 1.1rem 0 0;
+    font-family: var(--font-mono);
+    font-size: 0.83rem;
+    color: var(--ink-3);
+  }
+
+  .rename .old { text-decoration: line-through; }
+  .rename .new { color: var(--accent); }
+
+  .factbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 2.4rem;
+    margin-top: 2.2rem;
+    padding-top: 1.4rem;
+    border-top: 1px solid var(--line);
+  }
+
+  .factbar div { display: flex; flex-direction: column; gap: 0.15rem; }
+  .factbar dt, .fact-k {
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--ink-3);
+    font-weight: 650;
+  }
+  .factbar dd, .fact-v {
+    margin: 0;
+    font-family: var(--font-head);
+    font-size: 1.15rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ---------- table of contents ---------- */
+
+  nav.toc {
+    margin-top: 3rem;
+    padding: 1.3rem 1.5rem;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+  }
+
+  nav.toc ol {
+    margin: 0.6rem 0 0;
+    padding: 0;
+    list-style: none;
+    counter-reset: toc;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 0.35rem 1.6rem;
+  }
+
+  nav.toc li { counter-increment: toc; max-width: none; }
+
+  nav.toc li::before {
+    content: counter(toc, decimal-leading-zero);
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--ink-3);
+    margin-right: 0.6rem;
+  }
+
+  nav.toc a { color: var(--ink); text-decoration: none; border-bottom: 1px solid transparent; }
+  nav.toc a:hover { border-bottom-color: var(--accent); }
+
+  /* ---------- tables ---------- */
+
+  .scroll { overflow-x: auto; margin: 1.2rem 0; -webkit-overflow-scrolling: touch; }
+
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    min-width: 520px;
+    font-size: 0.9rem;
+    background: var(--surface);
+  }
+
+  caption {
+    caption-side: top;
+    text-align: left;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--ink-3);
+    font-weight: 650;
+    padding-bottom: 0.55rem;
+  }
+
+  th, td { text-align: left; padding: 0.6rem 0.9rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.09em; color: var(--ink-3); font-weight: 650; background: var(--surface-2); }
+  tbody tr:last-child td { border-bottom: none; }
+  td.num { font-variant-numeric: tabular-nums; }
+
+  table.api td:nth-child(2) { font-family: var(--font-mono); font-size: 0.8rem; white-space: nowrap; }
+  table.api td:nth-child(3) { font-family: var(--font-mono); font-size: 0.78rem; color: var(--accent); white-space: nowrap; }
+
+  .verb {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    padding: 0.15rem 0.4rem;
+    border-radius: 3px;
+    background: var(--surface-2);
+    color: var(--ink-2);
+    white-space: nowrap;
+  }
+  .verb.post { background: var(--accent-soft); color: var(--accent); }
+  .verb.patch { background: var(--signal-soft); color: var(--signal); }
+
+  /* ---------- code ---------- */
+
+  pre {
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 0.95rem 1.1rem;
+    overflow-x: auto;
+    margin: 1.1rem 0;
+    font-size: 0.79rem;
+    line-height: 1.55;
+  }
+
+  pre code { font-size: inherit; background: none; padding: 0; }
+
+  /* ---------- callout ---------- */
+
+  .callout {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--signal);
+    border-radius: 3px;
+    padding: 0.9rem 1.2rem;
+    margin: 1.6rem 0;
+  }
+
+  .callout p { margin: 0.35rem 0; font-size: 0.94rem; }
+  .callout .eyebrow { color: var(--signal); }
+
+  /* ---------- figure ---------- */
+
+  figure { margin: 2rem 0 1rem; }
+
+  figure svg { display: block; width: 100%; max-width: 100%; height: auto; color: var(--ink-2); }
+
+  figcaption {
+    font-size: 0.83rem;
+    color: var(--ink-3);
+    margin-top: 0.8rem;
+    max-width: 68ch;
+  }
+
+  .figure-frame {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 1.4rem 1.2rem 1rem;
+    overflow-x: auto;
+  }
+  .figure-frame > svg { min-width: 640px; }
+
+  /* ---------- steps ---------- */
+
+  .steps { display: flex; flex-direction: column; gap: 1.1rem; margin-top: 1.8rem; }
+
+  .step {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 1.3rem 1.5rem 1.5rem;
+  }
+
+  .step-head { display: flex; align-items: baseline; gap: 0.9rem; flex-wrap: wrap; }
+
+  .step-no {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--accent);
+    background: var(--accent-soft);
+    border-radius: 3px;
+    padding: 0.2rem 0.5rem;
+    letter-spacing: 0.03em;
+  }
+
+  .step-dates {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--ink-3);
+    font-variant-numeric: tabular-nums;
+    margin-left: auto;
+  }
+
+  .step h3 { margin: 0; font-size: 1.15rem; }
+
+  .step .goal { margin: 0.85rem 0 0; }
+
+  .done {
+    margin: 0.9rem 0 0;
+    padding: 0.7rem 0.95rem;
+    background: var(--surface-2);
+    border-radius: 3px;
+    font-size: 0.92rem;
+  }
+  .done b {
+    display: block;
+    font-family: var(--font-body);
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--ink-3);
+    margin-bottom: 0.25rem;
+  }
+
+  ul.check { list-style: none; margin: 1.1rem 0 0; padding: 0; display: flex; flex-direction: column; gap: 0.4rem; }
+
+  ul.check li {
+    position: relative;
+    padding-left: 1.75rem;
+    font-size: 0.94rem;
+    max-width: 66ch;
+  }
+
+  ul.check li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0.36em;
+    width: 0.85em;
+    height: 0.85em;
+    border: 1.5px solid var(--line-strong);
+    border-radius: 2px;
+  }
+
+  ul.commits { list-style: none; margin: 1.1rem 0 0; padding: 0.9rem 0 0; border-top: 1px dashed var(--line); display: flex; flex-direction: column; gap: 0.3rem; }
+
+  ul.commits li {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    color: var(--ink-2);
+    padding-left: 1.1rem;
+    position: relative;
+    max-width: none;
+  }
+
+  ul.commits li::before { content: "\2022"; position: absolute; left: 0.2rem; color: var(--accent); }
+
+  .commits-label {
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--ink-3);
+    font-weight: 650;
+    margin: 0 0 0.5rem;
+  }
+
+  /* ---------- misc lists ---------- */
+
+  ul.plain { list-style: none; padding: 0; margin: 1rem 0; display: flex; flex-direction: column; gap: 0.5rem; }
+  ul.plain li { padding-left: 1.1rem; position: relative; }
+  ul.plain li::before { content: "\2014"; position: absolute; left: 0; color: var(--ink-3); }
+
+  dl.fields { margin: 1.1rem 0; display: grid; grid-template-columns: minmax(140px, auto) 1fr; gap: 0.45rem 1.2rem; }
+  dl.fields dt { font-family: var(--font-mono); font-size: 0.82rem; color: var(--accent); }
+  dl.fields dd { margin: 0; font-size: 0.94rem; }
+
+  footer.colophon {
+    margin-top: 5rem;
+    padding-top: 1.4rem;
+    border-top: 1px solid var(--line-strong);
+    font-size: 0.83rem;
+    color: var(--ink-3);
+  }
+
+  @media (max-width: 640px) {
+    .step-dates { margin-left: 0; width: 100%; }
+    dl.fields { grid-template-columns: 1fr; gap: 0.15rem 0; }
+    dl.fields dd { margin-bottom: 0.6rem; }
+  }
+</style>
+
+<main>
+
+  <header class="masthead">
+    <p class="eyebrow">Plano de reconstrução · versão 2</p>
+    <h1>SISLAB Sync</h1>
+    <p class="rename">
+      <span class="old">NLIMS Controller</span>
+      <span>&rarr;</span>
+      <span class="new">SISLAB Sync</span>
+    </p>
+    <p class="lede">
+      Um único artefacto que corre em dois modos — <strong>local</strong> e <strong>nacional</strong> — e que passa a ser
+      simultaneamente o dicionário do SISLAB, o ponto de entrada de pedidos vindos dos EMR e a rede de referenciamento
+      de amostras entre unidades sanitárias.
+    </p>
+
+    <dl class="factbar">
+      <div><dt>Duração</dt><dd>12 semanas</dd></div>
+      <div><dt>Início</dt><dd>17/08/2026</dd></div>
+      <div><dt>Entrega</dt><dd>06/11/2026</dd></div>
+      <div><dt>Equipa</dt><dd>1 dev</dd></div>
+      <div><dt>Compatibilidade</dt><dd>nenhuma</dd></div>
+    </dl>
+  </header>
+
+  <nav class="toc" aria-label="Índice">
+    <p class="eyebrow">Índice</p>
+    <ol>
+      <li><a href="#decisoes">Decisões fixadas</a></li>
+      <li><a href="#arquitectura">Arquitectura e modos</a></li>
+      <li><a href="#dados">Modelo de dados</a></li>
+      <li><a href="#auth">Autenticação por API key</a></li>
+      <li><a href="#emr">Integração: EMR &harr; local</a></li>
+      <li><a href="#sislab">Integração: SISLAB &harr; local</a></li>
+      <li><a href="#nacional">Integração: local &harr; nacional</a></li>
+      <li><a href="#referenciamento">Referenciamento de amostras</a></li>
+      <li><a href="#ui">Interface</a></li>
+      <li><a href="#passos">Os passos</a></li>
+      <li><a href="#riscos">Riscos</a></li>
+      <li><a href="#ambito">Pressupostos e âmbito</a></li>
+    </ol>
+  </nav>
+
+  <!-- ============================================================ -->
+  <h2 id="decisoes">1 · Decisões fixadas</h2>
+  <p class="section-note">Registo das decisões tomadas antes deste plano. Alterar qualquer uma delas obriga a rever os passos indicados.</p>
+
+  <div class="scroll">
+    <table>
+      <caption>Decisões e impacto</caption>
+      <thead>
+        <tr><th>Tema</th><th>Decisão</th><th>Passos afectados</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Base de código</td><td>Greenfield no mesmo repositório, branch <code>v2</code>; schema novo de raiz</td><td class="num">S1</td></tr>
+        <tr><td>Interface</td><td>Rails 8 + Hotwire + Tailwind, dentro da mesma aplicação</td><td class="num">S11</td></tr>
+        <tr><td>Sincronização</td><td>O local empurra; o local puxa. O nacional nunca inicia ligação</td><td class="num">S5, S9, S10</td></tr>
+        <tr><td>Dicionário</td><td>Carregado da base do SISLAB/mLab e depois gerido no nacional</td><td class="num">S3, S4</td></tr>
+        <tr><td>Autenticação</td><td>API key com hash e <em>scopes</em>, por cliente e por facility</td><td class="num">S2</td></tr>
+        <tr><td>Identidade</td><td><code>uuid</code> imutável + código nacional legível (<code>MOZ-TT-0042</code>)</td><td class="num">S3</td></tr>
+        <tr><td>Distribuição</td><td>Delta incremental por cursor, sem versões publicadas</td><td class="num">S3, S5</td></tr>
+        <tr><td>Dados nacionais</td><td>Tudo, incluindo identificação do doente (NID)</td><td class="num">S6, S9</td></tr>
+        <tr><td>Referenciamento</td><td><code>lab_code</code> = laboratório executor; receptor definido no pedido</td><td class="num">S10</td></tr>
+        <tr><td>Tracking number</td><td>Gerado sempre pelo nó local</td><td class="num">S6</td></tr>
+        <tr><td>Deployment</td><td>Docker Compose, mesmo artefacto para os dois modos</td><td class="num">S1</td></tr>
+        <tr><td>Âmbito SISLAB/EMR</td><td>Especificação + SDK de referência; a implementação é de cada equipa</td><td class="num">S12</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ============================================================ -->
+  <h2 id="arquitectura">2 · Arquitectura e modos</h2>
+  <p class="section-note">A mesma imagem corre em qualquer nó. O que muda é a variável <code>SISLAB_SYNC_MODE</code>.</p>
+
+  <div class="wide">
+    <div class="wide-inner">
+      <figure>
+        <div class="figure-frame">
+          <svg viewBox="0 0 960 420" role="img" aria-label="Topologia do SISLAB Sync: o EMR cria pedidos no nó local e puxa resultados; o SISLAB puxa pedidos pendentes e publica resultados no nó local; o nó local empurra eventos para o nó nacional e recebe de volta amostras referidas; o dicionário desce do nacional para o local e do local para o SISLAB.">
+            <defs>
+              <marker id="arw" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <path d="M 0 1 L 10 5 L 0 9 z" fill="currentColor"></path>
+              </marker>
+              <marker id="arwA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <path d="M 0 1 L 10 5 L 0 9 z" fill="var(--accent)"></path>
+              </marker>
+            </defs>
+
+            <!-- boxes -->
+            <rect x="30" y="36" width="180" height="76" rx="5" fill="var(--surface-2)" stroke="var(--line-strong)" stroke-width="1"></rect>
+            <text x="50" y="68" font-family="var(--font-body)" font-size="15" font-weight="650" fill="var(--ink)">EMR</text>
+            <text x="50" y="90" font-family="var(--font-body)" font-size="11.5" fill="var(--ink-3)">unidade sanitária</text>
+
+            <rect x="30" y="296" width="180" height="76" rx="5" fill="var(--surface-2)" stroke="var(--line-strong)" stroke-width="1"></rect>
+            <text x="50" y="328" font-family="var(--font-body)" font-size="15" font-weight="650" fill="var(--ink)">SISLAB / mLab</text>
+            <text x="50" y="350" font-family="var(--font-body)" font-size="11.5" fill="var(--ink-3)">laboratório</text>
+
+            <rect x="380" y="140" width="200" height="150" rx="5" fill="var(--surface)" stroke="var(--accent)" stroke-width="1.5"></rect>
+            <text x="400" y="166" font-family="var(--font-body)" font-size="9.5" font-weight="700" letter-spacing="1.4" fill="var(--accent)">MODO LOCAL</text>
+            <text x="400" y="189" font-family="var(--font-body)" font-size="15" font-weight="650" fill="var(--ink)">SISLAB Sync</text>
+            <text x="400" y="215" font-family="var(--font-body)" font-size="11.5" fill="var(--ink-2)">réplica do dicionário</text>
+            <text x="400" y="233" font-family="var(--font-body)" font-size="11.5" fill="var(--ink-2)">pedidos, testes, resultados</text>
+            <text x="400" y="251" font-family="var(--font-body)" font-size="11.5" fill="var(--ink-2)">outbox de sincronização</text>
+            <text x="400" y="269" font-family="var(--font-body)" font-size="11.5" fill="var(--ink-2)">gera tracking numbers</text>
+
+            <rect x="750" y="140" width="190" height="150" rx="5" fill="var(--surface)" stroke="var(--line-strong)" stroke-width="1.5"></rect>
+            <text x="770" y="166" font-family="var(--font-body)" font-size="9.5" font-weight="700" letter-spacing="1.4" fill="var(--ink-3)">MODO NACIONAL</text>
+            <text x="770" y="189" font-family="var(--font-body)" font-size="15" font-weight="650" fill="var(--ink)">SISLAB Sync</text>
+            <text x="770" y="215" font-family="var(--font-body)" font-size="11.5" fill="var(--ink-2)">dicionário (fonte)</text>
+            <text x="770" y="233" font-family="var(--font-body)" font-size="11.5" fill="var(--ink-2)">repositório nacional</text>
+            <text x="770" y="251" font-family="var(--font-body)" font-size="11.5" fill="var(--ink-2)">rede de referenciamento</text>
+            <text x="770" y="269" font-family="var(--font-body)" font-size="11.5" fill="var(--ink-2)">gestão de chaves</text>
+
+            <!-- order flow (solid) -->
+            <g fill="none" stroke="currentColor" stroke-width="1.4" marker-end="url(#arw)">
+              <path d="M210,62 H330 V185 H376"></path>
+              <path d="M380,215 H250 V98 H214"></path>
+              <path d="M210,320 H270 V250 H376"></path>
+              <path d="M580,180 H746"></path>
+              <path d="M750,220 H384"></path>
+            </g>
+
+            <!-- dictionary flow (dashed accent) -->
+            <g fill="none" stroke="var(--accent)" stroke-width="1.4" stroke-dasharray="5 4" marker-end="url(#arwA)">
+              <path d="M380,272 H340 V355 H214"></path>
+              <path d="M750,258 H384"></path>
+            </g>
+
+            <!-- labels -->
+            <g font-family="var(--font-body)" font-size="11.5" fill="var(--ink-2)">
+              <text x="214" y="52">cria pedido de exame</text>
+              <text x="376" y="207" text-anchor="end">devolve resultado</text>
+              <text x="376" y="240" text-anchor="end">puxa pedidos · publica resultados</text>
+              <text x="665" y="171" text-anchor="middle">empurra eventos (outbox)</text>
+              <text x="665" y="211" text-anchor="middle">amostras referidas</text>
+            </g>
+            <g font-family="var(--font-body)" font-size="11.5" fill="var(--accent)">
+              <text x="214" y="347">delta do dicionário</text>
+              <text x="665" y="277" text-anchor="middle">delta do dicionário</text>
+            </g>
+
+            <!-- legend -->
+            <g>
+              <line x1="300" y1="398" x2="338" y2="398" stroke="currentColor" stroke-width="1.4"></line>
+              <text x="346" y="402" font-family="var(--font-body)" font-size="11" fill="var(--ink-3)">fluxo de pedidos e resultados</text>
+              <line x1="560" y1="398" x2="598" y2="398" stroke="var(--accent)" stroke-width="1.4" stroke-dasharray="5 4"></line>
+              <text x="606" y="402" font-family="var(--font-body)" font-size="11" fill="var(--ink-3)">distribuição do dicionário</text>
+            </g>
+          </svg>
+        </div>
+        <figcaption>
+          Todas as ligações partem do lado esquerdo: o nó nacional nunca inicia uma ligação, porque os nós locais estão
+          atrás de NAT e sem endereço fixo. O dicionário desce em cascata — nacional &rarr; local &rarr; SISLAB — pelo mesmo
+          contrato de delta, o que permite ao nó local servi-lo sem estar ligado.
+        </figcaption>
+      </figure>
+    </div>
+  </div>
+
+  <h3>O que muda com o modo</h3>
+
+  <div class="scroll">
+    <table>
+      <caption>Comportamento por modo</caption>
+      <thead>
+        <tr><th>Capacidade</th><th>Modo local</th><th>Modo nacional</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Dicionário</td><td>Réplica só de leitura</td><td>Fonte: criação, edição, retirada</td></tr>
+        <tr><td>Tracking numbers</td><td>Gera</td><td>Nunca gera</td></tr>
+        <tr><td>API do EMR</td><td>Activa</td><td>Desligada</td></tr>
+        <tr><td>API do SISLAB</td><td>Activa</td><td>Desligada</td></tr>
+        <tr><td>Outbox</td><td>Escreve e empurra</td><td>Não tem</td></tr>
+        <tr><td>Recepção de eventos</td><td>Não</td><td><code>POST /sync/events</code></td></tr>
+        <tr><td>Gestão de chaves</td><td>Clientes locais (EMR, SISLAB)</td><td>Clientes locais e chaves de nó</td></tr>
+        <tr><td>Registo de nós</td><td>Não</td><td>Sim, com heartbeat</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>
+    Um nó local só depende do nacional para duas coisas: receber o dicionário e receber amostras referidas de fora.
+    Nenhuma operação de laboratório bloqueia se o nacional estiver inacessível.
+  </p>
+
+  <!-- ============================================================ -->
+  <h2 id="dados">3 · Modelo de dados</h2>
+
+  <h3>3.1 Dicionário — propriedade do nacional</h3>
+  <p>
+    Entidades: <code>departments</code>, <code>specimen_types</code>, <code>test_types</code>, <code>indicators</code>,
+    <code>indicator_ranges</code>, <code>test_panels</code>, <code>organisms</code>, <code>drugs</code>, mais as tabelas de
+    ligação (teste&harr;espécime, teste&harr;indicador, teste&harr;organismo, painel&harr;teste, organismo&harr;fármaco).
+  </p>
+  <p>Todos os registos do dicionário partilham a mesma espinha:</p>
+
+  <dl class="fields">
+    <dt>uuid</dt><dd>UUID v4, imutável, chave usada em toda a rede</dd>
+    <dt>national_code</dt><dd>Código legível e estável, <code>MOZ-TT-0042</code>; é o que aparece nos formulários e nas integrações</dd>
+    <dt>status</dt><dd><code>draft</code> · <code>active</code> · <code>retired</code></dd>
+    <dt>revision</dt><dd>Inteiro global monotónico atribuído no <em>commit</em>; é o cursor de replicação</dd>
+    <dt>loinc_code</dt><dd>Opcional, para interoperabilidade externa</dd>
+    <dt>moh_code</dt><dd>Opcional, código do MISAU</dd>
+    <dt>deleted_at</dt><dd>Nunca se apaga um item que já saiu; marca-se</dd>
+  </dl>
+
+  <div class="callout">
+    <p class="eyebrow">Ponto técnico decidido em S3</p>
+    <p>
+      O cursor <strong>não</strong> pode ser <code>updated_at</code>. Duas transacções concorrentes podem gravar
+      <code>updated_at</code> por ordem diferente daquela em que se tornam visíveis — o nó local avança o cursor e perde
+      permanentemente a alteração mais lenta. O cursor é uma sequência <code>revision</code> atribuída no momento do
+      <em>commit</em>, e o teste de concorrência do passo S3 existe precisamente para provar que não há lacunas.
+    </p>
+  </div>
+
+  <p>
+    Como a distribuição é por delta contínuo e não por versões publicadas, o controlo de qualidade passa a estar no
+    estado: uma edição começa sempre em <code>draft</code> e só entra no delta quando alguém a promove a
+    <code>active</code>. A promoção fica auditada com autor e data.
+  </p>
+
+  <h4>Mapeamentos externos</h4>
+  <p>
+    Cada EMR e cada instalação do SISLAB tem os seus próprios códigos herdados. Em vez de os enfiar no dicionário,
+    vivem numa tabela <code>external_mappings</code> (<code>system</code>, <code>api_client_uuid</code>,
+    <code>entity_type</code>, <code>entity_uuid</code>, <code>external_code</code>, <code>external_name</code>). Substitui
+    o <code>name_mappings</code> actual, que só sabia mapear texto para texto.
+  </p>
+
+  <h3>3.2 Núcleo transaccional</h3>
+  <dl class="fields">
+    <dt>patients</dt><dd>uuid, NID, nome, sexo, data de nascimento</dd>
+    <dt>orders</dt><dd>uuid, tracking_number, status, priority, sending_facility_code, receiving_lab_code, lab_code, specimen_type_uuid, collected_at, requested_by, clinical_history, source_system, source_client_uuid</dd>
+    <dt>order_tests</dt><dd>uuid, order_uuid, test_type_uuid, panel_uuid, status, method_of_testing</dd>
+    <dt>test_results</dt><dd>uuid, order_test_uuid, indicator_uuid, value, unit, recorded_at, recorded_by, replaced_by_uuid</dd>
+    <dt>status_events</dt><dd>Histórico <em>append-only</em> de todas as transições; substitui os vários <code>*_trails</code> actuais</dd>
+    <dt>referrals</dt><dd>Ver secção 8</dd>
+    <dt>sync_outbox</dt><dd>event_uuid, aggregate_uuid, sequence, type, payload, attempts, delivered_at, last_error</dd>
+  </dl>
+
+  <p>
+    Os <code>*_sync_trackers</code> actuais — quatro tabelas com semânticas ligeiramente diferentes — desaparecem, todos
+    substituídos pelo <code>sync_outbox</code>. Um resultado corrigido não sobrescreve o anterior: cria uma nova linha e
+    marca a antiga com <code>replaced_by_uuid</code>, porque o nacional já pode ter distribuído o valor errado.
+  </p>
+
+  <h3>3.3 Tracking number</h3>
+  <p>
+    Formato <code>MZ-&lt;facility_code&gt;-&lt;yyddd&gt;-&lt;seq&gt;</code>, por exemplo
+    <code>MZ-HCM-26229-0417</code>: prefixo do país, código da unidade que colhe, ano e dia do ano, sequência diária.
+    Gerado sempre pelo nó local, com unicidade garantida por índice único e não por leitura da última linha — o modo
+    actual, com <code>TrackingNumberTrail.last</code>, colide sob concorrência.
+  </p>
+
+  <!-- ============================================================ -->
+  <h2 id="auth">4 · Autenticação por API key</h2>
+
+  <p>
+    Sai o par <code>token</code> + <code>appuuid</code> com expiração e renovação. Entra uma chave por cliente,
+    guardada em <em>hash</em>, com <em>scopes</em> e sem prazo curto.
+  </p>
+
+  <pre><code>Authorization: Bearer ssk_prod_a1b2c3d4_9fK2mZq7XvR4tLpN8sJdW3yH6bC1
+                      │    │    │        └─ segredo (32 chars, só existe no cliente)
+                      │    │    └────────── prefixo público, indexado, lookup O(1)
+                      │    └─────────────── ambiente: prod | staging | dev
+                      └──────────────────── sislab sync key</code></pre>
+
+  <p>
+    O segredo é guardado como SHA-256 e comparado em tempo constante. O prefixo é indexado para evitar percorrer todas
+    as chaves. A chave transporta consigo o <code>facility_code</code> e o <code>lab_code</code> do cliente — um pedido que
+    tente actuar sobre outra facility recebe <code>403</code>, mesmo que a chave seja válida.
+  </p>
+
+  <div class="scroll">
+    <table>
+      <caption>Scopes</caption>
+      <thead>
+        <tr><th>Scope</th><th>Permite</th><th>Perfil típico</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>orders:write</code></td><td>Criar pedidos de exame</td><td>EMR</td></tr>
+        <tr><td><code>orders:read</code></td><td>Consultar pedidos e estados</td><td>EMR, SISLAB</td></tr>
+        <tr><td><code>results:read</code></td><td>Ler e confirmar recepção de resultados</td><td>EMR</td></tr>
+        <tr><td><code>results:write</code></td><td>Publicar estados e resultados</td><td>SISLAB</td></tr>
+        <tr><td><code>referrals:write</code></td><td>Referir, receber e rejeitar amostras</td><td>SISLAB</td></tr>
+        <tr><td><code>dictionary:read</code></td><td>Puxar o dicionário</td><td>EMR, SISLAB, nó local</td></tr>
+        <tr><td><code>dictionary:write</code></td><td>Editar o dicionário</td><td>UI do nacional</td></tr>
+        <tr><td><code>sync:push</code></td><td>Enviar lotes de eventos</td><td>Nó local</td></tr>
+        <tr><td><code>sync:pull</code></td><td>Puxar amostras referidas e resultados de fora</td><td>Nó local</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Envelope e erros</h3>
+  <p>Todas as respostas usam a mesma forma, e os erros têm código estável — a mensagem é para humanos, o código é para máquinas.</p>
+
+  <pre><code>{
+  "data":   { "tracking_number": "MZ-HCM-26229-0417", "status": "requested" },
+  "meta":   { "next_cursor": "1284471", "has_more": false },
+  "errors": []
+}
+
+{
+  "data": null,
+  "errors": [
+    { "code": "unknown_test_type", "message": "Teste MOZ-TT-9999 não existe no dicionário", "field": "tests[0].test_type" }
+  ]
+}</code></pre>
+
+  <ul class="plain">
+    <li><code>401 unauthenticated</code> — chave em falta, malformada, expirada ou revogada</li>
+    <li><code>403 insufficient_scope</code> · <code>403 facility_mismatch</code></li>
+    <li><code>409 conflict</code> — pedido já reclamado por outro laboratório, ou tracking number já existente</li>
+    <li><code>422 unprocessable</code> — validação de domínio, sempre com <code>field</code></li>
+    <li><code>429 rate_limited</code> — com <code>Retry-After</code></li>
+  </ul>
+
+  <p>
+    Todos os <code>POST</code> que criam recursos exigem <code>Idempotency-Key</code>. Uma repetição com a mesma chave
+    devolve a resposta original, com o mesmo estado HTTP — indispensável quando a rede cai a meio e o EMR reenvia.
+  </p>
+
+  <!-- ============================================================ -->
+  <h2 id="emr">5 · Integração: EMR &harr; nó local</h2>
+  <p class="section-note">O EMR nunca fala com o nacional. Cria o pedido no nó local da sua unidade e vai lá buscar o resultado.</p>
+
+  <div class="wide">
+    <div class="wide-inner">
+      <div class="scroll">
+        <table class="api">
+          <caption>Endpoints — perfil EMR</caption>
+          <thead>
+            <tr><th>Método</th><th>Endpoint</th><th>Scope</th><th>Descrição</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><span class="verb post">POST</span></td><td>/api/v3/order-requests</td><td>orders:write</td><td>Cria o pedido e devolve o tracking number gerado</td></tr>
+            <tr><td><span class="verb">GET</span></td><td>/api/v3/orders/{tracking_number}</td><td>orders:read</td><td>Estado do pedido e dos seus testes</td></tr>
+            <tr><td><span class="verb">GET</span></td><td>/api/v3/orders/{tracking_number}/results</td><td>results:read</td><td>Resultados por indicador</td></tr>
+            <tr><td><span class="verb">GET</span></td><td>/api/v3/results?since=&amp;patient_national_id=</td><td>results:read</td><td>Resultados novos desde o cursor, para polling</td></tr>
+            <tr><td><span class="verb post">POST</span></td><td>/api/v3/results/{uuid}/acknowledge</td><td>results:read</td><td>Confirma que o EMR arquivou o resultado</td></tr>
+            <tr><td><span class="verb">GET</span></td><td>/api/v3/dictionary/test-types?since=</td><td>dictionary:read</td><td>Catálogo para montar o formulário de pedido</td></tr>
+            <tr><td><span class="verb">GET</span></td><td>/api/v3/health</td><td>&mdash;</td><td>Modo, versão, código do nó</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <h3>Criar um pedido</h3>
+
+  <pre><code>POST /api/v3/order-requests
+Authorization: Bearer ssk_prod_a1b2c3d4_…
+Idempotency-Key: 7f3c0b18-4d2e-4a91-9c65-2b8e1f0a7d34
+
+{
+  "patient": {
+    "national_id": "110100234567A",
+    "name": "Ana Macuácua",
+    "sex": "F",
+    "birthdate": "1991-04-12"
+  },
+  "order": {
+    "sending_facility_code": "HCM",
+    "receiving_lab_code": "HCM-LAB",
+    "lab_code": "HCM-LAB-BIOQ",
+    "priority": "routine",
+    "requested_by": "Dr. J. Sitoe",
+    "clinical_history": "Febre há 5 dias",
+    "specimen_type": { "national_code": "MOZ-SP-0007" },
+    "collected_at": "2026-09-14T08:20:00+02:00"
+  },
+  "tests": [
+    { "test_type": { "national_code": "MOZ-TT-0042" } },
+    { "test_type": { "national_code": "MOZ-TT-0118" } }
+  ]
+}
+
+201 Created
+{ "data": { "tracking_number": "MZ-HCM-26257-0031",
+            "order_uuid": "0f2a…", "status": "requested" }, "errors": [] }</code></pre>
+
+  <p>
+    O EMR não envia tracking number. Envia <code>national_code</code> (ou <code>uuid</code>) dos itens do dicionário —
+    nunca nomes livres. Um código desconhecido devolve <code>422</code> nomeando o item, o que torna óbvio que o EMR
+    está com o dicionário desactualizado.
+  </p>
+
+  <h3>Ciclo de vida do pedido</h3>
+  <pre><code>requested ──→ accepted ──→ specimen_collected ──→ in_progress ──→ completed
+    │             │                                 ↑    │
+    │             ├─────────────────────────────────┘    └──→ referred_out ──→ completed
+    │             └──────────→ rejected
+    └──→ cancelled</code></pre>
+
+  <p>
+    <code>specimen_collected</code> é opcional. Na maior parte das amostras o tubo foi colhido na enfermaria e chegou
+    com o pedido: o laboratório que a recebe não tem colheita nenhuma para registar, e passa de <code>accepted</code>
+    directamente a <code>in_progress</code>. Quem colhe continua a registá-lo — e, para esses, continua a ter de vir
+    antes do trabalho.
+  </p>
+
+  <!-- ============================================================ -->
+  <h2 id="sislab">6 · Integração: SISLAB &harr; nó local</h2>
+  <p class="section-note">O SISLAB puxa os pedidos que lhe dizem respeito, reclama-os, e publica estados e resultados.</p>
+
+  <div class="wide">
+    <div class="wide-inner">
+      <div class="scroll">
+        <table class="api">
+          <caption>Endpoints — perfil SISLAB</caption>
+          <thead>
+            <tr><th>Método</th><th>Endpoint</th><th>Scope</th><th>Descrição</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><span class="verb">GET</span></td><td>/api/v3/lab/pending-orders?lab_code=&amp;since=</td><td>orders:read</td><td>Pedidos por processar, por cursor</td></tr>
+            <tr><td><span class="verb post">POST</span></td><td>/api/v3/lab/orders/{tn}/claim</td><td>orders:read</td><td>Assume o pedido; <code>409</code> se já foi reclamado</td></tr>
+            <tr><td><span class="verb patch">PATCH</span></td><td>/api/v3/lab/orders/{tn}/status</td><td>results:write</td><td>Transição de estado com carimbo e autor</td></tr>
+            <tr><td><span class="verb post">POST</span></td><td>/api/v3/lab/orders/{tn}/results</td><td>results:write</td><td>Resultados por indicador; parciais e reenvios</td></tr>
+            <tr><td><span class="verb post">POST</span></td><td>/api/v3/lab/orders/{tn}/tests</td><td>results:write</td><td>Teste acrescentado já no laboratório</td></tr>
+            <tr><td><span class="verb post">POST</span></td><td>/api/v3/lab/orders/{tn}/reject</td><td>results:write</td><td>Rejeição da amostra, com motivo do dicionário</td></tr>
+            <tr><td><span class="verb post">POST</span></td><td>/api/v3/lab/referrals</td><td>referrals:write</td><td>Refere a amostra para outro laboratório</td></tr>
+            <tr><td><span class="verb patch">PATCH</span></td><td>/api/v3/lab/referrals/{uuid}</td><td>referrals:write</td><td>Recepção ou rejeição no laboratório receptor</td></tr>
+            <tr><td><span class="verb">GET</span></td><td>/api/v3/dictionary/changes?since=&amp;entities=</td><td>dictionary:read</td><td>Delta do dicionário, mesmo contrato do nacional</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <h3>Publicar resultados</h3>
+
+  <pre><code>POST /api/v3/lab/orders/MZ-HCM-26257-0031/results
+
+{
+  "results": [
+    { "test_type": { "national_code": "MOZ-TT-0042" },
+      "indicator": { "national_code": "MOZ-TI-0311" },
+      "value": "12.4", "unit": "g/dL",
+      "recorded_at": "2026-09-14T14:02:00+02:00", "recorded_by": "tec.mabjaia" }
+  ],
+  "final": false
+}</code></pre>
+
+  <p>
+    <code>final: false</code> permite publicar resultados à medida que saem. Reenviar o mesmo indicador cria uma nova
+    linha e marca a anterior como substituída — o nacional recebe as duas e sabe qual vale. O <code>lab_code</code> da
+    chave tem de coincidir com o do pedido; caso contrário, <code>403 facility_mismatch</code>.
+  </p>
+
+  <h3>Delta do dicionário</h3>
+
+  <pre><code>GET /api/v3/dictionary/changes?since=1284310&amp;entities=test_types,indicators&amp;limit=500
+
+{
+  "data": [
+    { "entity": "test_types", "revision": 1284471, "status": "active",
+      "uuid": "3b9e…", "national_code": "MOZ-TT-0042",
+      "name": "Hemograma completo", "short_name": "HC",
+      "department": { "national_code": "MOZ-TC-0003" },
+      "specimen_types": [{ "national_code": "MOZ-SP-0007" }],
+      "indicators": [{ "national_code": "MOZ-TI-0311" }],
+      "target_tat": "4 horas", "loinc_code": "58410-2" }
+  ],
+  "meta": { "next_cursor": "1284471", "has_more": true }
+}</code></pre>
+
+  <p>
+    As ligações vêm por código, nunca por ID. Um lote pode referir um item que ainda não chegou; a aplicação é
+    transaccional por lote e tolera chegada fora de ordem, resolvendo as ligações pendentes no lote seguinte.
+  </p>
+
+  <!-- ============================================================ -->
+  <h2 id="nacional">7 · Integração: nó local &harr; nacional</h2>
+
+  <div class="wide">
+    <div class="wide-inner">
+      <div class="scroll">
+        <table class="api">
+          <caption>Endpoints — perfil nó</caption>
+          <thead>
+            <tr><th>Método</th><th>Endpoint</th><th>Scope</th><th>Descrição</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><span class="verb post">POST</span></td><td>/api/v3/sync/events</td><td>sync:push</td><td>Lote de eventos do outbox, idempotente por <code>event_uuid</code></td></tr>
+            <tr><td><span class="verb">GET</span></td><td>/api/v3/sync/inbound?since=</td><td>sync:pull</td><td>Amostras referidas para este nó e resultados feitos fora</td></tr>
+            <tr><td><span class="verb">GET</span></td><td>/api/v3/dictionary/changes?since=</td><td>dictionary:read</td><td>Delta do dicionário nacional</td></tr>
+            <tr><td><span class="verb post">POST</span></td><td>/api/v3/nodes/heartbeat</td><td>sync:push</td><td>Versão, cursores, pendentes, últimos erros</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <pre><code>POST /api/v3/sync/events
+
+{
+  "node_code": "HCM",
+  "events": [
+    { "event_uuid": "a1f0…", "aggregate_uuid": "0f2a…", "sequence": 1,
+      "type": "order.created", "occurred_at": "2026-09-14T08:22:11+02:00",
+      "payload": { … } },
+    { "event_uuid": "b7c3…", "aggregate_uuid": "0f2a…", "sequence": 2,
+      "type": "test.result_recorded", "occurred_at": "2026-09-14T14:02:00+02:00",
+      "payload": { … } }
+  ]
+}
+
+200 OK
+{ "data": { "accepted": ["a1f0…", "b7c3…"], "rejected": [] }, "errors": [] }</code></pre>
+
+  <h3>Garantias</h3>
+  <ul class="plain">
+    <li><strong>At-least-once com idempotência.</strong> O evento é escrito no outbox na mesma transacção que altera o domínio. O nacional aceita cada <code>event_uuid</code> uma só vez; reenviar é seguro.</li>
+    <li><strong>Ordem por agregado.</strong> O <code>sequence</code> é por <code>aggregate_uuid</code>. Um evento fora de ordem fica em espera até chegar o anterior, em vez de ser aplicado errado.</li>
+    <li><strong>Nada se apaga.</strong> O outbox marca <code>delivered_at</code>; falhas guardam <code>last_error</code> e contam <code>attempts</code>, com backoff exponencial e reprocessamento manual pela UI.</li>
+    <li><strong>Rejeição explícita.</strong> Um evento rejeitado (por exemplo, refere um teste que não existe no dicionário nacional) volta com código e mensagem, e fica visível na fila de sincronização em vez de desaparecer nos logs.</li>
+  </ul>
+
+  <p>Tipos de evento: <code>patient.upserted</code>, <code>order.created</code>, <code>order.status_changed</code>,
+  <code>order.test_added</code>, <code>test.status_changed</code>, <code>test.result_recorded</code>,
+  <code>specimen.rejected</code>, <code>referral.dispatched</code>, <code>referral.received</code>,
+  <code>referral.rejected</code>.</p>
+
+  <!-- ============================================================ -->
+  <h2 id="referenciamento">8 · Referenciamento de amostras</h2>
+
+  <p>
+    Três códigos acompanham a amostra do início ao fim: <code>sending_facility_code</code> (quem colhe e envia),
+    <code>receiving_lab_code</code> (o laboratório que executa) e <code>lab_code</code> (a secção dentro desse
+    laboratório). O tracking number nunca muda, mesmo quando a amostra atravessa duas instituições.
+  </p>
+
+  <div class="scroll">
+    <table>
+      <caption>Percurso de uma amostra referida</caption>
+      <thead>
+        <tr><th>#</th><th>Onde</th><th>Acontece</th><th>Registo</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="num">1</td><td>Lab A</td><td>Não executa o teste; cria a referência para o lab B</td><td><code>referral.dispatched</code>, pedido passa a <code>referred_out</code></td></tr>
+        <tr><td class="num">2</td><td>Nó local A</td><td>Empurra o evento</td><td>Outbox &rarr; nacional</td></tr>
+        <tr><td class="num">3</td><td>Nacional</td><td>Indexa e encaminha para o nó de B</td><td>Disponível em <code>/sync/inbound</code></td></tr>
+        <tr><td class="num">4</td><td>Nó local B</td><td>Puxa e cria o pedido como <code>referred_in</code></td><td>Aparece em <code>pending-orders</code> com a origem</td></tr>
+        <tr><td class="num">5</td><td>Lab B</td><td>Recebe fisicamente a amostra — ou rejeita-a</td><td><code>referral.received</code> ou <code>referral.rejected</code></td></tr>
+        <tr><td class="num">6</td><td>Lab B</td><td>Executa e publica o resultado</td><td><code>test.result_recorded</code></td></tr>
+        <tr><td class="num">7</td><td>Nacional &rarr; nó A</td><td>Resultado volta à unidade de origem</td><td><code>/sync/inbound</code></td></tr>
+        <tr><td class="num">8</td><td>EMR de A</td><td>Puxa o resultado com o mesmo tracking number</td><td><code>/results?since=</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>
+    A tabela <code>referrals</code> guarda <code>from_facility_code</code>, <code>from_lab_code</code>,
+    <code>to_lab_code</code>, <code>state</code>, <code>dispatched_at</code>, <code>received_at</code>,
+    <code>rejected_at</code>, <code>rejection_reason</code>, <code>courier</code> e <code>remarks</code>. A diferença
+    entre <code>dispatched_at</code> e <code>received_at</code> é a métrica de transporte que hoje ninguém consegue medir.
+  </p>
+
+  <!-- ============================================================ -->
+  <h2 id="ui">9 · Interface</h2>
+  <p class="section-note">Hotwire + Tailwind na mesma aplicação, em português, com i18n preparada. Sessão de utilizador separada das chaves de API.</p>
+
+  <div class="scroll">
+    <table>
+      <caption>Ecrãs</caption>
+      <thead>
+        <tr><th>Ecrã</th><th>Serve para</th><th>Modo</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Painel do nó</td><td>Estado da sincronização, pendentes na outbox, último heartbeat, cursor do dicionário</td><td>ambos</td></tr>
+        <tr><td>Pedidos</td><td>Pesquisa por tracking number, NID, unidade e período; detalhe com histórico completo de estados</td><td>ambos</td></tr>
+        <tr><td>Amostras referidas</td><td>Em trânsito, recebidas, rejeitadas, com tempo de transporte</td><td>ambos</td></tr>
+        <tr><td>Dicionário</td><td>Navegação em qualquer modo; edição, promoção e retirada só no nacional</td><td>ambos</td></tr>
+        <tr><td>Clientes e chaves</td><td>Emitir (segredo mostrado uma única vez), rodar, revogar, ver último uso</td><td>ambos</td></tr>
+        <tr><td>Fila de sincronização</td><td>Eventos falhados com o erro e botão de reprocessar</td><td>local</td></tr>
+        <tr><td>Nós</td><td>Último contacto, versão, atraso do cursor, alertas</td><td>nacional</td></tr>
+        <tr><td>Auditoria</td><td>Quem alterou o dicionário, quem emitiu chaves, que cliente chamou o quê</td><td>ambos</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ============================================================ -->
+  <h2 id="passos">10 · Os passos</h2>
+  <p class="section-note">
+    Uma semana por passo, sequencial, de 17/08 a 06/11/2026. Cada passo termina com algo demonstrável e com os commits
+    indicados. Um passo só está fechado quando o critério de «feito quando» é verificável por outra pessoa.
+  </p>
+
+  <div class="steps">
+
+    <article class="step">
+      <div class="step-head">
+        <span class="step-no">S1</span>
+        <h3>Fundação e modo dual</h3>
+        <span class="step-dates">17 – 21 ago</span>
+      </div>
+      <p class="goal">Esqueleto novo da aplicação a correr em Docker nos dois modos, com integração contínua verde.</p>
+      <p class="done"><b>Feito quando</b> <code>docker compose up</code> levanta a aplicação em <code>mode=local</code> e em <code>mode=national</code>, <code>GET /api/v3/health</code> devolve <code>{mode, version, node_code}</code> em ambos, e o CI corre em cada push.</p>
+      <ul class="check">
+        <li>Branch <code>v2</code> criada a partir de <code>main</code>; aplicação Rails 8 gerada de raiz, código antigo removido</li>
+        <li><code>SISLAB_SYNC_MODE</code> lido em <code>config/sislab_sync.rb</code>, exposto por <code>SislabSync.local?</code> e <code>.national?</code></li>
+        <li>Rotas, jobs e cron registados condicionalmente por modo</li>
+        <li><code>docker-compose.yml</code> com app, MySQL 8, Redis e Sidekiq; <code>.env.example</code> para cada modo</li>
+        <li>i18n com <code>pt</code> por omissão; nenhum texto fixo nas views</li>
+        <li>GitHub Actions: RSpec, RuboCop e Brakeman obrigatórios</li>
+        <li><code>GET /api/v3/health</code></li>
+      </ul>
+      <p class="commits-label">Commits</p>
+      <ul class="commits">
+        <li>chore: bootstrap sislab sync rails 8 skeleton</li>
+        <li>feat: add local and national run modes</li>
+        <li>chore: add docker compose stack for both modes</li>
+        <li>ci: run rspec, rubocop and brakeman on push</li>
+      </ul>
+    </article>
+
+    <article class="step">
+      <div class="step-head">
+        <span class="step-no">S2</span>
+        <h3>Autenticação por API key</h3>
+        <span class="step-dates">24 – 28 ago</span>
+      </div>
+      <p class="goal">Toda a API protegida por chave com scopes, com emissão, rotação, revogação e auditoria.</p>
+      <p class="done"><b>Feito quando</b> um pedido sem chave devolve <code>401 unauthenticated</code>, uma chave sem scope devolve <code>403 insufficient_scope</code>, uma chave revogada deixa de funcionar de imediato, e cada pedido autenticado deixa registo com cliente, endpoint, estado e IP.</p>
+      <ul class="check">
+        <li>Modelos <code>ApiClient</code> (kind, facility_code, lab_code) e <code>ApiKey</code> (prefix, key_digest, scopes, expires_at, revoked_at, last_used_at)</li>
+        <li>Formato <code>ssk_&lt;env&gt;_&lt;prefix&gt;_&lt;secret&gt;</code>, lookup por prefixo, comparação em tempo constante</li>
+        <li>Concern de autenticação e <code>authorize_scope!</code> em todos os controladores</li>
+        <li>Envelope <code>{data, meta, errors}</code> e catálogo de códigos de erro estáveis</li>
+        <li><code>Idempotency-Key</code> com tabela de respostas guardadas</li>
+        <li>Rate limit por chave com <code>429</code> e <code>Retry-After</code></li>
+        <li>Tabela <code>request_audits</code></li>
+        <li>Rake <code>api_key:issue</code> e <code>api_key:revoke</code></li>
+      </ul>
+      <p class="commits-label">Commits</p>
+      <ul class="commits">
+        <li>feat: add api clients and hashed api keys</li>
+        <li>feat: authenticate api requests with scoped keys</li>
+        <li>feat: standardise api envelope and error codes</li>
+        <li>feat: add idempotency keys and per-key rate limiting</li>
+        <li>feat: audit every authenticated api request</li>
+      </ul>
+    </article>
+
+    <article class="step">
+      <div class="step-head">
+        <span class="step-no">S3</span>
+        <h3>Dicionário: modelo e revisões</h3>
+        <span class="step-dates">31 ago – 4 set</span>
+      </div>
+      <p class="goal">Esquema do dicionário com identidade estável e um cursor de replicação sem lacunas.</p>
+      <p class="done"><b>Feito quando</b> criar, alterar ou retirar qualquer item incrementa uma revisão global monotónica, e um teste que grava em transacções concorrentes prova que nenhuma alteração fica invisível a um cursor que avançou.</p>
+      <ul class="check">
+        <li>Tabelas do dicionário e todas as tabelas de ligação</li>
+        <li>Cada registo com <code>uuid</code>, <code>national_code</code>, <code>status</code>, <code>revision</code>, <code>deleted_at</code>, <code>loinc_code</code>, <code>moh_code</code></li>
+        <li>Sequência global de revisões atribuída no commit, não <code>updated_at</code></li>
+        <li>Gerador de <code>national_code</code> por tipo de entidade, com bloqueio</li>
+        <li>Tabela <code>external_mappings</code> em substituição de <code>name_mappings</code></li>
+        <li>Só <code>active</code> e <code>retired</code> entram no delta; <code>draft</code> fica retido</li>
+        <li>Teste de concorrência do cursor</li>
+      </ul>
+      <p class="commits-label">Commits</p>
+      <ul class="commits">
+        <li>feat: add national dictionary schema with stable identities</li>
+        <li>feat: assign monotonic revisions to dictionary changes</li>
+        <li>feat: add external code mappings for client systems</li>
+        <li>test: prove the dictionary cursor has no gaps under concurrency</li>
+      </ul>
+    </article>
+
+    <article class="step">
+      <div class="step-head">
+        <span class="step-no">S4</span>
+        <h3>Importação do dicionário do SISLAB</h3>
+        <span class="step-dates">7 – 11 set</span>
+      </div>
+      <p class="goal">Dicionário nacional carregado a partir da base do SISLAB/mLab, com relatório de qualidade e promoção controlada.</p>
+      <p class="done"><b>Feito quando</b> <code>rake dictionary:import_from_mlab</code> corre duas vezes seguidas sem duplicar nada, produz <code>tmp/dictionary_quality.csv</code>, e as contagens finais por entidade são aceites pela equipa de laboratório.</p>
+      <ul class="check">
+        <li><code>moz_catalog.rake</code> reescrito como <code>Dictionary::MlabImporter</code>, idempotente</li>
+        <li>Importa departamentos, espécimes, fármacos, organismos, indicadores com intervalos, tipos de teste, painéis e as cinco tabelas de mapeamento</li>
+        <li>Tudo entra como <code>draft</code></li>
+        <li>Relatório: nomes duplicados, testes sem indicadores, indicadores sem tipo, espécimes órfãos, intervalos inválidos</li>
+        <li>Promoção <code>draft → active</code> em lote, com autor e data registados</li>
+        <li>Fixture do import para os testes dos passos seguintes</li>
+      </ul>
+      <p class="commits-label">Commits</p>
+      <ul class="commits">
+        <li>feat: import the national dictionary from the mlab database</li>
+        <li>feat: report dictionary quality issues after import</li>
+        <li>feat: promote dictionary drafts to active in bulk</li>
+      </ul>
+    </article>
+
+    <article class="step">
+      <div class="step-head">
+        <span class="step-no">S5</span>
+        <h3>Replicação do dicionário</h3>
+        <span class="step-dates">14 – 18 set</span>
+      </div>
+      <p class="goal">O nacional publica o delta; o nó local consome-o e serve o mesmo contrato ao SISLAB e ao EMR.</p>
+      <p class="done"><b>Feito quando</b> um nó local vazio sincroniza o dicionário completo sem intervenção, uma alteração feita no nacional aparece no local em menos de 5 minutos, e o cursor sobrevive a reiniciar os dois nós a meio da sincronização.</p>
+      <ul class="check">
+        <li><code>GET /api/v3/dictionary/changes</code> com <code>since</code>, <code>entities</code> e <code>limit</code>, idêntico nos dois modos</li>
+        <li>Ligações serializadas por código, nunca por ID</li>
+        <li><code>DictionaryPullJob</code> agendado, com tabela <code>sync_cursors</code></li>
+        <li>Aplicação transaccional por lote, tolerante a ligações que chegam antes do seu alvo</li>
+        <li>Itens retirados marcados, nunca apagados</li>
+        <li>Leituras simples <code>/dictionary/test-types</code>, <code>/specimen-types</code>, <code>/panels</code></li>
+      </ul>
+      <p class="commits-label">Commits</p>
+      <ul class="commits">
+        <li>feat: expose the dictionary change feed with a cursor</li>
+        <li>feat: pull and apply dictionary changes on local nodes</li>
+        <li>feat: serve dictionary reads to lab and emr clients</li>
+      </ul>
+    </article>
+
+    <article class="step">
+      <div class="step-head">
+        <span class="step-no">S6</span>
+        <h3>Núcleo transaccional</h3>
+        <span class="step-dates">21 – 25 set</span>
+      </div>
+      <p class="goal">Doentes, pedidos, testes, resultados e histórico de estados, com máquina de estados explícita.</p>
+      <p class="done"><b>Feito quando</b> criar um pedido com três testes, percorrer os estados e registar resultados produz um histórico completo e um evento por transição; e uma transição ilegal é rejeitada com <code>422</code> em vez de gravar.</p>
+      <ul class="check">
+        <li>Tabelas <code>patients</code>, <code>orders</code>, <code>order_tests</code>, <code>test_results</code></li>
+        <li><code>status_events</code> <em>append-only</em>, substituindo os vários <code>*_trails</code></li>
+        <li>Máquinas de estado do pedido e do teste, com transições ilegais rejeitadas</li>
+        <li>Resultado corrigido cria nova linha com <code>replaced_by_uuid</code>, nunca sobrescreve</li>
+        <li>Gerador de tracking number com unicidade por índice único e teste de concorrência</li>
+        <li>Serializadores partilhados por todas as APIs</li>
+      </ul>
+      <p class="commits-label">Commits</p>
+      <ul class="commits">
+        <li>feat: add patients, orders, tests and results schema</li>
+        <li>feat: record every status transition as an append-only event</li>
+        <li>feat: generate facility-scoped tracking numbers</li>
+      </ul>
+    </article>
+
+    <article class="step">
+      <div class="step-head">
+        <span class="step-no">S7</span>
+        <h3>API EMR &harr; nó local</h3>
+        <span class="step-dates">28 set – 2 out</span>
+      </div>
+      <p class="goal">Um EMR consegue criar um pedido, seguir o estado e ir buscar o resultado, sem falar com o nacional.</p>
+      <p class="done"><b>Feito quando</b> um cliente com scopes de EMR percorre o ciclo completo contra um nó de teste, e repetir o <code>POST</code> com a mesma <code>Idempotency-Key</code> devolve o mesmo tracking number sem criar um segundo pedido.</p>
+      <ul class="check">
+        <li><code>POST /api/v3/order-requests</code> com validação por código do dicionário</li>
+        <li><code>GET /api/v3/orders/{tn}</code> e <code>/orders/{tn}/results</code></li>
+        <li><code>GET /api/v3/results?since=</code> com cursor, para polling do EMR</li>
+        <li><code>POST /api/v3/results/{uuid}/acknowledge</code></li>
+        <li>Erro que nomeia o item desconhecido do dicionário</li>
+        <li>Testes de request cobrindo 201, 401, 403, 409, 422 e a repetição idempotente</li>
+      </ul>
+      <p class="commits-label">Commits</p>
+      <ul class="commits">
+        <li>feat: accept lab order requests from emr clients</li>
+        <li>feat: expose order status and results to emr clients</li>
+        <li>feat: let emr clients acknowledge received results</li>
+      </ul>
+    </article>
+
+    <article class="step">
+      <div class="step-head">
+        <span class="step-no">S8</span>
+        <h3>API SISLAB &harr; nó local</h3>
+        <span class="step-dates">5 – 9 out</span>
+      </div>
+      <p class="goal">O SISLAB puxa o trabalho que lhe pertence e publica tudo o que acontece à amostra.</p>
+      <p class="done"><b>Feito quando</b> o SISLAB puxa os pedidos pendentes do seu <code>lab_code</code>, reclama um (com <code>409</code> em disputa), publica resultados parciais e finais, e rejeita uma amostra com motivo do dicionário — tudo verificado por testes de request.</p>
+      <ul class="check">
+        <li><code>GET /api/v3/lab/pending-orders</code> com cursor e filtro por <code>lab_code</code></li>
+        <li><code>POST .../claim</code> com <code>409</code> em disputa</li>
+        <li><code>PATCH .../status</code> e <code>POST .../results</code> com suporte a parciais e substituição</li>
+        <li><code>POST .../tests</code> para testes acrescentados no laboratório</li>
+        <li><code>POST .../reject</code> com motivo vindo do dicionário</li>
+        <li>Regra de coincidência entre o <code>lab_code</code> da chave e o do recurso</li>
+      </ul>
+      <p class="commits-label">Commits</p>
+      <ul class="commits">
+        <li>feat: expose pending lab orders to sislab clients</li>
+        <li>feat: accept lab statuses, results and rejections</li>
+        <li>feat: allow tests to be added to an order at the lab</li>
+      </ul>
+    </article>
+
+    <article class="step">
+      <div class="step-head">
+        <span class="step-no">S9</span>
+        <h3>Outbox e push para o nacional</h3>
+        <span class="step-dates">12 – 16 out</span>
+      </div>
+      <p class="goal">Nada se perde quando a ligação cai, e nada se duplica quando volta.</p>
+      <p class="done"><b>Feito quando</b> com o nacional desligado durante uma hora de actividade, nenhum evento se perde; ao voltar, o local reenvia tudo por ordem, e reenviar deliberadamente o mesmo lote não cria duplicados.</p>
+      <ul class="check">
+        <li>Tabela <code>sync_outbox</code>, escrita na mesma transacção da alteração de domínio</li>
+        <li><code>POST /api/v3/sync/events</code> no nacional, idempotente por <code>event_uuid</code></li>
+        <li>Resposta com aceites e rejeitados, cada rejeição com código</li>
+        <li><code>SyncPushJob</code> com lote configurável e backoff exponencial</li>
+        <li>Ordem por agregado garantida pelo <code>sequence</code>, com espera em vez de aplicação fora de ordem</li>
+        <li><code>POST /api/v3/nodes/heartbeat</code> e tabela <code>nodes</code></li>
+        <li>Teste de corte de rede com dois contentores</li>
+      </ul>
+      <p class="commits-label">Commits</p>
+      <ul class="commits">
+        <li>feat: record domain events in a transactional outbox</li>
+        <li>feat: accept idempotent event batches on the national node</li>
+        <li>feat: push outbox events with backoff and heartbeat</li>
+        <li>test: prove no events are lost or duplicated across an outage</li>
+      </ul>
+    </article>
+
+    <article class="step">
+      <div class="step-head">
+        <span class="step-no">S10</span>
+        <h3>Referenciamento ponta a ponta</h3>
+        <span class="step-dates">19 – 23 out</span>
+      </div>
+      <p class="goal">Uma amostra referida entre duas unidades chega ao lab receptor e o resultado volta à origem.</p>
+      <p class="done"><b>Feito quando</b> um teste automatizado com três contentores — nó A, nó B e nacional — cria um pedido em A, refere-o para B, executa em B e verifica que o EMR de A obtém o resultado com o mesmo tracking number, com todos os carimbos registados.</p>
+      <ul class="check">
+        <li>Tabela <code>referrals</code> com todos os carimbos e motivo de rejeição</li>
+        <li><code>POST /api/v3/lab/referrals</code> e <code>PATCH /api/v3/lab/referrals/{uuid}</code></li>
+        <li>Estados <code>referred_out</code> e <code>referred_in</code> na máquina de estados</li>
+        <li><code>GET /api/v3/sync/inbound?since=</code> no nacional</li>
+        <li><code>SyncPullJob</code> no local, que aplica o inbound e o disponibiliza ao SISLAB e ao EMR de origem</li>
+        <li>Teste E2E entre dois nós locais e um nacional</li>
+      </ul>
+      <p class="commits-label">Commits</p>
+      <ul class="commits">
+        <li>feat: add sample referrals between facilities</li>
+        <li>feat: route referred samples and results through the national node</li>
+        <li>test: cover the two-facility referral round trip end to end</li>
+      </ul>
+    </article>
+
+    <article class="step">
+      <div class="step-head">
+        <span class="step-no">S11</span>
+        <h3>Interface</h3>
+        <span class="step-dates">26 – 30 out</span>
+      </div>
+      <p class="goal">Operar o sistema sem terminal: ver, procurar, emitir chaves, reprocessar e gerir o dicionário.</p>
+      <p class="done"><b>Feito quando</b> um operador consegue, só pela interface, ver o estado do nó, encontrar um pedido pelo tracking number ou pelo NID, emitir e revogar uma chave, reprocessar um evento falhado e — no nacional — editar e activar um item do dicionário.</p>
+      <ul class="check">
+        <li>Hotwire e Tailwind, layout em português, textos em <code>config/locales/pt.yml</code></li>
+        <li>Painel do nó com sincronização, outbox, heartbeat e cursor</li>
+        <li>Pedidos: pesquisa e detalhe com histórico de estados</li>
+        <li>Amostras referidas com tempo de transporte</li>
+        <li>Dicionário: navegação em ambos os modos, edição e promoção só no nacional</li>
+        <li>Clientes e chaves, com o segredo mostrado uma única vez</li>
+        <li>Fila de sincronização com reprocessamento manual</li>
+        <li>Ecrã de nós no modo nacional</li>
+        <li>Sessão de utilizador para a UI, separada das chaves de API</li>
+      </ul>
+      <p class="commits-label">Commits</p>
+      <ul class="commits">
+        <li>feat: add hotwire ui shell with portuguese locale</li>
+        <li>feat: add node dashboard and order search screens</li>
+        <li>feat: manage api clients and keys from the ui</li>
+        <li>feat: manage the dictionary and sync queue from the ui</li>
+      </ul>
+    </article>
+
+    <article class="step">
+      <div class="step-head">
+        <span class="step-no">S12</span>
+        <h3>Contrato, SDK e entrega</h3>
+        <span class="step-dates">2 – 6 nov</span>
+      </div>
+      <p class="goal">Entregar às equipas do SISLAB e dos EMR tudo o que precisam para integrar sem perguntar nada.</p>
+      <p class="done"><b>Feito quando</b> existe um OpenAPI 3.1 validado em CI, um cliente de referência que percorre os três perfis contra um nó de teste, um guia de instalação seguido com sucesso por alguém de fora da equipa, e a tag <code>v2.0.0</code> publicada.</p>
+      <ul class="check">
+        <li>OpenAPI 3.1 gerado a partir dos testes, validado em CI, servido em <code>/api-docs</code></li>
+        <li>Colecção de exemplos <code>curl</code> por perfil de cliente</li>
+        <li>Gem <code>sislab_sync_client</code> com os perfis EMR, SISLAB e nó</li>
+        <li>Guia de integração para cada uma das três fronteiras</li>
+        <li>Guia de instalação e operação: Docker, backups, rotação de chaves, recuperação da outbox</li>
+        <li>Teste de carga com 10 000 pedidos e 30 000 resultados sincronizados</li>
+        <li>Renomeação concluída em repositório, imagens, serviços e README; tag <code>v2.0.0</code></li>
+      </ul>
+      <p class="commits-label">Commits</p>
+      <ul class="commits">
+        <li>docs: publish the openapi contract and integration guides</li>
+        <li>feat: add the sislab sync reference client gem</li>
+        <li>docs: add installation and operations guide</li>
+        <li>chore: rename the project to sislab sync and tag v2.0.0</li>
+      </ul>
+    </article>
+
+    <article class="step">
+      <div class="step-head">
+        <span class="step-no">S13</span>
+        <h3>O nó é a unidade sanitária</h3>
+        <span class="step-dates">30 ago</span>
+      </div>
+      <p class="goal">Corrigir a identidade do nó. S6 assumiu que uma instalação servia um laboratório; não serve — uma instância do mLab serve todos os laboratórios da unidade, cada um com o seu código, e todos chegam à rede pelo mesmo nó. A unidade sanitária passa a ser o que um nó é, e os laboratórios passam a viver por baixo dela.</p>
+      <p class="done"><b>Feito quando</b> uma instalação é identificada por <code>SISLAB_SYNC_FACILITY_CODE</code>, um laboratório desconhecido que envia a primeira amostra é registado sem recusar nada e recebe código nacional pela sincronização de rotina, um pedido do EMR chega à unidade sem laboratório e ganha-o na reclamação, e uma amostra passada entre duas bancadas da mesma unidade resolve-se no nó sem ir à capital.</p>
+      <ul class="check">
+        <li>Entidade de dicionário <code>facilities</code>, propriedade do nó nacional, no mesmo feed e na mesma sequência de revisões; <code>labs</code> aponta para ela</li>
+        <li><code>SISLAB_SYNC_FACILITY_CODE</code> é a identidade; <code>SISLAB_SYNC_LAB_CODE</code> é recusada com a indicação da renomeação</li>
+        <li>Bloco <code>lab</code> no pedido: código desconhecido é registado na mesma transacção, com <code>source_code</code> e sem código nacional</li>
+        <li>Evento <code>lab.registered</code> na outbox existente; o nó nacional aceita e publica sempre, e devolve o código nacional pelo feed do dicionário</li>
+        <li><code>orders.receiving_facility_code</code> obrigatório, <code>receiving_lab_code</code> facultativo; a reclamação atribui a bancada</li>
+        <li>Encaminhamento por unidade sanitária: <code>Sync::Routing</code>, <code>/sync/inbound</code>, <code>authorize_node!</code> e o heartbeat</li>
+        <li>Referenciamento entre bancadas da mesma unidade resolve-se no nó; sobe como evento, não é encaminhado de volta</li>
+        <li><code>specimen_collected</code> facultativo: uma bancada que não colheu passa de <code>accepted</code> a <code>in_progress</code></li>
+        <li>Contrato, colecção Postman, gem de referência e README acompanham</li>
+      </ul>
+      <p class="commits-label">Commits</p>
+      <ul class="commits">
+        <li>feat(register): make the health facility a dictionary entity of its own</li>
+        <li>feat(identity): a node is a health facility, not a laboratory</li>
+        <li>feat(intake): register a laboratory the first time it sends a sample</li>
+        <li>feat(sync): route by health facility and settle internal handovers locally</li>
+        <li>docs(api): describe the facility register, and teach the client gem about it</li>
+        <li>feat(lifecycle): start work on a sample the ward already collected</li>
+      </ul>
+    </article>
+
+  </div>
+
+  <!-- ============================================================ -->
+  <h2 id="riscos">11 · Riscos</h2>
+
+  <div class="wide">
+    <div class="wide-inner">
+      <div class="scroll">
+        <table>
+          <caption>Riscos e mitigação</caption>
+          <thead>
+            <tr><th>Risco</th><th>Consequência</th><th>Mitigação</th><th>Passo</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Delta sem versões publicadas</td>
+              <td>Uma edição errada no dicionário chega a todos os laboratórios em minutos</td>
+              <td>Estado <code>draft</code> obrigatório em criação e edição, promoção explícita e auditada, e reversão que gera nova revisão com o estado anterior</td>
+              <td class="num">S3, S11</td>
+            </tr>
+            <tr>
+              <td>Cursor por tempo</td>
+              <td>Alterações invisíveis e permanentemente perdidas nos nós locais</td>
+              <td>Sequência de revisões atribuída no commit, com teste de concorrência</td>
+              <td class="num">S3</td>
+            </tr>
+            <tr>
+              <td>Qualidade do dicionário do mLab</td>
+              <td>Duplicados e itens retirados de forma inconsistente entram no nacional</td>
+              <td>Importação para <code>draft</code>, relatório de qualidade, promoção manual pela equipa de laboratório</td>
+              <td class="num">S4</td>
+            </tr>
+            <tr>
+              <td>Rede intermitente nos locais</td>
+              <td>Perda de resultados ou bloqueio do laboratório</td>
+              <td>Outbox transaccional com backoff; nenhuma operação de laboratório depende do nacional</td>
+              <td class="num">S9</td>
+            </tr>
+            <tr>
+              <td>Dados identificáveis no nacional</td>
+              <td>Exposição de dados de doentes</td>
+              <td>TLS obrigatório, scopes mínimos por chave, auditoria de acesso e política de retenção acordada com o MISAU</td>
+              <td class="num">S2, S9</td>
+            </tr>
+            <tr>
+              <td>Dependência das equipas do SISLAB e dos EMR</td>
+              <td>A integração não avança apesar do servidor estar pronto</td>
+              <td>Nó de teste e SDK disponíveis desde S8, antes da entrega final</td>
+              <td class="num">S8, S12</td>
+            </tr>
+            <tr>
+              <td>Um único programador</td>
+              <td>S10 e S11 são os passos mais pesados e podem escorregar</td>
+              <td>Se houver atraso, S11 reduz-se ao painel do nó, pesquisa de pedidos e gestão de chaves; os restantes ecrãs saem depois da v2.0.0</td>
+              <td class="num">S10, S11</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <h2 id="ambito">12 · Pressupostos e âmbito</h2>
+
+  <h3>Pressupostos assumidos</h3>
+  <ul class="plain">
+    <li>Ruby 3.3+, Rails 8, MySQL 8, Redis e Sidekiq mantidos como base técnica</li>
+    <li>O identificador do doente é o NID de Moçambique</li>
+    <li>O trabalho decorre na branch <code>v2</code>; <code>main</code> fica intocada até à tag <code>v2.0.0</code></li>
+    <li>CI com RSpec, RuboCop e Brakeman obrigatórios em cada passo</li>
+    <li>Não há migração de dados históricos, porque o NLIMS não está em produção</li>
+    <li>TLS terminado por um proxy à frente da aplicação, em ambos os modos</li>
+  </ul>
+
+  <h3>Fora de âmbito</h3>
+  <ul class="plain">
+    <li>Alterações ao código do mLab/SISLAB — entregamos especificação, SDK e ambiente de teste</li>
+    <li>Adaptadores dentro dos EMR</li>
+    <li>Migração dos dados históricos do NLIMS actual</li>
+    <li>Aplicação móvel e impressão de etiquetas</li>
+  </ul>
+
+  <footer class="colophon">
+    <p>
+      SISLAB Sync · plano da versão 2 · 17/08/2026 – 06/11/2026 · gerado a partir da revisão do
+      <span class="mono">nlims_controller</span> em <span class="mono">main</span>.
+    </p>
+  </footer>
+
+</main>

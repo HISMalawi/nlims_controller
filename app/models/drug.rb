@@ -1,12 +1,11 @@
 # frozen_string_literal: true
 
-# this is the model for the drug table
+# An antimicrobial a susceptibility test can report against.
 class Drug < ApplicationRecord
-  include Codeable
+  include DictionaryEntry
 
-  has_many :organism_drugs, dependent: :restrict_with_error, class_name: 'OrganismDrug'
+  self.national_code_prefix = "DR"
+
+  has_many :organism_drugs, dependent: :destroy
   has_many :organisms, through: :organism_drugs
-  has_paper_trail
-
-  NLIMS_CODE_PREFIX = 'DRG'
 end

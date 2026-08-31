@@ -1,138 +1,152 @@
-# frozen_string_literal: true
-
-require 'sidekiq/web'
-require 'sidekiq/cron/web'
-
 Rails.application.routes.draw do
-  mount Rswag::Ui::Engine => '/api-docs'
-  mount Rswag::Api::Engine => '/api-docs'
-  # For details on the DSL available within this file, see http://guides.rubyonrails.org/routing.html
-  mount Sidekiq::Web => '/sidekiq'
-  root to: 'home#index'
-  get 'latest_orders_by_site', to: 'home#latest_orders_by_site'
-  get 'latest_results_by_site', to: 'home#latest_results_by_site'
-  get 'search_orders', to: 'home#search_orders'
-  get 'search_results', to: 'home#search_results'
-  get 'count_by_sending_facility', to: 'home#counts'
-  get 'order_per_sending_facility', to: 'home#order_per_site'
-  get 'sites_by_orders', to: 'home#sites_by_orders'
-  get 'integrated_sites', to: 'home#integrated_sites'
-  get '/refresh_app_ping_status' => 'home#refresh_app_ping_status'
-  get '/orders_summary' => 'home#orders_summary'
+  # Reveals what this node is without authentication, so an operator or a load
+  # balancer can tell a local node from the national one.
+  get "up" => "rails/health#show", as: :rails_health_check
+
   namespace :api do
-    namespace :v1 do
-      # order routes
-      post '/create_order'	=> 'order#create_order'
-      get  '/query_results_by_tracking_number/:tracking_number'	=> 'order#query_results_by_tracking_number'
-      get '/query_order_by_tracking_number/:tracking_number'	=> 'order#query_order_by_tracking_number'
-      get  '/query_order_by_npid/:npid'	=> 'order#query_order_by_npid'
-      get  '/query_results_by_npid/:npid'	=> 'order#query_results_by_npid'
-      post '/update_order'	=> 'order#update_order'
-      get  '/query_requested_order_by_npid/:npid'	=> 'order#query_requested_order_by_npid'
-      post '/dispatch_sample'	=> 'order#dispatch_sample'
-      get	 '/check_if_dispatched/:tracking_number'	=> 'order#check_if_dispatched'
-      get  '/retrieve_undispatched_samples'	=> 'order#retrieve_undispatched_samples'
-      get  '/retrieve_samples/:order_date/:from_date/:region'	=> 'order#retrieve_samples'
-      get 'get_order_tracking_numbers' => 'order#order_tracking_numbers_to_logged'
-      get '/verify_order_tracking_number_exist/:tracking_number' => 'order#verify_order_tracking_number_exist'
+    namespace :v3 do
+      get "health", to: "health#show"
+      get "me", to: "me#show"
 
-      # test routes
-      post '/update_test' => 'test#update_test'
-      post '/add_test' => 'test#add_test'
-      put  '/edit_test_result' => 'test#edit_test_result'
-      get	 '/query_test_measures/:test_name'	=> 'test#query_test_measures'
-      get  '/query_test_status/:tracking_number'	=> 'test#query_test_status'
-      get  '/query_tests_with_no_results_by_npid/:npid'	=> 'test#test_no_results'
-      post '/acknowledge/test/results/recipient'	=> 'test#acknowledge_test_results_receiptient'
+      # Endpoints the EMR and the SISLAB call. A national node has no clients of
+      # this kind, so the routes simply do not exist there.
+      if SislabSync.local?
+        post "order-requests", to: "order_requests#create"
 
-      # user routes
-      post '/create_user'	=>	'user#create_user'
-      get	 '/authenticate/:username/:password'	=>	'user#authenticate_user'
-      get	 '/re_authenticate/:username/:password'	=>	'user#re_authenticate'
-      get	 '/check_token_validity'	=>	'user#check_token_validity'
-      post '/login' => 'user#login'
-      post '/refresh_token' => 'user#refresh_token'
-      resources :users, controller: :user, only: %i[index create show update] do
-        collection do
-          get '/check_username/:username' => 'user#check_username'
-          get '/roles/all' => 'user#roles'
-          get '/locations/all' => 'user#locations'
-        end
-        member do
-          post '/disable_enable' => 'user#disable_enable_user'
+        # The tracking number is the identifier here, not an id: it is what the
+        # EMR was given, what is written on the tube, and what an operator has
+        # in front of them when they telephone.
+        get "orders/:tracking_number", to: "orders#show", as: :order
+        get "orders/:tracking_number/results", to: "orders#results", as: :order_results
+
+        get "results", to: "results#index"
+        post "results/:uuid/acknowledge", to: "results#acknowledge", as: :acknowledge_result
+
+        # The laboratory polls and publishes; the node never calls it.
+        namespace :lab do
+          get "pending-orders", to: "orders#pending"
+          post "orders/:tracking_number/claim", to: "orders#claim", as: :claim_order
+          patch "orders/:tracking_number/status", to: "orders#status", as: :order_status
+          post "orders/:tracking_number/results", to: "orders#results", as: :order_results
+          post "orders/:tracking_number/tests", to: "orders#tests", as: :order_tests
+          post "orders/:tracking_number/reject", to: "orders#reject", as: :reject_order
+
+          post "referrals", to: "referrals#create"
+          patch "referrals/:uuid", to: "referrals#update", as: :referral
         end
       end
 
-      # other routes
-      get '/retrieve_order_location'	=> 'test#retrieve_order_location'
-      get '/retrieve_target_labs'	=> 'test#retrieve_target_labs'
-      get '/sites' => 'test#sites'
-
-      # status of the app
-      get '/ping' => 'status#ping'
-      post '/check_in' => 'status#check_in'
-      post '/register_order_source' => 'source_tracker#register_order_source'
-      post '/update_order_source_couch_id' => 'source_tracker#update_order_source_couch_id'
-
-      resources :test_types, only: %i[index create show update destroy] do
-        collection do
-          get '/measures' => 'test_types#measures'
-          get '/measure_types' => 'test_types#measure_types'
-          post '/import' => 'test_types#import'
+      # Endpoints only the national node answers.
+      if SislabSync.national?
+        namespace :sync do
+          post "events", to: "events#create"
+          get "inbound", to: "inbound#index"
         end
+
+        post "nodes/heartbeat", to: "nodes#heartbeat"
       end
 
-      # test catalog routes
-      post '/approve_test_catalog' => 'test_types#approve_test_catalog'
-      post '/release_test_catalog' => 'test_types#release_version'
-      get  '/retrieve_test_catalog'	=> 'test_types#retrieve_test_catalog'
-      get '/retrieve_test_catalog_versions' => 'test_types#retrieve_test_catalog_versions'
-      get '/check_new_test_catalog_version_available' => 'test_types#new_test_catalog_version_available'
-
-      resources :drugs
-      resources :organisms
-      resources :test_statuses
-      resources :departments
-      resources :specimen_types
-      resources :lab_test_sites
-      resources :equipments
-      resources :products
-      resources :test_panels
-    end
-
-    namespace :v2 do
-      # order routes
-      resources :orders, controller: :orders, only: %i[index show create update] do
-        collection do
-          get '/:tracking_number/exists' => 'orders#order_exist'
-          get '/tracking_numbers/all' => 'orders#tracking_numbers'
-          post 'requests/' => 'orders#request_order'
-          put 'requests/:tracking_number/' => 'orders#confirm_order_request'
-        end
+      # The dictionary reads the same way in both modes: a local node pulls from
+      # the national one, a SISLAB or EMR pulls from its local node.
+      scope :dictionary, controller: :dictionary, as: :dictionary do
+        get "changes", action: :changes, as: :changes
+        get ":entity_type", action: :index, as: :entity, constraints: { entity_type: /[a-z_]+/ }
       end
-
-      resources :tests, controller: :tests, only: %i[update] do
-        collection do
-          post ':id/acknowledge_test_results_receipt' => 'tests#acknowledge_test_results_receipt'
-          post ':id/add_test_to_order' => 'tests#add_test_to_order'
-        end
-      end
-
-      resources :test_catalog, controller: :test_catalog_version_managers, only: %i[index] do
-        collection do
-          get '/:version' => 'test_catalog_version_managers#show'
-          get '/new_version/available' => 'test_catalog_version_managers#new_version_available'
-        end
-      end
-
-      post '/request_order'	=> 'order#request_order'
-      post '/confirm_order_request'	=> 'order#confirm_order_request'
-      get  '/query_requested_order_by_npid/:npid'	=> 'order#query_requested_order_by_npid2'
-      get '/query_order_by_tracking_number/:tracking_number'	=> 'order#query_order_by_tracking_number'
-      post '/create_order'	=> 'order#create_order'
-      post '/update_tests' => 'order#update_tests'
-      post '/create_order_once_off' => 'order#create_order_once_off'
-      get '/find_order_by_tracking_number' => 'order#find_order_by_tracking_number'
     end
   end
+
+  # The FHIR R4 façade for the EMR: the same orders, samples and readings the
+  # JSON API serves, in the shape an EMR already knows how to read. Nothing here
+  # owns any data — every write goes back through the same OrderRequest intake.
+  #
+  # Deliberately outside /api/v3: FHIR resources carry their own shape and their
+  # own error resource, and two envelopes under one prefix would make the
+  # published contract ambiguous. The contract here is the CapabilityStatement,
+  # which is where a FHIR client looks for it.
+  #
+  # Local mode only, for the same reason the JSON EMR endpoints are: a national
+  # node has no EMRs of its own.
+  if SislabSync.local?
+    scope "fhir/r4", module: :fhir, as: :fhir do
+      get "metadata", to: "capability#show", as: :metadata
+
+      # A transaction Bundle posted to the base URL — several tests on one
+      # sample, in one call.
+      post "/", to: "transactions#create", as: :transaction
+
+      post "ServiceRequest", to: "service_requests#create"
+      get "ServiceRequest", to: "service_requests#index", as: :service_requests
+      get "ServiceRequest/:id", to: "service_requests#show", as: :service_request
+
+      get "DiagnosticReport", to: "diagnostic_reports#index", as: :diagnostic_reports
+      get "DiagnosticReport/:id", to: "diagnostic_reports#show", as: :diagnostic_report
+
+      get "Observation", to: "observations#index", as: :observations
+      get "Observation/:id", to: "observations#show", as: :observation
+      post "Observation/:id/$acknowledge", to: "observations#acknowledge", as: :acknowledge_observation
+
+      get "Patient", to: "patients#index", as: :patients
+      get "Patient/:id", to: "patients#show", as: :patient
+
+      get "Specimen/:id", to: "specimens#show", as: :specimen
+    end
+  end
+
+  # The contract, served by the node it describes and narrowed to what this node
+  # answers. Open to anyone who can reach the node: it is what a team reads
+  # before they have a key. `.json` and `.yaml` give the OpenAPI document itself.
+  get "api-docs", to: "api_docs#show", as: :api_docs
+
+  # The operator interface. Everything below authenticates with a user session
+  # and answers HTML; everything above authenticates with an API key and answers
+  # JSON. Nothing crosses.
+  resource :session, only: %i[new create destroy]
+
+  # Addressed by tracking number, as everywhere else: it is what is written on
+  # the tube and what an operator has in front of them.
+  resources :orders, only: %i[index show], param: :tracking_number
+
+  resources :referrals, only: :index
+
+  # Clients are never deleted. A client that has called this node is part of the
+  # audit trail; withdrawing it means marking it inactive.
+  resources :api_clients, except: :destroy do
+    resources :api_keys, only: %i[new create destroy] do
+      post :rotate, on: :member
+    end
+  end
+
+  resources :audits, only: :index
+
+  # Readable in both modes, writable only on the national node — the same rule
+  # the API follows, drawn the same way, so a local node has no route that could
+  # invent a code nobody else has heard of.
+  get "dictionary", to: "dictionary#index", as: :dictionary
+
+  if SislabSync.national?
+    post "dictionary/promote", to: "dictionary_entries#promote", as: :promote_dictionary
+    get "dictionary/:entity_type/new", to: "dictionary_entries#new", as: :new_dictionary_entry
+    post "dictionary/:entity_type", to: "dictionary_entries#create", as: :dictionary_entries
+    get "dictionary/:entity_type/:national_code/edit", to: "dictionary_entries#edit", as: :edit_dictionary_entry
+    patch "dictionary/:entity_type/:national_code", to: "dictionary_entries#update", as: :dictionary_entry
+    post "dictionary/:entity_type/:national_code/activate", to: "dictionary_entries#activate",
+         as: :activate_dictionary_entry
+    post "dictionary/:entity_type/:national_code/retire", to: "dictionary_entries#retire",
+         as: :retire_dictionary_entry
+  end
+
+  get "dictionary/:entity_type", to: "dictionary#show", as: :dictionary_entity,
+      constraints: { entity_type: /[a-z_]+/ }
+
+  # The outbox only exists on a node that produces events; the nodes table only
+  # on the one that hears from them.
+  if SislabSync.local?
+    get "sync-queue", to: "sync_queue#index", as: :sync_queue
+    post "sync-queue/retry-all", to: "sync_queue#retry_all", as: :retry_all_sync_events
+    post "sync-queue/:id/retry", to: "sync_queue#retry", as: :retry_sync_event
+  end
+
+  resources :nodes, only: :index if SislabSync.national?
+
+  root "dashboard#show"
 end

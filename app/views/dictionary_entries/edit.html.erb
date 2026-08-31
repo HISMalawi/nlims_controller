@@ -1,0 +1,28 @@
+<% content_for :title, @entry.national_code %>
+
+<%= link_to t("dictionary.entities.#{@entity_type}"), dictionary_entity_path(@entity_type),
+      class: "text-xs text-slate-500 hover:text-slate-900" %>
+
+<div class="mt-1 flex flex-wrap items-center gap-3">
+  <h1 class="text-2xl font-semibold tracking-tight"><%= @entry.name %></h1>
+  <%= status_badge @entry.status, scope: "dictionary.statuses" %>
+</div>
+
+<p class="mt-1 font-mono text-xs text-slate-500">
+  <%= @entry.national_code %> · <%= t("dictionary.columns.revision") %> <%= @entry.revision %>
+</p>
+
+<div class="mt-6 max-w-2xl rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+  <%= render "form", entry: @entry, entity_type: @entity_type %>
+</div>
+
+<div class="mt-6 flex max-w-2xl flex-wrap gap-3">
+  <% if @entry.draft? %>
+    <%= button_to t("dictionary.show.activate"), activate_dictionary_entry_path(@entity_type, @entry.national_code),
+          class: "rounded-md border border-emerald-300 bg-white px-3 py-2 text-sm font-medium text-emerald-700 hover:bg-emerald-50" %>
+  <% elsif @entry.active? %>
+    <%= button_to t("dictionary.show.retire"), retire_dictionary_entry_path(@entity_type, @entry.national_code),
+          form: { data: { turbo_confirm: t("dictionary.show.retire_confirm", name: @entry.name) } },
+          class: "rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50" %>
+  <% end %>
+</div>

@@ -1,2 +1,0 @@
-class VisittypeWard < ApplicationRecord
-end

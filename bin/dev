@@ -1,0 +1,12 @@
+#!/usr/bin/env sh
+
+# Docker is the supported way to run this — `docker compose up` starts the same
+# two processes as separate services. This is for running against a database you
+# already have.
+
+if ! gem list foreman -i --silent; then
+  echo "Installing foreman..."
+  gem install foreman
+fi
+
+exec foreman start -f Procfile.dev "$@"

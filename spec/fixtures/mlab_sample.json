@@ -1,0 +1,79 @@
+{
+  "_comment": "A small mLab-shaped dictionary. Deliberately carries the same defects the real database has, so the importer and the quality report are exercised against them: an indicator with no name, a duplicate name, an orphan indicator, a numeric indicator with no range, an inverted range, an unused specimen type, an untested drug, an unisolated organism, a test with no indicators, a test with no specimen, and an empty panel.",
+
+  "departments": [
+    { "id": 1, "name": "Bioquímica", "code": "BIO" },
+    { "id": 2, "name": "Microbiologia", "code": "MIC" }
+  ],
+
+  "specimen_types": [
+    { "id": 1, "name": "Sangue total", "description": "Tubo EDTA" },
+    { "id": 2, "name": "Urina", "description": null },
+    { "id": 3, "name": "Expectoração", "description": null }
+  ],
+
+  "drugs": [
+    { "id": 1, "name": "Amoxicilina", "short_name": "AMX" },
+    { "id": 2, "name": "Gentamicina", "short_name": null }
+  ],
+
+  "organisms": [
+    { "id": 1, "name": "Escherichia coli", "description": null },
+    { "id": 2, "name": "Klebsiella pneumoniae", "description": null }
+  ],
+
+  "organism_drug_links": [
+    { "organism_id": 1, "drug_id": 1 }
+  ],
+
+  "indicators": [
+    { "id": 1, "name": "Hemoglobina", "unit": "g/dL", "description": null, "test_indicator_type": 2 },
+    { "id": 2, "name": "Leucócitos", "unit": "10^9/L", "description": null, "test_indicator_type": 2 },
+    { "id": 3, "name": "Cultura", "unit": null, "description": null, "test_indicator_type": 1 },
+    { "id": 4, "name": "   ", "unit": null, "description": null, "test_indicator_type": 1 },
+    { "id": 5, "name": "Hemoglobina", "unit": "g/dL", "description": null, "test_indicator_type": 1 }
+  ],
+
+  "indicator_ranges": [
+    { "test_indicator_id": 1, "min_age": 0, "max_age": 120, "sex": "Male",
+      "lower_range": "13.0", "upper_range": "17.0", "interpretation": null, "value": null },
+    { "test_indicator_id": 1, "min_age": 0, "max_age": 120, "sex": "Female",
+      "lower_range": "12.0", "upper_range": "15.0", "interpretation": null, "value": null },
+    { "test_indicator_id": 1, "min_age": null, "max_age": null, "sex": null,
+      "lower_range": "20.0", "upper_range": "10.0", "interpretation": "crítico", "value": null }
+  ],
+
+  "test_types": [
+    { "id": 1, "name": "Hemograma completo", "short_name": "HC",
+      "department_id": 1, "sex": "Both", "target_tat": "4 horas" },
+    { "id": 2, "name": "Urina II", "short_name": null,
+      "department_id": 1, "sex": "Both", "target_tat": null },
+    { "id": 3, "name": "Cultura de sangue", "short_name": null,
+      "department_id": 2, "sex": "Female", "target_tat": "5 dias" }
+  ],
+
+  "test_type_indicator_links": [
+    { "test_type_id": 1, "indicator_id": 1 },
+    { "test_type_id": 1, "indicator_id": 2 },
+    { "test_type_id": 3, "indicator_id": 3 }
+  ],
+
+  "test_type_specimen_links": [
+    { "test_type_id": 1, "specimen_type_id": 1 },
+    { "test_type_id": 2, "specimen_type_id": 2 }
+  ],
+
+  "test_type_organism_links": [
+    { "test_type_id": 3, "organism_id": 1 }
+  ],
+
+  "test_panels": [
+    { "id": 1, "name": "Painel básico", "short_name": null, "description": null },
+    { "id": 2, "name": "Painel vazio", "short_name": null, "description": null }
+  ],
+
+  "test_panel_test_type_links": [
+    { "test_panel_id": 1, "test_type_id": 1 },
+    { "test_panel_id": 1, "test_type_id": 2 }
+  ]
+}

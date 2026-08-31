@@ -1,2 +1,0 @@
-class OrderStatusSyncTracker < ApplicationRecord
-end

@@ -1,2 +1,0 @@
-class DataAnomaly < ApplicationRecord
-end

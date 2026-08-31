@@ -1,66 +1,62 @@
 # frozen_string_literal: true
 
-# OrderSerializer class for serializing orders
-module OrderSerializer
-  class << self
-    def serialize(order)
-      {
-        order: {
-          uuid: order&.couch_id,
-          tracking_number: order&.tracking_number,
-          sample_type: order&.specimen_types,
-          sample_status: order&.specimen_statuses,
-          order_location: order&.wards&.name,
-          date_created: order&.date_created,
-          priority: order&.priority,
-          reason_for_test: order&.priority,
-          drawn_by: {
-            id: order&.drawn_by_id,
-            name: order&.drawn_by_name,
-            phone_number: order&.drawn_by_phone_number
-          },
-          target_lab: order&.target_lab,
-          sending_facility: order&.sending_facility,
-          district: order&.district,
-          site_code_number: Site.find_by(name: order&.sending_facility)&.site_code_number || '',
-          requested_by: order&.requested_by.present? ? order&.requested_by : order&.drawn_by_name,
-          art_start_date: order&.art_start_date,
-          arv_number: order&.arv_number,
-          art_regimen: order&.art_regimen,
-          clinical_history: order&.clinical_history,
-          lab_location: order&.lab_location,
-          source_system: order&.source_system,
-          status_trail: order&.specimen_status_trail&.map do |trail|
-            {
-              status_id: trail&.specimen_status_id,
-              status: trail&.specimen_status&.name,
-              timestamp: trail&.time_updated,
-              updated_by: {
-                first_name: trail&.who_updated_name&.split(' ')&.first,
-                last_name: trail&.who_updated_name&.split(' ')&.last,
-                id: trail&.who_updated_id,
-                phone_number: trail&.who_updated_phone_number
-              }
-            }
-          end
-        },
-        patient: serialize_patient(order&.tests&.first&.patient),
-        tests: order.tests.map { |t| TestSerializer.serialize(t) }
-      }
-    end
+# One order on the wire, in the shape the EMR, the SISLAB and the national node
+# all receive. There is one serializer rather than one per audience: the three
+# integrations disagreeing about what an order looks like is how the current
+# system ended up translating between three shapes of the same record.
+class OrderSerializer
+  def self.call(order, results: false, history: false)
+    new(order, results: results, history: history).as_json
+  end
 
-    def serialize_patient(patient)
-      {
-        id: patient&.id,
-        national_patient_id: patient&.patient_number,
-        first_name: patient&.name&.split(' ')&.first,
-        last_name: patient&.name&.split(' ')&.last,
-        gender: patient&.gender,
-        date_of_birth: patient&.dob,
-        address: patient&.address,
-        email: patient&.email,
-        phone_number: patient&.phone_number
-      }
-    end
+  def initialize(order, results: false, history: false)
+    @order = order
+    @results = results
+    @history = history
+  end
+
+  def as_json
+    json = base.merge(tests: tests_json)
+    json = json.merge(history: history_json) if @history
+    json
+  end
+
+  private
+
+  def base
+    {
+      uuid: @order.uuid,
+      revision: @order.revision,
+      tracking_number: @order.tracking_number,
+      status: @order.status,
+      priority: @order.priority,
+      claimed_at: @order.claimed_at&.iso8601,
+      claimed_by_lab_code: @order.claimed_by_lab_code,
+      sending_facility_code: @order.sending_facility_code,
+      receiving_facility_code: @order.receiving_facility_code,
+      receiving_lab_code: @order.receiving_lab_code,
+      lab_code: @order.lab_code,
+      specimen_type: DictionaryReference.call(@order.specimen_type_reference),
+      collected_at: @order.collected_at&.iso8601,
+      requested_by: @order.requested_by,
+      order_location: @order.order_location,
+      clinical_history: @order.clinical_history,
+      source_system: @order.source_system,
+      patient: PatientSerializer.call(@order.patient),
+      # The parcel this sample is travelling on, if it is. A laboratory looking
+      # at a referred sample needs to know where it came from without being told
+      # to go and ask.
+      referral: ReferralSerializer.call(@order.referrals.max_by(&:dispatched_at)),
+      created_at: @order.created_at&.iso8601,
+      updated_at: @order.updated_at&.iso8601
+    }
+  end
+
+  def tests_json
+    @order.order_tests.map { |test| OrderTestSerializer.call(test, results: @results) }
+  end
+
+  def history_json
+    @order.status_events.map { |event| StatusEventSerializer.call(event) }
   end
 end

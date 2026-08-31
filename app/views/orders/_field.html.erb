@@ -1,0 +1,6 @@
+<div class="flex items-baseline justify-between gap-4 px-5 py-2">
+  <dt class="shrink-0 text-xs font-medium uppercase tracking-wide text-slate-500"><%= label %></dt>
+  <dd class="min-w-0 break-words text-right text-sm text-slate-900">
+    <%= value.presence || tag.span("—", class: "text-slate-400") %>
+  </dd>
+</div>

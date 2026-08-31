@@ -1,63 +1,71 @@
-source 'https://rubygems.org'
+source "https://rubygems.org"
 
-git_source(:github) do |repo_name|
-  repo_name = "#{repo_name}/#{repo_name}" unless repo_name.include?('/')
-  "https://github.com/#{repo_name}.git"
-end
+gem "rails", "~> 8.1.3", ">= 8.1.3.1"
 
-ruby '3.2.0'
+# Database and cache
+gem "mysql2", "~> 0.5"
+gem "redis", ">= 5.0"
 
-# Bundle edge Rails instead: gem 'rails', github: 'rails/rails'
-gem 'rails', '~> 7.1.0'
+# Web
+gem "propshaft"
+gem "puma", ">= 5.0"
+gem "rack-cors"
 
-gem 'mime-types', '~> 3.3'
-gem 'paper_trail', '~> 16.0'
-gem 'parallel'
-gem 'ruby-progressbar'
-# Use mysql as the database for Active Record
-gem 'mysql2', '>= 0.3.18'
-# Use Puma as the app server
-gem 'puma', '>= 3.7'
-# Build JSON APIs with ease. Read more: https://github.com/rails/jbuilder
-# gem 'jbuilder', '~> 2.5'
-# Use Redis adapter to run Action Cable in production
-# gem 'redis', '~> 4.0'
-# Use ActiveModel has_secure_password
-gem 'apipie-rails'
-gem 'bcrypt', '>= 3.1.7'
+# Hotwire + Tailwind
+gem "importmap-rails"
+gem "stimulus-rails"
+gem "tailwindcss-rails"
+gem "turbo-rails"
 
-gem 'net-ping'
-# Use Capistrano for deployment
-# gem 'capistrano-rails', group: :development
+# Background work
+gem "sidekiq", "~> 7.3"
+gem "sidekiq-cron", "~> 2.0"
+# Sidekiq 7 asks for connection_pool >= 2.3 with no upper bound, but 3.0 changed
+# TimedStack#pop and its scheduler thread dies on boot. Hold it at 2.x until the
+# app moves to Sidekiq 8.
+gem "connection_pool", "~> 2.5"
 
-# Use Rack CORS for handling Cross-Origin Resource Sharing (CORS), making cross-origin AJAX possible
-gem 'rack-cors'
-gem 'sidekiq'
-gem 'sidekiq-cron'
-gem 'sidekiq-unique-jobs'
+# The operator interface signs people in with a password. API clients never do:
+# they carry a key, and ApiKey hashes those itself.
+gem "bcrypt", "~> 3.1"
 
-gem 'passenger'
-gem 'rest-client', '~> 2.1'
-gem 'roo', '~> 2.10.0'
-gem 'sucker_punch'
+# Leaves the default gems in Ruby 3.4. The quality report, the coverage report
+# and the LOINC worksheets are all CSV, so this stops being a warning and starts
+# being a boot failure the day the image's Ruby moves.
+gem "csv"
 
-# Swagger
-gem 'rswag'
-gem 'rswag-api'
-gem 'rswag-ui'
+# Configuration
+gem "dotenv-rails"
+
+# Portuguese for the validation and error messages Rails itself produces.
+gem "rails-i18n", "~> 8.0"
+
+# Interactive API Reference UI via Scalar
+gem "scalar_ruby"
+
+gem "bootsnap", require: false
+gem "tzinfo-data", platforms: %i[windows jruby]
+
 group :development, :test do
-  # Call 'byebug' anywhere in the code to stop execution and get a debugger console
-  gem 'byebug', platforms: %i[mri mingw x64_mingw]
-  gem 'rspec-rails'
-  gem 'rswag-specs'
+  gem "brakeman", require: false
+  gem "bundler-audit", require: false
+  gem "debug", platforms: %i[mri windows], require: "debug/prelude"
+  gem "factory_bot_rails"
+  gem "rspec-rails", "~> 8.0"
+  gem "rubocop-rails-omakase", require: false
+  gem "rubocop-rspec", require: false
+
+  # The OpenAPI contract in docs/sislab-sync/openapi.yaml is checked against the
+  # real routes and against the responses the suite produces. OpenAPI 3.1 uses
+  # JSON Schema draft 2020-12, which is what this validates.
+  gem "json_schemer", "~> 2.3"
+
+  # The reference client, from this repository. It is here so the suite can
+  # drive all three of its profiles against this node — a client that is only
+  # ever tested against a mock of the node is a client that agrees with the mock.
+  gem "sislab_sync_client", path: "clients/ruby"
 end
 
 group :development do
-  gem 'listen', '>= 3.0.5'
-  # Spring speeds up development by keeping your application running in the background. Read more: https://github.com/rails/spring
-  gem 'spring'
-  gem 'spring-watcher-listen', '>= 2.0.0'
+  gem "web-console"
 end
-
-# Windows does not include zoneinfo files, so bundle the tzinfo-data gem
-gem 'tzinfo-data', platforms: %i[mingw mswin x64_mingw jruby]

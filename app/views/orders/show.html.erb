@@ -1,0 +1,153 @@
+<% content_for :title, @order.tracking_number %>
+
+<div class="flex flex-wrap items-start justify-between gap-3">
+  <div>
+    <p class="text-xs font-semibold uppercase tracking-wide text-slate-500"><%= t(".heading") %></p>
+    <h1 class="mt-1 font-mono text-2xl font-semibold tabular tracking-tight"><%= @order.tracking_number %></h1>
+  </div>
+
+  <div class="flex flex-wrap items-center gap-2">
+    <%= status_badge @order.status, scope: "orders.statuses" %>
+    <% if @order.priority != "routine" %>
+      <%= badge t("orders.priorities.#{@order.priority}"), tone: :bad %>
+    <% end %>
+  </div>
+</div>
+
+<% if @order.rejection_reason_reference.present? %>
+  <div class="mt-4 rounded-xl border border-rose-300 bg-rose-50 px-5 py-4">
+    <p class="text-sm font-medium text-rose-900"><%= t(".rejected") %></p>
+    <p class="mt-1 text-sm text-rose-800">
+      <%= term @order.rejection_reason_reference %>
+    </p>
+  </div>
+<% end %>
+
+<div class="mt-6 grid gap-6 lg:grid-cols-3">
+  <div class="space-y-6 lg:col-span-2">
+    <%= panel t(".tests") do %>
+      <% if @order.order_tests.empty? %>
+        <%= render "shared/empty", message: t(".no_tests") %>
+      <% else %>
+        <ul class="divide-y divide-slate-100">
+          <% @order.order_tests.each do |order_test| %>
+            <li class="px-5 py-4">
+              <div class="flex flex-wrap items-baseline justify-between gap-2">
+                <div>
+                  <span class="font-medium"><%= term order_test.test_type_reference %></span>
+                </div>
+                <%= status_badge order_test.status, scope: "order_tests.statuses" %>
+              </div>
+
+              <% rows = @results.select { |result| result.order_test_id == order_test.id } %>
+              <% if rows.any? %>
+                <dl class="mt-3 grid gap-x-6 gap-y-1 sm:grid-cols-2">
+                  <% rows.each do |result| %>
+                    <div class="flex items-baseline justify-between gap-3 border-b border-dashed border-slate-100 py-1">
+                      <dt class="text-sm text-slate-600"><%= term result.indicator_reference, code: false %></dt>
+                      <dd class="text-sm font-medium text-slate-900">
+                        <%= result.value %><%= " #{result.unit}" if result.unit.present? %>
+                      </dd>
+                    </div>
+                  <% end %>
+                </dl>
+              <% end %>
+            </li>
+          <% end %>
+        </ul>
+      <% end %>
+    <% end %>
+
+    <% if @referrals.any? %>
+      <%= panel t(".referrals") do %>
+        <ul class="divide-y divide-slate-100">
+          <% @referrals.each do |referral| %>
+            <li class="px-5 py-3">
+              <div class="flex flex-wrap items-baseline justify-between gap-2">
+                <p class="text-sm text-slate-900">
+                  <span class="font-mono text-xs"><%= referral.from_lab_code || referral.from_facility_code %></span>
+                  <span class="mx-1 text-slate-400">&rarr;</span>
+                  <span class="font-mono text-xs"><%= referral.to_lab_code %></span>
+                </p>
+                <%= status_badge referral.state, scope: "referrals.states" %>
+              </div>
+              <p class="mt-1 text-xs text-slate-500">
+                <%= t("referrals.dispatched_at") %>: <%= timestamp referral.dispatched_at %>
+                <% if referral.transport_time %>
+                  · <%= t("referrals.transport_time") %>: <%= duration referral.transport_time %>
+                <% end %>
+              </p>
+              <% if referral.remarks.present? %>
+                <p class="mt-1 text-xs text-slate-600"><%= referral.remarks %></p>
+              <% end %>
+            </li>
+          <% end %>
+        </ul>
+      <% end %>
+    <% end %>
+
+    <%# The whole history, the order's own transitions and its tests', in the
+        order they happened. This is the answer to the question the telephone
+        call is actually about. %>
+    <%= panel t(".history"), subtitle: t(".history_hint") do %>
+      <ol class="divide-y divide-slate-100">
+        <% @history.each do |event| %>
+          <li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 px-5 py-3 text-sm">
+            <%= timestamp event.created_at %>
+
+            <span class="flex items-center gap-2">
+              <% if event.from_status %>
+                <span class="text-slate-500"><%= t("#{history_scope(event)}.#{event.from_status}", default: event.from_status.humanize) %></span>
+                <span class="text-slate-400">&rarr;</span>
+              <% end %>
+              <%= status_badge event.to_status, scope: history_scope(event) %>
+            </span>
+
+            <span class="text-xs text-slate-500">
+              <%= t("status_events.entities.#{event.entity_type}", default: event.entity_type) %>
+            </span>
+
+            <% if event.actor.present? %>
+              <span class="text-xs text-slate-600"><%= event.actor %></span>
+            <% end %>
+
+            <% if event.reason.present? %>
+              <span class="basis-full text-xs text-slate-500"><%= event.reason %></span>
+            <% end %>
+          </li>
+        <% end %>
+      </ol>
+    <% end %>
+  </div>
+
+  <div class="space-y-6">
+    <%= panel t(".patient") do %>
+      <dl class="divide-y divide-slate-100">
+        <%= render "orders/field", label: t("patients.name"), value: @order.patient.name %>
+        <%= render "orders/field", label: t("patients.national_id"), value: mono(@order.patient.national_id) %>
+        <%= render "orders/field", label: t("patients.sex"), value: t("patients.sexes.#{@order.patient.sex}", default: @order.patient.sex) %>
+        <%= render "orders/field", label: t("patients.birthdate"),
+              value: @order.patient.birthdate ? "#{l(@order.patient.birthdate)} · #{patient_age(@order.patient)}" : nil %>
+      </dl>
+    <% end %>
+
+    <%= panel t(".sample") do %>
+      <dl class="divide-y divide-slate-100">
+        <%= render "orders/field", label: t("orders.columns.facility"), value: mono(@order.sending_facility_code) %>
+        <%= render "orders/field", label: t("orders.fields.receiving_facility"),
+              value: mono(@order.receiving_facility_code) %>
+        <%# Em branco enquanto nenhuma das bancadas da unidade tiver reclamado a
+            amostra — que é como um pedido do EMR começa. %>
+        <%= render "orders/field", label: t("orders.fields.receiving_lab"),
+              value: @order.receiving_lab_code.present? ? mono(@order.receiving_lab_code) : t("orders.fields.unclaimed") %>
+        <%= render "orders/field", label: t("orders.fields.specimen_type"), value: @order.specimen_type_label %>
+        <%= render "orders/field", label: t("orders.fields.collected_at"), value: timestamp(@order.collected_at) %>
+        <%= render "orders/field", label: t("orders.fields.requested_by"), value: @order.requested_by %>
+        <%= render "orders/field", label: t("orders.fields.claimed_by"),
+              value: @order.claimed? ? safe_join([mono(@order.claimed_by_lab_code), " ", timestamp(@order.claimed_at)]) : nil %>
+        <%= render "orders/field", label: t("orders.fields.source"), value: @order.source_system %>
+        <%= render "orders/field", label: t("orders.fields.uuid"), value: mono(@order.uuid) %>
+      </dl>
+    <% end %>
+  </div>
+</div>

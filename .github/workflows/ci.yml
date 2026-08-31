@@ -1,0 +1,69 @@
+name: CI
+
+on:
+  push:
+    branches: [main, v2]
+  pull_request:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: .ruby-version
+          bundler-cache: true
+      - name: RuboCop
+        run: bin/rubocop --parallel
+      - name: Brakeman
+        run: bin/brakeman --no-pager
+      - name: Bundler audit
+        run: bundle exec bundler-audit check --update
+
+  spec:
+    runs-on: ubuntu-latest
+
+    # Both modes are exercised on every push: a route or an initializer that
+    # only works in one of them has to fail here, not at a site.
+    strategy:
+      fail-fast: false
+      matrix:
+        mode: [local, national]
+
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: sislab
+        ports: ["3306:3306"]
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -psislab"
+          --health-interval=5s --health-timeout=5s --health-retries=20
+      redis:
+        image: redis:7-alpine
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=5s --health-timeout=3s --health-retries=20
+
+    env:
+      RAILS_ENV: test
+      SISLAB_SYNC_MODE: ${{ matrix.mode }}
+      SISLAB_SYNC_FACILITY_CODE: CI${{ matrix.mode }}
+      DATABASE_HOST: 127.0.0.1
+      DATABASE_USER: root
+      DATABASE_PASSWORD: sislab
+      TEST_DATABASE_NAME: sislab_sync_test_${{ matrix.mode }}
+      REDIS_URL: redis://127.0.0.1:6379/0
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: .ruby-version
+          bundler-cache: true
+      - name: Prepare database
+        run: bin/rails db:prepare
+      - name: RSpec
+        run: bundle exec rspec
