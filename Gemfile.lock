@@ -1,7 +1,7 @@
 PATH
   remote: clients/ruby
   specs:
-    sislab_sync_client (2.0.0.pre)
+    sislab_sync_client (2.0.0.rc1)
 
 GEM
   remote: https://rubygems.org/
