@@ -946,6 +946,11 @@ paths:
       description: |
         Executa uma transição no ciclo de vida da amostra de acordo com as regras
         estritas da máquina de estados.
+
+        `specimen_collected` é opcional: uma amostra colhida na enfermaria chega
+        ao laboratório já colhida, e passa de `accepted` directamente a
+        `in_progress`. O laboratório que colhe regista-o, e nesse caso o passo
+        tem de vir antes de `in_progress`.
       x-node-mode: local
       x-scope: results:write
       parameters:

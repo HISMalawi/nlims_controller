@@ -422,7 +422,7 @@
     },
     {
       "name": "2 — Percurso do laboratorio (papel de SISLAB)",
-      "description": "Cada passo escreve mais um evento na outbox. A ordem segue a maquina de estados de app/models/order.rb: requested -> accepted -> specimen_collected -> in_progress -> completed. Saltar um passo devolve 422, de proposito.",
+      "description": "Cada passo escreve mais um evento na outbox. A ordem segue a maquina de estados de app/models/order.rb: requested -> accepted -> specimen_collected -> in_progress -> completed. specimen_collected e o unico passo que se pode saltar, para a amostra que ja chegou colhida da enfermaria: accepted -> in_progress vale. Saltar qualquer outro devolve 422, de proposito.",
       "item": [
         {
           "name": "Fila do laboratorio",

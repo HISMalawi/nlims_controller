@@ -52,6 +52,33 @@ RSpec.describe Order do
       expect(order).to be_terminal
     end
 
+    # Most tubes are drawn at the ward and arrive with the request, so the bench
+    # that takes the sample has no collection of its own to record. Inventing
+    # one to satisfy the machine would put a timestamp in the history that
+    # nobody stands behind.
+    it "lets a bench start on a sample that arrived already collected" do
+      order = create(:order)
+
+      order.transition_to!(described_class::ACCEPTED)
+      order.transition_to!(described_class::IN_PROGRESS)
+
+      expect(order.reload.status).to eq(described_class::IN_PROGRESS)
+      expect(order.own_status_events.map(&:to_status))
+        .to eq([ described_class::REQUESTED, described_class::ACCEPTED,
+                 described_class::IN_PROGRESS ])
+    end
+
+    # Skipping the step is allowed; taking it late is not. A collection recorded
+    # after the work began describes a tube that was already on the bench.
+    it "refuses a collection recorded after the work started" do
+      order = create(:order)
+      order.transition_to!(described_class::ACCEPTED)
+      order.transition_to!(described_class::IN_PROGRESS)
+
+      expect { order.transition_to!(described_class::SPECIMEN_COLLECTED) }
+        .to raise_error(ActiveRecord::RecordInvalid, /cannot go from in_progress to specimen_collected/)
+    end
+
     it "rejects a transition it does not have, without writing" do
       order = create(:order)
 
@@ -100,6 +127,15 @@ RSpec.describe Order do
     it "reports what may happen next" do
       expect(create(:order).next_statuses)
         .to contain_exactly(described_class::ACCEPTED, described_class::CANCELLED)
+    end
+
+    it "offers a taken sample both the collection and the bench" do
+      order = create(:order)
+      order.transition_to!(described_class::ACCEPTED)
+
+      expect(order.next_statuses)
+        .to contain_exactly(described_class::SPECIMEN_COLLECTED, described_class::IN_PROGRESS,
+                            described_class::REJECTED)
     end
   end
 

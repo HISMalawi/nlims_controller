@@ -810,9 +810,17 @@ Idempotency-Key: 7f3c0b18-4d2e-4a91-9c65-2b8e1f0a7d34
 
   <h3>Ciclo de vida do pedido</h3>
   <pre><code>requested ──→ accepted ──→ specimen_collected ──→ in_progress ──→ completed
-    │             │                                      │
-    │             └──────────→ rejected                  └──→ referred_out ──→ completed
+    │             │                                 ↑    │
+    │             ├─────────────────────────────────┘    └──→ referred_out ──→ completed
+    │             └──────────→ rejected
     └──→ cancelled</code></pre>
+
+  <p>
+    <code>specimen_collected</code> é opcional. Na maior parte das amostras o tubo foi colhido na enfermaria e chegou
+    com o pedido: o laboratório que a recebe não tem colheita nenhuma para registar, e passa de <code>accepted</code>
+    directamente a <code>in_progress</code>. Quem colhe continua a registá-lo — e, para esses, continua a ter de vir
+    antes do trabalho.
+  </p>
 
   <!-- ============================================================ -->
   <h2 id="sislab">6 · Integração: SISLAB &harr; nó local</h2>

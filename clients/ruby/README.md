@@ -136,7 +136,7 @@ lab.pending_orders(since: cursor, lab_code: "LAB01").each_page do |pedidos, curs
 end
 
 lab.claim(tn, lab_code: "LAB01")                         # fica com a amostra
-lab.transition(tn, status: "specimen_collected")
+lab.transition(tn, status: "specimen_collected")         # só quem colhe
 lab.transition(tn, status: "in_progress")
 
 lab.record_results(tn, final: true, actor: "Téc. M. Nhaca", results: [
@@ -151,6 +151,11 @@ falar: no feed, restringe-o ao trabalho dessa bancada mais tudo o que ainda não
 foi reclamado; na reclamação, é quem fica com a amostra — e um pedido vindo de um
 EMR chegou sem laboratório nenhum, pelo que é aqui que ganha um. Sem `lab_code`,
 o feed devolve a unidade inteira.
+
+`specimen_collected` é opcional: a maior parte dos tubos foi colhida na
+enfermaria e chegou com o pedido, e uma bancada que não colheu nada passa de
+`accepted` directamente a `in_progress`. Quem colhe regista-o, e aí o passo tem
+de vir antes do trabalho.
 
 `final: true` termina as análises que aquelas leituras cobrem. Fechar o pedido é
 uma transição à parte: um laboratório pode ter mais a acrescentar a uma amostra

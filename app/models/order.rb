@@ -16,6 +16,15 @@ class Order < ApplicationRecord
   REJECTED = "rejected"
   CANCELLED = "cancelled"
 
+  # accepted leads to in_progress as well as to specimen_collected, because on
+  # most samples the tube was drawn at the ward before the order ever reached a
+  # laboratory: the bench that takes it has nothing to record about a collection
+  # it did not perform, and a step that only ever gets a made-up timestamp is
+  # worse than no step. When the ward collected, it says so on the order itself
+  # — `collected_at`, sent with the request — so skipping the status loses
+  # nothing anyone reads. specimen_collected stays for the laboratories that do
+  # collect, and for them it still has to come before the work.
+  #
   # referred_out leads to completed because the result comes back under this
   # same tracking number, whichever laboratory produced it — and to rejected,
   # because the laboratory it was sent to may refuse the sample.
@@ -27,7 +36,7 @@ class Order < ApplicationRecord
     initial: REQUESTED,
     transitions: {
       REQUESTED => [ ACCEPTED, CANCELLED ],
-      ACCEPTED => [ SPECIMEN_COLLECTED, REJECTED ],
+      ACCEPTED => [ SPECIMEN_COLLECTED, IN_PROGRESS, REJECTED ],
       SPECIMEN_COLLECTED => [ IN_PROGRESS ],
       IN_PROGRESS => [ COMPLETED, REFERRED_OUT ],
       REFERRED_OUT => [ COMPLETED, REJECTED ],
