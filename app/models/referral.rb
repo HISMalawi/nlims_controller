@@ -136,12 +136,25 @@ class Referral < ApplicationRecord
     settle!(RECEIVED, actor: actor, remarks: remarks) do
       self.received_at = Time.current
 
+      # Whose work it now is. The bench named on the parcel is the one that
+      # opened it, and this is the only place that fact is written: an external
+      # referral arrives against no laboratory at all, and an internal handover
+      # arrives against the bench that is giving the sample up.
+      #
+      # Taking the parcel in is taking the sample, so it is claimed here too —
+      # otherwise the order sits accepted and unclaimed, and a later claim on it
+      # would be refused by the status machine rather than by the fact that the
+      # sample already has a laboratory.
+      order.assign_attributes(receiving_lab_code: to_lab_code, claimed_by_lab_code: to_lab_code,
+                              claimed_at: order.claimed_at || Time.current)
+
+      # The sample that never left the unit has no status to restore: it stayed
+      # in whatever the bench giving it up had reached, and only the handover
+      # moves.
       if order.status == Order::REFERRED_IN
         order.transition_to!(Order::ACCEPTED, actor: actor, reason: "amostra referida recebida em #{to_lab_code}")
-      elsif internal?
-        # The sample never left the unit, so there is no status to restore —
-        # only the question of whose work it now is, which the handover settles.
-        order.update!(receiving_lab_code: to_lab_code, claimed_by_lab_code: to_lab_code)
+      else
+        order.save!
       end
     end
   end

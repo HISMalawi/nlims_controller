@@ -144,4 +144,42 @@ RSpec.describe Referral, mode: :local do
       expect(referral.to_facility_code).to eq("MAP")
     end
   end
+
+  # The receiving end. An external referral arrives as referred_in and becomes
+  # the destination bench's work; anything else means the parcel and the order
+  # it points at do not belong together.
+  describe "taking a parcel in" do
+    def parcel_from_elsewhere(status: Order::REFERRED_IN)
+      order = create(:order, sending_facility_code: "MAP", receiving_facility_code: SislabSync.facility_code,
+                             receiving_lab_code: nil, status: status)
+      described_class.create!(
+        order: order, tracking_number: order.tracking_number,
+        from_facility_code: "MAP", from_lab_code: "MAP-LAB-CENTRAL",
+        to_facility_code: SislabSync.facility_code, to_lab_code: bioquimica.national_code,
+        dispatched_at: 2.hours.ago, replicated: true
+      )
+    end
+
+    it "makes the sample the work of the bench the parcel was addressed to" do
+      referral = parcel_from_elsewhere
+
+      referral.receive!(actor: "tec.chissano")
+
+      order = referral.order.reload
+      expect(order.status).to eq(Order::ACCEPTED)
+      expect(order.receiving_lab_code).to eq(bioquimica.national_code)
+      expect(order.claimed_by_lab_code).to eq(bioquimica.national_code)
+    end
+
+    # Accepted and unclaimed is a state no screen knows how to show: the sample
+    # has a laboratory, and a later claim on it would be turned away by the
+    # status machine rather than by the fact that it is already taken.
+    it "counts as taking the sample, not only as accepting it" do
+      referral = parcel_from_elsewhere
+
+      referral.receive!(actor: "tec.chissano")
+
+      expect(referral.order.reload.claimed_at).to be_present
+    end
+  end
 end
