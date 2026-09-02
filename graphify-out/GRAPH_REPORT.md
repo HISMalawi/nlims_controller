@@ -1,7 +1,7 @@
 # Graph Report - nlims_controller  (2026-09-02)
 
 ## Corpus Check
-- 333 files · ~399,662 words
+- 333 files · ~399,991 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `c1fee149`
+- Built from commit: `ee8e6b0a`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 

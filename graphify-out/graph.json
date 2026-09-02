@@ -2837,7 +2837,7 @@
       "file_type": "code",
       "norm_label": "order::alreadyclaimed",
       "source_file": "app/models/order.rb",
-      "source_location": "L48"
+      "source_location": "L59"
     },
     {
       "id": "app_models_tracking_number_trackingnumber",
@@ -9091,7 +9091,7 @@
       "file_type": "code",
       "norm_label": ".find_by_tracking_number!()",
       "source_file": "app/models/order.rb",
-      "source_location": "L92"
+      "source_location": "L103"
     },
     {
       "id": "app_serializers_fhir_specimen_resource_fhir_specimenresource_call",
@@ -12211,7 +12211,7 @@
       "file_type": "code",
       "norm_label": ".cursor()",
       "source_file": "app/models/order.rb",
-      "source_location": "L97"
+      "source_location": "L108"
     },
     {
       "id": "app_models_sequence_sequence_current",
@@ -13627,7 +13627,7 @@
       "file_type": "code",
       "norm_label": ".assign_revision()",
       "source_file": "app/models/order.rb",
-      "source_location": "L196"
+      "source_location": "L207"
     },
     {
       "id": "app_models_order_order_assign_tracking_number",
@@ -13639,7 +13639,7 @@
       "file_type": "code",
       "norm_label": ".assign_tracking_number()",
       "source_file": "app/models/order.rb",
-      "source_location": "L176"
+      "source_location": "L187"
     },
     {
       "id": "app_models_order_order_claim_bang",
@@ -13651,7 +13651,7 @@
       "file_type": "code",
       "norm_label": ".claim!()",
       "source_file": "app/models/order.rb",
-      "source_location": "L118"
+      "source_location": "L129"
     },
     {
       "id": "app_models_order_order_claimed_pred",
@@ -13663,7 +13663,7 @@
       "file_type": "code",
       "norm_label": ".claimed?()",
       "source_file": "app/models/order.rb",
-      "source_location": "L101"
+      "source_location": "L112"
     },
     {
       "id": "app_models_order_order_own_status_events",
@@ -13675,7 +13675,7 @@
       "file_type": "code",
       "norm_label": ".own_status_events()",
       "source_file": "app/models/order.rb",
-      "source_location": "L167"
+      "source_location": "L178"
     },
     {
       "id": "app_models_order_order_reject_bang",
@@ -13687,7 +13687,7 @@
       "file_type": "code",
       "norm_label": ".reject!()",
       "source_file": "app/models/order.rb",
-      "source_location": "L136"
+      "source_location": "L147"
     },
     {
       "id": "app_models_order_order_touch_revision_bang",
@@ -13699,7 +13699,7 @@
       "file_type": "code",
       "norm_label": ".touch_revision!()",
       "source_file": "app/models/order.rb",
-      "source_location": "L156"
+      "source_location": "L167"
     },
     {
       "id": "app_models_order_search_ordersearch_exact_match",
@@ -14947,7 +14947,7 @@
       "file_type": "code",
       "norm_label": ".status_events()",
       "source_file": "app/models/order.rb",
-      "source_location": "L163"
+      "source_location": "L174"
     },
     {
       "id": "app_models_status_event_statusevent_created_pred",
@@ -16999,7 +16999,7 @@
       "file_type": "code",
       "norm_label": "parcel_from_elsewhere()",
       "source_file": "spec/models/referral_spec.rb",
-      "source_location": "L152"
+      "source_location": "L168"
     },
     {
       "id": "spec_models_referral_spec_sample_in_progress",
@@ -29861,7 +29861,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "app/models/order.rb",
-      "source_location": "L199",
+      "source_location": "L210",
       "weight": 1.0
     },
     {
@@ -29873,7 +29873,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "app/models/order.rb",
-      "source_location": "L191",
+      "source_location": "L202",
       "weight": 1.0
     },
     {
@@ -29885,7 +29885,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "app/models/order.rb",
-      "source_location": "L98",
+      "source_location": "L109",
       "weight": 1.0
     },
     {
@@ -29897,7 +29897,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "app/models/order.rb",
-      "source_location": "L168",
+      "source_location": "L179",
       "weight": 1.0
     },
     {
@@ -29909,7 +29909,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "app/models/order.rb",
-      "source_location": "L137",
+      "source_location": "L148",
       "weight": 1.0
     },
     {
@@ -29921,7 +29921,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "app/models/order.rb",
-      "source_location": "L164",
+      "source_location": "L175",
       "weight": 1.0
     },
     {
@@ -29933,7 +29933,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "app/models/order.rb",
-      "source_location": "L157",
+      "source_location": "L168",
       "weight": 1.0
     },
     {
@@ -37292,7 +37292,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "app/models/order.rb",
-      "source_location": "L48",
+      "source_location": "L59",
       "weight": 1.0
     },
     {
@@ -39712,7 +39712,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "spec/models/referral_spec.rb",
-      "source_location": "L152",
+      "source_location": "L168",
       "weight": 1.0
     },
     {
@@ -41648,7 +41648,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "app/models/order.rb",
-      "source_location": "L48",
+      "source_location": "L59",
       "weight": 1.0
     },
     {
@@ -48352,101 +48352,13 @@
     },
     {
       "source": "app_models_order_order",
-      "target": "app_models_order_order_claimed_pred",
-      "relation": "method",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "app/models/order.rb",
-      "source_location": "L101",
-      "weight": 1.0
-    },
-    {
-      "source": "app_models_order_order",
-      "target": "app_models_order_order_claim_bang",
-      "relation": "method",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "app/models/order.rb",
-      "source_location": "L118",
-      "weight": 1.0
-    },
-    {
-      "source": "app_models_order_order",
-      "target": "app_models_order_order_reject_bang",
-      "relation": "method",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "app/models/order.rb",
-      "source_location": "L136",
-      "weight": 1.0
-    },
-    {
-      "source": "app_models_order_order",
-      "target": "app_models_order_order_touch_revision_bang",
-      "relation": "method",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "app/models/order.rb",
-      "source_location": "L156",
-      "weight": 1.0
-    },
-    {
-      "source": "app_models_order_order",
-      "target": "app_models_order_order_status_events",
-      "relation": "method",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "app/models/order.rb",
-      "source_location": "L163",
-      "weight": 1.0
-    },
-    {
-      "source": "app_models_order_order",
-      "target": "app_models_order_order_own_status_events",
-      "relation": "method",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "app/models/order.rb",
-      "source_location": "L167",
-      "weight": 1.0
-    },
-    {
-      "source": "app_models_order_order",
-      "target": "app_models_order_order_assign_tracking_number",
-      "relation": "method",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "app/models/order.rb",
-      "source_location": "L176",
-      "weight": 1.0
-    },
-    {
-      "source": "app_models_order_order",
-      "target": "app_models_order_order_assign_revision",
-      "relation": "method",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "app/models/order.rb",
-      "source_location": "L196",
-      "weight": 1.0
-    },
-    {
-      "source": "app_models_order_order",
       "target": "app_models_order_order_find_by_tracking_number_bang",
       "relation": "method",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "app/models/order.rb",
-      "source_location": "L92",
+      "source_location": "L103",
       "weight": 1.0
     },
     {
@@ -48457,7 +48369,95 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "app/models/order.rb",
-      "source_location": "L97",
+      "source_location": "L108",
+      "weight": 1.0
+    },
+    {
+      "source": "app_models_order_order",
+      "target": "app_models_order_order_claimed_pred",
+      "relation": "method",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "app/models/order.rb",
+      "source_location": "L112",
+      "weight": 1.0
+    },
+    {
+      "source": "app_models_order_order",
+      "target": "app_models_order_order_claim_bang",
+      "relation": "method",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "app/models/order.rb",
+      "source_location": "L129",
+      "weight": 1.0
+    },
+    {
+      "source": "app_models_order_order",
+      "target": "app_models_order_order_reject_bang",
+      "relation": "method",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "app/models/order.rb",
+      "source_location": "L147",
+      "weight": 1.0
+    },
+    {
+      "source": "app_models_order_order",
+      "target": "app_models_order_order_touch_revision_bang",
+      "relation": "method",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "app/models/order.rb",
+      "source_location": "L167",
+      "weight": 1.0
+    },
+    {
+      "source": "app_models_order_order",
+      "target": "app_models_order_order_status_events",
+      "relation": "method",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "app/models/order.rb",
+      "source_location": "L174",
+      "weight": 1.0
+    },
+    {
+      "source": "app_models_order_order",
+      "target": "app_models_order_order_own_status_events",
+      "relation": "method",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "app/models/order.rb",
+      "source_location": "L178",
+      "weight": 1.0
+    },
+    {
+      "source": "app_models_order_order",
+      "target": "app_models_order_order_assign_tracking_number",
+      "relation": "method",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "app/models/order.rb",
+      "source_location": "L187",
+      "weight": 1.0
+    },
+    {
+      "source": "app_models_order_order",
+      "target": "app_models_order_order_assign_revision",
+      "relation": "method",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "app/models/order.rb",
+      "source_location": "L207",
       "weight": 1.0
     },
     {
@@ -54290,7 +54290,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "app/models/order.rb",
-      "source_location": "L127",
+      "source_location": "L138",
       "weight": 1.0
     },
     {
@@ -54302,7 +54302,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "app/models/order.rb",
-      "source_location": "L141",
+      "source_location": "L152",
       "weight": 1.0
     },
     {
@@ -54614,7 +54614,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "spec/models/referral_spec.rb",
-      "source_location": "L153",
+      "source_location": "L169",
       "weight": 1.0
     },
     {
@@ -56828,5 +56828,5 @@
       "source_file": "docs/sislab-sync/plano.html"
     }
   ],
-  "built_at_commit": "c1fee149fe4fb5e329784396927d329f08396eba"
+  "built_at_commit": "ee8e6b0af114c302f1699088c8e9a7d78aef5763"
 }
