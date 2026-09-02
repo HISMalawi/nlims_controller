@@ -95,5 +95,115 @@ RSpec.describe Referral, mode: :local do
       expect { described_class.dispatch!(order: order, to_lab_code: "NAO-EXISTE") }
         .to raise_error(InvalidRequest, /não consta do registo/)
     end
+
+    it "names the unit on the parcel, so the receiving node can recognise it" do
+      order = sample_in_progress
+
+      described_class.dispatch!(order: order, to_lab_code: elsewhere.national_code)
+
+      expect(described_class.sole.to_facility_code).to eq(elsewhere.facility_code)
+    end
+  end
+
+  # A node whose register has never arrived can still refer — it is asked for
+  # the unit itself, rather than blamed for something missing at this end. What
+  # it cannot do is refer to nowhere: a parcel with no unit on it travels and
+  # arrives and cannot be taken in at the other end, which is worse than being
+  # told to name the destination.
+  describe "on a node whose register is still empty" do
+    before { Lab.delete_all }
+
+    it "refuses a destination it cannot place, naming what is missing" do
+      order = sample_in_progress(lab_code: "HCM-LAB")
+
+      expect { described_class.dispatch!(order: order, to_lab_code: "MAP-LAB-CENTRAL") }
+        .to raise_error(InvalidRequest, /to_facility_code/)
+    end
+
+    it "takes the unit from the client when the register cannot supply it" do
+      order = sample_in_progress(lab_code: "HCM-LAB")
+
+      referral = described_class.dispatch!(order: order, to_lab_code: "MAP-LAB-CENTRAL",
+                                                         to_facility_code: "MAP")
+
+      expect(referral.to_facility_code).to eq("MAP")
+      expect(referral.to_lab_code).to eq("MAP-LAB-CENTRAL")
+      expect(order.reload.status).to eq(Order::REFERRED_OUT)
+    end
+
+    # The register is the authority when it has an answer; the client is only
+    # filling a gap. Otherwise a client could address a parcel to a unit the
+    # laboratory does not belong to.
+    it "prefers the register over what the client says" do
+      lab = create(:lab, facility_code: "MAP", national_code: "MAP-LAB-CENTRAL")
+      order = sample_in_progress
+
+      referral = described_class.dispatch!(order: order, to_lab_code: lab.national_code,
+                                                         to_facility_code: "INVENTADA")
+
+      expect(referral.to_facility_code).to eq("MAP")
+    end
+  end
+
+  # The receiving end. An external referral arrives as referred_in and becomes
+  # the destination bench's work; anything else means the parcel and the order
+  # it points at do not belong together.
+  describe "taking a parcel in" do
+    def parcel_from_elsewhere(status: Order::REFERRED_IN)
+      order = create(:order, sending_facility_code: "MAP", receiving_facility_code: SislabSync.facility_code,
+                             receiving_lab_code: nil, status: status)
+      described_class.create!(
+        order: order, tracking_number: order.tracking_number,
+        from_facility_code: "MAP", from_lab_code: "MAP-LAB-CENTRAL",
+        to_facility_code: SislabSync.facility_code, to_lab_code: bioquimica.national_code,
+        dispatched_at: 2.hours.ago, replicated: true
+      )
+    end
+
+    it "makes the sample the work of the bench the parcel was addressed to" do
+      referral = parcel_from_elsewhere
+
+      referral.receive!(actor: "tec.chissano")
+
+      order = referral.order.reload
+      expect(order.status).to eq(Order::ACCEPTED)
+      expect(order.receiving_lab_code).to eq(bioquimica.national_code)
+      expect(order.claimed_by_lab_code).to eq(bioquimica.national_code)
+    end
+
+    # Accepted and unclaimed is a state no screen knows how to show: the sample
+    # has a laboratory, and a later claim on it would be turned away by the
+    # status machine rather than by the fact that it is already taken.
+    it "counts as taking the sample, not only as accepting it" do
+      referral = parcel_from_elsewhere
+
+      referral.receive!(actor: "tec.chissano")
+
+      expect(referral.order.reload.claimed_at).to be_present
+    end
+
+    # A parcel addressed to a unit this node is not arrives holding the status
+    # its origin gave it, and nothing at this end can move it. Saying so is the
+    # whole point: settling the referral and leaving the order untouched would
+    # report the sample as received and leave it unworkable.
+    it "refuses an order that is not the arriving kind, rather than settling quietly" do
+      referral = parcel_from_elsewhere(status: Order::REFERRED_OUT)
+
+      expect { referral.receive!(actor: "tec.chissano") }
+        .to raise_error(InvalidRequest, /referred_out/)
+
+      expect(referral.reload).to be_dispatched
+      expect(referral.order.reload.status).to eq(Order::REFERRED_OUT)
+    end
+
+    # The second attempt is what is wrong, not the state the first one left
+    # behind, and the caller is owed the answer that says so.
+    it "still reports a parcel already taken in as already settled" do
+      referral = parcel_from_elsewhere
+      referral.receive!(actor: "tec.chissano")
+
+      expect { referral.receive!(actor: "tec.chissano") }
+        .to raise_error(described_class::AlreadySettled)
+    end
   end
 end

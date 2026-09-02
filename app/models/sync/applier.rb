@@ -58,6 +58,14 @@ module Sync
       order = Order.find_or_initialize_by(uuid: json["uuid"])
       return order if order.persisted?
 
+      # A sample arriving from another unit carries the bench that sent it away,
+      # and that bench is not one of this node's. Which laboratory here takes it
+      # is settled when the parcel is opened, so it arrives against none of
+      # them: written down, the origin's code would file the sample under a
+      # laboratory that does not exist at this unit, and hide it from the feed
+      # of every laboratory that does.
+      arriving = status == Order::REFERRED_IN
+
       order.assign_attributes(
         tracking_number: json["tracking_number"],
         patient: upsert_patient_from(json["patient"]),
@@ -65,7 +73,7 @@ module Sync
         priority: json["priority"],
         sending_facility_code: json["sending_facility_code"],
         receiving_facility_code: json["receiving_facility_code"].presence || json["sending_facility_code"],
-        receiving_lab_code: json["receiving_lab_code"],
+        receiving_lab_code: arriving ? nil : json["receiving_lab_code"],
         lab_code: json["lab_code"],
         collected_at: json["collected_at"],
         requested_by: json["requested_by"],

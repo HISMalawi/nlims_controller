@@ -71,8 +71,19 @@ RSpec.describe "a sample referred between two facilities", mode: :local, type: :
       expect(order.order_tests.sole.test_type).to eq(test_type)
       expect(order.referrals.sole.from_facility_code).to eq("HCM")
 
+      # Against none of this unit's benches yet. The laboratory that sent it
+      # away is on the referral, where it belongs; writing it on the order would
+      # file the sample here under a laboratory that is not here.
+      expect(order.receiving_lab_code).to be_nil
+      expect(order.referrals.sole.from_lab_code).to eq("HCM-LAB")
+
       Referral.find_by!(tracking_number: tracking_number)
               .receive!(actor: "tec.chissano", remarks: "chegou às 14h")
+
+      # Opening the parcel is what makes it this bench's work, and the feed it
+      # polls is scoped by exactly this column.
+      expect(order.reload.receiving_lab_code).to eq("MAP-LAB-CENTRAL")
+      expect(order.claimed_at).to be_present
 
       order.reload.transition_to!(Order::SPECIMEN_COLLECTED, actor: "tec.chissano")
       order.transition_to!(Order::IN_PROGRESS, actor: "tec.chissano")

@@ -1168,9 +1168,12 @@ paths:
                 to_facility_code:
                   type: string
                   description: >
-                    Ignorado: a unidade sanitária de destino é lida do registo.
-                    Aceite para que clientes escritos contra o contrato anterior
-                    continuem a funcionar.
+                    Unidade sanitária de destino, usada apenas quando o registo
+                    não consegue situar `to_lab_code` — o que acontece num nó
+                    cujo registo ainda não chegou. Quando o registo tem resposta,
+                    é ela que prevalece. Sem nenhum dos dois a remessa é recusada
+                    com `422`: a unidade é o endereço da encomenda, e uma remessa
+                    sem ela chega ao destino sem poder ser recebida.
                 courier:
                   type: string
                   description: Identificação do responsável pelo transporte / estafeta.
@@ -1197,6 +1200,16 @@ paths:
         Atualiza o estado de uma remessa de amostra referida no laboratório de
         destino, registando a receção efetiva (`received`) ou a recusa na
         triagem (`rejected`).
+
+        É por aqui que uma amostra referida se toma, e não por
+        `POST /api/v3/lab/orders/{tn}/claim`: a receção move o pedido de
+        `referred_in` para `accepted`, passa-o para a bancada indicada em
+        `to_lab_code` e devolve à origem a notícia de que a amostra chegou.
+
+        Responde `422` quando o pedido não está em `referred_in` nem se trata de
+        uma entrega entre bancadas da mesma unidade — sinal de que a remessa foi
+        despachada sem unidade de destino e o pedido ficou neste nó com o estado
+        que a origem lhe deu.
       x-node-mode: local
       x-scope: referrals:write
       parameters:

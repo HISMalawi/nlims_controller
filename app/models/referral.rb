@@ -55,8 +55,17 @@ class Referral < ApplicationRecord
   #
   # A code the register does not carry is refused — but only once the register
   # has been pulled at all. On a node that has never received one, refusing
-  # would be blaming the client for something missing at this end.
-  def self.resolve_destination!(to_lab_code)
+  # would be blaming the client for something missing at this end; there the
+  # client may name the unit itself, which is the only way a node whose register
+  # is still empty can refer at all.
+  #
+  # The unit is what the parcel is addressed by, so a destination it cannot be
+  # determined for is refused here rather than dispatched. Sent without one, the
+  # referral travels and arrives and is indistinguishable from a good one until
+  # the receiving node tries to take the sample in: it looks up the parcel's
+  # unit, does not find its own, and holds the order as still on its way
+  # elsewhere — work nobody at either end can move.
+  def self.resolve_destination!(to_lab_code, to_facility_code: nil)
     code = to_lab_code.presence
     raise InvalidRequest.new("é preciso indicar o laboratório de destino", field: "to_lab_code") if code.nil?
 
@@ -67,7 +76,15 @@ class Referral < ApplicationRecord
                                field: "to_lab_code")
     end
 
-    { lab_code: lab&.code || code, facility_code: lab&.facility_code, label: lab&.label || code }
+    facility = lab&.facility_code.presence || to_facility_code.presence
+
+    if facility.blank?
+      raise InvalidRequest.new("não é possível determinar a unidade do laboratório #{code}: " \
+                               "indique to_facility_code",
+                               field: "to_facility_code")
+    end
+
+    { lab_code: lab&.code || code, facility_code: facility, label: lab&.label || code }
   end
 
   # A sample handed to another laboratory.
@@ -79,8 +96,8 @@ class Referral < ApplicationRecord
   # share this node and this database, and there is one order row, not two. So
   # the status does not move; what moves is which laboratory the order is
   # against, and the referral row is the record of the handover.
-  def self.dispatch!(order:, to_lab_code:, courier: nil, remarks: nil, actor: nil)
-    destination = resolve_destination!(to_lab_code)
+  def self.dispatch!(order:, to_lab_code:, to_facility_code: nil, courier: nil, remarks: nil, actor: nil)
+    destination = resolve_destination!(to_lab_code, to_facility_code: to_facility_code)
     internal = internal?(order, destination[:facility_code])
 
     transaction do
@@ -116,15 +133,30 @@ class Referral < ApplicationRecord
   # that sent the sample the order stays referred_out — it is still away, and it
   # comes back as a result rather than as a change of hands.
   def receive!(actor: nil, remarks: nil)
+    receivable!
+
     settle!(RECEIVED, actor: actor, remarks: remarks) do
       self.received_at = Time.current
 
+      # Whose work it now is. The bench named on the parcel is the one that
+      # opened it, and this is the only place that fact is written: an external
+      # referral arrives against no laboratory at all, and an internal handover
+      # arrives against the bench that is giving the sample up.
+      #
+      # Taking the parcel in is taking the sample, so it is claimed here too —
+      # otherwise the order sits accepted and unclaimed, and a later claim on it
+      # would be refused by the status machine rather than by the fact that the
+      # sample already has a laboratory.
+      order.assign_attributes(receiving_lab_code: to_lab_code, claimed_by_lab_code: to_lab_code,
+                              claimed_at: order.claimed_at || Time.current)
+
+      # The sample that never left the unit has no status to restore: it stayed
+      # in whatever the bench giving it up had reached, and only the handover
+      # moves.
       if order.status == Order::REFERRED_IN
         order.transition_to!(Order::ACCEPTED, actor: actor, reason: "amostra referida recebida em #{to_lab_code}")
-      elsif internal?
-        # The sample never left the unit, so there is no status to restore —
-        # only the question of whose work it now is, which the handover settles.
-        order.update!(receiving_lab_code: to_lab_code, claimed_by_lab_code: to_lab_code)
+      else
+        order.save!
       end
     end
   end
@@ -155,6 +187,25 @@ class Referral < ApplicationRecord
   # capital, and one order row shared by both.
   def internal?
     to_facility_code.present? && to_facility_code == from_facility_code
+  end
+
+  # The two shapes a parcel can be taken in under. Anything else means the order
+  # this referral points at is not the one the parcel is for — most often a
+  # sample addressed to a unit this node is not, which arrives holding the status
+  # its origin gave it. Refusing here names that, where doing nothing quietly
+  # would settle the referral and leave the sample untouched behind it.
+  def receivable!
+    # A parcel already settled has a better answer waiting in settle!, and it is
+    # the one the caller is owed: what is wrong is the second attempt, not the
+    # state the first one left the order in.
+    return if settled?
+    return if internal? || order.status == Order::REFERRED_IN
+
+    raise InvalidRequest.new(
+      "a amostra #{tracking_number} está em #{order.status} neste nó e não pode ser recebida: " \
+      "uma referência de outra unidade chega em #{Order::REFERRED_IN}",
+      field: "state"
+    )
   end
 
   def dispatched? = state == DISPATCHED
