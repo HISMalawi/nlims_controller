@@ -103,6 +103,22 @@ RSpec.describe Referral, mode: :local do
 
       expect(described_class.sole.to_facility_code).to eq(elsewhere.facility_code)
     end
+
+    # A laboratory refers a sample precisely because it cannot run the test, so
+    # it never reaches in_progress. Requiring that state asked reception to
+    # pretend it had started work in order to be allowed to give the tube away.
+    [ Order::ACCEPTED, Order::SPECIMEN_COLLECTED ].each do |state|
+      it "sends away a sample that is still #{state}" do
+        order = create(:order, receiving_facility_code: SislabSync.facility_code,
+                               receiving_lab_code: bioquimica.national_code)
+        order.transition_to!(Order::ACCEPTED)
+        order.transition_to!(Order::SPECIMEN_COLLECTED) if state == Order::SPECIMEN_COLLECTED
+
+        described_class.dispatch!(order: order, to_lab_code: elsewhere.national_code)
+
+        expect(order.reload.status).to eq(Order::REFERRED_OUT)
+      end
+    end
   end
 
   # A node whose register has never arrived can still refer — it is asked for

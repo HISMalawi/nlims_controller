@@ -28,6 +28,17 @@ class Order < ApplicationRecord
   # same tracking number, whichever laboratory produced it — and to rejected,
   # because the laboratory it was sent to may refuse the sample.
   #
+  # It is reached from accepted and specimen_collected as well, and not only
+  # from in_progress, because a laboratory refers a sample precisely when it
+  # cannot run the test: reception reads the request, sees it is for something
+  # this bench does not do, and sends the tube on. Reachable only from
+  # in_progress, the machine asked a laboratory to pretend it had started work
+  # in order to be allowed to give it away.
+  #
+  # Not from requested, though. A sample the unit has not taken in is one it
+  # does not have, and nothing is sent away that never arrived — a LIS that
+  # wants to refer says first that it holds the tube.
+  #
   # referred_in is where a sample begins on the node that receives it. Nothing
   # transitions into it: the order is born that way, out of the referral its
   # origin dispatched.
@@ -35,8 +46,8 @@ class Order < ApplicationRecord
     initial: REQUESTED,
     transitions: {
       REQUESTED => [ ACCEPTED, CANCELLED ],
-      ACCEPTED => [ SPECIMEN_COLLECTED, IN_PROGRESS, REJECTED ],
-      SPECIMEN_COLLECTED => [ IN_PROGRESS ],
+      ACCEPTED => [ SPECIMEN_COLLECTED, IN_PROGRESS, REJECTED, REFERRED_OUT ],
+      SPECIMEN_COLLECTED => [ IN_PROGRESS, REFERRED_OUT ],
       IN_PROGRESS => [ COMPLETED, REFERRED_OUT ],
       REFERRED_OUT => [ COMPLETED, REJECTED ],
       REFERRED_IN => [ ACCEPTED, REJECTED ]
