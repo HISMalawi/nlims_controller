@@ -135,7 +135,7 @@ RSpec.describe Order do
 
       expect(order.next_statuses)
         .to contain_exactly(described_class::SPECIMEN_COLLECTED, described_class::IN_PROGRESS,
-                            described_class::REJECTED)
+                            described_class::REJECTED, described_class::REFERRED_OUT)
     end
   end
 
