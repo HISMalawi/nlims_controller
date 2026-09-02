@@ -77,6 +77,27 @@ RSpec.describe "a sample referred between two facilities", mode: :local, type: :
       expect(order.receiving_lab_code).to be_nil
       expect(order.referrals.sole.from_lab_code).to eq("HCM-LAB")
 
+      # But addressed to this unit, which is the whole of how a bench here ever
+      # finds it: what a laboratory polls is scoped by the unit holding the
+      # sample, and left as HCM the parcel arrives at MAP invisible to every
+      # laboratory in it and untouchable by all of them — a referral that fails
+      # while looking, from both ends, like it worked.
+      expect(order.receiving_facility_code).to eq("MAP")
+
+      # So the bench polls the way an mLab does, and the sample is in the answer
+      # before anybody here has said anything about it.
+      lis = create(:api_client, :sislab, facility_code: "MAP", lab_code: "MAP-LAB-CENTRAL")
+      lis_token = issue_key(api_client: lis, scopes: %w[orders:read]).last
+
+      get "/api/v3/lab/pending-orders",
+          params: { since: 0, lab_code: "MAP-LAB-CENTRAL" }, headers: auth_headers(lis_token)
+
+      expect(response).to have_http_status(:ok)
+      waiting = response.parsed_body["data"].sole
+      expect(waiting["tracking_number"]).to eq(tracking_number)
+      expect(waiting["status"]).to eq(Order::REFERRED_IN)
+      expect(waiting.dig("referral", "to_lab_code")).to eq("MAP-LAB-CENTRAL")
+
       Referral.find_by!(tracking_number: tracking_number)
               .receive!(actor: "tec.chissano", remarks: "chegou às 14h")
 

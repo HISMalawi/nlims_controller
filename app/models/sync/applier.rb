@@ -58,12 +58,12 @@ module Sync
       order = Order.find_or_initialize_by(uuid: json["uuid"])
       return order if order.persisted?
 
-      # A sample arriving from another unit carries the bench that sent it away,
-      # and that bench is not one of this node's. Which laboratory here takes it
-      # is settled when the parcel is opened, so it arrives against none of
-      # them: written down, the origin's code would file the sample under a
-      # laboratory that does not exist at this unit, and hide it from the feed
-      # of every laboratory that does.
+      # A sample arriving from another unit carries the unit and the bench that
+      # sent it away, and neither of them is this node's. Which laboratory here
+      # takes it is settled when the parcel is opened, so it arrives against
+      # none of them: written down, the origin's code would file the sample
+      # under a laboratory that does not exist at this unit, and hide it from
+      # the feed of every laboratory that does.
       arriving = status == Order::REFERRED_IN
 
       order.assign_attributes(
@@ -72,7 +72,7 @@ module Sync
         status: status || json["status"],
         priority: json["priority"],
         sending_facility_code: json["sending_facility_code"],
-        receiving_facility_code: json["receiving_facility_code"].presence || json["sending_facility_code"],
+        receiving_facility_code: receiving_facility_for(json, arriving),
         receiving_lab_code: arriving ? nil : json["receiving_lab_code"],
         lab_code: json["lab_code"],
         collected_at: json["collected_at"],
@@ -95,6 +95,26 @@ module Sync
       Array(json["tests"]).each { |test| upsert_test(order, test) }
 
       order
+    end
+
+    # The unit holding the sample, which is what a laboratory polls by
+    # (`Order.for_facility`) and what every /lab/ route authorises against.
+    #
+    # On the node a sample was referred to, that unit is this one. Copied across
+    # as it arrived it would be the unit that sent the sample away, and the
+    # parcel would land on a node where no bench can see it and no bench is
+    # allowed to touch it: the order reaches the destination, the destination's
+    # LIS polls a feed that filters it out, and the sample sits in a database
+    # nobody is looking at. Which is the only shape a referral can fail in that
+    # looks, from both ends, like it worked.
+    #
+    # Only on the node that receives it. The capital keeps the unit the origin
+    # gave, because from there the sample is simply out — and that is also what
+    # `Sync::Routing` reads to know which nodes still have a hand on it.
+    def receiving_facility_for(json, arriving)
+      return SislabSync.facility_code if arriving
+
+      json["receiving_facility_code"].presence || json["sending_facility_code"]
     end
 
     def upsert_test(order, json)
