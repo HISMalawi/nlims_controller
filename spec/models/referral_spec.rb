@@ -181,5 +181,29 @@ RSpec.describe Referral, mode: :local do
 
       expect(referral.order.reload.claimed_at).to be_present
     end
+
+    # A parcel addressed to a unit this node is not arrives holding the status
+    # its origin gave it, and nothing at this end can move it. Saying so is the
+    # whole point: settling the referral and leaving the order untouched would
+    # report the sample as received and leave it unworkable.
+    it "refuses an order that is not the arriving kind, rather than settling quietly" do
+      referral = parcel_from_elsewhere(status: Order::REFERRED_OUT)
+
+      expect { referral.receive!(actor: "tec.chissano") }
+        .to raise_error(InvalidRequest, /referred_out/)
+
+      expect(referral.reload).to be_dispatched
+      expect(referral.order.reload.status).to eq(Order::REFERRED_OUT)
+    end
+
+    # The second attempt is what is wrong, not the state the first one left
+    # behind, and the caller is owed the answer that says so.
+    it "still reports a parcel already taken in as already settled" do
+      referral = parcel_from_elsewhere
+      referral.receive!(actor: "tec.chissano")
+
+      expect { referral.receive!(actor: "tec.chissano") }
+        .to raise_error(described_class::AlreadySettled)
+    end
   end
 end

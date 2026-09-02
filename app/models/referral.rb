@@ -133,6 +133,8 @@ class Referral < ApplicationRecord
   # that sent the sample the order stays referred_out — it is still away, and it
   # comes back as a result rather than as a change of hands.
   def receive!(actor: nil, remarks: nil)
+    receivable!
+
     settle!(RECEIVED, actor: actor, remarks: remarks) do
       self.received_at = Time.current
 
@@ -185,6 +187,25 @@ class Referral < ApplicationRecord
   # capital, and one order row shared by both.
   def internal?
     to_facility_code.present? && to_facility_code == from_facility_code
+  end
+
+  # The two shapes a parcel can be taken in under. Anything else means the order
+  # this referral points at is not the one the parcel is for — most often a
+  # sample addressed to a unit this node is not, which arrives holding the status
+  # its origin gave it. Refusing here names that, where doing nothing quietly
+  # would settle the referral and leave the sample untouched behind it.
+  def receivable!
+    # A parcel already settled has a better answer waiting in settle!, and it is
+    # the one the caller is owed: what is wrong is the second attempt, not the
+    # state the first one left the order in.
+    return if settled?
+    return if internal? || order.status == Order::REFERRED_IN
+
+    raise InvalidRequest.new(
+      "a amostra #{tracking_number} está em #{order.status} neste nó e não pode ser recebida: " \
+      "uma referência de outra unidade chega em #{Order::REFERRED_IN}",
+      field: "state"
+    )
   end
 
   def dispatched? = state == DISPATCHED
