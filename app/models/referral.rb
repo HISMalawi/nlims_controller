@@ -55,8 +55,17 @@ class Referral < ApplicationRecord
   #
   # A code the register does not carry is refused — but only once the register
   # has been pulled at all. On a node that has never received one, refusing
-  # would be blaming the client for something missing at this end.
-  def self.resolve_destination!(to_lab_code)
+  # would be blaming the client for something missing at this end; there the
+  # client may name the unit itself, which is the only way a node whose register
+  # is still empty can refer at all.
+  #
+  # The unit is what the parcel is addressed by, so a destination it cannot be
+  # determined for is refused here rather than dispatched. Sent without one, the
+  # referral travels and arrives and is indistinguishable from a good one until
+  # the receiving node tries to take the sample in: it looks up the parcel's
+  # unit, does not find its own, and holds the order as still on its way
+  # elsewhere — work nobody at either end can move.
+  def self.resolve_destination!(to_lab_code, to_facility_code: nil)
     code = to_lab_code.presence
     raise InvalidRequest.new("é preciso indicar o laboratório de destino", field: "to_lab_code") if code.nil?
 
@@ -67,7 +76,15 @@ class Referral < ApplicationRecord
                                field: "to_lab_code")
     end
 
-    { lab_code: lab&.code || code, facility_code: lab&.facility_code, label: lab&.label || code }
+    facility = lab&.facility_code.presence || to_facility_code.presence
+
+    if facility.blank?
+      raise InvalidRequest.new("não é possível determinar a unidade do laboratório #{code}: " \
+                               "indique to_facility_code",
+                               field: "to_facility_code")
+    end
+
+    { lab_code: lab&.code || code, facility_code: facility, label: lab&.label || code }
   end
 
   # A sample handed to another laboratory.
@@ -79,8 +96,8 @@ class Referral < ApplicationRecord
   # share this node and this database, and there is one order row, not two. So
   # the status does not move; what moves is which laboratory the order is
   # against, and the referral row is the record of the handover.
-  def self.dispatch!(order:, to_lab_code:, courier: nil, remarks: nil, actor: nil)
-    destination = resolve_destination!(to_lab_code)
+  def self.dispatch!(order:, to_lab_code:, to_facility_code: nil, courier: nil, remarks: nil, actor: nil)
+    destination = resolve_destination!(to_lab_code, to_facility_code: to_facility_code)
     internal = internal?(order, destination[:facility_code])
 
     transaction do

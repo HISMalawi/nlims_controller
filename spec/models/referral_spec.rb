@@ -95,5 +95,53 @@ RSpec.describe Referral, mode: :local do
       expect { described_class.dispatch!(order: order, to_lab_code: "NAO-EXISTE") }
         .to raise_error(InvalidRequest, /não consta do registo/)
     end
+
+    it "names the unit on the parcel, so the receiving node can recognise it" do
+      order = sample_in_progress
+
+      described_class.dispatch!(order: order, to_lab_code: elsewhere.national_code)
+
+      expect(described_class.sole.to_facility_code).to eq(elsewhere.facility_code)
+    end
+  end
+
+  # A node whose register has never arrived can still refer — it is asked for
+  # the unit itself, rather than blamed for something missing at this end. What
+  # it cannot do is refer to nowhere: a parcel with no unit on it travels and
+  # arrives and cannot be taken in at the other end, which is worse than being
+  # told to name the destination.
+  describe "on a node whose register is still empty" do
+    before { Lab.delete_all }
+
+    it "refuses a destination it cannot place, naming what is missing" do
+      order = sample_in_progress(lab_code: "HCM-LAB")
+
+      expect { described_class.dispatch!(order: order, to_lab_code: "MAP-LAB-CENTRAL") }
+        .to raise_error(InvalidRequest, /to_facility_code/)
+    end
+
+    it "takes the unit from the client when the register cannot supply it" do
+      order = sample_in_progress(lab_code: "HCM-LAB")
+
+      referral = described_class.dispatch!(order: order, to_lab_code: "MAP-LAB-CENTRAL",
+                                                         to_facility_code: "MAP")
+
+      expect(referral.to_facility_code).to eq("MAP")
+      expect(referral.to_lab_code).to eq("MAP-LAB-CENTRAL")
+      expect(order.reload.status).to eq(Order::REFERRED_OUT)
+    end
+
+    # The register is the authority when it has an answer; the client is only
+    # filling a gap. Otherwise a client could address a parcel to a unit the
+    # laboratory does not belong to.
+    it "prefers the register over what the client says" do
+      lab = create(:lab, facility_code: "MAP", national_code: "MAP-LAB-CENTRAL")
+      order = sample_in_progress
+
+      referral = described_class.dispatch!(order: order, to_lab_code: lab.national_code,
+                                                         to_facility_code: "INVENTADA")
+
+      expect(referral.to_facility_code).to eq("MAP")
+    end
   end
 end

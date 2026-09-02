@@ -1168,9 +1168,12 @@ paths:
                 to_facility_code:
                   type: string
                   description: >
-                    Ignorado: a unidade sanitária de destino é lida do registo.
-                    Aceite para que clientes escritos contra o contrato anterior
-                    continuem a funcionar.
+                    Unidade sanitária de destino, usada apenas quando o registo
+                    não consegue situar `to_lab_code` — o que acontece num nó
+                    cujo registo ainda não chegou. Quando o registo tem resposta,
+                    é ela que prevalece. Sem nenhum dos dois a remessa é recusada
+                    com `422`: a unidade é o endereço da encomenda, e uma remessa
+                    sem ela chega ao destino sem poder ser recebida.
                 courier:
                   type: string
                   description: Identificação do responsável pelo transporte / estafeta.

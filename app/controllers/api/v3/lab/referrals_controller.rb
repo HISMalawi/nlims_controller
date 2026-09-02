@@ -16,6 +16,7 @@ module Api
           referral = Referral.dispatch!(
             order: @order,
             to_lab_code: referral_params[:to_lab_code],
+            to_facility_code: referral_params[:to_facility_code],
             courier: referral_params[:courier],
             remarks: referral_params[:remarks],
             actor: actor
