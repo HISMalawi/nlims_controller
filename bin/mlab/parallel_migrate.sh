@@ -51,26 +51,26 @@ echo "Press Ctrl+C to cancel, or Enter to continue..."
 read
 
 # OPTION 1: Split by quarters (recommended for large yearly datasets)
-run_migration "2024-01-01 00:00:00" "2024-03-31 23:59:59" &
+run_migration "2025-01-01 00:00:00" "2025-03-31 23:59:59" &
 sleep 2  # Small delay to avoid startup conflicts
 
-run_migration "2024-04-01 00:00:00" "2024-06-30 23:59:59" &
+run_migration "2025-04-01 00:00:00" "2025-06-30 23:59:59" &
 sleep 2
 
-run_migration "2024-07-01 00:00:00" "2024-09-30 23:59:59" &
+run_migration "2025-07-01 00:00:00" "2025-09-30 23:59:59" &
 sleep 2
 
-run_migration "2024-10-01 00:00:00" "2024-12-31 23:59:59" &
+run_migration "2025-10-01 00:00:00" "2025-12-31 23:59:59" &
 sleep 2
 
 # OPTION 2: Split by hours within a busy day (uncomment to use)
-# run_migration "2024-06-15 00:00:00" "2024-06-15 05:59:59" &
+# run_migration "2025-06-15 00:00:00" "2025-06-15 05:59:59" &
 # sleep 2
-# run_migration "2024-06-15 06:00:00" "2024-06-15 11:59:59" &
+# run_migration "2025-06-15 06:00:00" "2025-06-15 11:59:59" &
 # sleep 2
-# run_migration "2024-06-15 12:00:00" "2024-06-15 17:59:59" &
+# run_migration "2025-06-15 12:00:00" "2025-06-15 17:59:59" &
 # sleep 2
-# run_migration "2024-06-15 18:00:00" "2024-06-15 23:59:59" &
+# run_migration "2025-06-15 18:00:00" "2025-06-15 23:59:59" &
 # sleep 2
 
 echo ""

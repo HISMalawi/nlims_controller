@@ -229,6 +229,25 @@ def iblis_tests_for_order(order)
       status_trail: status_trails_by_test[test.id] || [],
       test_results: results_by_test[test.id] || []
     }
+  end.flat_map { |t| expand_urinalysis_test(t) }
+end
+
+# Duplicates URINALYSIS tests (nlims_code nil) into two entries for both NLIMS codes.
+URINALYSIS_NLIMS_CODES = %w[NLIMS_TT_0011_MWI NLIMS_TT_0012_MWI].freeze
+
+def expand_urinalysis_test(test)
+  return [test] unless test[:test_type][:name] == 'URINALYSIS' && test[:test_type][:nlims_code].nil?
+
+  URINALYSIS_NLIMS_CODES.map.with_index do |nlims_code, idx|
+    copy = test.merge(test_type: test[:test_type].merge(nlims_code: nlims_code))
+    # First copy keeps original UUIDs; subsequent copies get fresh ones to avoid duplicate key errors.
+    next copy if idx == 0
+
+    copy.merge(
+      test_uuid: SecureRandom.uuid,
+      status_trail: test[:status_trail].map { |t| t.merge(trail_uuid: SecureRandom.uuid) },
+      test_results: test[:test_results].map { |r| r.merge(uuid: SecureRandom.uuid) }
+    )
   end
 end
 
@@ -370,6 +389,7 @@ rescue Encoding::UndefinedConversionError
 end
 
 def set_test_to_voided_to_mark_as_synced_to_nlims(iblis_test)
+  MlabSyncFailure.where(mlab_test_id: iblis_test[:id]).update_all(resolved: true, resolved_at: Time.current)
   MlabBase.connection.execute <<~SQL
     UPDATE tests SET voided = 1 WHERE id = #{iblis_test[:id]}
   SQL
@@ -383,7 +403,12 @@ def migrate_iblis_order_to_nlims(iblis_order)
 
   nlims_order = Speciman.find_by(tracking_number: iblis_order[:order][:tracking_number])
   if nlims_order.present?
-    patient_id = nlims_order.tests.first&.patient_id
+        patient_id = if iblis_order[:patient].present?
+                   create_patient(iblis_order[:patient]).id
+                 else
+                   nlims_order.tests.first&.patient_id
+                 end
+    #patient_id = nlims_order.tests.first&.patient_id
     # puts "Order with tracking number #{iblis_order[:order][:tracking_number]} already exists. Updating existing order before migration."
     update_existing_order(nlims_order, iblis_order)
     # puts "Deleting existing order status trail for order with tracking number #{iblis_order[:order][:tracking_number]} before migration."
@@ -741,8 +766,9 @@ def main(prep: false, start_datetime: nil, end_datetime: nil, skip_count: false)
 
       # Start new transaction batch if needed
       ActiveRecord::Base.connection.begin_db_transaction if orders_in_transaction == 0
-
+  
       iblis_order_data = iblis_order(order)
+      
       result = migrate_iblis_order_to_nlims(iblis_order_data)
 
       if result
@@ -826,67 +852,71 @@ def main(prep: false, start_datetime: nil, end_datetime: nil, skip_count: false)
   puts '=' * 80
 end
 
-# Prompt user for options
-puts ''
-puts '=' * 80
-puts 'MIGRATION CONFIGURATION'
-puts '=' * 80
-puts ''
+# Skip main execution if being loaded as a library
+unless defined?($skip_migrate_data_main_execution) && $skip_migrate_data_main_execution
+  # Prompt user for options
+  puts ''
+  puts '=' * 80
+  puts 'MIGRATION CONFIGURATION'
+  puts '=' * 80
+  puts ''
 
-print 'Clear mlab sync failure table before starting? (y/N): '
-user_input = gets.chomp.downcase
-prep_option = %w[y yes].include?(user_input)
+  print 'Clear mlab sync failure table before starting? (y/N): '
+  user_input = gets.chomp.downcase
+  prep_option = %w[y yes].include?(user_input)
 
-puts ''
-puts 'Start DateTime Filter (optional)'
-puts 'Format: YYYY-MM-DD HH:MM:SS or YYYY-MM-DD (defaults to 00:00:00)'
-print 'Leave blank to process from beginning: '
-start_datetime_input = gets.chomp.strip
-start_datetime = if start_datetime_input.empty?
-                   nil
-                 else
-                   begin
-                     # Check if input includes time component (contains colon)
-                     if start_datetime_input.include?(':')
-                       Time.parse(start_datetime_input)
-                     else
-                       # Date only - default to beginning of day
-                       Date.parse(start_datetime_input).to_time
-                     end
-                   rescue ArgumentError
-                     puts 'Invalid datetime format. Ignoring start filter.'
-                     nil
-                   end
-                 end
+  puts ''
+  puts 'Start DateTime Filter (optional)'
+  puts 'Format: YYYY-MM-DD HH:MM:SS or YYYY-MM-DD (defaults to 00:00:00)'
+  print 'Leave blank to process from beginning: '
+  start_datetime_input = gets.chomp.strip
+  start_datetime = if start_datetime_input.empty?
+                    nil
+                  else
+                    begin
+                      # Check if input includes time component (contains colon)
+                      if start_datetime_input.include?(':')
+                        Time.parse(start_datetime_input)
+                      else
+                        # Date only - default to beginning of day
+                        Date.parse(start_datetime_input).to_time
+                      end
+                    rescue ArgumentError
+                      puts 'Invalid datetime format. Ignoring start filter.'
+                      nil
+                    end
+                  end
 
-puts ''
-puts 'End DateTime Filter (optional)'
-puts 'Format: YYYY-MM-DD HH:MM:SS or YYYY-MM-DD (defaults to 23:59:59)'
-print 'Leave blank to process until now: '
-end_datetime_input = gets.chomp.strip
-end_datetime = if end_datetime_input.empty?
-                 nil
-               else
-                 begin
-                   # Check if input includes time component (contains colon)
-                   if end_datetime_input.include?(':')
-                     Time.parse(end_datetime_input)
-                   else
-                     # Date only - default to end of day (23:59:59)
-                     Date.parse(end_datetime_input).end_of_day
-                   end
-                 rescue ArgumentError
-                   puts 'Invalid datetime format. Ignoring end filter.'
-                   nil
-                 end
-               end
+  puts ''
+  puts 'End DateTime Filter (optional)'
+  puts 'Format: YYYY-MM-DD HH:MM:SS or YYYY-MM-DD (defaults to 23:59:59)'
+  print 'Leave blank to process until now: '
+  end_datetime_input = gets.chomp.strip
+  end_datetime = if end_datetime_input.empty?
+                  nil
+                else
+                  begin
+                    # Check if input includes time component (contains colon)
+                    if end_datetime_input.include?(':')
+                      Time.parse(end_datetime_input)
+                    else
+                      # Date only - default to end of day (23:59:59)
+                      Date.parse(end_datetime_input).end_of_day
+                    end
+                  rescue ArgumentError
+                    puts 'Invalid datetime format. Ignoring end filter.'
+                    nil
+                  end
+                end
 
-puts ''
-print 'Skip counting total orders for faster startup? (y/N): '
-skip_count_input = gets.chomp.downcase
-skip_count_option = %w[y yes].include?(skip_count_input)
+  puts ''
+  print 'Skip counting total orders for faster startup? (y/N): '
+  skip_count_input = gets.chomp.downcase
+  skip_count_option = %w[y yes].include?(skip_count_input)
 
-puts '=' * 80
-puts ''
+  puts '=' * 80
+  puts ''
 
-main(prep: prep_option, start_datetime: start_datetime, end_datetime: end_datetime, skip_count: skip_count_option)
+  main(prep: prep_option, start_datetime: start_datetime, end_datetime: end_datetime, skip_count: skip_count_option)
+end
+
