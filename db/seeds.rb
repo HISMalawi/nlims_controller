@@ -256,13 +256,17 @@ def measure_ranges(measure_id, nlims_measure)
   end
 end
 
-puts 'Importing specimen'
-specimen
-puts 'Importing test types'
-test_types
-puts 'Importing drugs'
-drugs
-puts 'Importing organisms'
-organisms
-puts 'Importing test panels'
-test_panels
+if MlabBase.configured?
+  puts 'Importing specimen'
+  specimen
+  puts 'Importing test types'
+  test_types
+  puts 'Importing drugs'
+  drugs
+  puts 'Importing organisms'
+  organisms
+  puts 'Importing test panels'
+  test_panels
+else
+  puts 'Skipping MLAB imports: mlab database is not configured'
+end

@@ -284,10 +284,16 @@ class API::V2::OrderController < ApplicationController
   end
 
   def update_sending_facility
-    return nil if request.remote_ip == '127.0.0.1' || !request.remote_ip.present?
+    order_params = params[:order]
+    return nil unless order_params.present?
 
-    site = Site.find_by(host_address: request.remote_ip)
-    params[:order][:sending_facility] = site&.name if params[:order].present? && site.present?
+    facility_name = order_params[:sending_facility].presence
+    site = Site.find_by(name: facility_name) || Site.find_by(other_name: facility_name) if facility_name.present?
+    if site.nil?
+      remote_ip = request.remote_ip
+      site = Site.find_by(host_address: remote_ip) if remote_ip.present? && !%w[127.0.0.1 ::1].include?(remote_ip)
+    end
+    order_params[:sending_facility] = site.name if site.present?
     site
   end
 end
