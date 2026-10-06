@@ -16,29 +16,32 @@
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
 --
--- Table structure for table `equipment_test_types`
+-- Table structure for table `equipment`
 --
 
-DROP TABLE IF EXISTS `equipment_test_types`;
+DROP TABLE IF EXISTS `equipment`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `equipment_test_types` (
-  `test_type_id` bigint NOT NULL,
-  `equipment_id` bigint NOT NULL,
-  KEY `index_equipment_test_types_on_test_type_id` (`test_type_id`),
-  KEY `index_equipment_test_types_on_equipment_id` (`equipment_id`),
-  CONSTRAINT `fk_rails_3d86bd088c` FOREIGN KEY (`equipment_id`) REFERENCES `equipment` (`id`),
-  CONSTRAINT `fk_rails_c2ca1a2ed4` FOREIGN KEY (`test_type_id`) REFERENCES `test_types` (`id`)
+CREATE TABLE `equipment` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) DEFAULT NULL,
+  `description` varchar(255) DEFAULT NULL,
+  `nlims_code` varchar(255) DEFAULT NULL,
+  `moh_code` varchar(255) DEFAULT NULL,
+  `loinc_code` varchar(255) DEFAULT NULL,
+  `created_at` datetime(6) NOT NULL,
+  `updated_at` datetime(6) NOT NULL,
+  PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Dumping data for table `equipment_test_types`
+-- Dumping data for table `equipment`
 --
 
-LOCK TABLES `equipment_test_types` WRITE;
-/*!40000 ALTER TABLE `equipment_test_types` DISABLE KEYS */;
-/*!40000 ALTER TABLE `equipment_test_types` ENABLE KEYS */;
+LOCK TABLES `equipment` WRITE;
+/*!40000 ALTER TABLE `equipment` DISABLE KEYS */;
+/*!40000 ALTER TABLE `equipment` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
