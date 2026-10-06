@@ -35,6 +35,10 @@ module Nlims
 
     config.middleware.use config.session_store, config.session_options
 
+    # HTML forms (integration setup pages) send PATCH/DELETE as POST with a `_method` field;
+    # api_only leaves this middleware out, so add it back where a full Rails app has it.
+    config.middleware.insert_after Rack::Runtime, Rack::MethodOverride
+
     # Skip views, helpers and assets when generating a new resource.
 
     # Only loads a smaller set of middleware suitable for API only apps.

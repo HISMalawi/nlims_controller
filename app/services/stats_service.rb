@@ -38,11 +38,13 @@ module StatsService
     end
 
     def integrated_sites
-      enabled_sites = Site.where(enabled: true).order(:name).pluck(:name)
+      sites = Site.enabled.includes(:emr_instance).order(:name).to_a
+      site_names = sites.map(&:name)
+      stale_hours = IntegrationStatus::Settings.load.stale_sync_hours
 
       # Step 1: Get latest sync for sites that have Specimen records
       latest_syncs = Speciman
-                     .where(sending_facility: enabled_sites)
+                     .where(sending_facility: site_names)
                      .group(:sending_facility)
                      .maximum(:created_at)
 
@@ -53,29 +55,36 @@ module StatsService
       integration_status_last_update = integration_status_report&.updated_at
 
       # Step 3: Merge with all enabled sites
-      sites_data = enabled_sites.map do |site_name|
-        last_sync = latest_syncs[site_name]
-        site = Site.find_by(name: site_name)
-        integration_status = integration_status_hash[site_name] || {}
+      sites_data = sites.map do |site|
+        last_sync = latest_syncs[site.name]
+        integration_status = integration_status_hash[site.name] || {}
+        central = site.central_emr?
 
         {
-          sending_facility: site_name,
-          district: site&.district,
-          ip_address: site&.host_address,
-          port: site&.application_port,
+          sending_facility: site.name,
+          district: site.district,
+          integration_mode: site.integration_mode,
+          emr_instance: site.emr_instance&.name,
+          ip_address: central ? site.emr_instance&.host : site.host_address,
+          port: central ? site.emr_instance&.port&.to_s : site.application_port,
           app_status: integration_status['app_status'] == true ? 'Running' : 'Down',
           ping_status: integration_status['ping_status'] == true ? 'Success' : 'Failed',
           last_sync_date: last_sync ? last_sync.strftime('%d/%b/%Y %H:%M') : 'Has Never Synced with NLIMS',
           status_last_updated: integration_status['status_last_updated'] || 'Never Updated',
-          is_gt_24hr: last_sync.nil? || last_sync < 48.hours.ago,
+          is_gt_24hr: last_sync.nil? || last_sync < stale_hours.hours.ago,
           order_summary: integration_status['order_summary'] || {},
-          app_version: integration_status['app_version'] || 'N/A'
+          app_version: integration_status['app_version'] || 'N/A',
+          check_errors: integration_status['check_errors'] || [],
+          # The stored row may predate a mode switch until the next check runs
+          status_mode_matches: integration_status.empty? ||
+            integration_status.fetch('integration_mode', Site::LOCAL_NLIMS) == site.integration_mode
         }
       end
 
       # Step 4: Return segregated data with last update information
       {
         data: sites_data,
+        stale_sync_hours: stale_hours,
         integration_status_last_update: integration_status_last_update ? integration_status_last_update.strftime('%d/%b/%Y %H:%M') : 'Never Updated'
       }
     end

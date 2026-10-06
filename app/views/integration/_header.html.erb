@@ -1,0 +1,63 @@
+<style>
+  .ix-wrap { max-width: 1200px; margin: 0 auto; }
+  .ix-top { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
+  .ix-top h1 { margin: 0; font-size: 24px; color: #1f2937; }
+  .ix-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 18px; border-bottom: 2px solid #dee2e6; }
+  .ix-tab { padding: 8px 14px; text-decoration: none; color: #004499; font-weight: 500; font-size: 14px; border-radius: 4px 4px 0 0; }
+  .ix-tab.active { background: #0066cc; color: #fff; }
+  .ix-notice { padding: 10px 14px; border-radius: 4px; margin-bottom: 16px; background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+  .ix-errors { padding: 10px 14px; border-radius: 4px; margin-bottom: 16px; background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+  .ix-errors ul { margin: 4px 0 0 18px; padding: 0; }
+  .ix-card { background: #fff; border: 1px solid #dee2e6; border-radius: 6px; padding: 18px; margin-bottom: 18px; }
+  .ix-card h2 { margin: 0 0 12px 0; font-size: 17px; color: #1f2937; }
+  .ix-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+  .ix-field label { display: block; font-weight: 600; font-size: 13px; margin-bottom: 4px; color: #374151; }
+  .ix-field input[type=text], .ix-field input[type=number], .ix-field input[type=password], .ix-field input[type=url], .ix-field select {
+    width: 100%; box-sizing: border-box; padding: 7px 9px; border: 1px solid #ced4da; border-radius: 4px; font-size: 14px; background: #fff;
+  }
+  .ix-hint { font-size: 12px; color: #6b7280; margin-top: 3px; }
+  .ix-btn { display: inline-block; padding: 8px 14px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; text-decoration: none; background: #0066cc; color: #fff; }
+  .ix-btn.secondary { background: #6c757d; }
+  .ix-btn.danger { background: #dc3545; }
+  .ix-btn.small { padding: 4px 9px; font-size: 12px; }
+  .ix-btn:disabled { opacity: .6; cursor: default; }
+  .ix-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 16px; }
+  .ix-table { width: 100%; border-collapse: collapse; font-size: 13px; background: #fff; }
+  .ix-table th { background: linear-gradient(135deg, #0066cc 0%, #004499 100%); color: #fff; text-align: left; padding: 8px; }
+  .ix-table td { border-bottom: 1px solid #e5e7eb; padding: 7px 8px; vertical-align: top; }
+  .ix-badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 12px; font-weight: 600; }
+  .ix-badge.local { background: #e0ecff; color: #004499; }
+  .ix-badge.central { background: #fff3cd; color: #856404; }
+  .ix-badge.ok { background: #d4edda; color: #155724; }
+  .ix-badge.bad { background: #f8d7da; color: #721c24; }
+  .ix-badge.muted { background: #e9ecef; color: #495057; }
+  .ix-filters { display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 14px; }
+  .ix-result { margin-top: 14px; padding: 12px; border-radius: 4px; background: #f8f9fa; border: 1px solid #dee2e6; font-size: 13px; display: none; }
+  .ix-result dl { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; margin: 0; }
+  .ix-result dt { font-weight: 600; }
+  .ix-result dd { margin: 0; }
+  .ix-table-scroll { overflow-x: auto; }
+</style>
+
+<div class="ix-top">
+  <h1><%= title %></h1>
+  <% if current_admin %>
+    <div style="display: flex; gap: 10px; align-items: center; font-size: 13px;">
+      <span>Signed in as <strong><%= current_admin.username %></strong></span>
+      <%= button_to 'Sign out', integration_logout_path, method: :delete, class: 'ix-btn secondary small', form: { style: 'margin: 0;' } %>
+    </div>
+  <% end %>
+</div>
+
+<% if current_admin %>
+  <nav class="ix-tabs">
+    <%= link_to 'Sites', integration_sites_path, class: "ix-tab #{'active' if controller_name == 'sites'}" %>
+    <%= link_to 'Central EMR Instances', integration_emr_instances_path, class: "ix-tab #{'active' if controller_name == 'emr_instances'}" %>
+    <%= link_to 'Check Settings', edit_integration_settings_path, class: "ix-tab #{'active' if controller_name == 'settings'}" %>
+    <%= link_to 'Integrated Sites Dashboard', integrated_sites_path, class: 'ix-tab' %>
+  </nav>
+<% end %>
+
+<% if notice_message.present? %>
+  <div class="ix-notice"><%= notice_message %></div>
+<% end %>

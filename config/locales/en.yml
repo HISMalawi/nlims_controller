@@ -31,3 +31,13 @@
 
 en:
   hello: "Hello world"
+  activerecord:
+    attributes:
+      site:
+        emr_instance: "Central EMR instance"
+        mahis_location_id: "MaHIS location ID"
+        mahis_facility_code: "MaHIS facility code"
+      emr_instance:
+        base_url: "Base URL"
+        vl_concept_id: "HIV Viral Load concept ID"
+        timeout_seconds: "Timeout (seconds)"

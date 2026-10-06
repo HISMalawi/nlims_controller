@@ -1,0 +1,132 @@
+<%= render 'integration/errors', messages: @emr_instance.errors.full_messages %>
+
+<%= form_with model: @emr_instance, url: url, method: method, local: true, id: 'instance-form' do |f| %>
+  <div class="ix-card">
+    <h2>Instance</h2>
+    <div class="ix-grid">
+      <div class="ix-field">
+        <%= f.label :name %>
+        <%= f.text_field :name, placeholder: 'MaHIS Central', required: true %>
+      </div>
+      <div class="ix-field">
+        <%= f.label :emr_type, 'Type' %>
+        <%= f.select :emr_type, EmrInstance::EMR_TYPES.invert %>
+      </div>
+      <div class="ix-field">
+        <%= f.label :base_url, 'Base URL' %>
+        <%= f.url_field :base_url, placeholder: 'https://mahis.health.gov.mw', required: true %>
+        <div class="ix-hint">Without /api/v1; paths below are appended to it.</div>
+      </div>
+      <div class="ix-field">
+        <%= f.label :vl_concept_id, 'HIV Viral Load concept ID' %>
+        <%= f.number_field :vl_concept_id, min: 1, required: true %>
+        <div class="ix-hint">Concept ID of HIV Viral Load in this EMR (differs from the local EMRs).</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ix-card">
+    <h2>Lab API login</h2>
+    <div class="ix-grid">
+      <div class="ix-field">
+        <%= f.label :username %>
+        <%= f.text_field :username, autocomplete: 'off' %>
+      </div>
+      <div class="ix-field">
+        <%= f.label :password %>
+        <%= f.password_field :password, value: '', autocomplete: 'new-password',
+                             placeholder: @emr_instance.persisted? && @emr_instance.password_before_type_cast.present? ? 'Saved — leave blank to keep' : '' %>
+        <div class="ix-hint">Stored encrypted.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ix-card">
+    <h2>Endpoints &amp; connection</h2>
+    <div class="ix-grid">
+      <div class="ix-field">
+        <%= f.label :health_path, 'Health check path' %>
+        <%= f.text_field :health_path %>
+        <div class="ix-hint">Used instead of ping, which the server blocks.</div>
+      </div>
+      <div class="ix-field">
+        <%= f.label :version_path, 'Version path' %>
+        <%= f.text_field :version_path %>
+      </div>
+      <div class="ix-field">
+        <%= f.label :login_path, 'Login path' %>
+        <%= f.text_field :login_path %>
+      </div>
+      <div class="ix-field">
+        <%= f.label :summary_path, 'Order summary path' %>
+        <%= f.text_field :summary_path %>
+      </div>
+      <div class="ix-field">
+        <%= f.label :timeout_seconds, 'Timeout (seconds)' %>
+        <%= f.number_field :timeout_seconds, min: 1, max: 120 %>
+      </div>
+      <div class="ix-field">
+        <label style="display: flex; gap: 8px; align-items: center; margin-top: 4px;"><%= f.check_box :verify_ssl %> Verify SSL certificate</label>
+        <label style="display: flex; gap: 8px; align-items: center; margin-top: 8px;"><%= f.check_box :active %> Active</label>
+        <div class="ix-hint">Sites on a disabled instance are reported as not checked.</div>
+      </div>
+    </div>
+
+    <div class="ix-actions">
+      <button type="button" class="ix-btn secondary" id="test-btn" onclick="testConnection()">Test connection</button>
+      <%= f.submit 'Save', class: 'ix-btn' %>
+      <%= link_to 'Cancel', integration_emr_instances_path, class: 'ix-btn secondary' %>
+    </div>
+    <div class="ix-result" id="test-result"></div>
+  </div>
+<% end %>
+
+<script>
+  function escapeHtml(value) {
+    const div = document.createElement('div');
+    div.textContent = value === null || value === undefined ? '' : String(value);
+    return div.innerHTML;
+  }
+
+  function badge(ok, yes, no) {
+    return '<span class="ix-badge ' + (ok ? 'ok' : 'bad') + '">' + (ok ? yes : no) + '</span>';
+  }
+
+  async function testConnection() {
+    const button = document.getElementById('test-btn');
+    const box = document.getElementById('test-result');
+    button.disabled = true;
+    button.textContent = 'Testing...';
+    box.style.display = 'block';
+    box.innerHTML = 'Contacting the EMR...';
+    try {
+      const data = new FormData(document.getElementById('instance-form'));
+      data.delete('_method');
+      <% if @emr_instance.persisted? %>data.append('id', '<%= @emr_instance.id %>');<% end %>
+      const response = await fetch('<%= test_connection_integration_emr_instances_path %>', {
+        method: 'POST',
+        headers: { 'Accept': 'application/json', 'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || '' },
+        body: data,
+        credentials: 'same-origin'
+      });
+      const json = await response.json();
+      if (!json.ok) {
+        box.innerHTML = '<div class="ix-errors" style="margin: 0;">' + (json.errors || [json.error]).map(escapeHtml).join('<br>') + '</div>';
+        return;
+      }
+      const r = json.result;
+      box.innerHTML =
+        '<dl>' +
+        '<dt>Reachable</dt><dd>' + badge(r.health.reachable, 'Yes', 'No') + '</dd>' +
+        '<dt>Health</dt><dd>' + badge(r.health.up, 'Up', 'Down') + (r.health.error ? ' ' + escapeHtml(r.health.error) : '') + '</dd>' +
+        '<dt>Version</dt><dd>' + escapeHtml(r.version) + '</dd>' +
+        '<dt>Login</dt><dd>' + badge(r.authenticated, 'OK', 'Failed') + (r.auth_error ? ' ' + escapeHtml(r.auth_error) : '') + '</dd>' +
+        '</dl>';
+    } catch (error) {
+      box.innerHTML = '<div class="ix-errors" style="margin: 0;">Test failed: ' + escapeHtml(error.message) + '</div>';
+    } finally {
+      button.disabled = false;
+      button.textContent = 'Test connection';
+    }
+  }
+</script>

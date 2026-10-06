@@ -1,0 +1,46 @@
+<div class="ix-wrap">
+  <%= render 'integration/header', title: 'Central EMR Instances' %>
+
+  <div class="ix-actions" style="margin: 0 0 14px 0;">
+    <%= link_to 'Add central EMR instance', new_integration_emr_instance_path, class: 'ix-btn' %>
+  </div>
+
+  <% if @emr_instances.empty? %>
+    <div class="ix-card">
+      No central EMR instances yet. Add one (e.g. MaHIS at https://mahis.health.gov.mw) and then move sites to it from the Sites tab.
+    </div>
+  <% else %>
+    <div class="ix-table-scroll">
+      <table class="ix-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Base URL</th>
+            <th>VL Concept ID</th>
+            <th>Login User</th>
+            <th>Sites</th>
+            <th>Status</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @emr_instances.each do |instance| %>
+            <tr>
+              <td><strong><%= instance.name %></strong><div class="ix-hint"><%= EmrInstance::EMR_TYPES[instance.emr_type] %></div></td>
+              <td><%= instance.base_url %></td>
+              <td><%= instance.vl_concept_id %></td>
+              <td><%= instance.username.presence || '—' %></td>
+              <td><%= @site_counts[instance.id] || 0 %></td>
+              <td><span class="ix-badge <%= instance.active ? 'ok' : 'muted' %>"><%= instance.active ? 'Active' : 'Disabled' %></span></td>
+              <td style="display: flex; gap: 6px;">
+                <%= link_to 'Edit', edit_integration_emr_instance_path(instance), class: 'ix-btn small' %>
+                <%= button_to 'Delete', integration_emr_instance_path(instance), method: :delete, class: 'ix-btn small danger',
+                              form: { style: 'margin: 0;', onsubmit: "return confirm('Delete #{j instance.name}?');" } %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% end %>
+</div>
