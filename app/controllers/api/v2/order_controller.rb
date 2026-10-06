@@ -135,7 +135,7 @@ class API::V2::OrderController < ApplicationController
   def create_order
     message = required_params
     if message.present?
-      render json: { error: true, message: message, data: {} }, status: :unprocessable_entity and return
+      render json: { error: true, message: message, data: {} }, status: :unprocessable_content and return
     end
 
     specimen = Speciman.find_by(tracking_number: params[:order][:tracking_number])
@@ -164,7 +164,7 @@ class API::V2::OrderController < ApplicationController
         error: true,
         message: response,
         data: {}
-      }, status: :unprocessable_entity
+      }, status: :unprocessable_content
     end
   end
 
@@ -181,14 +181,14 @@ class API::V2::OrderController < ApplicationController
         error: true,
         message: response,
         data: {}
-      }, status: :unprocessable_entity
+      }, status: :unprocessable_content
     end
   end
 
   def create_order_once_off
     message = required_params
     if message.present?
-      render json: { error: true, message: message, data: {} }, status: :unprocessable_entity and return
+      render json: { error: true, message: message, data: {} }, status: :unprocessable_content and return
     end
 
     specimen = Speciman.find_by(tracking_number: params[:order][:tracking_number])
@@ -230,7 +230,7 @@ class API::V2::OrderController < ApplicationController
         error: true,
         message: response,
         data: {}
-      }, status: :unprocessable_entity
+      }, status: :unprocessable_content
     end
   end
 

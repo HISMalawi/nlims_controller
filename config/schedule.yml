@@ -8,9 +8,22 @@ generate_integration_status_report_job:
   name: "Generate Integration Status Report Every 5 hours"
   cron: "0 */5 * * *"
   class: "GenerateIntegrationStatusReportJob"
-  queue: default
+  queue: critical
 
 sync_error_log_cleanup_worker:
   name: "Sync Error Log Cleanup Worker"
   cron: "0 * * * *"
   class: "SyncErrorLogCleanupWorker"
+  queue: low_priority
+
+mahis_couchdb_order_backfill_job:
+  name: "Retry Failed MaHIS CouchDB Order Imports Every 5 Minutes"
+  cron: "*/5 * * * *"
+  class: "MahisCouchdbOrderBackfillJob"
+  queue: default
+
+update_order_source_couch_id_job:
+  name: "Update Order Source Couch ID - Weekly Friday at 3pm"
+  cron: "0 15 * * 5"
+  class: "UpdateOrderSourceCouchIdJob"
+  queue: default

@@ -1,7 +1,7 @@
 :concurrency: 5
 :queues:
-  - critical
-  - default
-  - high_priority
-  - low_priority
+  - [critical, 4]
+  - [high_priority, 3]
+  - [default, 2]
+  - [low_priority, 1]
 :namespace: "nlims_controller"

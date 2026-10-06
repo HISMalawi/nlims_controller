@@ -52,7 +52,7 @@ module API
 
         render json: organism, status: :created
       rescue StandardError => e
-        render json: { error: e.message }, status: :unprocessable_entity
+        render json: { error: e.message }, status: :unprocessable_content
       end
 
       # PUT/PATCH /api/v1/test_catalogs/:catalog_id/organisms/:id
@@ -62,7 +62,7 @@ module API
 
         render json: organism
       rescue StandardError => e
-        render json: { error: e.message }, status: :unprocessable_entity
+        render json: { error: e.message }, status: :unprocessable_content
       end
 
       # DELETE /api/v1/test_catalogs/:catalog_id/organisms/:id
@@ -72,7 +72,7 @@ module API
 
         head :no_content
       rescue StandardError => e
-        render json: { error: e.message }, status: :unprocessable_entity
+        render json: { error: e.message }, status: :unprocessable_content
       end
 
       private

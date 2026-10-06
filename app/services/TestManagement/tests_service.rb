@@ -16,6 +16,8 @@ module TestManagement
 
           TestStatusTrail.create!(
             test_id: lab_test.id,
+            test_uuid: trail[:test_uuid],
+            uuid: trail[:trail_uuid],
             time_updated: trail[:timestamp],
             test_status_id: trail_status.id,
             who_updated_id: trail[:updated_by]['id'].to_s,
@@ -56,8 +58,10 @@ module TestManagement
         device_name = "#{result_params[:platform]} #{result_params[:platformserial]}".strip
         if previous_result.present?
           TestResultTrail.create!(
+            uuid: test_result[:uuid],
             measure_id: measure.id,
             test_id: lab_test_id,
+            test_uuid: Test.find_by(id: lab_test_id)&.test_uuid,
             old_result: previous_result.result,
             new_result: result_value,
             old_device_name: previous_result.device_name,

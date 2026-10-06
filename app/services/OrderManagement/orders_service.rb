@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'digest'
+
 # OrderManagement module
 module OrderManagement
   # OrderService class
@@ -52,12 +54,14 @@ module OrderManagement
               test_status_id,
               created_by,
               panel_id = nil,
-              lab_test.dig(:test_type, :method_of_testing)
+              lab_test.dig(:test_type, :method_of_testing),
+              lab_test[:test_uuid]
             )
           else
-            panel = PanelType.find_by(name: lab_test)
+            panel = PanelType.find_by(name: lab_test.dig(:test_type, :name))
             test_types = panel&.test_types || []
             test_types.each do |test_type|
+              test_uuid = panel_test_uuid(lab_test[:test_uuid], test_type.id, specimen.couch_id)
               create_test(
                 patient,
                 specimen,
@@ -66,7 +70,8 @@ module OrderManagement
                 test_status_id,
                 created_by,
                 panel_id = panel.id,
-                lab_test.dig(:test_type, :method_of_testing)
+                lab_test.dig(:test_type, :method_of_testing),
+                test_uuid
               )
             end
           end
@@ -75,6 +80,18 @@ module OrderManagement
       [true, params[:order][:tracking_number]]
     rescue StandardError => e
       [false, e.message]
+    end
+
+    def self.panel_test_uuid(base_uuid, test_type_id, order_uuid)
+      seed = [base_uuid.presence || order_uuid, test_type_id].compact.join(':')
+      digest = Digest::MD5.hexdigest(seed)
+      [
+        digest[0, 8],
+        digest[8, 4],
+        digest[12, 4],
+        digest[16, 4],
+        digest[20, 12]
+      ].join('-')
     end
 
     def self.update_order(order, params)
@@ -112,6 +129,8 @@ module OrderManagement
 
           SpecimenStatusTrail.create!(
             specimen_id: order.id,
+            order_uuid: order.couch_id,
+            uuid: trail[:trail_uuid],
             time_updated: trail[:timestamp],
             specimen_status_id: trail_status.id,
             who_updated_id: trail[:updated_by]['id'].to_s,
@@ -159,7 +178,7 @@ module OrderManagement
         specimen_type = SpecimenType.find_by(nlims_code: params.dig(:sample_type, :nlims_code))
       end
       order = Speciman.create!(
-        couch_id: params[:uuid] || SecureRandom.uuid,
+        couch_id: params[:uuid] || params[:order_uuid] || SecureRandom.uuid,
         tracking_number: params[:tracking_number],
         specimen_type_id: specimen_type&.id,
         specimen_status_id: sample_status_id,
@@ -199,9 +218,11 @@ module OrderManagement
       order
     end
 
-    def self.create_test(patient, specimen, testype_id, time_created, test_status_id, created_by, panel_id = nil, method_of_testing = nil)
+    def self.create_test(patient, specimen, testype_id, time_created, test_status_id, created_by, panel_id = nil, method_of_testing = nil, uuid = nil)
       Test.create!(
+        uuid: uuid,
         specimen_id: specimen.id,
+        order_uuid: specimen.couch_id,
         test_type_id: testype_id,
         patient_id: patient.id,
         created_by: created_by,

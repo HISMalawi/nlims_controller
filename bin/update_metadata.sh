@@ -10,10 +10,12 @@ rm Gemfile.lock && bundle install --local && bundle exec rails db:migrate && (
   bundle exec rake db:seed:specific\[seed_additional_test_statuses.rb\] &&
   bundle exec rake db:seed:specific\[seed_roles.rb\] &&
   bundle exec rake db:seed:specific\[add_roles_to_users.rb\] &&
-  bundle exec rake db:load_metadata
+  bundle exec rake db:load_metadata &&
+  bundle exec rails r bin/mlab/clear_sync_trackers.rb
 )
 bundle exec rails r bin/updater.rb && bash bin/add_cronjob.sh
 
-# Update couch IDs for order sources
-echo "Updating order source couch IDs..."
-nohup bundle exec rake master_nlims:update_order_source_couch_id > log/update_order_source_couch_id.log 2>&1 &
+# Update indexes and constraints in background to avoid long downtime during migration
+# Logs will be written to log/uuid_backfill.log
+echo "Starting Index and constraint update process in background..."
+nohup bundle exec rake uuid:add_indexes > log/uuid_add_indexes.log 2>&1 &

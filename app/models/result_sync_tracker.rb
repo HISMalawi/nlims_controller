@@ -14,8 +14,24 @@ class ResultSyncTracker < ApplicationRecord
   end
 
   def push_result_to_emr
+    specimen = Speciman.find_by(tracking_number:)
+    return if specimen&.source_system&.downcase == 'iblis'
+
+    if MahisCouchdb::ResultWriterService.mahis_couchdb_order?(specimen)
+      return unless app == 'emr'
+
+      if MahisCouchdb::ResultWriterService.new.call(tracking_number:, test_id:)
+        update_columns(sync_status: true, updated_at: Time.current)
+      else
+        MahisCouchdbResultSyncJob.perform_async({
+          tracking_number:,
+          test_id:
+        }.stringify_keys)
+      end
+      return
+    end
+
     return if !Config.master_update_source?(tracking_number) && Config.same_source?(tracking_number)
-    return if Speciman.find_by(tracking_number:)&.source_system&.downcase == 'iblis'
 
     SyncWithEmrJob.perform_async({
       tracking_number:,

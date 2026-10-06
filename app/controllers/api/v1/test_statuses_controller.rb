@@ -31,7 +31,7 @@ module API
         if @test_status.save
           render json: @test_status, status: :created
         else
-          render json: { errors: @test_status.errors.full_messages }, status: :unprocessable_entity
+          render json: { errors: @test_status.errors.full_messages }, status: :unprocessable_content
         end
       end
 
@@ -40,7 +40,7 @@ module API
         if @test_status.update(test_status_params)
           render json: @test_status
         else
-          render json: { errors: @test_status.errors.full_messages }, status: :unprocessable_entity
+          render json: { errors: @test_status.errors.full_messages }, status: :unprocessable_content
         end
       end
 

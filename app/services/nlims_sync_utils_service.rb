@@ -216,8 +216,9 @@ class NlimsSyncUtilsService
     push_order_to_master_nlims(tracking_number, once_off: once_off)
   end
 
-  def push_acknwoledgement_to_master_nlims(pending_acks: nil)
+  def push_acknwoledgement_to_master_nlims(pending_acks: nil, created_at_cutoff: 30.days.ago)
     pending_acks ||= ResultsAcknwoledge.where(acknwoledged_to_nlims: false)
+                                       .where('created_at >= ?', created_at_cutoff)
     return if pending_acks.empty?
 
     pending_acks.each do |ack|
@@ -243,11 +244,84 @@ class NlimsSyncUtilsService
       puts "Pushed acknowledgments for tracking number: #{ack.tracking_number} to Master NLIMS"
     rescue StandardError => e
       puts "Error: #{JSON.parse(e.response)} ==> NLIMS Push Acknowledgement to Master NLIMS"
-      SyncUtilService.log_error(
-        error_message: e.response,
-        custom_message: "NLIMS Push Acknowledgement to Master NLIMS @ #{@address}",
-        payload:
-      )
+      next
+    end
+  end
+
+  ##
+  # Fetches an order from master NLIMS with timeout handling
+  # Returns the order data if found, nil otherwise
+  def fetch_order_from_master(tracking_number, couch_id: nil)
+    return nil unless Config.local_nlims?
+
+    url = if couch_id.present?
+            "#{@address}/api/v2/orders/#{tracking_number}?couch_id=#{couch_id}"
+          else
+            "#{@address}/api/v2/orders/#{tracking_number}"
+          end
+
+    response = JSON.parse(RestClient::Request.execute(
+                            method: :get,
+                            url:,
+                            timeout: 3,
+                            headers: { content_type: :json, accept: :json, token: @token }
+                          ))
+
+    return nil if response['error'] == true || response['data'].blank?
+
+    response['data']
+  rescue RestClient::RequestTimeout, RestClient::Exceptions::OpenTimeout => e
+    Rails.logger.warn("Timeout fetching order #{tracking_number} from master NLIMS: #{e.message}")
+    nil
+  rescue StandardError => e
+    Rails.logger.error("Error fetching order #{tracking_number} from master NLIMS: #{e.message}")
+    nil
+  end
+
+  ##
+  # Creates an order locally from master NLIMS data
+  # Returns [success, order] tuple
+  def create_order_from_master_data(order_data)
+    return [false, nil] if order_data.blank?
+
+    # Transform the data to match the create_order params structure
+    params = {
+      order: order_data[:order],
+      patient: order_data[:patient],
+      tests: order_data[:tests]
+    }
+
+    # Create the order using the existing service
+    status, response = OrderManagement::OrdersService.create_order(params)
+    return [false, nil] unless status
+
+    # Fetch the created order
+    order = Speciman.find_by(tracking_number: response)
+    return [false, nil] unless order
+
+    # Update tests with their status trails and results from master
+    update_tests_from_master(order, order_data[:tests])
+
+    [true, order]
+  rescue StandardError => e
+    Rails.logger.error("Error creating order from master data: #{e.message}")
+    [false, nil]
+  end
+
+  ##
+  # Updates tests with status trails and results from master NLIMS data
+  def update_tests_from_master(order, tests_data)
+    return if tests_data.blank?
+
+    tests_data.each do |test_data|
+      # Skip if no status trail or results to update
+      next if test_data[:status_trail].blank? && test_data[:test_results].blank?
+
+      # Update test with status trails and results
+      TestManagement::TestsService.update_tests(order, test_data)
+    rescue StandardError => e
+      Rails.logger.error("Error updating test from master data: #{e.message}")
+      # Continue with other tests even if one fails
       next
     end
   end

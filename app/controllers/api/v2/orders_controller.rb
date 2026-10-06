@@ -16,20 +16,28 @@ module API
       end
 
       def show
+        # If order not found locally and this is a local NLIMS, try fetching from master
+        if @order.nil? && Config.local_nlims?
+          @order = fetch_and_create_from_master
+          return render_error('order not available', :not_found) if @order.nil?
+        elsif @order.nil?
+          return render_error('order not available', :not_found)
+        end
+
         render_success('Order Found', OrderSerializer.serialize(@order))
       end
 
       # rubocop:disable Metrics/AbcSize
       def create
         if (error_message = required_params).present?
-          return render_error(error_message, :unprocessable_entity)
+          return render_error(error_message, :unprocessable_content)
         end
         if (specimen = Speciman.find_by(tracking_number: params.dig(:order, :tracking_number)))
           return render_success('order already available', { tracking_number: specimen.tracking_number }, :created)
         end
 
         status, response = OrderManagement::OrdersService.create_order(params)
-        return render_error(response, :unprocessable_entity) unless status
+        return render_error(response, :unprocessable_content) unless status
 
         @order = Speciman.find_by(tracking_number: response)
         update_tests(@order, params[:tests]) if params[:tests].present?
@@ -40,7 +48,7 @@ module API
 
       def request_order
         if (error_message = required_params).present?
-          return render_error(error_message, :unprocessable_entity)
+          return render_error(error_message, :unprocessable_content)
         end
 
         if (specimen = Speciman.find_by(tracking_number: params.dig(:order, :tracking_number)))
@@ -48,7 +56,7 @@ module API
         end
 
         status, response = OrderManagement::OrdersService.create_order(params, true)
-        return render_error(response, :unprocessable_entity) unless status
+        return render_error(response, :unprocessable_content) unless status
 
         order = Speciman.find_by(tracking_number: response)
         render_success('order created successfully', { tracking_number: order.tracking_number, uuid: order.couch_id },
@@ -60,13 +68,13 @@ module API
         if status
           render_success(response, { tracking_number: params['tracking_number'] })
         else
-          render_error(response, :unprocessable_entity)
+          render_error(response, :unprocessable_content)
         end
       end
 
       def update
         update_status, message = OrderManagement::OrdersService.update_order(@order, params)
-        return render_error(message, :unprocessable_entity) unless update_status
+        return render_error(message, :unprocessable_content) unless update_status
 
         render_success('order updated successfully', { tracking_number: @order.tracking_number })
       end
@@ -177,9 +185,38 @@ module API
                  else
                    Speciman.find_by(tracking_number: params[:id])
                  end
+        # Don't render error here - let the show action handle master NLIMS fallback
+        return @order if action_name == 'show'
         return render_error('order not available', :not_found) unless @order
 
         @order
+      end
+
+      def fetch_and_create_from_master
+        return nil unless Config.local_nlims?
+
+        begin
+          # Initialize NLIMS service for master communication
+          nlims_service = NlimsSyncUtilsService.new(params[:id])
+          return nil unless nlims_service.token.present?
+
+          # Fetch order from master with timeout
+          order_data = nlims_service.fetch_order_from_master(
+            params[:id],
+            couch_id: params[:couch_id]
+          )
+          return nil if order_data.blank?
+
+          # Create order locally from master data
+          success, order = nlims_service.create_order_from_master_data(order_data.deep_symbolize_keys)
+          return nil unless success
+
+          Rails.logger.info("Successfully fetched and created order #{params[:id]} from master NLIMS")
+          order
+        rescue StandardError => e
+          Rails.logger.error("Failed to fetch order from master NLIMS: #{e.message}")
+          nil
+        end
       end
 
       def update_sending_facility

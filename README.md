@@ -129,6 +129,52 @@ NOTE: The above steps for running the application are for the ART server and the
 
 NOTE: The rails environment in which nlims-api is running should be the same envinronment in which the sidekiq worker is running. If development, sidekiq should also be development. If production, sidekiq should also be production. You can change the environments in the services file.
 
+## Running the MaHIS CouchDB integration
+
+NLIMS can listen to MaHIS CouchDB `patients_records` changes and import lab orders as soon as they are saved in MaHIS. Before starting the listener, make sure the MaHIS CouchDB settings are configured in `config/application.yml`.
+
+Start the permanent MaHIS CouchDB listener:
+
+```bash
+RAILS_ENV=production bundle exec rake mahis_couchdb:listen
+```
+
+The listener prints MaHIS CouchDB order activity to the terminal and Rails logs. You should see messages for connection status, pending-order backfill, processed CouchDB changes, imported lab orders, already-imported orders, and failed order imports. Result write-back logs are also printed by the process that pushes the result, usually Sidekiq, including pushed results and failed result write-backs.
+
+The order listener does not scan every patient record. MaHIS marks patient docs that contain NLiMS work with `has_pending_nlims_orders=true`, and NLIMS creates a CouchDB Mango index on that field. On startup and reconnect, NLIMS queries only those pending docs, then marks each order with `nlims_order_listener_status` as `processed`, `failed`, or `dead_letter`.
+
+For development, use:
+
+```bash
+bundle exec rake mahis_couchdb:listen
+```
+
+To test the CouchDB sync once and exit:
+
+```bash
+RAILS_ENV=production bundle exec rake mahis_couchdb:sync_once
+```
+
+Keep Sidekiq running as well, because result write-back retries, scheduled jobs, and failed-order backfills run through Sidekiq:
+
+```bash
+RAILS_ENV=production bundle exec sidekiq
+```
+
+If CouchDB or metadata was unavailable and some lab orders were written to `SyncErrorLog`, retry them manually with:
+
+```bash
+RAILS_ENV=production bundle exec rake mahis_couchdb:retry_failed_orders LIMIT=100
+```
+
+To enqueue the same retry through Sidekiq:
+
+```bash
+RAILS_ENV=production bundle exec rake mahis_couchdb:enqueue_retry_failed_orders LIMIT=100
+```
+
+The failed-order backfill job is also scheduled in `config/schedule.yml` to run every 5 minutes. Restart Sidekiq after changing the schedule so the new cron entry is loaded.
+
 # Local NLIMS at Sites 
 
 ## Overview
