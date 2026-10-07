@@ -25,6 +25,7 @@
   <thead>
     <tr style="background-color: #f1f5f9;">
       <th style="padding: 12px; border: 1px solid #cbd5e1; color: #334155; font-size: 12px; font-weight: 700; text-transform: uppercase;">Stock ID</th>
+      <th style="padding: 12px; border: 1px solid #cbd5e1; color: #334155; font-size: 12px; font-weight: 700; text-transform: uppercase;">Stock Item</th>
       <th style="padding: 12px; border: 1px solid #cbd5e1; color: #334155; font-size: 12px; font-weight: 700; text-transform: uppercase;">Lot</th>
       <th style="padding: 12px; border: 1px solid #cbd5e1; color: #334155; font-size: 12px; font-weight: 700; text-transform: uppercase;">Batch</th>
       <th style="padding: 12px; border: 1px solid #cbd5e1; color: #334155; font-size: 12px; font-weight: 700; text-transform: uppercase; white-space: nowrap;">Expiry Date</th>
@@ -35,6 +36,7 @@
     <% @stock_transactions.each do |transaction| %>
       <tr>
         <td style="padding: 12px; border: 1px solid #e2e8f0;"><span class="mobile-label" style="display: none;">Stock ID</span><%= transaction['stock_id'] %></td>
+        <td style="padding: 12px; border: 1px solid #e2e8f0;"><span class="mobile-label" style="display: none;">Stock Item</span><%= transaction['stock_item_name'] %></td>
         <td style="padding: 12px; border: 1px solid #e2e8f0;"><span class="mobile-label" style="display: none;">Lot</span><%= transaction['lot'] %></td>
         <td style="padding: 12px; border: 1px solid #e2e8f0;"><span class="mobile-label" style="display: none;">Batch</span><%= transaction['batch'] %></td>
         <td style="padding: 12px; border: 1px solid #e2e8f0; white-space: nowrap;"><span class="mobile-label" style="display: none;">Expiry Date</span><%= transaction['expiry_date']&.to_date %></td>
