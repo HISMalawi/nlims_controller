@@ -1130,7 +1130,7 @@ module OrderService
   def self.nlims_local_orders(start_date, end_date, concept, sending_facility: nil)
     start_date = start_date.present? ? start_date.to_date.beginning_of_day : Date.today.beginning_of_day
     end_date = end_date.present? ? end_date.to_date.end_of_day : Date.today.end_of_day
-    test_type = TestType.where("name LIKE '%#{concept[:name]}%'")
+    test_type = concept_test_types(concept)
     if sending_facility.present?
       sp = Speciman.where('date_created >= ? AND date_created <= ? AND sending_facility = ?', start_date, end_date, sending_facility)
     else
@@ -1143,6 +1143,27 @@ module OrderService
     return Speciman.where(id: tests.pluck(:specimen_id)) if sending_facility.present?
 
     Speciman.where(id: tests.pluck(:specimen_id))
+  end
+
+  def self.concept_test_types(concept)
+    TestType.where('name LIKE ?', "%#{TestType.sanitize_sql_like(concept[:name].to_s)}%")
+  end
+
+  # Same counting rules as nlims_local_orders(...).count, for many facilities in one query.
+  # Returns { sending_facility => count }; facilities without orders are absent.
+  def self.nlims_orders_count_by_facility(start_date, end_date, concept, facilities)
+    return {} if facilities.blank?
+
+    start_date = start_date.to_date.beginning_of_day
+    end_date = end_date.to_date.end_of_day
+    scope = Speciman.where(date_created: start_date..end_date, sending_facility: facilities)
+    test_type_ids = concept_test_types(concept).ids
+    if test_type_ids.any?
+      scope = scope.joins(:tests)
+                   .where(tests: { test_type_id: test_type_ids })
+                   .where.not(tests: { test_status_id: TestStatus.get_test_status_id('voided') })
+    end
+    scope.group(:sending_facility).distinct.count(:id)
   end
 
   def self.order_summary_remark(emr_orders, nlims_orders, nlims_chsu: nil)

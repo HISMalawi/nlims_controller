@@ -1,0 +1,108 @@
+<div class="ix-wrap">
+  <%= render 'integration/header', title: 'Integration Setup' %>
+
+  <div class="ix-card">
+    <p style="margin-top: 0;">
+      Each site's status is checked in one of two ways:
+      <span class="ix-badge local">Local NLIMS</span> pings the site's server and asks its local NLIMS for EMR order counts;
+      <span class="ix-badge central">Central EMR</span> checks the central EMR (e.g. MaHIS) health endpoint and asks it for the site's orders by location.
+      Moving a site to the central EMR is just a change of mode here; the report stays in the same format.
+    </p>
+    <div class="ix-actions" style="margin-top: 0;">
+      <%= button_to 'Re-check all sites now', run_check_integration_sites_path, method: :post, class: 'ix-btn secondary', form: { style: 'margin: 0;' } %>
+      <% if @emr_instances.empty? %>
+        <span class="ix-hint">No central EMR instances yet. <%= link_to 'Add one', new_integration_emr_instance_path %> before moving sites.</span>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="ix-filters">
+    <div class="ix-field">
+      <label for="site-search">Search</label>
+      <input type="text" id="site-search" placeholder="Facility, district or IP" oninput="filterSites()">
+    </div>
+    <div class="ix-field">
+      <label for="mode-filter">Mode</label>
+      <select id="mode-filter" onchange="filterSites()">
+        <option value="">All</option>
+        <option value="<%= Site::LOCAL_NLIMS %>">Local NLIMS</option>
+        <option value="<%= Site::CENTRAL_EMR %>">Central EMR</option>
+      </select>
+    </div>
+    <div class="ix-field">
+      <label for="enabled-filter">Monitoring</label>
+      <select id="enabled-filter" onchange="filterSites()">
+        <option value="true">Enabled sites</option>
+        <option value="">All sites</option>
+        <option value="false">Disabled sites</option>
+      </select>
+    </div>
+    <div class="ix-hint" id="site-count"></div>
+  </div>
+
+  <div class="ix-table-scroll">
+    <table class="ix-table" id="sites-table">
+      <thead>
+        <tr>
+          <th>Site</th>
+          <th>District</th>
+          <th>Mode</th>
+          <th>Checked via</th>
+          <th>MaHIS Location ID</th>
+          <th>Facility Code</th>
+          <th>Monitoring</th>
+          <th>Mode Changed</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @sites.each do |site| %>
+          <tr data-mode="<%= site.integration_mode %>" data-enabled="<%= site.enabled ? 'true' : 'false' %>"
+              data-search="<%= [site.name, site.other_name, site.district, site.host_address].compact.join(' ').downcase %>">
+            <td>
+              <strong><%= site.name %></strong>
+              <% if site.other_name.present? %><div class="ix-hint">Also: <%= site.other_name %></div><% end %>
+            </td>
+            <td><%= site.district %></td>
+            <td>
+              <span class="ix-badge <%= site.central_emr? ? 'central' : 'local' %>">
+                <%= IntegrationStatusService.mode_label(site.integration_mode) %>
+              </span>
+            </td>
+            <td>
+              <% if site.central_emr? %>
+                <%= site.emr_instance&.name || '—' %>
+                <% if site.emr_instance && !site.emr_instance.active %><span class="ix-badge bad">instance disabled</span><% end %>
+              <% else %>
+                <%= [site.host_address, site.application_port].compact.join(':').presence || '—' %>
+              <% end %>
+            </td>
+            <td><%= site.mahis_location_id || '—' %></td>
+            <td><%= site.mahis_facility_code || '—' %></td>
+            <td><span class="ix-badge <%= site.enabled ? 'ok' : 'muted' %>"><%= site.enabled ? 'Enabled' : 'Disabled' %></span></td>
+            <td><%= site.integration_mode_changed_at&.strftime('%d/%b/%Y %H:%M') || '—' %></td>
+            <td><%= link_to 'Configure', edit_integration_site_path(site), class: 'ix-btn small' %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+  function filterSites() {
+    const search = document.getElementById('site-search').value.trim().toLowerCase();
+    const mode = document.getElementById('mode-filter').value;
+    const enabled = document.getElementById('enabled-filter').value;
+    let shown = 0;
+    document.querySelectorAll('#sites-table tbody tr').forEach(function (row) {
+      const visible = (search === '' || row.dataset.search.includes(search)) &&
+        (mode === '' || row.dataset.mode === mode) &&
+        (enabled === '' || row.dataset.enabled === enabled);
+      row.style.display = visible ? '' : 'none';
+      if (visible) shown++;
+    });
+    document.getElementById('site-count').textContent = shown + ' site(s)';
+  }
+  document.addEventListener('DOMContentLoaded', filterSites);
+</script>

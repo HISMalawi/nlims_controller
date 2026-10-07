@@ -1,0 +1,24 @@
+<div class="ix-wrap" style="max-width: 420px;">
+  <%= render 'integration/header', title: 'Integration Setup' %>
+
+  <div class="ix-card">
+    <h2>Sign in</h2>
+    <p class="ix-hint" style="margin-top: 0;">Use an NLIMS account with the <strong>admin</strong> role.</p>
+    <% if @error %>
+      <div class="ix-errors"><%= @error %></div>
+    <% end %>
+    <%= form_with url: integration_login_path, method: :post, local: true do %>
+      <div class="ix-field" style="margin-bottom: 12px;">
+        <%= label_tag :username, 'Username' %>
+        <%= text_field_tag :username, params[:username], autocomplete: 'username', required: true, autofocus: true %>
+      </div>
+      <div class="ix-field">
+        <%= label_tag :password, 'Password' %>
+        <%= password_field_tag :password, nil, autocomplete: 'current-password', required: true %>
+      </div>
+      <div class="ix-actions">
+        <%= submit_tag 'Sign in', class: 'ix-btn' %>
+      </div>
+    <% end %>
+  </div>
+</div>

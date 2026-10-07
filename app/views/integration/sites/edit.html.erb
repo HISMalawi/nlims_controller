@@ -1,0 +1,156 @@
+<div class="ix-wrap">
+  <%= render 'integration/header', title: "Configure #{@site.name}" %>
+  <%= render 'integration/errors', messages: @site.errors.full_messages %>
+
+  <%= form_with model: @site, url: integration_site_path(@site), method: :patch, local: true, id: 'site-form' do |f| %>
+    <div class="ix-card">
+      <h2>How is this site's integration checked?</h2>
+      <div style="display: flex; gap: 24px; flex-wrap: wrap;">
+        <label style="display: flex; gap: 8px; align-items: flex-start; max-width: 460px;">
+          <%= f.radio_button :integration_mode, Site::LOCAL_NLIMS, onchange: 'toggleMode()' %>
+          <span><strong>Local NLIMS</strong><br>
+            <span class="ix-hint">EMR and NLIMS run on a server at the site. Master pings the server and asks the local NLIMS for EMR order counts.</span></span>
+        </label>
+        <label style="display: flex; gap: 8px; align-items: flex-start; max-width: 460px;">
+          <%= f.radio_button :integration_mode, Site::CENTRAL_EMR, onchange: 'toggleMode()' %>
+          <span><strong>Central EMR</strong><br>
+            <span class="ix-hint">The site uses a central EMR (e.g. MaHIS) that sends orders straight to master NLIMS. Master checks the central EMR and asks it for this site's orders by location.</span></span>
+        </label>
+      </div>
+    </div>
+
+    <div class="ix-card" id="central-fields">
+      <h2>Central EMR</h2>
+      <div class="ix-grid">
+        <div class="ix-field">
+          <%= f.label :emr_instance_id, 'Central EMR instance' %>
+          <%= f.select :emr_instance_id,
+                       @emr_instances.map { |i| ["#{i.name}#{' (disabled)' unless i.active}", i.id] },
+                       { include_blank: '— select —' } %>
+          <div class="ix-hint"><%= link_to 'Manage instances', integration_emr_instances_path %></div>
+        </div>
+        <div class="ix-field">
+          <%= f.label :mahis_location_id, 'MaHIS location ID' %>
+          <%= f.number_field :mahis_location_id, min: 1 %>
+          <div class="ix-hint">The site's location_id in MaHIS; used to filter EMR order counts.</div>
+        </div>
+        <div class="ix-field">
+          <%= f.label :mahis_facility_code, 'MaHIS facility code' %>
+          <%= f.text_field :mahis_facility_code %>
+        </div>
+      </div>
+    </div>
+
+    <div class="ix-card" id="local-fields">
+      <h2>Local NLIMS</h2>
+      <div class="ix-grid">
+        <div class="ix-field">
+          <%= f.label :host_address, 'Server IP address' %>
+          <%= f.text_field :host_address %>
+        </div>
+        <div class="ix-field">
+          <%= f.label :application_port, 'Local NLIMS port' %>
+          <%= f.text_field :application_port %>
+        </div>
+      </div>
+    </div>
+
+    <div class="ix-card">
+      <h2>General</h2>
+      <div class="ix-grid">
+        <div class="ix-field">
+          <%= f.label :other_name, 'Other name' %>
+          <%= f.text_field :other_name %>
+          <div class="ix-hint">Another name the EMR may send as sending facility; such orders are recorded under "<%= @site.name %>".</div>
+        </div>
+        <div class="ix-field">
+          <label style="display: flex; gap: 8px; align-items: center; margin-top: 22px;">
+            <%= f.check_box :enabled %> Monitor this site's integration status
+          </label>
+        </div>
+      </div>
+
+      <div class="ix-actions">
+        <button type="button" class="ix-btn secondary" id="test-btn" onclick="testSite()">Test with these settings</button>
+        <label style="display: flex; gap: 6px; align-items: center; font-size: 13px;">
+          <%= check_box_tag :recheck, '1', true %> Re-check status after saving
+        </label>
+        <%= f.submit 'Save', class: 'ix-btn' %>
+        <%= link_to 'Cancel', integration_sites_path, class: 'ix-btn secondary' %>
+      </div>
+      <div class="ix-result" id="test-result"></div>
+    </div>
+  <% end %>
+</div>
+
+<script>
+  function selectedMode() {
+    const checked = document.querySelector('input[name="site[integration_mode]"]:checked');
+    return checked ? checked.value : '<%= Site::LOCAL_NLIMS %>';
+  }
+
+  function toggleMode() {
+    const central = selectedMode() === '<%= Site::CENTRAL_EMR %>';
+    document.getElementById('central-fields').style.display = central ? '' : 'none';
+    document.getElementById('local-fields').style.display = central ? 'none' : '';
+  }
+
+  function escapeHtml(value) {
+    const div = document.createElement('div');
+    div.textContent = value === null || value === undefined ? '' : String(value);
+    return div.innerHTML;
+  }
+
+  function badge(ok, yes, no) {
+    return '<span class="ix-badge ' + (ok ? 'ok' : 'bad') + '">' + (ok ? yes : no) + '</span>';
+  }
+
+  async function testSite() {
+    const button = document.getElementById('test-btn');
+    const box = document.getElementById('test-result');
+    button.disabled = true;
+    button.textContent = 'Testing...';
+    box.style.display = 'block';
+    box.innerHTML = 'Running check, this can take up to a minute...';
+    try {
+      const form = document.getElementById('site-form');
+      const data = new FormData(form);
+      data.delete('_method');
+      const response = await fetch('<%= test_integration_site_path(@site) %>', {
+        method: 'POST',
+        headers: { 'Accept': 'application/json', 'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || '' },
+        body: data,
+        credentials: 'same-origin'
+      });
+      const json = await response.json();
+      if (!json.ok) {
+        box.innerHTML = '<div class="ix-errors" style="margin: 0;">' + (json.errors || [json.error]).map(escapeHtml).join('<br>') + '</div>';
+        return;
+      }
+      const s = json.status;
+      const summary = s.order_summary || {};
+      const emr = summary.emr || {};
+      const chsu = summary.nlims_chsu || {};
+      const local = summary.nlims_local || {};
+      box.innerHTML =
+        '<dl>' +
+        '<dt>Checked via</dt><dd>' + escapeHtml((s.emr_instance ? s.emr_instance + ' — ' : '') + (s.ip_address || '') + (s.app_port ? ':' + s.app_port : '')) + ' (' + escapeHtml(s.ping_method) + ')</dd>' +
+        '<dt>Ping</dt><dd>' + badge(s.ping_status, 'Success', 'Failed') + '</dd>' +
+        '<dt>App</dt><dd>' + badge(s.app_status, 'Running', 'Down') + ' version ' + escapeHtml(s.app_version) + '</dd>' +
+        '<dt>EMR orders</dt><dd>' + escapeHtml(emr.count) + ' (last drawn: ' + escapeHtml(emr.last_order_date || 'N/A') + ')</dd>' +
+        '<dt>NLIMS local orders</dt><dd>' + (local.applicable === false ? 'N/A (no local NLIMS)' : escapeHtml(local.count)) + '</dd>' +
+        '<dt>NLIMS CHSU orders</dt><dd>' + escapeHtml(chsu.count) + '</dd>' +
+        '<dt>Remark</dt><dd>' + escapeHtml(summary.overall_remark) + '</dd>' +
+        '<dt>Last synced order</dt><dd>' + escapeHtml(s.last_sync_date) + '</dd>' +
+        ((s.check_errors || []).length ? '<dt>Problems</dt><dd>' + s.check_errors.map(escapeHtml).join('<br>') + '</dd>' : '') +
+        '</dl><p class="ix-hint" style="margin-bottom: 0;">Nothing was saved. Click Save to apply.</p>';
+    } catch (error) {
+      box.innerHTML = '<div class="ix-errors" style="margin: 0;">Test failed: ' + escapeHtml(error.message) + '</div>';
+    } finally {
+      button.disabled = false;
+      button.textContent = 'Test with these settings';
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', toggleMode);
+</script>

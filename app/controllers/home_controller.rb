@@ -3,9 +3,10 @@ class HomeController < ApplicationController
 
   def index
     @info = 'NLIMS SERVICE'
-    start_date = Date.today - 1.day
-    end_date = Date.today
-    concept = { name: 'HIV Viral Load', id: 856 }
+    settings = IntegrationStatus::Settings.load
+    start_date = settings.summary_start_date
+    end_date = settings.summary_end_date
+    concept = settings.concept
     @git_tag = git_tag
     @local_nlims = Config.local_nlims? ? 'Local' : 'Master'
     return unless @local_nlims == 'Local'
@@ -13,7 +14,7 @@ class HomeController < ApplicationController
     nlims = NlimsSyncUtilsService.new(nil)
     emr = EmrSyncService.new(nil)
     @master_status = nlims.application_status ? 'Running' : 'Down'
-    @pinger = Net::Ping::External.new('10.44.0.46').ping ? 'Successful' : 'Cannot be reached'
+    @pinger = Net::Ping::External.new(master_host(nlims.address)).ping ? 'Successful' : 'Cannot be reached'
     @master_auth = nlims.token.blank? ? 'Failed' : 'Successful'
     @nlims_chsu_address = nlims.address
     @emr_auth = emr.token.blank? ? 'Failed' : 'Successful'
@@ -64,58 +65,36 @@ class HomeController < ApplicationController
   end
 
   def refresh_app_ping_status
-    integration_service = IntegrationStatusService.new
     site = Site.find_by(name: params[:site_name])
-    status = integration_service.application_status(site&.host_address, site&.application_port, site&.id)
-    ping_status = integration_service.ping_server(site&.host_address)
-    timestamp = Time.now.strftime('%d/%b/%Y %H:%M')
-    last_sync_date = integration_service.last_sync_date(site&.name)
-    last_sync_date = last_sync_date.present? ? last_sync_date.strftime('%d/%b/%Y %H:%M') : 'Has Never Synced with NLIMS'
-    order_summary = integration_service.fetch_order_summary(site&.host_address, site&.application_port, site&.name)
-    data = {
-      "app_status": status[:ping] ? 'Running' : 'Down',
-      "ping_status": ping_status ? 'Success' : 'Failed',
-      "app_version": status[:version],
-      "last_sync_date": last_sync_date,
-      "is_gt_24hr": integration_service.last_sync_date_gt_24hr?(last_sync_date),
-      "order_summary": order_summary,
-      "status_last_updated": timestamp
+    return render(json: { error: 'Site not found' }, status: :not_found) if site.nil?
+
+    row = IntegrationStatusService.new.refresh_site(site)
+    render json: {
+      app_status: row['app_status'] ? 'Running' : 'Down',
+      ping_status: row['ping_status'] ? 'Success' : 'Failed',
+      app_version: row['app_version'],
+      last_sync_date: row['last_sync_date'],
+      is_gt_24hr: row['last_sync_date_gt_24hr'],
+      order_summary: row['order_summary'],
+      status_last_updated: row['status_last_updated'],
+      integration_mode: row['integration_mode'],
+      ip_address: row['ip_address'],
+      app_port: row['app_port'],
+      check_errors: row['check_errors']
     }
-    report = Report.find_or_create_by(name: 'integration_status') do |r|
-      r.data = []
-    end
-
-    # Find the site in the existing data array or add it
-    site_index = report.data.find_index { |s| s['name'] == params[:site_name] }
-
-    updated_site_data = {
-      name: site.name,
-      ip_address: site.host_address,
-      app_port: site.application_port,
-      ping_status: ping_status,
-      app_status: status[:ping],
-      app_version: status[:version],
-      status_last_updated: timestamp,
-      last_sync_date_gt_24hr: integration_service.last_sync_date_gt_24hr?(last_sync_date),
-      last_sync_date: last_sync_date,
-      order_summary: order_summary
-    }.stringify_keys
-
-    if site_index
-      # Update existing site data
-      report.data[site_index] = updated_site_data
-    else
-      # Add new site data
-      report.data << updated_site_data
-    end
-
-    report.save!
-    render json: data
   end
 
   def orders_summary
     integration_service = IntegrationStatusService.new
     summary = integration_service.orders_summary(params)
     render json: summary
+  end
+
+  private
+
+  def master_host(address)
+    URI.parse(address.to_s).host || address
+  rescue URI::InvalidURIError
+    address
   end
 end

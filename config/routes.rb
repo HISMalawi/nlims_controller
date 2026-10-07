@@ -19,6 +19,22 @@ Rails.application.routes.draw do
   get 'integrated_sites', to: 'home#integrated_sites'
   get '/refresh_app_ping_status' => 'home#refresh_app_ping_status'
   get '/orders_summary' => 'home#orders_summary'
+
+  # Integration setup pages (master NLIMS admins): how each site's integration status is checked
+  namespace :integration do
+    get 'login', to: 'sessions#new', as: :login
+    post 'login', to: 'sessions#create'
+    delete 'logout', to: 'sessions#destroy', as: :logout
+    resources :sites, only: %i[index edit update] do
+      post :test, on: :member
+      post :run_check, on: :collection
+    end
+    # Listed explicitly: api_only apps drop new/edit from `resources` by default
+    resources :emr_instances, only: %i[index new create edit update destroy] do
+      post :test_connection, on: :collection
+    end
+    resource :settings, only: %i[edit update]
+  end
   namespace :api do
     namespace :v1 do
       # order routes

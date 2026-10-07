@@ -2,3 +2,11 @@ local_nlims: password
 master_nlims: password
 emr: password
 mahis: password
+
+# Keys for encrypting stored credentials (e.g. central EMR passwords).
+# Generate with: bin/rails db:encryption:init  (copy the three values below)
+# Keep these identical across restarts; losing them makes saved passwords unreadable.
+active_record_encryption:
+  primary_key:
+  deterministic_key:
+  key_derivation_salt:

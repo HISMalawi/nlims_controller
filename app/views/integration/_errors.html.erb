@@ -1,0 +1,10 @@
+<% if messages.any? %>
+  <div class="ix-errors">
+    <strong>Please fix the following:</strong>
+    <ul>
+      <% messages.each do |message| %>
+        <li><%= message %></li>
+      <% end %>
+    </ul>
+  </div>
+<% end %>

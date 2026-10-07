@@ -1,0 +1,50 @@
+<div class="ix-wrap">
+  <%= render 'integration/header', title: 'Integration Check Settings' %>
+  <%= render 'integration/errors', messages: @errors %>
+
+  <%= form_with scope: :settings, url: integration_settings_path, method: :patch, local: true do |f| %>
+    <div class="ix-card">
+      <h2>Order summary</h2>
+      <div class="ix-grid">
+        <div class="ix-field">
+          <%= f.label :vl_concept_name, 'Test type name' %>
+          <%= f.text_field :vl_concept_name, value: @settings.vl_concept_name %>
+          <div class="ix-hint">NLIMS test types matching this name are counted.</div>
+        </div>
+        <div class="ix-field">
+          <%= f.label :vl_concept_id, 'Local EMR concept ID' %>
+          <%= f.number_field :vl_concept_id, value: @settings.vl_concept_id, min: 1 %>
+          <div class="ix-hint">Concept ID sent to local NLIMS sites' EMRs. Central EMR instances set their own.</div>
+        </div>
+        <div class="ix-field">
+          <%= f.label :summary_window_days, 'Summary window (days back)' %>
+          <%= f.number_field :summary_window_days, value: @settings.summary_window_days, min: 1 %>
+          <div class="ix-hint">1 = yesterday and today.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ix-card">
+      <h2>Checks</h2>
+      <div class="ix-grid">
+        <div class="ix-field">
+          <%= f.label :stale_sync_hours, 'Flag sites not synced for (hours)' %>
+          <%= f.number_field :stale_sync_hours, value: @settings.stale_sync_hours, min: 1 %>
+        </div>
+        <div class="ix-field">
+          <%= f.label :http_timeout_seconds, 'Local NLIMS timeout (seconds)' %>
+          <%= f.number_field :http_timeout_seconds, value: @settings.http_timeout_seconds, min: 1 %>
+        </div>
+        <div class="ix-field">
+          <%= f.label :parallel_threads, 'Sites checked in parallel' %>
+          <%= f.number_field :parallel_threads, value: @settings.parallel_threads, min: 1, max: 32 %>
+          <div class="ix-hint">1 checks sites one at a time.</div>
+        </div>
+      </div>
+
+      <div class="ix-actions">
+        <%= f.submit 'Save', class: 'ix-btn' %>
+      </div>
+    </div>
+  <% end %>
+</div>

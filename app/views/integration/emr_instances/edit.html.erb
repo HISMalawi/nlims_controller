@@ -1,0 +1,4 @@
+<div class="ix-wrap">
+  <%= render 'integration/header', title: "Edit #{@emr_instance.name_was || @emr_instance.name}" %>
+  <%= render 'form', url: integration_emr_instance_path(@emr_instance), method: :patch %>
+</div>

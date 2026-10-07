@@ -3,167 +3,46 @@
 require 'parallel'
 
 # IntegrationStatusService
+# Checks each enabled site through the path that matches how it is set up (local NLIMS or central EMR,
+# see Site#integration_mode) and stores one uniformly shaped report for the dashboard, the daily email
+# and PowerBI.
 class IntegrationStatusService
-  def initialize
-    @sites = Site.where(enabled: true)
+  REPORT_NAME = 'integration_status'
+  HISTORY_REPORT_NAME = 'integration_status_history'
+
+  attr_reader :settings
+
+  def initialize(sites: Site.enabled)
+    @sites = sites
+    @settings = IntegrationStatus::Settings.load
   end
 
-  def ping_server(ip_address)
-    Net::Ping::External.new(ip_address || '').ping
-  end
-
-  def application_status(ip_address, port, site_id)
-    return false if ip_address.blank? || port.blank?
-
-    url = "http://#{ip_address}:#{port}/api/v1/ping?site_id=#{site_id}"
-
-    response = RestClient::Request.execute(
-      method: :get,
-      url: url,
-      headers: { content_type: 'application/json' },
-      timeout: 10,
-      open_timeout: 10
-    )
-    json_parse = JSON.parse(response)
-    {
-      ping: json_parse['ping'],
-      version: json_parse['version'].present? ? json_parse['version'] : 'N/A'
-    }
-  rescue RestClient::Exceptions::OpenTimeout, RestClient::Exceptions::ReadTimeout => e
-    puts "Timeout error: #{e.message}"
-    { ping: false, version: 'N/A' }
-  rescue RestClient::ExceptionWithResponse => e
-    if e.http_code == 404
-      url = "http://#{ip_address}:#{port}/api/v1/re_authenticate/aexede/aexede"
-      response = RestClient::Request.execute(
-        method: :get,
-        url: url,
-        headers: { content_type: 'application/json' },
-        timeout: 10,
-        open_timeout: 10
-      )
-      json_parse = JSON.parse(response)
-      { ping: json_parse['error'], version: 'N/A' }
-    end
-  rescue StandardError => e
-    puts "Error: #{e.message}"
-    { ping: false, version: 'N/A' }
-  end
-
-  def last_sync_date(sending_facility)
-    Speciman.where(sending_facility: sending_facility).order('created_at DESC').first&.created_at
-  end
-
-  def last_sync_date_gt_24hr?(last_sync_date)
-    puts "last sync date: #{last_sync_date}"
-    last_sync_date.present? && last_sync_date != 'Has Never Synced with NLIMS' ? last_sync_date < 48.hours.ago : true
-  end
-
-  # rubocop:disable Metrics/MethodLength
-  # rubocop:disable Metrics/AbcSize
   def check_integration_status
-    site_data = @sites.map do |site|
-      {
-        id: site.id,
-        name: site.name,
-        ip_address: site.host_address,
-        app_port: site.application_port
-      }
-    end
-
-    results = []
-
-    site_data.each do |site|
-      ip_address = site[:ip_address]
-      sending_facility = site[:name]
-      application_port = site[:app_port]
-
-      last_sync_date = ActiveRecord::Base.connection_pool.with_connection do
-        puts "checking last sync date #{sending_facility} : #{ip_address}"
-        last_sync_date(sending_facility)
-      end
-
-      # next unless last_sync_date_gt_24hr?(last_sync_date)
-
-      puts "pinging #{sending_facility} : #{ip_address}"
-      ping_status = ping_server(ip_address)
-
-      puts "checking application status #{sending_facility} : #{ip_address}"
-      status = application_status(ip_address, application_port, site[:id])
-      order_summary = fetch_order_summary(ip_address, application_port, sending_facility)
-
-      results << {
-        name: sending_facility,
-        ip_address: ip_address,
-        app_port: application_port,
-        ping_status: ping_status,
-        app_status: status[:ping],
-        app_version: status[:version],
-        status_last_updated: Time.now.strftime('%d/%b/%Y %H:%M'),
-        last_sync_date_gt_24hr: last_sync_date_gt_24hr?(last_sync_date),
-        last_sync_date: last_sync_date.present? ? last_sync_date.strftime('%d/%b/%Y %H:%M') : 'Has Never Synced with NLIMS',
-        order_summary: order_summary,
-        last_app_check_in_date: AppCheckIn.where(site_id: site[:id]).order('check_in_time DESC').first&.check_in_time
-      }
-    rescue StandardError => e
-      puts "[Error] #{e.class}: #{e.message}"
-    end
-
-    results
+    check_sites(@sites)
   end
-
-  # rubocop:enable Metrics/MethodLength
-  # rubocop:enable Metrics/AbcSize
 
   def generate_status_report
-    data = check_integration_status.sort_by { |site| site[:name].to_s.downcase }
-    Report.find_or_create_by(name: 'integration_status').update(data:)
-    Report.create(name: 'integration_status_history', data:)
-  end
-
-  def fetch_order_summary(ip_address, port, sending_facility)
-    url = "http://#{ip_address}:#{port}/orders_summary"
-    include_data = false
-    payload = {
-      start_date: Date.today - 1.day,
-      end_date: Date.today,
-      concept: { name: 'HIV Viral Load', id: 856 },
-      include_data: include_data
-    }
-    response = RestClient::Request.execute(
-      method: :get,
-      url: url,
-      payload: payload.to_json,
-      headers: { content_type: 'application/json' },
-      timeout: 10,
-      open_timeout: 10
-    )
-    data = JSON.parse(response).deep_symbolize_keys
-    nlims_chsu = OrderService.nlims_local_orders(payload[:start_date], payload[:end_date], payload[:concept], sending_facility: sending_facility)
-    data[:nlims_chsu] = {
-      count: nlims_chsu.count,
-      lab_orders: include_data ? nlims_chsu.pluck(:tracking_number).uniq : []
-    }
-    data[:overall_remark] = OrderService.order_summary_remark(data[:emr], data[:nlims_local], nlims_chsu: data[:nlims_chsu])
+    data = check_integration_status.sort_by { |site| site['name'].to_s.downcase }
+    Report.find_or_create_by(name: REPORT_NAME).update(data:)
+    Report.create(name: HISTORY_REPORT_NAME, data:)
     data
-  rescue StandardError => e
-    puts "Error: #{e.message}"
-    {
-      "emr": {
-        "count": 0,
-        "last_order_date": nil,
-        "lab_orders": [],
-        "remark": 'NLIMS Local Not Reachable'
-      },
-      "nlims_local": {
-        "count": 0,
-        "lab_orders": []
-      },
-      "nlims_chsu": { "count": 0, "lab_orders": [] },
-      "overall_remark": 'NLIMS Local Not Reachable'
-    }
   end
 
+  # Checks a site without saving anything; works on unsaved changes too (used by "Test" in the setup UI)
+  def check_site(site)
+    check_sites([site]).first
+  end
+
+  # Re-checks one site and replaces its row in the stored report
+  def refresh_site(site)
+    row = check_site(site)
+    report = Report.find_or_create_by(name: REPORT_NAME) { |r| r.data = [] }
+    data = (report.data || []).reject { |r| r['name'] == site.name } << row
+    report.update!(data: data.sort_by { |r| r['name'].to_s.downcase })
+    row
+  end
+
+  # Runs on a local NLIMS: answers master's request for EMR vs local NLIMS order counts
   def orders_summary(params)
     emr = EmrSyncService.new(nil)
     include_data = params[:include_data]
@@ -177,14 +56,7 @@ class IntegrationStatusService
   end
 
   def collect_outdated_sync_sites
-    # report = Report.where(name: 'integration_status').where(updated_at: (Time.now - 6.hour)..Time.now).first
-    # return report&.data&.select { |site| site['last_sync_date_gt_24hr'] } if report.present?
-
-    # generate_status_report
-    # data = Report.where(name: 'integration_status').where(updated_at: (Time.now - 6.hour)..Time.now).first&.data
-    # data&.select { |site| site['last_sync_date_gt_24hr'] } if data.present?
-
-    report = Report.where(name: 'integration_status').first
+    report = Report.where(name: REPORT_NAME).first
     return [] unless report.present?
 
     report&.data&.select { |site| site['last_sync_date_gt_24hr'] }
@@ -196,7 +68,8 @@ class IntegrationStatusService
     csv_data = CSV.generate do |csv|
       # Add headers
       csv << ['Site', 'IP Address', 'NLIMS Application Port', 'Last Synced Order Timestamp (CHSU)',
-              'Application Status', 'Ping Status', 'App Version', 'App-Ping Status Last Updated At']
+              'Application Status', 'Ping Status', 'App Version', 'App-Ping Status Last Updated At',
+              'Integration Mode', 'EMR Instance', 'Orders Summary Remark']
 
       # Add data rows
       site_reports.each do |report|
@@ -208,7 +81,10 @@ class IntegrationStatusService
           report['app_status'] ? 'Running' : 'Down',
           report['ping_status'] ? 'Successful' : 'Failed',
           report['app_version'],
-          report['status_last_updated']
+          report['status_last_updated'],
+          IntegrationStatusService.mode_label(report['integration_mode']),
+          report['emr_instance'],
+          report.dig('order_summary', 'overall_remark')
         ]
       end
     end
@@ -218,5 +94,44 @@ class IntegrationStatusService
     File.write(file_path, csv_data)
 
     file_path
+  end
+
+  # Rows written before integration modes existed have no mode; they were all local NLIMS sites
+  def self.mode_label(mode)
+    mode == Site::CENTRAL_EMR ? 'Central EMR' : 'Local NLIMS'
+  end
+
+  private
+
+  def check_sites(sites)
+    sites = sites.to_a
+    return [] if sites.empty?
+
+    ActiveRecord::Associations::Preloader.new(records: sites, associations: :emr_instance).call
+    facts = IntegrationStatus::SiteFacts.prefetch(sites, settings)
+    clients = sites.filter_map(&:emr_instance).select(&:active).uniq(&:id)
+                   .to_h { |instance| [instance.id, IntegrationStatus::EmrInstanceClient.new(instance)] }
+    checkers = sites.map { |site| checker_for(site, facts, clients) }
+    run_checkers(checkers)
+  end
+
+  def checker_for(site, facts, clients)
+    if site.central_emr?
+      IntegrationStatus::CentralEmrChecker.new(site:, settings:, facts:, client: clients[site.emr_instance_id])
+    else
+      IntegrationStatus::LocalNlimsChecker.new(site:, settings:, facts:)
+    end
+  end
+
+  # Checkers only do network I/O (all DB reads happen in SiteFacts), so threads don't need DB connections
+  def run_checkers(checkers)
+    threads = [settings.parallel_threads, checkers.size].min
+    return checkers.map(&:call) if threads <= 1
+
+    ActiveSupport::Dependencies.interlock.permit_concurrent_loads do
+      Parallel.map(checkers, in_threads: threads) do |checker|
+        Rails.application.executor.wrap { checker.call }
+      end
+    end
   end
 end
