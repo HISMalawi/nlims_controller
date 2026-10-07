@@ -2,7 +2,7 @@ Expired Stock Written Off
 
 <%= @stock_transactions.count %> expired stock lot(s) were automatically written off.
 
-Stock ID | Lot | Batch | Expiry Date | Quantity Written Off
+Stock ID | Stock Item | Lot | Batch | Expiry Date | Quantity Written Off
 <% @stock_transactions.each do |transaction| %>
-<%= transaction['stock_id'] %> | <%= transaction['lot'] %> | <%= transaction['batch'] %> | <%= transaction['expiry_date']&.to_date %> | <%= transaction['remaining_balance'] %>
+<%= transaction['stock_id'] %> | <%= transaction['stock_item_name'] %> | <%= transaction['lot'] %> | <%= transaction['batch'] %> | <%= transaction['expiry_date']&.to_date %> | <%= transaction['remaining_balance'] %>
 <% end %>
