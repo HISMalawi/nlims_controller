@@ -73,6 +73,7 @@ Rails.application.routes.draw do
       post '/check_in' => 'status#check_in'
       post '/register_order_source' => 'source_tracker#register_order_source'
       post '/update_order_source_couch_id' => 'source_tracker#update_order_source_couch_id'
+      post '/expired_stock_write_off_notifications' => 'expired_stock_write_off_notifications#create'
 
       resources :test_types, only: %i[index create show update destroy] do
         collection do
