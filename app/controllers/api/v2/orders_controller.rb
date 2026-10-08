@@ -225,11 +225,11 @@ module API
 
         facility_name = order_params[:sending_facility].presence
         site = Site.find_by(name: facility_name) || Site.find_by(other_name: facility_name) if facility_name.present?
-        if site.nil?
+        if site.nil? || facility_name == 'HIV Reception'
           remote_ip = request.remote_ip
-          site = Site.find_by(host_address: remote_ip) if remote_ip.present? && !%w[127.0.0.1 ::1].include?(remote_ip)
+          site = Site.find_by(host_address: remote_ip, enabled: true) if remote_ip.present? && !%w[127.0.0.1 ::1].include?(remote_ip)
         end
-        order_params[:sending_facility] = site.name if site.present?
+        order_params[:sending_facility] = site&.name if site.present?
         site
       end
     end
