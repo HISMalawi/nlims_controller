@@ -11,7 +11,9 @@ module API
         order_date: 'order date not provided',
         specimen_type: 'specimen type not provided',
         test_type: 'test type not provided',
-        ordering_facility: 'facility the order originated from not provided'
+        ordering_facility: 'facility the order originated from not provided',
+        ordered_by: 'person who placed the order not provided',
+        lab: 'lab that received the order not provided'
       }.freeze
 
       # rubocop:disable Metrics/AbcSize
@@ -68,8 +70,8 @@ module API
           specimen_type: params[:specimen_type].to_s.strip,
           test_type: params[:test_type].to_s.strip,
           ordering_facility: params[:ordering_facility].to_s.strip,
-          ordered_by: params[:ordered_by].to_s.strip.presence,
-          receiving_lab: params[:lab].to_s.strip.presence
+          ordered_by: params[:ordered_by].to_s.strip,
+          receiving_lab: params[:lab].to_s.strip
         }
       end
 

@@ -48,11 +48,20 @@ RSpec.describe 'Workflow bypassed orders', type: :request do
     expect(response.parsed_body['message']).to match(/already logged/)
   end
 
-  it 'logs the sample without ordered by and lab' do
-    expect { post_order(payload.except(:ordered_by, :lab)) }.to change(WorkflowBypassedOrder, :count).by(1)
+  it 'rejects a missing ordered by' do
+  expect { post_order(payload.except(:ordered_by)) }
+    .not_to change(WorkflowBypassedOrder, :count)
 
-    expect(response).to have_http_status(:created)
-    expect(WorkflowBypassedOrder.last).to have_attributes(ordered_by: nil, receiving_lab: nil)
+    expect(response).to have_http_status(:unprocessable_content)
+    expect(response.parsed_body['message']).to eq('person who placed the order not provided')
+  end
+
+  it 'rejects a missing lab' do
+    expect { post_order(payload.except(:lab)) }
+      .not_to change(WorkflowBypassedOrder, :count)
+
+    expect(response).to have_http_status(:unprocessable_content)
+    expect(response.parsed_body['message']).to eq('lab that received the order not provided')
   end
 
   it 'rejects a missing required field' do
