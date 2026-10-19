@@ -10,8 +10,8 @@ class CreateWorkflowBypassedOrders < ActiveRecord::Migration[7.1]
       t.string :specimen_type, null: false
       t.string :test_type, null: false
       t.string :ordering_facility, null: false
-      t.string :ordered_by
-      t.string :receiving_lab
+      t.string :ordered_by, null: false
+      t.string :receiving_lab, null: false
       t.timestamps
     end
 
