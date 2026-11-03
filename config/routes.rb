@@ -127,6 +127,7 @@ Rails.application.routes.draw do
         end
       end
 
+      get 'workflow_bypassed_orders' => 'workflow_bypassed_orders#index'
       post 'workflow_bypassed_orders' => 'workflow_bypassed_orders#create'
 
       resources :tests, controller: :tests, only: %i[update] do
