@@ -17,3 +17,9 @@ mahis_couchdb:
   changes_limit: 100
   heartbeat: 10000
   reconnect_delay: 5
+
+# Basic auth credentials for the /sidekiq web dashboard.
+# If missing, the dashboard rejects all logins.
+sidekiq:
+  username: admin
+  password: change_me

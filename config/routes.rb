@@ -3,6 +3,32 @@
 require 'sidekiq/web'
 require 'sidekiq/cron/web'
 
+# Basic auth for the /sidekiq dashboard, credentials read from config/application.yml:
+#   sidekiq:
+#     username: admin
+#     password: change_me
+# Fails closed: if the credentials are missing, every login attempt is rejected.
+sidekiq_web_config = begin
+  YAML.load_file(Rails.root.join('config/application.yml'), aliases: true)&.fetch('sidekiq', nil) || {}
+rescue Errno::ENOENT
+  {}
+end
+
+Sidekiq::Web.use Rack::Auth::Basic, 'Sidekiq' do |username, password|
+  expected_username = sidekiq_web_config['username'].to_s
+  expected_password = sidekiq_web_config['password'].to_s
+
+  if expected_username.empty? || expected_password.empty?
+    Rails.logger.error('Sidekiq dashboard locked: config/application.yml is missing sidekiq.username/sidekiq.password')
+    next false
+  end
+
+  # Evaluate both comparisons so timing does not reveal which one failed
+  username_ok = ActiveSupport::SecurityUtils.secure_compare(username.to_s, expected_username)
+  password_ok = ActiveSupport::SecurityUtils.secure_compare(password.to_s, expected_password)
+  username_ok & password_ok
+end
+
 Rails.application.routes.draw do
   mount Rswag::Ui::Engine => '/api-docs'
   mount Rswag::Api::Engine => '/api-docs'
