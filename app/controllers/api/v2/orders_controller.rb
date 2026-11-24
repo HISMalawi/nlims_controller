@@ -33,6 +33,7 @@ module API
           return render_error(error_message, :unprocessable_content)
         end
         if (specimen = Speciman.find_by(tracking_number: params.dig(:order, :tracking_number)))
+          refresh_clinical_history(specimen)
           return render_success('order already available', { tracking_number: specimen.tracking_number }, :created)
         end
 
@@ -52,6 +53,7 @@ module API
         end
 
         if (specimen = Speciman.find_by(tracking_number: params.dig(:order, :tracking_number)))
+          refresh_clinical_history(specimen)
           return render_success('order already available', { tracking_number: specimen.tracking_number }, :created)
         end
 
@@ -91,6 +93,11 @@ module API
       end
 
       private
+
+      def refresh_clinical_history(specimen)
+        history = params.dig(:order, :clinical_history)
+        specimen.update!(clinical_history: history) if history.present? && specimen.clinical_history != history
+      end
 
       def remote_host
         return unless params[:tracking_number].present?
